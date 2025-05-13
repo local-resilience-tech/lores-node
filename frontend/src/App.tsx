@@ -1,4 +1,4 @@
-import { RouterProvider, createBrowserRouter } from "react-router-dom"
+import { Navigate, RouterProvider, createBrowserRouter } from "react-router-dom"
 import Layout from "./pages/Layout"
 import { ChakraProvider } from "@chakra-ui/react"
 import { ColorModeProvider } from "./components/ui/color-mode"
@@ -17,6 +17,7 @@ const router = createBrowserRouter(
           path: "",
           element: <EnsureRegion />,
           children: [
+            { path: "", element: <Navigate to="nodes" replace /> },
             { path: "nodes", element: <Nodes /> },
             { path: "this_node", element: <EnsureNode /> },
           ],
