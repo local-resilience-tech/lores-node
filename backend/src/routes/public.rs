@@ -40,9 +40,8 @@ async fn hello(mut db: Connection<MainDb>, panda_container: &State<P2PandaContai
     };
 
     match panda_container.get_public_key().await {
-        Ok(public_key) => {
+        Ok(_) => {
             response.p2p = HelloStatus::Up;
-            println!("public key: {}", public_key);
         }
         Err(e) => {
             println!("Failed to get public key: {:?}", e);
@@ -55,6 +54,7 @@ async fn hello(mut db: Connection<MainDb>, panda_container: &State<P2PandaContai
     let node_result = repo.find(&mut db).await.map(|node| Json(node));
     match node_result {
         Ok(node) => {
+            response.db = HelloStatus::Up;
             response.node = Some(HelloResponseNode {
                 id: node.id.to_string(),
                 name: node.name.to_string(),
@@ -62,6 +62,7 @@ async fn hello(mut db: Connection<MainDb>, panda_container: &State<P2PandaContai
         }
         Err(e) => match e {
             ThisNodeRepoError::NotFound(_) => {
+                response.db = HelloStatus::Up;
                 println!("Node not found");
             }
             ThisNodeRepoError::InternalServerError(_) => {
