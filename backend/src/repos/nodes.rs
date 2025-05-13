@@ -1,5 +1,8 @@
+use rocket_db_pools::Connection;
 use sqlx::Sqlite;
 use thiserror::Error;
+
+use crate::infra::db::MainDb;
 
 use super::entities::Node;
 
@@ -38,5 +41,14 @@ impl NodesRepo {
         .map_err(|_| NodesError::InternalServerError("Database error".to_string()))?;
 
         Ok(())
+    }
+
+    pub async fn all(&self, connection: &mut Connection<MainDb>) -> Result<Vec<Node>, NodesError> {
+        let nodes = sqlx::query_as!(Node, "SELECT id, name FROM nodes")
+            .fetch_all(&mut ***connection)
+            .await
+            .map_err(|_| NodesError::InternalServerError("Database error".to_string()))?;
+
+        Ok(nodes)
     }
 }
