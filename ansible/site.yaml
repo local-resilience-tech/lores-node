@@ -5,4 +5,4 @@
     - docker_swarm_manager
     - traefik
     - shepherd
-    - site_manager
+    - lores_node

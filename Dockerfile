@@ -23,19 +23,19 @@ COPY deployment/cargo-config.toml ./.cargo/config
 # Compile the backend
 COPY ./backend .
 RUN RUSTFLAGS=-g SQLX_OFFLINE=true cargo build --release --target $(cat /app/.platform)
-RUN cp /app/target/$(cat /app/.platform)/release/lores-node /app/site-manager
+RUN cp /app/target/$(cat /app/.platform)/release/lores-node /app/lores-node
 
 # RUNNER
 FROM ubuntu AS runner
-COPY --from=rustbuilder /app/site-manager /app/backend/site-manager
+COPY --from=rustbuilder /app/lores-node /app/backend/lores-node
 COPY --from=rustbuilder /app/Rocket.toml /app/backend/Rocket.toml
 COPY --from=vitebuilder /app/dist /app/frontend
 ENV ROCKET_ADDRESS=0.0.0.0
 ENV ROCKET_PORT=8000
 ENV ROCKET_FRONTEND_ASSET_PATH=/app/frontend
-ENV DATABASE_URL=sqlite:/app/site-manager.db
+ENV DATABASE_URL=sqlite:/app/lores-node.db
 EXPOSE 8000
 EXPOSE 2022/udp
 EXPOSE 2023/udp
 WORKDIR /app/backend
-CMD ["./site-manager"]
+CMD ["./lores-node"]

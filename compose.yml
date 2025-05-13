@@ -2,7 +2,7 @@ services:
   site-manager:
     image: resilientlocaltech/site-manager
     environment:
-      DATABASE_URL: "sqlite:/data/site-manager.db"
+      DATABASE_URL: "sqlite:/data/lores-node.db"
     volumes:
       - data:/data
     ports:
