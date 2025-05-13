@@ -27,6 +27,11 @@ mod tests;
 use rocket_db_pools::Database;
 
 #[get("/")]
+fn hello() -> String {
+    "OK".to_string()
+}
+
+#[get("/")]
 fn admin_redirect() -> Redirect {
     Redirect::to("/admin")
 }
@@ -74,7 +79,7 @@ async fn rocket() -> _ {
     // routes
     rocket
         .mount("/", routes![admin_redirect])
-        .mount("/hello", routes::public::routes())
+        .mount("/hello", routes![hello])
         .mount("/api/this_node", routes::this_node::routes())
         .mount("/api/this_region", routes::this_region::routes())
         .mount("/api/this_p2panda_node", routes::this_p2panda_node::routes())

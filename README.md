@@ -53,7 +53,7 @@ The backend will serve up the frontend, which only happens because the environme
 ## Running Published Version
 
 On every release, a version is published to Docker Hub at:
-https://hub.docker.com/r/resilientlocaltech/site-manager
+https://hub.docker.com/r/resilientlocaltech/lores-node
 
 This can be run using a single docker command, like:
 `sudo docker run -p 8000:80 resilientlocaltech/site-manager:latest`
