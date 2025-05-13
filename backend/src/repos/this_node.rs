@@ -27,7 +27,7 @@ impl ThisNodeRepo {
             "
             SELECT nodes.id as id, nodes.name as name
             FROM nodes
-            INNER JOIN node_configs ON node_configs.this_node_id = nodes.id
+            INNER JOIN node_configs ON node_configs.public_key_hex = nodes.id
             WHERE node_configs.id = ? LIMIT 1
             ",
             NODE_CONFIG_ID

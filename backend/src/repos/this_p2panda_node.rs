@@ -155,8 +155,9 @@ impl ThisP2PandaNodeRepo {
 
     async fn create_private_key(&self, db: &MainDb) -> Result<PrivateKey, ThisP2PandaNodeRepoError> {
         let new_private_key = PrivateKey::new();
+        let public_key = new_private_key.public_key();
 
-        self.set_private_key_hex(db, new_private_key.to_hex())
+        self.set_private_key_hex(db, new_private_key.to_hex(), public_key.to_hex())
             .await?;
 
         println!("Created new private key");
@@ -164,20 +165,25 @@ impl ThisP2PandaNodeRepo {
         return Ok(new_private_key);
     }
 
-    async fn set_private_key_hex(&self, db: &MainDb, private_key_hex: String) -> Result<(), ThisP2PandaNodeRepoError> {
+    async fn set_private_key_hex(&self, db: &MainDb, private_key_hex: String, public_key_hex: String) -> Result<(), ThisP2PandaNodeRepoError> {
         let mut connection = db.sqlite_pool().acquire().await.unwrap();
 
         let _region = sqlx::query!(
             "
             UPDATE node_configs
-            SET private_key_hex = ?
+            SET private_key_hex = ?, public_key_hex = ?
             WHERE node_configs.id = ?
             ",
             private_key_hex,
+            public_key_hex,
             NODE_CONFIG_ID
         )
         .execute(&mut *connection)
-        .await;
+        .await
+        .map_err(|error| {
+            println!("Failed to set private key hex: {:?}", error);
+            ThisP2PandaNodeRepoError::InternalServerError("Database error".to_string())
+        })?;
 
         return Ok(());
     }

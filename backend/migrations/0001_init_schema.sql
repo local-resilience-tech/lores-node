@@ -13,7 +13,6 @@ CREATE TABLE network_configs (
 
 CREATE TABLE node_configs (
     id INT PRIMARY KEY NOT NULL,
-    this_node_id VARCHAR(36),
-    private_key_hex VARCHAR(64),
-    FOREIGN KEY (this_node_id) REFERENCES nodes(id)
+    public_key_hex VARCHAR(36),
+    private_key_hex VARCHAR(64)
 );
