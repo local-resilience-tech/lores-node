@@ -1,6 +1,6 @@
 ---
 - hosts:
-    - cloud.sites.merri-bek.tech
+    - cloud.nodes.merri-bek.tech
   roles:
     - docker_swarm_manager
     - traefik
