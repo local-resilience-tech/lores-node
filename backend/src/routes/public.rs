@@ -30,7 +30,7 @@ struct HelloResponseNode {
     name: String,
 }
 
-#[get("/")]
+#[get("/hello")]
 async fn hello(mut db: Connection<MainDb>, panda_container: &State<P2PandaContainer>) -> Json<HelloResponse> {
     let mut response = HelloResponse {
         web: HelloStatus::Up,
