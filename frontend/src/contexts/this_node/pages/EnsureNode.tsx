@@ -37,9 +37,11 @@ export default function EnsureNode() {
   }, [])
 
   const onSubmitNewNode = (data: NewNodeData) => {
-    api.create(data.name).then((result: ApiResult<NodeDetails, any>) => {
-      if ("Ok" in result) updateNode(result.Ok)
-    })
+    api
+      .create({ name: data.name })
+      .then((result: ApiResult<NodeDetails, any>) => {
+        if ("Ok" in result) updateNode(result.Ok)
+      })
   }
 
   if (loading) return <Loading />

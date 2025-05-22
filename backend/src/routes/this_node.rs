@@ -15,6 +15,13 @@ struct CreateNodeDetails {
     name: String,
 }
 
+#[derive(Deserialize, Debug)]
+#[serde(crate = "rocket::serde")]
+struct UpdateNodeDetails {
+    name: String,
+    public_ipv4: String,
+}
+
 #[post("/create", data = "<data>")]
 async fn create(data: Json<CreateNodeDetails>, panda_container: &State<P2PandaContainer>) -> Result<Json<Node>, ThisNodeRepoError> {
     panda_container
@@ -38,6 +45,23 @@ async fn show(mut db: Connection<MainDb>) -> Result<Json<Node>, ThisNodeRepoErro
     repo.find(&mut db).await.map(|node| Json(node))
 }
 
+#[patch("/", format = "json", data = "<data>")]
+async fn update(data: Json<UpdateNodeDetails>, panda_container: &State<P2PandaContainer>) -> Result<Json<Node>, ThisNodeRepoError> {
+    println!("update node: {:?}", data);
+    // panda_container
+    //     .announce_node(data.name.clone())
+    //     .await
+    //     .map_err(|e| {
+    //         println!("got error: {}", e);
+    //         ThisNodeRepoError::InternalServerError(e.to_string())
+    //     })?;
+
+    return Ok(Json(Node {
+        id: "1".to_string(),
+        name: data.name.clone(),
+    }));
+}
+
 pub fn routes() -> Vec<Route> {
-    routes![create, show]
+    routes![create, show, update]
 }

@@ -3,27 +3,24 @@ import { NodeDetails } from "../types"
 import { Input, VStack } from "@chakra-ui/react"
 
 import { Field, Button, FormActions } from "../../../components"
-
-export interface EditNodeData {
-  name: string
-}
+import { UpdateNodeData } from "../api"
 
 export default function EditNodeForm({
   node,
   onSubmit,
 }: {
   node: NodeDetails
-  onSubmit: (data: EditNodeData) => void
+  onSubmit: (data: UpdateNodeData) => void
 }) {
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<EditNodeData>({ defaultValues: { name: node.name } })
+  } = useForm<UpdateNodeData>({ defaultValues: { name: node.name } })
 
   return (
-    <VStack gap={4} align="stretch">
-      <form onSubmit={handleSubmit(onSubmit)}>
+    <form onSubmit={handleSubmit(onSubmit)}>
+      <VStack gap={4} align="stretch">
         <Field
           label="Node Name"
           helperText={`A name to identify your Node - use lowercase letters and no spaces`}
@@ -45,12 +42,29 @@ export default function EditNodeForm({
           />
         </Field>
 
+        <Field
+          label="Public IPv4"
+          helperText={`The public IPv4 address of your node`}
+          invalid={!!errors.public_ipv4}
+          errorText={errors.public_ipv4?.message}
+        >
+          <Input
+            {...register("public_ipv4", {
+              required: false,
+              pattern: {
+                value: /^((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)\.?\b){4}$/,
+                message: "Invalid IPv4 address",
+              },
+            })}
+          />
+        </Field>
+
         <FormActions>
           <Button loading={isSubmitting} type="submit">
             Update
           </Button>
         </FormActions>
-      </form>
-    </VStack>
+      </VStack>
+    </form>
   )
 }
