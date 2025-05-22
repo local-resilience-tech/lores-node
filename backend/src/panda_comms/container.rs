@@ -13,7 +13,7 @@ use rocket::tokio::{self};
 use std::sync::Arc;
 use tokio::sync::{broadcast, mpsc, Mutex};
 
-use super::lores_events::{LoResEvent, LoResEventHeader, LoResEventPayload, NodeAnnounced};
+use super::lores_events::{LoResEvent, LoResEventHeader, LoResEventPayload};
 
 const RELAY_URL: &str = "https://staging-euw1-1.relay.iroh.network/";
 const TOPIC_NAME: &str = "lores_mesh";
@@ -178,14 +178,13 @@ impl P2PandaContainer {
         *node_api_lock = maybe_node_api;
     }
 
-    pub async fn announce_node(&self, node_name: String) -> Result<()> {
+    pub async fn publish_persisted(&self, payload: LoResEventPayload) -> Result<()> {
         let mut node_api = self.node_api.lock().await;
         let node_api = node_api
             .as_mut()
             .ok_or(anyhow::Error::msg("Network not started"))?;
 
-        let node_announced = NodeAnnounced { name: node_name.clone() };
-        let event_payload = LoResEventPayload::NodeAnnounced(node_announced);
+        let event_payload: LoResEventPayload = payload;
 
         let payload = serde_json::to_vec(&event_payload)?;
 
@@ -197,8 +196,6 @@ impl P2PandaContainer {
         node_api
             .publish_persisted(TOPIC_NAME, &payload, Some(LOG_ID), Some(extensions))
             .await?;
-
-        println!("Announcing node: {}", node_name);
 
         Ok(())
     }

@@ -6,6 +6,7 @@ use rocket_db_pools::Connection;
 
 use crate::infra::db::MainDb;
 use crate::panda_comms::container::P2PandaContainer;
+use crate::panda_comms::lores_events::{LoResEventPayload, NodeAnnounced};
 use crate::repos::entities::Node;
 use crate::repos::this_node::{ThisNodeRepo, ThisNodeRepoError};
 
@@ -24,8 +25,10 @@ struct UpdateNodeDetails {
 
 #[post("/create", data = "<data>")]
 async fn create(data: Json<CreateNodeDetails>, panda_container: &State<P2PandaContainer>) -> Result<Json<Node>, ThisNodeRepoError> {
+    let event_payload = LoResEventPayload::NodeAnnounced(NodeAnnounced { name: data.name.clone() });
+
     panda_container
-        .announce_node(data.name.clone())
+        .publish_persisted(event_payload)
         .await
         .map_err(|e| {
             println!("got error: {}", e);
@@ -48,13 +51,16 @@ async fn show(mut db: Connection<MainDb>) -> Result<Json<Node>, ThisNodeRepoErro
 #[patch("/", format = "json", data = "<data>")]
 async fn update(data: Json<UpdateNodeDetails>, panda_container: &State<P2PandaContainer>) -> Result<Json<Node>, ThisNodeRepoError> {
     println!("update node: {:?}", data);
-    // panda_container
-    //     .announce_node(data.name.clone())
-    //     .await
-    //     .map_err(|e| {
-    //         println!("got error: {}", e);
-    //         ThisNodeRepoError::InternalServerError(e.to_string())
-    //     })?;
+
+    let event_payload = LoResEventPayload::NodeAnnounced(NodeAnnounced { name: data.name.clone() });
+
+    panda_container
+        .publish_persisted(event_payload)
+        .await
+        .map_err(|e| {
+            println!("got error: {}", e);
+            ThisNodeRepoError::InternalServerError(e.to_string())
+        })?;
 
     return Ok(Json(Node {
         id: "1".to_string(),
