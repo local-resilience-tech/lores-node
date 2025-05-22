@@ -5,6 +5,7 @@ import { NodeDetails } from "../types"
 import ThisNodeApi from "../api"
 import { ApiResult } from "../../shared/types"
 import { Loading, useLoading } from "../../shared"
+import EditNode from "./EditNode"
 
 const api = new ThisNodeApi()
 
@@ -46,12 +47,7 @@ export default function EnsureNode() {
   return (
     <Container maxWidth={"2xl"}>
       {node == null && <NewNode onSubmitNewNode={onSubmitNewNode} />}
-      {node != null && (
-        <div>
-          <h1>Node created!</h1>
-          <p>Node: {node?.name}</p>
-        </div>
-      )}
+      {node != null && <EditNode node={node} />}
     </Container>
   )
 }
