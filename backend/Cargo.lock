@@ -2786,7 +2786,7 @@ dependencies = [
 
 [[package]]
 name = "lores-node"
-version = "0.5.5"
+version = "0.5.6"
 dependencies = [
  "anyhow",
  "async-trait",
