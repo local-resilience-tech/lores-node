@@ -4,7 +4,7 @@ use thiserror::Error;
 
 use crate::infra::db::MainDb;
 
-use super::entities::Node;
+use super::entities::{Node, NodeDetails};
 
 pub struct NodesRepo {}
 
@@ -43,13 +43,18 @@ impl NodesRepo {
         Ok(())
     }
 
-    pub async fn update(&self, pool: &sqlx::Pool<Sqlite>, node: Node) -> Result<(), NodesError> {
+    pub async fn update(&self, pool: &sqlx::Pool<Sqlite>, node: NodeDetails) -> Result<(), NodesError> {
         let mut connection = pool.acquire().await.unwrap();
 
-        let _node = sqlx::query!("UPDATE nodes SET name = ? WHERE id = ?", node.name, node.id)
-            .execute(&mut *connection)
-            .await
-            .map_err(|_| NodesError::InternalServerError("Database error".to_string()))?;
+        let _node = sqlx::query!(
+            "UPDATE nodes SET name = ?, public_ipv4 = ? WHERE id = ?",
+            node.name,
+            node.public_ipv4,
+            node.id
+        )
+        .execute(&mut *connection)
+        .await
+        .map_err(|_| NodesError::InternalServerError("Database error".to_string()))?;
 
         Ok(())
     }

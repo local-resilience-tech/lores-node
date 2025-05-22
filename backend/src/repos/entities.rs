@@ -10,6 +10,14 @@ pub struct Node {
 
 #[derive(sqlx::FromRow, Serialize, Deserialize)]
 #[serde(crate = "rocket::serde")]
+pub struct NodeDetails {
+    pub id: String,
+    pub name: String,
+    pub public_ipv4: String,
+}
+
+#[derive(sqlx::FromRow, Serialize, Deserialize)]
+#[serde(crate = "rocket::serde")]
 pub struct NodeConfig {
     pub id: String,
     pub this_node_id: String,

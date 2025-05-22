@@ -2,7 +2,10 @@ use sqlx::Sqlite;
 
 use crate::{
     panda_comms::lores_events::{LoResEvent, LoResEventPayload},
-    repos::{entities::Node, nodes::NodesRepo},
+    repos::{
+        entities::{Node, NodeDetails},
+        nodes::NodesRepo,
+    },
 };
 
 pub async fn handle_event(event: LoResEvent, pool: &sqlx::Pool<Sqlite>) {
@@ -14,7 +17,7 @@ pub async fn handle_event(event: LoResEvent, pool: &sqlx::Pool<Sqlite>) {
 
             println!("Node announced: {:?}", payload);
 
-            let node: Node = Node {
+            let node = Node {
                 id: header.author_node_id.clone(),
                 name: payload.name.clone(),
             };
@@ -26,9 +29,10 @@ pub async fn handle_event(event: LoResEvent, pool: &sqlx::Pool<Sqlite>) {
 
             println!("Node updated: {:?}", payload);
 
-            let node: Node = Node {
+            let node = NodeDetails {
                 id: header.author_node_id.clone(),
                 name: payload.name.clone(),
+                public_ipv4: payload.public_ipv4.clone(),
             };
 
             repo.update(pool, node).await.unwrap();
