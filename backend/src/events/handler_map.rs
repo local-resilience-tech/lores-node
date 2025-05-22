@@ -21,5 +21,17 @@ pub async fn handle_event(event: LoResEvent, pool: &sqlx::Pool<Sqlite>) {
 
             repo.upsert(pool, node).await.unwrap();
         }
+        LoResEventPayload::NodeUpdated(payload) => {
+            let repo = NodesRepo::init();
+
+            println!("Node updated: {:?}", payload);
+
+            let node: Node = Node {
+                id: header.author_node_id.clone(),
+                name: payload.name.clone(),
+            };
+
+            repo.update(pool, node).await.unwrap();
+        }
     }
 }

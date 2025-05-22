@@ -17,7 +17,7 @@ pub async fn run_migrations(rocket: Rocket<Build>) -> fairing::Result {
         println!("Running DB migrations");
 
         // run migrations using `db`. get the inner type with &db.0.
-        sqlx::migrate!("./migrations")
+        sqlx::migrate!()
             .run(&db.0)
             .await
             .expect("Error running DB migrations");

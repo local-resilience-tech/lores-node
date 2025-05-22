@@ -6,7 +6,7 @@ use rocket_db_pools::Connection;
 
 use crate::infra::db::MainDb;
 use crate::panda_comms::container::P2PandaContainer;
-use crate::panda_comms::lores_events::{LoResEventPayload, NodeAnnounced};
+use crate::panda_comms::lores_events::{LoResEventPayload, NodeAnnounced, NodeUpdated};
 use crate::repos::entities::Node;
 use crate::repos::this_node::{ThisNodeRepo, ThisNodeRepoError};
 
@@ -52,7 +52,10 @@ async fn show(mut db: Connection<MainDb>) -> Result<Json<Node>, ThisNodeRepoErro
 async fn update(data: Json<UpdateNodeDetails>, panda_container: &State<P2PandaContainer>) -> Result<Json<Node>, ThisNodeRepoError> {
     println!("update node: {:?}", data);
 
-    let event_payload = LoResEventPayload::NodeAnnounced(NodeAnnounced { name: data.name.clone() });
+    let event_payload = LoResEventPayload::NodeUpdated(NodeUpdated {
+        name: data.name.clone(),
+        public_ipv4: data.public_ipv4.clone(),
+    });
 
     panda_container
         .publish_persisted(event_payload)

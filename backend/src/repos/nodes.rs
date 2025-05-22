@@ -43,6 +43,17 @@ impl NodesRepo {
         Ok(())
     }
 
+    pub async fn update(&self, pool: &sqlx::Pool<Sqlite>, node: Node) -> Result<(), NodesError> {
+        let mut connection = pool.acquire().await.unwrap();
+
+        let _node = sqlx::query!("UPDATE nodes SET name = ? WHERE id = ?", node.name, node.id)
+            .execute(&mut *connection)
+            .await
+            .map_err(|_| NodesError::InternalServerError("Database error".to_string()))?;
+
+        Ok(())
+    }
+
     pub async fn all(&self, connection: &mut Connection<MainDb>) -> Result<Vec<Node>, NodesError> {
         let nodes = sqlx::query_as!(Node, "SELECT id, name FROM nodes")
             .fetch_all(&mut ***connection)
