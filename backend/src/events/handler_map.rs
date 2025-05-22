@@ -32,7 +32,7 @@ pub async fn handle_event(event: LoResEvent, pool: &sqlx::Pool<Sqlite>) {
             let node = NodeDetails {
                 id: header.author_node_id.clone(),
                 name: payload.name.clone(),
-                public_ipv4: payload.public_ipv4.clone(),
+                public_ipv4: Some(payload.public_ipv4.clone()),
             };
 
             repo.update(pool, node).await.unwrap();

@@ -13,7 +13,7 @@ pub struct Node {
 pub struct NodeDetails {
     pub id: String,
     pub name: String,
-    pub public_ipv4: String,
+    pub public_ipv4: Option<String>,
 }
 
 #[derive(sqlx::FromRow, Serialize, Deserialize)]

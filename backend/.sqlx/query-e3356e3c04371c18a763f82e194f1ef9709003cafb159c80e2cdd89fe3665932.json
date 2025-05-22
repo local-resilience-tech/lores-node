@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT id, name FROM nodes",
+  "query": "SELECT id, name, public_ipv4 FROM nodes",
   "describe": {
     "columns": [
       {
@@ -12,6 +12,11 @@
         "name": "name",
         "ordinal": 1,
         "type_info": "Text"
+      },
+      {
+        "name": "public_ipv4",
+        "ordinal": 2,
+        "type_info": "Text"
       }
     ],
     "parameters": {
@@ -19,8 +24,9 @@
     },
     "nullable": [
       false,
-      false
+      false,
+      true
     ]
   },
-  "hash": "dad07617d38d6f71bc2f2247338773410caebb9f2f68d3dad513e41fb3e37509"
+  "hash": "e3356e3c04371c18a763f82e194f1ef9709003cafb159c80e2cdd89fe3665932"
 }

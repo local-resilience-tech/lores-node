@@ -1,5 +1,5 @@
 import { useForm } from "react-hook-form"
-import { NodeDetails } from "../types"
+import { NodeIdentity } from "../types"
 import { Input, VStack } from "@chakra-ui/react"
 
 import { Field, Button, FormActions } from "../../../components"
@@ -9,7 +9,7 @@ export default function EditNodeForm({
   node,
   onSubmit,
 }: {
-  node: NodeDetails
+  node: NodeIdentity
   onSubmit: (data: UpdateNodeData) => void
 }) {
   const {

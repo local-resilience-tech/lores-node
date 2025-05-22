@@ -5,7 +5,7 @@ use rocket_db_pools::Connection;
 
 use crate::infra::db::MainDb;
 use crate::panda_comms::container::{build_public_key_from_hex, P2PandaContainer};
-use crate::repos::entities::{Node, Region};
+use crate::repos::entities::{NodeDetails, Region};
 use crate::repos::nodes::NodesRepo;
 use crate::repos::this_p2panda_node::{SimplifiedNodeAddress, ThisP2PandaNodeRepo, ThisP2PandaNodeRepoError};
 
@@ -30,7 +30,7 @@ async fn show(mut db: Connection<MainDb>) -> Result<Json<Option<Region>>, ThisP2
 }
 
 #[get("/nodes", format = "json")]
-async fn nodes(mut db: Connection<MainDb>) -> Result<Json<Vec<Node>>, ThisP2PandaNodeRepoError> {
+async fn nodes(mut db: Connection<MainDb>) -> Result<Json<Vec<NodeDetails>>, ThisP2PandaNodeRepoError> {
     let repo = NodesRepo::init();
 
     let nodes = repo

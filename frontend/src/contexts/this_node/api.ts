@@ -1,6 +1,6 @@
 import { BaseApi } from "../shared"
 import { ApiResult } from "../shared/types"
-import { NodeDetails, RegionDetails } from "./types"
+import { NodeIdentity, RegionDetails } from "./types"
 
 export interface UpdateNodeData {
   name: string
@@ -8,18 +8,18 @@ export interface UpdateNodeData {
 }
 
 export default class ThisNodeApi extends BaseApi {
-  show(): Promise<ApiResult<NodeDetails | null, any>> {
+  show(): Promise<ApiResult<NodeIdentity | null, any>> {
     return this.apiCall("this_node")
   }
 
-  create({ name }: { name: string }): Promise<ApiResult<NodeDetails, any>> {
+  create({ name }: { name: string }): Promise<ApiResult<NodeIdentity, any>> {
     return this.apiCall("this_node/create", "POST", { name })
   }
 
   update({
     name,
     public_ipv4,
-  }: UpdateNodeData): Promise<ApiResult<NodeDetails, any>> {
+  }: UpdateNodeData): Promise<ApiResult<NodeIdentity, any>> {
     return this.apiCall(`this_node/`, "PATCH", {
       name,
       public_ipv4,

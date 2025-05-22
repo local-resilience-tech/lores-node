@@ -59,8 +59,8 @@ impl NodesRepo {
         Ok(())
     }
 
-    pub async fn all(&self, connection: &mut Connection<MainDb>) -> Result<Vec<Node>, NodesError> {
-        let nodes = sqlx::query_as!(Node, "SELECT id, name FROM nodes")
+    pub async fn all(&self, connection: &mut Connection<MainDb>) -> Result<Vec<NodeDetails>, NodesError> {
+        let nodes = sqlx::query_as!(NodeDetails, "SELECT id, name, public_ipv4 FROM nodes")
             .fetch_all(&mut ***connection)
             .await
             .map_err(|_| NodesError::InternalServerError("Database error".to_string()))?;

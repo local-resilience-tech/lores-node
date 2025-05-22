@@ -1,7 +1,7 @@
 import { Container } from "@chakra-ui/react"
 import { useEffect, useState } from "react"
 import NewNode, { NewNodeData } from "../components/NewNode"
-import { NodeDetails } from "../types"
+import { NodeIdentity } from "../types"
 import ThisNodeApi from "../api"
 import { ApiResult } from "../../shared/types"
 import { Loading, useLoading } from "../../shared"
@@ -9,17 +9,17 @@ import EditNode from "./EditNode"
 
 const api = new ThisNodeApi()
 
-const getNode = async (): Promise<NodeDetails | null> => {
+const getNode = async (): Promise<NodeIdentity | null> => {
   const result = await api.show()
   if ("Ok" in result) return result.Ok
   return null
 }
 
 export default function EnsureNode() {
-  const [node, setNode] = useState<NodeDetails | null>(null)
+  const [node, setNode] = useState<NodeIdentity | null>(null)
   const [loading, withLoading] = useLoading(true)
 
-  const updateNode = (newNode: NodeDetails | null) => {
+  const updateNode = (newNode: NodeIdentity | null) => {
     console.log("Updating node", newNode)
     setNode(newNode)
   }
@@ -39,7 +39,7 @@ export default function EnsureNode() {
   const onSubmitNewNode = (data: NewNodeData) => {
     api
       .create({ name: data.name })
-      .then((result: ApiResult<NodeDetails, any>) => {
+      .then((result: ApiResult<NodeIdentity, any>) => {
         if ("Ok" in result) updateNode(result.Ok)
       })
   }
