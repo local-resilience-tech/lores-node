@@ -25,9 +25,3 @@ pub struct LoResEvent {
     pub header: LoResEventHeader,
     pub payload: LoResEventPayload,
 }
-
-impl LoResEvent {
-    pub fn new(header: LoResEventHeader, payload: LoResEventPayload) -> Self {
-        LoResEvent { header, payload }
-    }
-}

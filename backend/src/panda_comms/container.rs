@@ -13,6 +13,7 @@ use rocket::tokio::{self};
 use std::sync::Arc;
 use tokio::sync::{broadcast, mpsc, Mutex};
 
+use super::event_encoding::{decode_lores_event, encode_lores_event_payload};
 use super::lores_events::{LoResEvent, LoResEventHeader, LoResEventPayload};
 
 const RELAY_URL: &str = "https://staging-euw1-1.relay.iroh.network/";
@@ -178,15 +179,13 @@ impl P2PandaContainer {
         *node_api_lock = maybe_node_api;
     }
 
-    pub async fn publish_persisted(&self, payload: LoResEventPayload) -> Result<()> {
+    pub async fn publish_persisted(&self, event_payload: LoResEventPayload) -> Result<()> {
         let mut node_api = self.node_api.lock().await;
         let node_api = node_api
             .as_mut()
             .ok_or(anyhow::Error::msg("Network not started"))?;
 
-        let event_payload: LoResEventPayload = payload;
-
-        let payload = serde_json::to_vec(&event_payload)?;
+        let encoded_payload = encode_lores_event_payload(event_payload)?;
 
         let extensions = NodeExtensions {
             log_id: Some(LogId(LOG_ID.to_string())),
@@ -194,7 +193,7 @@ impl P2PandaContainer {
         };
 
         node_api
-            .publish_persisted(TOPIC_NAME, &payload, Some(LOG_ID), Some(extensions))
+            .publish_persisted(TOPIC_NAME, &encoded_payload, Some(LOG_ID), Some(extensions))
             .await?;
 
         Ok(())
@@ -269,25 +268,16 @@ impl P2PandaContainer {
 
                 match data {
                     EventData::Application(payload) => {
-                        let lores_event: Result<LoResEventPayload, _> = serde_json::from_slice(&payload);
-                        match lores_event {
-                            Ok(lores_event_payload) => {
-                                println!("  Parsed LoResEvent: {:?}", lores_event_payload);
+                        let header = event.header.unwrap();
+                        let author_node_id = header.public_key.to_hex();
+                        let result: Result<LoResEvent, _> = decode_lores_event(author_node_id, &payload);
 
-                                let header = event.header.unwrap();
+                        if let Ok(lores_event) = result {
+                            let send_result = events_tx.send(lores_event).await;
 
-                                // emit to the event handler
-                                let lores_event_header = LoResEventHeader {
-                                    author_node_id: header.public_key.to_hex(),
-                                };
-                                let event = LoResEvent::new(lores_event_header, lores_event_payload);
-                                let send_result = events_tx.send(event).await;
-
-                                if let Err(err) = send_result {
-                                    println!("  Failed to send event: {:?}", err);
-                                }
+                            if let Err(err) = send_result {
+                                println!("  Failed to send event: {:?}", err);
                             }
-                            Err(err) => println!("  Failed to parse LoResEvent: {:?}", err),
                         }
                     }
                     EventData::Ephemeral(payload) => {
