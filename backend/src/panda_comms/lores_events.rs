@@ -1,18 +1,18 @@
-#[derive(serde::Deserialize, serde::Serialize, Debug)]
-pub struct NodeAnnounced {
+#[derive(serde::Deserialize, serde::Serialize, Clone, PartialEq, Debug)]
+pub struct NodeAnnouncedData {
     pub name: String,
 }
 
-#[derive(serde::Deserialize, serde::Serialize, Debug)]
-pub struct NodeUpdated {
+#[derive(serde::Deserialize, serde::Serialize, Clone, PartialEq, Debug)]
+pub struct NodeUpdatedData {
     pub name: String,
     pub public_ipv4: String,
 }
 
-#[derive(serde::Deserialize, serde::Serialize, Debug)]
+#[derive(serde::Deserialize, serde::Serialize, Clone, PartialEq, Debug)]
 pub enum LoResEventPayload {
-    NodeAnnounced(NodeAnnounced),
-    NodeUpdated(NodeUpdated),
+    NodeAnnounced(NodeAnnouncedData),
+    NodeUpdated(NodeUpdatedData),
 }
 
 #[derive(Debug)]

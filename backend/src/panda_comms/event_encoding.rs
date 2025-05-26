@@ -38,3 +38,22 @@ pub fn decode_lores_event(author_node_id: String, encoded_payload: &[u8]) -> Res
 
     Ok(lores_event)
 }
+
+// Test encoding and decoding
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::panda_comms::lores_events::{LoResEventPayload, NodeAnnouncedData};
+
+    #[test]
+    fn test_encode_decode_lores_event_payload() {
+        let payload = LoResEventPayload::NodeAnnounced(NodeAnnouncedData {
+            name: "Test Node".to_string(),
+        });
+
+        let encoded = encode_lores_event_payload(payload.clone()).unwrap();
+        let decoded = decode_lores_event_payload(&encoded).unwrap();
+
+        assert_eq!(payload, decoded);
+    }
+}
