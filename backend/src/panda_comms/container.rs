@@ -14,7 +14,7 @@ use std::sync::Arc;
 use tokio::sync::{broadcast, mpsc, Mutex};
 
 use super::event_encoding::{decode_lores_event, encode_lores_event_payload};
-use super::lores_events::{LoResEvent, LoResEventHeader, LoResEventPayload};
+use super::lores_events::{LoResEvent, LoResEventPayload};
 
 const RELAY_URL: &str = "https://staging-euw1-1.relay.iroh.network/";
 const TOPIC_NAME: &str = "lores_mesh";
