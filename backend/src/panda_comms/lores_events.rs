@@ -10,9 +10,16 @@ pub struct NodeUpdatedDataV1 {
 }
 
 #[derive(serde::Deserialize, serde::Serialize, Clone, PartialEq, Debug)]
+pub struct NodeStatusPostedDataV1 {
+    pub text: Option<String>,
+    pub state: Option<String>,
+}
+
+#[derive(serde::Deserialize, serde::Serialize, Clone, PartialEq, Debug)]
 pub enum LoResEventPayload {
     NodeAnnounced(NodeAnnouncedDataV1),
     NodeUpdated(NodeUpdatedDataV1),
+    NodeStatusPosted(NodeStatusPostedDataV1),
 }
 
 #[derive(serde::Deserialize, serde::Serialize, Clone, PartialEq, Debug)]

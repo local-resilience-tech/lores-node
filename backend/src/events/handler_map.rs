@@ -43,5 +43,8 @@ pub async fn handle_event(event: LoResEvent, pool: &sqlx::Pool<Sqlite>) {
                 println!("Node updated successfully");
             }
         }
+        LoResEventPayload::NodeStatusPosted(payload) => {
+            println!("Node status posted: {:?}", payload);
+        }
     }
 }

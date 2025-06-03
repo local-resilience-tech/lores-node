@@ -6,7 +6,7 @@ use rocket_db_pools::Connection;
 
 use crate::infra::db::MainDb;
 use crate::panda_comms::container::P2PandaContainer;
-use crate::panda_comms::lores_events::{LoResEventPayload, NodeAnnouncedDataV1, NodeUpdatedDataV1};
+use crate::panda_comms::lores_events::{LoResEventPayload, NodeAnnouncedDataV1, NodeStatusPostedDataV1, NodeUpdatedDataV1};
 use crate::repos::entities::Node;
 use crate::repos::this_node::{ThisNodeRepo, ThisNodeRepoError};
 
@@ -71,6 +71,23 @@ async fn update(data: Json<UpdateNodeDetails>, panda_container: &State<P2PandaCo
     }));
 }
 
+#[post("/status", format = "json", data = "<data>")]
+async fn post_status(data: Json<NodeStatusPostedDataV1>, panda_container: &State<P2PandaContainer>) -> Result<(), ThisNodeRepoError> {
+    println!("post status: {:?}", data);
+
+    let event_payload = LoResEventPayload::NodeStatusPosted(data.into_inner());
+
+    panda_container
+        .publish_persisted(event_payload)
+        .await
+        .map_err(|e| {
+            println!("got error: {}", e);
+            ThisNodeRepoError::InternalServerError(e.to_string())
+        })?;
+
+    return Ok(());
+}
+
 pub fn routes() -> Vec<Route> {
-    routes![create, show, update]
+    routes![create, show, update, post_status]
 }
