@@ -45,6 +45,7 @@ pub async fn handle_event(event: LoResEvent, pool: &sqlx::Pool<Sqlite>) {
         }
         LoResEventPayload::NodeStatusPosted(payload) => {
             println!("Node status posted: {:?}", payload);
+            println!("operation id: {}", header.operation_id.to_hex());
         }
     }
 }

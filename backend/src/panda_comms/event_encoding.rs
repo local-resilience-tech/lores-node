@@ -39,10 +39,8 @@ pub fn decode_lores_event_payload(encoded_payload: &[u8]) -> Result<LoResEventPa
     }
 }
 
-pub fn decode_lores_event(author_node_id: String, encoded_payload: &[u8]) -> Result<LoResEvent, anyhow::Error> {
+pub fn decode_lores_event(header: LoResEventHeader, encoded_payload: &[u8]) -> Result<LoResEvent, anyhow::Error> {
     let decoded_payload: LoResEventPayload = decode_lores_event_payload(encoded_payload)?;
-
-    let header = LoResEventHeader { author_node_id };
 
     let lores_event = LoResEvent {
         header,

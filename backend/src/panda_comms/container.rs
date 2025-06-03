@@ -13,6 +13,8 @@ use rocket::tokio::{self};
 use std::sync::Arc;
 use tokio::sync::{broadcast, mpsc, Mutex};
 
+use crate::panda_comms::lores_events::LoResEventHeader;
+
 use super::event_encoding::{decode_lores_event, encode_lores_event_payload};
 use super::lores_events::{LoResEvent, LoResEventPayload};
 
@@ -269,8 +271,14 @@ impl P2PandaContainer {
                 match data {
                     EventData::Application(payload) => {
                         let header = event.header.unwrap();
-                        let author_node_id = header.public_key.to_hex();
-                        let result: Result<LoResEvent, _> = decode_lores_event(author_node_id, &payload);
+
+                        let lores_header = LoResEventHeader {
+                            author_node_id: header.public_key.to_hex(),
+                            timestamp: header.timestamp,
+                            operation_id: header.hash(),
+                        };
+
+                        let result: Result<LoResEvent, _> = decode_lores_event(lores_header, &payload);
 
                         if let Ok(lores_event) = result {
                             let send_result = events_tx.send(lores_event).await;

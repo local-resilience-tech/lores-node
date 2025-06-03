@@ -1,3 +1,5 @@
+use p2panda_core::hash::Hash;
+
 #[derive(serde::Deserialize, serde::Serialize, Clone, PartialEq, Debug)]
 pub struct NodeAnnouncedDataV1 {
     pub name: String,
@@ -34,6 +36,11 @@ pub enum LoResWireEvent {
 #[derive(Debug)]
 pub struct LoResEventHeader {
     pub author_node_id: String,
+
+    // Time in milliseconds since the Unix epoch
+    pub timestamp: u64,
+
+    pub operation_id: Hash,
 }
 
 #[derive(Debug)]
