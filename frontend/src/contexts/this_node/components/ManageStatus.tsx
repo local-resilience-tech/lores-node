@@ -1,10 +1,10 @@
 import { VStack } from "@chakra-ui/react"
-import PostStatusMessage from "./PostStatusMessage"
+import PostStatus from "./PostStatus"
 
-export default function ManageStatusMessage() {
+export default function ManageStatus() {
   return (
     <VStack gap={4} align="stretch">
-      <PostStatusMessage />
+      <PostStatus />
       <p>Display current status here</p>
     </VStack>
   )
