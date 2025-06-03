@@ -1,18 +1,13 @@
 import { Input, NativeSelect, Select, VStack } from "@chakra-ui/react"
 import { Field, Button, FormActions } from "../../../components"
 import { useForm } from "react-hook-form"
+import { PostStatusData } from "../api"
 
-export interface PostStatusData {
-  text: string
-  state?: "active" | "inactive" | "maintenance" | "development"
-}
-
-export default function PostStatus() {
-  const onSubmit = (data: PostStatusData) => {
-    // Handle the form submission logic here
-    console.log("Form submitted with data:", data)
-  }
-
+export default function PostStatus({
+  onSubmit,
+}: {
+  onSubmit: (data: PostStatusData) => void
+}) {
   const {
     register,
     handleSubmit,

@@ -7,6 +7,11 @@ export interface UpdateNodeData {
   public_ipv4: string
 }
 
+export interface PostStatusData {
+  text: string
+  state?: "active" | "inactive" | "maintenance" | "development"
+}
+
 export default class ThisNodeApi extends BaseApi {
   show(): Promise<ApiResult<NodeIdentity | null, any>> {
     return this.apiCall("this_node")
@@ -16,14 +21,8 @@ export default class ThisNodeApi extends BaseApi {
     return this.apiCall("this_node/create", "POST", { name })
   }
 
-  update({
-    name,
-    public_ipv4,
-  }: UpdateNodeData): Promise<ApiResult<NodeIdentity, any>> {
-    return this.apiCall(`this_node/`, "PATCH", {
-      name,
-      public_ipv4,
-    })
+  update(data: UpdateNodeData): Promise<ApiResult<NodeIdentity, any>> {
+    return this.apiCall(`this_node/`, "PATCH", data)
   }
 
   showRegion(): Promise<ApiResult<RegionDetails, any>> {
@@ -38,5 +37,9 @@ export default class ThisNodeApi extends BaseApi {
       name,
       description,
     })
+  }
+
+  postStatus(data: PostStatusData) {
+    return this.apiCall("this_node/status", "POST", data)
   }
 }
