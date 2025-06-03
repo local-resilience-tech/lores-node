@@ -3,7 +3,8 @@ use sqlx::Sqlite;
 use crate::{
     panda_comms::lores_events::{LoResEvent, LoResEventPayload},
     repos::{
-        entities::{Node, NodeDetails},
+        entities::{Node, NodeDetails, NodeStatus},
+        node_statuses::NodeStatusesRepo,
         nodes::NodesRepo,
     },
 };
@@ -44,8 +45,28 @@ pub async fn handle_event(event: LoResEvent, pool: &sqlx::Pool<Sqlite>) {
             }
         }
         LoResEventPayload::NodeStatusPosted(payload) => {
+            let repo = NodeStatusesRepo::init();
+
             println!("Node status posted: {:?}", payload);
-            println!("operation id: {}", header.operation_id.to_hex());
+
+            let result = repo
+                .upsert(
+                    pool,
+                    NodeStatus {
+                        operation_id: header.operation_id.to_hex(),
+                        author_node_id: header.author_node_id.clone(),
+                        posted_timestamp: header.timestamp,
+                        text: payload.text.clone(),
+                        state: payload.state.clone(),
+                    },
+                )
+                .await;
+
+            if let Err(e) = result {
+                println!("Error posting node status: {}", e);
+            } else {
+                println!("Node status posted successfully");
+            }
         }
     }
 }

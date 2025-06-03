@@ -35,3 +35,11 @@ pub struct Region {
 pub struct PrivateKeyRow {
     pub private_key_hex: Option<String>,
 }
+
+pub struct NodeStatus {
+    pub operation_id: String,
+    pub author_node_id: String,
+    pub posted_timestamp: u64,
+    pub text: Option<String>,
+    pub state: Option<String>,
+}
