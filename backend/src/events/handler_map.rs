@@ -35,7 +35,13 @@ pub async fn handle_event(event: LoResEvent, pool: &sqlx::Pool<Sqlite>) {
                 public_ipv4: Some(payload.public_ipv4.clone()),
             };
 
-            repo.update(pool, node).await.unwrap();
+            let result = repo.update(pool, node).await;
+
+            if let Err(e) = result {
+                println!("Error updating node: {}", e);
+            } else {
+                println!("Node updated successfully");
+            }
         }
     }
 }
