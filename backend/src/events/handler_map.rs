@@ -14,21 +14,25 @@ pub async fn handle_event(event: LoResEvent, pool: &sqlx::Pool<Sqlite>) {
 
     match event.payload {
         LoResEventPayload::NodeAnnounced(payload) => {
-            let repo = NodesRepo::init();
-
             println!("Node announced: {:?}", payload);
 
             let node = Node {
                 id: header.author_node_id.clone(),
                 name: payload.name.clone(),
             };
-
-            repo.upsert(pool, node).await.unwrap();
+            upsert_node(pool, node).await;
         }
         LoResEventPayload::NodeUpdated(payload) => {
             let repo = NodesRepo::init();
 
             println!("Node updated: {:?}", payload);
+
+            // Upsert the node for now. This wouldn't be needed if we had a preserved message log.
+            let node = Node {
+                id: header.author_node_id.clone(),
+                name: payload.name.clone(),
+            };
+            upsert_node(pool, node).await;
 
             let node = NodeDetails {
                 id: header.author_node_id.clone(),
@@ -69,4 +73,10 @@ pub async fn handle_event(event: LoResEvent, pool: &sqlx::Pool<Sqlite>) {
             }
         }
     }
+}
+
+async fn upsert_node(pool: &sqlx::Pool<Sqlite>, node: Node) {
+    let repo = NodesRepo::init();
+
+    repo.upsert(pool, node).await.unwrap();
 }
