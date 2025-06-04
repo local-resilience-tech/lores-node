@@ -68,7 +68,7 @@ impl NodesRepo {
     pub async fn all(&self, connection: &mut Connection<MainDb>) -> Result<Vec<NodeDetails>, NodesError> {
         let nodes = sqlx::query_as!(
             NodeDetails,
-            "SELECT id, name, public_ipv4, node_statuses.text as status_text, node_statuses.state as state FROM nodes LEFT JOIN node_statuses ON nodes.id = node_statuses.node_id"
+            "SELECT id, name, public_ipv4, s.text as status_text, s.state as state FROM nodes LEFT JOIN current_node_statuses AS s ON nodes.id = s.node_id"
         )
         .fetch_all(&mut ***connection)
         .await

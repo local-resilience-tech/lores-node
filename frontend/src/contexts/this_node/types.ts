@@ -9,6 +9,11 @@ export type NodeDetails = {
   public_ipv4: string
 }
 
+export type NodeDetailsWithStatus = NodeDetails & {
+  status_text?: string | null
+  state?: string | null
+}
+
 export type RegionDetails = {
   id: string
   name: string
