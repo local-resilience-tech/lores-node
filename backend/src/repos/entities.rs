@@ -14,6 +14,8 @@ pub struct NodeDetails {
     pub id: String,
     pub name: String,
     pub public_ipv4: Option<String>,
+    pub status_text: Option<String>,
+    pub state: Option<String>,
 }
 
 #[derive(sqlx::FromRow, Serialize, Deserialize)]
@@ -34,12 +36,4 @@ pub struct Region {
 #[serde(crate = "rocket::serde")]
 pub struct PrivateKeyRow {
     pub private_key_hex: Option<String>,
-}
-
-pub struct NodeStatus {
-    pub operation_id: String,
-    pub author_node_id: String,
-    pub posted_timestamp: u64,
-    pub text: Option<String>,
-    pub state: Option<String>,
 }

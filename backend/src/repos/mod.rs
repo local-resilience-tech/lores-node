@@ -1,3 +1,4 @@
+pub mod current_node_statuses;
 pub mod entities;
 pub mod helpers;
 pub mod node_statuses;

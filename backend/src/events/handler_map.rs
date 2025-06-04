@@ -3,9 +3,10 @@ use sqlx::Sqlite;
 use crate::{
     panda_comms::lores_events::{LoResEvent, LoResEventPayload},
     repos::{
-        entities::{Node, NodeDetails, NodeStatus},
-        node_statuses::NodeStatusesRepo,
-        nodes::NodesRepo,
+        current_node_statuses::{CurrentNodeStatusRow, CurrentNodeStatusesRepo},
+        entities::Node,
+        node_statuses::{NodeStatusRow, NodeStatusesRepo},
+        nodes::{NodeUpdateRow, NodesRepo},
     },
 };
 
@@ -34,7 +35,7 @@ pub async fn handle_event(event: LoResEvent, pool: &sqlx::Pool<Sqlite>) {
             };
             upsert_node(pool, node).await;
 
-            let node = NodeDetails {
+            let node = NodeUpdateRow {
                 id: header.author_node_id.clone(),
                 name: payload.name.clone(),
                 public_ipv4: Some(payload.public_ipv4.clone()),
@@ -56,7 +57,7 @@ pub async fn handle_event(event: LoResEvent, pool: &sqlx::Pool<Sqlite>) {
             let result = repo
                 .upsert(
                     pool,
-                    NodeStatus {
+                    NodeStatusRow {
                         operation_id: header.operation_id.to_hex(),
                         author_node_id: header.author_node_id.clone(),
                         posted_timestamp: header.timestamp,
@@ -70,6 +71,26 @@ pub async fn handle_event(event: LoResEvent, pool: &sqlx::Pool<Sqlite>) {
                 println!("Error posting node status: {}", e);
             } else {
                 println!("Node status posted successfully");
+            }
+
+            let repo = CurrentNodeStatusesRepo::init();
+
+            let result = repo
+                .upsert(
+                    pool,
+                    CurrentNodeStatusRow {
+                        author_node_id: header.author_node_id.clone(),
+                        posted_timestamp: header.timestamp,
+                        text: payload.text.clone(),
+                        state: payload.state.clone(),
+                    },
+                )
+                .await;
+
+            if let Err(e) = result {
+                println!("Error posting current node status: {}", e);
+            } else {
+                println!("Current node status posted successfully");
             }
         }
     }

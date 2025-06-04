@@ -1,0 +1,44 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT id, name, public_ipv4, node_statuses.text as status_text, node_statuses.state as state FROM nodes LEFT JOIN node_statuses ON nodes.id = node_statuses.node_id",
+  "describe": {
+    "columns": [
+      {
+        "name": "id",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "name",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "public_ipv4",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "status_text",
+        "ordinal": 3,
+        "type_info": "Text"
+      },
+      {
+        "name": "state",
+        "ordinal": 4,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false,
+      false,
+      true,
+      true,
+      true
+    ]
+  },
+  "hash": "1148cdb71ec44be26ce17b5b550efbeb60b9cc409fed555ba12138656f8c3544"
+}
