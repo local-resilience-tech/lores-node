@@ -2,7 +2,12 @@ use axum::Extension;
 use p2panda_core::PublicKey;
 use sqlx::SqlitePool;
 use tokio::sync::mpsc;
-use tower_http::cors::{self, CorsLayer};
+use tower_http::{
+    cors::{self, CorsLayer},
+    trace::TraceLayer,
+};
+use tracing::Level;
+use tracing_subscriber::EnvFilter;
 use utoipa::OpenApi;
 use utoipa_axum::router::OpenApiRouter;
 use utoipa_swagger_ui::SwaggerUi;
@@ -34,6 +39,17 @@ async fn main() {
     #[openapi()]
     struct ApiDoc;
 
+    // LOGGING AND TRACING
+    tracing_subscriber::fmt()
+        // This allows you to use, e.g., `RUST_LOG=info` or `RUST_LOG=debug`
+        // when running the app to set log levels.
+        .with_env_filter(
+            EnvFilter::try_from_default_env()
+                .or_else(|_| EnvFilter::try_new("axum_tracing_example=error,tower_http=warn"))
+                .unwrap(),
+        )
+        .init();
+
     // CORS
     let cors = CorsLayer::new()
         .allow_origin(cors::Any)
@@ -59,6 +75,7 @@ async fn main() {
     let router = router
         .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", api.clone()))
         .layer(cors)
+        .layer(TraceLayer::new_for_http())
         .layer(Extension(pool))
         .layer(Extension(container));
 
