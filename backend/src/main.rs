@@ -1,3 +1,4 @@
+use axum::Extension;
 use tower_http::cors::{self, CorsLayer};
 use utoipa::OpenApi;
 use utoipa_axum::router::OpenApiRouter;
@@ -6,6 +7,10 @@ use utoipa_swagger_ui::SwaggerUi;
 use crate::api::api_router;
 
 mod api;
+mod database;
+
+#[macro_use]
+extern crate lazy_static;
 
 #[tokio::main]
 async fn main() {
@@ -18,6 +23,11 @@ async fn main() {
         .allow_origin(cors::Any)
         .allow_headers(cors::Any);
 
+    // DATABASE
+    let pool = database::prepare_database()
+        .await
+        .expect("Failed to prepare database");
+
     // ROUTES
     let (router, api) = OpenApiRouter::with_openapi(ApiDoc::openapi())
         .nest("/api", OpenApiRouter::new().merge(api_router()))
@@ -25,7 +35,8 @@ async fn main() {
 
     let router = router
         .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", api.clone()))
-        .layer(cors);
+        .layer(cors)
+        .layer(Extension(pool));
 
     // SERVICE
     let app = router.into_make_service();
