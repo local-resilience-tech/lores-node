@@ -22,6 +22,7 @@ const RELAY_URL: &str = "https://staging-euw1-1.relay.iroh.network/";
 const TOPIC_NAME: &str = "lores_mesh";
 const LOG_ID: &str = "lores_mesh";
 
+#[derive(Clone)]
 pub struct P2PandaContainer {
     params: Arc<Mutex<NodeParams>>,
     node_api: Arc<Mutex<Option<NodeApi<NodeExtensions>>>>,
