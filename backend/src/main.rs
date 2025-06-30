@@ -4,10 +4,10 @@ use utoipa::OpenApi;
 use utoipa_axum::router::OpenApiRouter;
 use utoipa_swagger_ui::SwaggerUi;
 
-use crate::api::api_router;
+use crate::{api::api_router, infra::db};
 
 mod api;
-mod database;
+mod infra;
 mod repos;
 mod routes;
 
@@ -26,7 +26,7 @@ async fn main() {
         .allow_headers(cors::Any);
 
     // DATABASE
-    let pool = database::prepare_database()
+    let pool = db::prepare_database()
         .await
         .expect("Failed to prepare database");
 
