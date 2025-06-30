@@ -17,14 +17,14 @@ export default function NodesList({
   return (
     <VStack alignItems="stretch" gap={4}>
       {nodes.map((node) => (
-        <Card.Root>
+        <Card.Root key={node.id}>
           <Card.Body gap="2">
             <Card.Title mt="2">{node.name}</Card.Title>
             <Text fontSize="xs" fontFamily="mono" mt={-2}>
               {node.id}
             </Text>
             <DataList.Root orientation="horizontal">
-              <DataList.Item key="ip">
+              <DataList.Item key="message">
                 <DataList.ItemLabel>Message</DataList.ItemLabel>
                 <DataList.ItemValue>{node.status_text}</DataList.ItemValue>
               </DataList.Item>
