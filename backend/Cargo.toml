@@ -8,7 +8,17 @@ publish = false
 anyhow = "1.0.98"
 async-trait = "0.1.88"
 axum = "0.8.4"
+experimental-node = { git = "https://github.com/p2panda/experimental-node", rev = "95f3a74c298d8b663fee2f3339dbce5f812ba26f" }
+p2panda-blobs = "0.3.1"
+p2panda-core = "0.3.1"
+p2panda-net = "0.3.1"
+p2panda-store = "0.3.1"
+p2panda-stream = "0.3.1"
+p2panda-discovery = { version = "0.3.1", features = ["mdns"] }
+p2panda-sync = { version = "0.3.1", features = ["log-sync"] }
+hex = "0.4.3"
 lazy_static = "1.5.0"
+serde = "1.0.219"
 sqlx = { version = "0.8.6", features = ["runtime-tokio-native-tls", "sqlite"] }
 tokio = { version = "1.45.1", features = ["macros", "rt-multi-thread"] }
 tower = "0.5.2"

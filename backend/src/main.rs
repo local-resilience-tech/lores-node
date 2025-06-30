@@ -8,6 +8,7 @@ use crate::api::api_router;
 
 mod api;
 mod database;
+mod repos;
 mod routes;
 
 #[macro_use]
