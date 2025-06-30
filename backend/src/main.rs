@@ -8,6 +8,7 @@ use crate::{api::api_router, infra::db};
 
 mod api;
 mod infra;
+mod panda_comms;
 mod repos;
 mod routes;
 
