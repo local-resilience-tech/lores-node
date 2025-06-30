@@ -8,6 +8,7 @@ use crate::api::api_router;
 
 mod api;
 mod database;
+mod routes;
 
 #[macro_use]
 extern crate lazy_static;
