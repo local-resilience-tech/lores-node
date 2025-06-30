@@ -9,6 +9,7 @@ use utoipa_swagger_ui::SwaggerUi;
 
 use crate::{
     api::api_router,
+    events::handler_map::handle_event,
     infra::db,
     panda_comms::{
         container::{build_public_key_from_hex, P2PandaContainer},
@@ -18,6 +19,7 @@ use crate::{
 };
 
 mod api;
+mod events;
 mod infra;
 mod panda_comms;
 mod repos;
@@ -47,6 +49,7 @@ async fn main() {
         mpsc::channel(32);
     let container = P2PandaContainer::new(channel_tx);
     start_panda(&pool, &container).await;
+    start_panda_event_handler(channel_rx, pool.clone());
 
     // ROUTES
     let (router, api) = OpenApiRouter::with_openapi(ApiDoc::openapi())
@@ -106,4 +109,15 @@ async fn start_panda(pool: &SqlitePool, container: &P2PandaContainer) {
     if let Err(e) = container.start().await {
         println!("Failed to start P2PandaContainer on liftoff: {:?}", e);
     }
+}
+
+fn start_panda_event_handler(channel_rx: mpsc::Receiver<LoResEvent>, pool: SqlitePool) {
+    tokio::spawn(async move {
+        let mut events_rx = channel_rx;
+
+        // Start the event loop to handle events
+        while let Some(event) = events_rx.recv().await {
+            handle_event(event, &pool).await;
+        }
+    });
 }
