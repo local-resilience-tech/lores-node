@@ -31,11 +31,16 @@ pub struct NodeDetails {
 }
 
 #[utoipa::path(get, path = "/", responses(
-    (status = 200, body = NodeDetails)
+    (status = 200, body = NodeDetails),
+    (status = 503, description = "Network not started", body = String),
 ),)]
 async fn show_this_panda_node(
     Extension(panda_container): Extension<P2PandaContainer>,
 ) -> impl IntoResponse {
+    if !panda_container.is_started().await {
+        return (StatusCode::SERVICE_UNAVAILABLE, Json("Network not started")).into_response();
+    }
+
     let public_key: String = panda_container.get_public_key().await.unwrap().to_string();
     println!("public key: {}", public_key);
 

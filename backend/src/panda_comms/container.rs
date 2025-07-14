@@ -82,7 +82,7 @@ impl P2PandaContainer {
         // let node = self.node.lock().await;
         // let node = node
         //     .as_ref()
-        //     .ok_or(anyhow::Error::msg("Network not started"))?;
+        //     .ok_or(anyhow::Error::msg("Trying to shutdown but network not started"))?;
 
         // node.shutdown().await?;
         // self.set_node(None).await;
@@ -164,9 +164,16 @@ impl P2PandaContainer {
         Ok(())
     }
 
+    pub async fn is_started(&self) -> bool {
+        let node_api = self.node_api.lock().await;
+        node_api.is_some()
+    }
+
     pub async fn get_public_key(&self) -> Result<String, Box<dyn std::error::Error>> {
         let node_api = self.node_api.lock().await;
-        let node_api = node_api.as_ref().ok_or("Network not started")?;
+        let node_api = node_api
+            .as_ref()
+            .ok_or("Trying to get public key but network not started")?;
 
         let node_id = node_api.node.network.node_id();
         Ok(node_id.to_string())
@@ -193,9 +200,9 @@ impl P2PandaContainer {
 
     pub async fn publish_persisted(&self, event_payload: LoResEventPayload) -> Result<()> {
         let mut node_api = self.node_api.lock().await;
-        let node_api = node_api
-            .as_mut()
-            .ok_or(anyhow::Error::msg("Network not started"))?;
+        let node_api = node_api.as_mut().ok_or(anyhow::Error::msg(
+            "Trying to publish but network not started",
+        ))?;
 
         let encoded_payload = encode_lores_event_payload(event_payload)?;
 
