@@ -5,10 +5,7 @@ import {
   BootstrapPeer,
 } from "../../this_p2panda_node"
 import { useState } from "react"
-import ThisRegionApi from "../api"
 import { getApi } from "../../../api"
-
-const regionApi = new ThisRegionApi()
 
 export default function ExistingRegion() {
   const [bootstrapData, setBootstrapData] = useState<BootstrapNodeData | null>(

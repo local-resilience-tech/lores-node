@@ -2,12 +2,9 @@ import { Container, Heading, VStack } from "@chakra-ui/react"
 import { useContext, useEffect, useState } from "react"
 import { RegionContext } from "../provider_contexts"
 import NodesList from "../components/NodesList"
-import ThisRegionApi from "../api"
 import { Loading, useLoading } from "../../shared"
 import { getApi } from "../../../api"
 import { NodeDetails } from "../../../api/Api"
-
-const api = new ThisRegionApi()
 
 const getNodes = async (): Promise<NodeDetails[] | null> => {
   const result = await getApi().api.showRegionNodes()

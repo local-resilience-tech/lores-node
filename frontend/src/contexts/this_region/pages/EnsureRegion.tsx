@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react"
 import { Container } from "@chakra-ui/react"
-import ThisRegionApi from "../api"
 import SetRegion from "../components/SetRegion"
 import { NewRegionData } from "../components/NewRegion"
 import { Outlet } from "react-router-dom"
@@ -8,8 +7,6 @@ import { RegionContext } from "../provider_contexts"
 import { Loading, useLoading } from "../../shared"
 import { getApi } from "../../../api"
 import { Region } from "../../../api/Api"
-
-const regionApi = new ThisRegionApi()
 
 const getRegion = async (): Promise<Region | null> => {
   const result = await getApi().api.showRegion()
