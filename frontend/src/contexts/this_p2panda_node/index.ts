@@ -4,5 +4,4 @@ export type {
   BootstrapNodeData,
   SubmitBootstrapNodeFunc,
 } from "./components/BootstrapNode"
-export { default as ThisNodeApi } from "./api"
 export type { BootstrapPeer } from "./types"
