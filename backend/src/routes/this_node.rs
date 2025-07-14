@@ -7,7 +7,9 @@ use utoipa_axum::{router::OpenApiRouter, routes};
 use crate::{
     panda_comms::{
         container::P2PandaContainer,
-        lores_events::{LoResEventPayload, NodeAnnouncedDataV1, NodeUpdatedDataV1},
+        lores_events::{
+            LoResEventPayload, NodeAnnouncedDataV1, NodeStatusPostedDataV1, NodeUpdatedDataV1,
+        },
     },
     repos::{entities::Node, this_node::ThisNodeRepo},
 };
@@ -17,6 +19,7 @@ pub fn router() -> OpenApiRouter {
         .routes(routes!(show_this_node))
         .routes(routes!(create_this_node))
         .routes(routes!(update_this_node))
+        .routes(routes!(post_node_status))
 }
 
 #[utoipa::path(get, path = "/", responses(
@@ -112,6 +115,43 @@ async fn update_this_node(
             };
             (StatusCode::OK, Json(node)).into_response()
         }
+        Err(e) => {
+            eprintln!("Error publishing event: {}", e);
+            (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response()
+        }
+    }
+}
+
+#[derive(Deserialize, ToSchema, Debug)]
+struct NodeStatusData {
+    pub text: Option<String>,
+    pub state: Option<String>,
+}
+
+#[utoipa::path(
+    post,
+    path = "/status",
+    responses(
+        (status = OK, body = ()),
+        (status = INTERNAL_SERVER_ERROR, body = String),
+    ),
+    request_body(content = NodeStatusData, content_type = "application/json"),
+)]
+async fn post_node_status(
+    Extension(panda_container): Extension<P2PandaContainer>,
+    axum::extract::Json(data): axum::extract::Json<NodeStatusData>,
+) -> impl IntoResponse {
+    println!("post status: {:?}", data);
+
+    let event_payload = LoResEventPayload::NodeStatusPosted(NodeStatusPostedDataV1 {
+        text: data.text.clone(),
+        state: data.state.clone(),
+    });
+
+    let result = panda_container.publish_persisted(event_payload).await;
+
+    match result {
+        Ok(_) => (StatusCode::OK, Json(())).into_response(),
         Err(e) => {
             eprintln!("Error publishing event: {}", e);
             (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response()

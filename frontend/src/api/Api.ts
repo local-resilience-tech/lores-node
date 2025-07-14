@@ -42,6 +42,11 @@ export interface NodeDetails {
   status_text?: string | null;
 }
 
+export interface NodeStatusData {
+  state?: string | null;
+  text?: string | null;
+}
+
 export interface P2PandaNodeDetails {
   iroh_node_addr: IrohNodeAddr;
   panda_node_id: string;
@@ -286,6 +291,22 @@ export class Api<
     createThisNode: (data: CreateNodeDetails, params: RequestParams = {}) =>
       this.request<Node, string>({
         path: `/api/this_node`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @name PostNodeStatus
+     * @request POST:/api/this_node/status
+     */
+    postNodeStatus: (data: NodeStatusData, params: RequestParams = {}) =>
+      this.request<any, string>({
+        path: `/api/this_node/status`,
         method: "POST",
         body: data,
         type: ContentType.Json,

@@ -1,13 +1,10 @@
 import { Container } from "@chakra-ui/react"
 import { useEffect, useState } from "react"
 import NewNode, { NewNodeData } from "../components/NewNode"
-import ThisNodeApi from "../api"
 import { Loading, useLoading } from "../../shared"
 import EditNode from "./EditNode"
 import { getApi } from "../../../api"
 import type { Node } from "../../../api/Api"
-
-const api = new ThisNodeApi()
 
 const getNode = async (): Promise<Node | null> => {
   const result = await getApi().api.showThisNode()

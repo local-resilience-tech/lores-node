@@ -1,18 +1,22 @@
 import { VStack } from "@chakra-ui/react"
 import PostStatus from "./PostStatus"
-import ThisNodeApi, { PostStatusData } from "../api"
-
-const api = new ThisNodeApi()
+import { getApi } from "../../../api"
+import type { NodeStatusData } from "../../../api/Api"
 
 export default function ManageStatus() {
-  const postStatus = async (data: PostStatusData) => {
-    const result = await api.postStatus(data)
-    if ("Ok" in result) {
-      console.log("Node updated successfully", result.Ok)
-    }
-    if ("Err" in result) {
-      console.error("Error updating node", result.Err)
-    }
+  const postStatus = async (data: NodeStatusData) => {
+    getApi()
+      .api.postNodeStatus(data)
+      .then((result) => {
+        if (result.status === 200) {
+          console.log("Node updated successfully", result.data)
+        } else {
+          console.error("Failed to create node", result)
+        }
+      })
+      .catch((error) => {
+        console.error("Error creating node", error)
+      })
   }
 
   return (

@@ -1,11 +1,8 @@
 import { Heading, VStack } from "@chakra-ui/react"
 import EditNodeForm from "../components/EditNodeForm"
-import ThisNodeApi from "../api"
 import ManageStatus from "../components/ManageStatus"
 import type { Node, UpdateNodeDetails } from "../../../api/Api"
 import { getApi } from "../../../api"
-
-const api = new ThisNodeApi()
 
 export default function EditNode({ node }: { node: Node }) {
   const updateNode = async (data: UpdateNodeDetails) => {
