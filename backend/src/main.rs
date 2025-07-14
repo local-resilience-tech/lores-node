@@ -6,7 +6,6 @@ use tower_http::{
     cors::{self, CorsLayer},
     trace::TraceLayer,
 };
-use tracing::Level;
 use tracing_subscriber::EnvFilter;
 use utoipa::OpenApi;
 use utoipa_axum::router::OpenApiRouter;
