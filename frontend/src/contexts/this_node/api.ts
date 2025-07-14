@@ -14,10 +14,6 @@ export interface PostStatusData {
 }
 
 export default class ThisNodeApi extends BaseApi {
-  create({ name }: { name: string }): Promise<ApiResult<Node, any>> {
-    return this.apiCall("this_node/create", "POST", { name })
-  }
-
   update(data: UpdateNodeData): Promise<ApiResult<Node, any>> {
     return this.apiCall(`this_node/`, "PATCH", data)
   }

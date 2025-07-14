@@ -43,9 +43,18 @@ export default function EnsureNode() {
   }, [])
 
   const onSubmitNewNode = (data: NewNodeData) => {
-    api.create({ name: data.name }).then((result: ApiResult<Node, any>) => {
-      if ("Ok" in result) updateNode(result.Ok)
-    })
+    getApi()
+      .api.createThisNode({ name: data.name })
+      .then((result) => {
+        if (result.status === 200) {
+          updateNode(result.data)
+        } else {
+          console.error("Failed to create node", result)
+        }
+      })
+      .catch((error) => {
+        console.error("Error creating node", error)
+      })
   }
 
   if (loading) return <Loading />

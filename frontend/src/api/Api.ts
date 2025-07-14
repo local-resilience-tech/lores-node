@@ -19,6 +19,10 @@ export interface BootstrapNodePeer {
   node_id: string;
 }
 
+export interface CreateNodeDetails {
+  name: string;
+}
+
 export interface IrohNodeAddr {
   direct_addresses: string[];
   node_id: string;
@@ -245,9 +249,25 @@ export class Api<
      * @request GET:/api/this_node
      */
     showThisNode: (params: RequestParams = {}) =>
-      this.request<Node, string>({
+      this.request<null | Node, string>({
         path: `/api/this_node`,
         method: "GET",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @name CreateThisNode
+     * @request POST:/api/this_node/create
+     */
+    createThisNode: (data: CreateNodeDetails, params: RequestParams = {}) =>
+      this.request<Node, string>({
+        path: `/api/this_node/create`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
         format: "json",
         ...params,
       }),
