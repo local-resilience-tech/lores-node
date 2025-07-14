@@ -38,6 +38,12 @@ export interface NodeDetails {
   status_text?: string | null;
 }
 
+export interface P2PandaNodeDetails {
+  iroh_node_addr: IrohNodeAddr;
+  panda_node_id: string;
+  peers: PandaNodeAddress[];
+}
+
 export interface PandaNodeAddress {
   direct_addresses: string[];
   public_key: string;
@@ -253,7 +259,7 @@ export class Api<
      * @request GET:/api/this_p2panda_node
      */
     showThisPandaNode: (params: RequestParams = {}) =>
-      this.request<NodeDetails, string>({
+      this.request<P2PandaNodeDetails, string>({
         path: `/api/this_p2panda_node`,
         method: "GET",
         format: "json",

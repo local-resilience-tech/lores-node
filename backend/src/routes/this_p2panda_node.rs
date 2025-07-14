@@ -24,14 +24,14 @@ pub struct PandaNodeAddress {
 }
 
 #[derive(sqlx::FromRow, Serialize, ToSchema)]
-pub struct NodeDetails {
+pub struct P2PandaNodeDetails {
     pub panda_node_id: String,
     pub iroh_node_addr: IrohNodeAddr,
     pub peers: Vec<PandaNodeAddress>,
 }
 
 #[utoipa::path(get, path = "/", responses(
-    (status = 200, body = NodeDetails),
+    (status = 200, body = P2PandaNodeDetails),
     (status = 503, description = "Network not started", body = String),
 ),)]
 async fn show_this_panda_node(
@@ -56,7 +56,7 @@ async fn show_this_panda_node(
         println!("peers: {:?}", peers);
     }
 
-    let node_details = NodeDetails {
+    let node_details = P2PandaNodeDetails {
         panda_node_id: public_key,
         iroh_node_addr: IrohNodeAddr {
             node_id: node_addr.node_id.to_string(),
