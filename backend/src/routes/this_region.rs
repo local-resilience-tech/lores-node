@@ -16,7 +16,7 @@ use crate::{
 pub fn router() -> OpenApiRouter {
     OpenApiRouter::new()
         .routes(routes!(show_region))
-        .routes(routes!(nodes))
+        .routes(routes!(show_region_nodes))
         .routes(routes!(bootstrap))
 }
 
@@ -47,7 +47,7 @@ async fn show_region(Extension(pool): Extension<SqlitePool>) -> impl IntoRespons
     (status = 200, body = Vec<NodeDetails>),
     (status = INTERNAL_SERVER_ERROR, body = ()),
 ),)]
-async fn nodes(Extension(pool): Extension<SqlitePool>) -> impl IntoResponse {
+async fn show_region_nodes(Extension(pool): Extension<SqlitePool>) -> impl IntoResponse {
     let repo = NodesRepo::init();
 
     repo.all(&pool)

@@ -293,10 +293,10 @@ export class Api<
     /**
      * No description
      *
-     * @name Nodes
+     * @name ShowRegionNodes
      * @request GET:/api/this_region/nodes
      */
-    nodes: (params: RequestParams = {}) =>
+    showRegionNodes: (params: RequestParams = {}) =>
       this.request<NodeDetails[], any>({
         path: `/api/this_region/nodes`,
         method: "GET",
