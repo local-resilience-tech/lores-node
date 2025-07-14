@@ -60,6 +60,7 @@ async fn nodes(Extension(pool): Extension<SqlitePool>) -> impl IntoResponse {
 #[utoipa::path(
     post,
     path = "/bootstrap",
+    request_body(content = BootstrapNodeData, content_type = "application/json"),
     responses(
         (status = 200, body = ()),
         (status = INTERNAL_SERVER_ERROR, body = String),

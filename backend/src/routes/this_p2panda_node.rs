@@ -85,12 +85,12 @@ async fn show_this_panda_node(
     (StatusCode::OK, Json(node_details)).into_response()
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, ToSchema)]
 pub struct BootstrapNodePeer {
     pub node_id: String,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, ToSchema)]
 pub struct BootstrapNodeData {
     pub network_name: String,
     pub bootstrap_peer: Option<BootstrapNodePeer>,
