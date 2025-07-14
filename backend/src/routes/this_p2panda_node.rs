@@ -1,5 +1,5 @@
 use axum::{http::StatusCode, response::IntoResponse, Extension, Json};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use utoipa_axum::{router::OpenApiRouter, routes};
 
@@ -83,4 +83,15 @@ async fn show_this_panda_node(
     };
 
     (StatusCode::OK, Json(node_details)).into_response()
+}
+
+#[derive(Deserialize)]
+pub struct BootstrapNodePeer {
+    pub node_id: String,
+}
+
+#[derive(Deserialize)]
+pub struct BootstrapNodeData {
+    pub network_name: String,
+    pub bootstrap_peer: Option<BootstrapNodePeer>,
 }
