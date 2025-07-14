@@ -9,7 +9,7 @@ pub fn router() -> OpenApiRouter {
 }
 
 #[utoipa::path(get, path = "/", responses(
-    (status = 200, body = Node),
+    (status = 200, body = Option<Node>),
     (status = INTERNAL_SERVER_ERROR, body = String, description = "Internal Server Error"),
 ))]
 async fn show_this_node(Extension(pool): Extension<SqlitePool>) -> impl IntoResponse {
