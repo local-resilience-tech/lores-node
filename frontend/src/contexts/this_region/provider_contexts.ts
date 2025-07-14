@@ -1,4 +1,4 @@
 import { createContext } from "react"
-import { RegionDetails } from "./types"
+import { Region } from "../../api/Api"
 
-export const RegionContext = createContext<RegionDetails | null>(null)
+export const RegionContext = createContext<Region | null>(null)

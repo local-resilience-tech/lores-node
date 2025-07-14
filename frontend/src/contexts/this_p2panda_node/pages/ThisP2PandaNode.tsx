@@ -31,11 +31,11 @@ export default function ThisP2PandaNode() {
     return <></>
   }
 
-  const restartNode = () => async () => {
-    console.log("restarting node")
-    await api.restart()
-    fetchNode()
-  }
+  // const restartNode = () => async () => {
+  //   console.log("restarting node")
+  //   await api.restart()
+  //   fetchNode()
+  // }
 
   return (
     <VStack alignItems={"stretch"}>
