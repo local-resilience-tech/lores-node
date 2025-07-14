@@ -58,6 +58,11 @@ export interface Region {
   network_id: string;
 }
 
+export interface UpdateNodeDetails {
+  name: string;
+  public_ipv4: string;
+}
+
 import type {
   AxiosInstance,
   AxiosRequestConfig,
@@ -259,12 +264,28 @@ export class Api<
     /**
      * No description
      *
+     * @name UpdateThisNode
+     * @request PUT:/api/this_node
+     */
+    updateThisNode: (data: UpdateNodeDetails, params: RequestParams = {}) =>
+      this.request<Node, string>({
+        path: `/api/this_node`,
+        method: "PUT",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
      * @name CreateThisNode
-     * @request POST:/api/this_node/create
+     * @request POST:/api/this_node
      */
     createThisNode: (data: CreateNodeDetails, params: RequestParams = {}) =>
       this.request<Node, string>({
-        path: `/api/this_node/create`,
+        path: `/api/this_node`,
         method: "POST",
         body: data,
         type: ContentType.Json,

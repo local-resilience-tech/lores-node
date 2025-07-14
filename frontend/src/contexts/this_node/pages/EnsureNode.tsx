@@ -2,7 +2,6 @@ import { Container } from "@chakra-ui/react"
 import { useEffect, useState } from "react"
 import NewNode, { NewNodeData } from "../components/NewNode"
 import ThisNodeApi from "../api"
-import { ApiResult } from "../../shared/types"
 import { Loading, useLoading } from "../../shared"
 import EditNode from "./EditNode"
 import { getApi } from "../../../api"
@@ -46,7 +45,7 @@ export default function EnsureNode() {
     getApi()
       .api.createThisNode({ name: data.name })
       .then((result) => {
-        if (result.status === 200) {
+        if (result.status === 201) {
           updateNode(result.data)
         } else {
           console.error("Failed to create node", result)

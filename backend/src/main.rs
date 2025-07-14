@@ -53,6 +53,7 @@ async fn main() {
     // CORS
     let cors = CorsLayer::new()
         .allow_origin(cors::Any)
+        .allow_methods(cors::Any)
         .allow_headers(cors::Any);
 
     // DATABASE

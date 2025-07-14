@@ -1,20 +1,26 @@
 import { Heading, VStack } from "@chakra-ui/react"
 import EditNodeForm from "../components/EditNodeForm"
-import ThisNodeApi, { UpdateNodeData } from "../api"
+import ThisNodeApi from "../api"
 import ManageStatus from "../components/ManageStatus"
-import type { Node } from "../../../api/Api"
+import type { Node, UpdateNodeDetails } from "../../../api/Api"
+import { getApi } from "../../../api"
 
 const api = new ThisNodeApi()
 
 export default function EditNode({ node }: { node: Node }) {
-  const updateNode = async (data: UpdateNodeData) => {
-    const result = await api.update(data)
-    if ("Ok" in result) {
-      console.log("Node updated successfully", result.Ok)
-    }
-    if ("Err" in result) {
-      console.error("Error updating node", result.Err)
-    }
+  const updateNode = async (data: UpdateNodeDetails) => {
+    getApi()
+      .api.updateThisNode(data)
+      .then((result) => {
+        if (result.status === 200) {
+          console.log("Node updated successfully", result.data)
+        } else {
+          console.error("Failed to create node", result)
+        }
+      })
+      .catch((error) => {
+        console.error("Error creating node", error)
+      })
   }
 
   return (
