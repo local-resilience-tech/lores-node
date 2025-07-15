@@ -68,27 +68,27 @@ impl P2PandaContainer {
         params_lock.bootstrap_node_id = bootstrap_node_id;
     }
 
-    pub async fn restart(&self) -> Result<()> {
-        println!("Restarting node: shutting down");
-        self.shutdown().await?;
-        println!("Restarting node: starting");
-        self.start().await?;
-        println!("Restarting node: done");
+    // pub async fn restart(&self) -> Result<()> {
+    //     println!("Restarting node: shutting down");
+    //     self.shutdown().await?;
+    //     println!("Restarting node: starting");
+    //     self.start().await?;
+    //     println!("Restarting node: done");
 
-        Ok(())
-    }
+    //     Ok(())
+    // }
 
-    pub async fn shutdown(&self) -> Result<()> {
-        // let node = self.node.lock().await;
-        // let node = node
-        //     .as_ref()
-        //     .ok_or(anyhow::Error::msg("Trying to shutdown but network not started"))?;
+    // pub async fn shutdown(&self) -> Result<()> {
+    //     let node = self.node.lock().await;
+    //     let node = node
+    //         .as_ref()
+    //         .ok_or(anyhow::Error::msg("Trying to shutdown but network not started"))?;
 
-        // node.shutdown().await?;
-        // self.set_node(None).await;
+    //     node.shutdown().await?;
+    //     self.set_node(None).await;
 
-        Ok(())
-    }
+    //     Ok(())
+    // }
 
     pub async fn start(&self) -> Result<()> {
         println!("Starting client");
@@ -140,7 +140,7 @@ impl P2PandaContainer {
             boostrap_node_id,
             Some(relay_url),
             store,
-            temp_blobs_root_dir.into_path(),
+            temp_blobs_root_dir.keep(),
             topic_map.clone(),
         )
         .await?;

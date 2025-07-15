@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO current_node_statuses (node_id, text, state, posted_at) VALUES (?, ?, ?, ?) ON CONFLICT(node_id) DO UPDATE SET text = ?, state = ?, posted_at = ?",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 7
+    },
+    "nullable": []
+  },
+  "hash": "577f03a14c7e69717b80e73a3121c9bb58fb0d47a1c97dc56b35de67912a4514"
+}

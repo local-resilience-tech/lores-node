@@ -1,0 +1,20 @@
+{
+  "db_name": "SQLite",
+  "query": "\n            SELECT network_name\n            FROM network_configs\n            WHERE network_configs.id = ?\n            LIMIT 1\n            ",
+  "describe": {
+    "columns": [
+      {
+        "name": "network_name",
+        "ordinal": 0,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      true
+    ]
+  },
+  "hash": "b5c378a3f2026a9aa40d43736f4ca9c1fd4a1f40497ec3f0324444b7bb0b19b1"
+}
