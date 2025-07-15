@@ -1,29 +1,34 @@
-use rocket::{fairing, Build, Rocket};
-use rocket_db_pools::Database;
-use sqlx::Sqlite;
+use sqlx::{sqlite::SqliteConnectOptions, Pool, Sqlite, SqlitePool};
+use std::env;
 
-#[derive(Database)]
-#[database("main_db")]
-pub struct MainDb(sqlx::SqlitePool);
-
-impl MainDb {
-    pub fn sqlite_pool(&self) -> &sqlx::Pool<Sqlite> {
-        &self.0
-    }
+lazy_static! {
+    pub static ref DATABASE_URL: String =
+        env::var("DATABASE_URL").unwrap_or_else(|_| if cfg!(test) {
+            "sqlite:main-test.sqlite"
+        } else {
+            "sqlite:main.sqlite"
+        }
+        .to_string());
 }
 
-pub async fn run_migrations(rocket: Rocket<Build>) -> fairing::Result {
-    if let Some(db) = MainDb::fetch(&rocket) {
-        println!("Running DB migrations");
+pub async fn prepare_database() -> anyhow::Result<Pool<Sqlite>> {
+    let filename = DATABASE_URL
+        .strip_prefix("sqlite:")
+        .ok_or_else(|| anyhow::anyhow!("DATABASE_URL must start with 'sqlite:'"))?;
 
-        // run migrations using `db`. get the inner type with &db.0.
-        sqlx::migrate!()
-            .run(&db.0)
-            .await
-            .expect("Error running DB migrations");
+    println!("Using database file: {}", filename);
 
-        Ok(rocket)
-    } else {
-        Err(rocket)
-    }
+    // create database if it does not exist
+    let options = SqliteConnectOptions::new()
+        .filename(filename)
+        .create_if_missing(true);
+
+    // prepare connection pool
+    let pool = SqlitePool::connect_with(options).await?;
+
+    // prepare schema in db if it does not yet exist
+    println!("Running migrations");
+    sqlx::migrate!().run(&pool).await?;
+
+    Ok(pool)
 }

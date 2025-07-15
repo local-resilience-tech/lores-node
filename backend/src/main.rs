@@ -1,17 +1,29 @@
-use events::fairing::EventHandlerFairing;
-use infra::db::{run_migrations, MainDb};
-use infra::spa_server::SpaServer;
-use panda_comms::container::P2PandaContainer;
-use panda_comms::fairing::P2PandaCommsFairing;
-use panda_comms::lores_events::LoResEvent;
-use rocket::fairing::AdHoc;
-use rocket::fs::{FileServer, Options};
-use rocket::response::Redirect;
-use rocket::serde::Deserialize;
-use rocket::tokio;
-use std::env;
+use axum::Extension;
+use p2panda_core::PublicKey;
+use sqlx::SqlitePool;
 use tokio::sync::mpsc;
+use tower_http::{
+    cors::{self, CorsLayer},
+    trace::TraceLayer,
+};
+use tracing::Level;
+use tracing_subscriber::EnvFilter;
+use utoipa::OpenApi;
+use utoipa_axum::router::OpenApiRouter;
+use utoipa_swagger_ui::SwaggerUi;
 
+use crate::{
+    api::api_router,
+    events::handler_map::handle_event,
+    infra::db,
+    panda_comms::{
+        container::{build_public_key_from_hex, P2PandaContainer},
+        lores_events::LoResEvent,
+    },
+    repos::this_p2panda_node::ThisP2PandaNodeRepo,
+};
+
+mod api;
 mod events;
 mod infra;
 mod panda_comms;
@@ -19,64 +31,111 @@ mod repos;
 mod routes;
 
 #[macro_use]
-extern crate rocket;
+extern crate lazy_static;
 
-#[cfg(test)]
-mod tests;
+#[tokio::main]
+async fn main() {
+    #[derive(OpenApi)]
+    #[openapi()]
+    struct ApiDoc;
 
-use rocket_db_pools::Database;
+    // LOGGING AND TRACING
+    tracing_subscriber::fmt()
+        // This allows you to use, e.g., `RUST_LOG=info` or `RUST_LOG=debug`
+        // when running the app to set log levels.
+        .with_env_filter(
+            EnvFilter::try_from_default_env()
+                .or_else(|_| EnvFilter::try_new("axum_tracing_example=error,tower_http=warn"))
+                .unwrap(),
+        )
+        .init();
 
-#[get("/")]
-fn admin_redirect() -> Redirect {
-    Redirect::to("/admin")
+    // CORS
+    let cors = CorsLayer::new()
+        .allow_origin(cors::Any)
+        .allow_methods(cors::Any)
+        .allow_headers(cors::Any);
+
+    // DATABASE
+    let pool = db::prepare_database()
+        .await
+        .expect("Failed to prepare database");
+
+    // P2PANDA
+    let (channel_tx, channel_rx): (mpsc::Sender<LoResEvent>, mpsc::Receiver<LoResEvent>) =
+        mpsc::channel(32);
+    let container = P2PandaContainer::new(channel_tx);
+    start_panda(&pool, &container).await;
+    start_panda_event_handler(channel_rx, pool.clone());
+
+    // ROUTES
+    let (router, api) = OpenApiRouter::with_openapi(ApiDoc::openapi())
+        .nest("/api", OpenApiRouter::new().merge(api_router()))
+        .split_for_parts();
+
+    let router = router
+        .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", api.clone()))
+        .layer(cors)
+        .layer(TraceLayer::new_for_http())
+        .layer(Extension(pool))
+        .layer(Extension(container));
+
+    // SERVICE
+
+    let app = router.into_make_service();
+
+    // run our app with hyper, listening globally on port 8000
+    let listener = tokio::net::TcpListener::bind("0.0.0.0:8000").await.unwrap();
+
+    println!("Listening on http://localhost:8000, Ctrl+C to stop");
+
+    axum::serve(listener, app).await.unwrap();
 }
 
-#[derive(Deserialize)]
-#[serde(crate = "rocket::serde")]
-struct Config {
-    frontend_asset_path: String,
-}
+async fn start_panda(pool: &SqlitePool, container: &P2PandaContainer) {
+    let repo = ThisP2PandaNodeRepo::init();
 
-#[launch]
-#[rocket::main]
-async fn rocket() -> _ {
-    let figment = rocket::Config::figment().merge(("databases.main_db.url", env::var("DATABASE_URL").expect("DATABASE_URL must be set")));
-
-    let mut rocket = rocket::custom(figment);
-
-    let config: Config = rocket.figment().extract().expect("config");
-
-    // log the config
-    println!("Config static_asset_path: {:?}", config.frontend_asset_path);
-
-    // state
-    let (channel_tx, channel_rx): (mpsc::Sender<LoResEvent>, mpsc::Receiver<LoResEvent>) = mpsc::channel(32);
-    rocket = rocket.manage(P2PandaContainer::new(channel_tx));
-
-    // fairings
-    rocket = rocket
-        .attach(infra::cors::cors_fairing())
-        .attach(MainDb::init())
-        .attach(AdHoc::try_on_ignite("DB Migrations", run_migrations))
-        .attach(EventHandlerFairing::new(channel_rx))
-        .attach(P2PandaCommsFairing::default());
-
-    // frontend
-    if !config.frontend_asset_path.is_empty() {
-        rocket = rocket
-            .mount("/admin/assets", FileServer::from(config.frontend_asset_path.clone() + "/assets").rank(3))
-            .mount(
-                "/admin",
-                SpaServer::new(config.frontend_asset_path.clone() + "/index.html", Options::IndexFile),
-            )
+    match repo.get_network_name(pool).await {
+        Ok(network_name) => {
+            if let Some(network_name) = network_name {
+                println!("Got network name: {:?}", network_name);
+                container.set_network_name(network_name).await;
+            }
+        }
+        Err(_) => {
+            println!("Failed to get network name");
+        }
     }
 
-    // routes
-    rocket
-        .mount("/", routes![admin_redirect])
-        .mount("/api/public", routes::public::routes())
-        .mount("/api/this_node", routes::this_node::routes())
-        .mount("/api/this_region", routes::this_region::routes())
-        .mount("/api/this_p2panda_node", routes::this_p2panda_node::routes())
-        .mount("/api/apps", routes::apps::routes())
+    match repo.get_or_create_private_key(pool).await {
+        Ok(private_key) => {
+            println!("Got private key");
+            container.set_private_key(private_key).await;
+        }
+        Err(_) => {
+            println!("Failed to get private key");
+        }
+    }
+
+    let bootstrap_details = repo.get_bootstrap_details(pool).await.unwrap();
+    let bootstrap_node_id: Option<PublicKey> = match &bootstrap_details {
+        Some(details) => build_public_key_from_hex(details.node_id.clone()),
+        None => None,
+    };
+    container.set_bootstrap_node_id(bootstrap_node_id).await;
+
+    if let Err(e) = container.start().await {
+        println!("Failed to start P2PandaContainer on liftoff: {:?}", e);
+    }
+}
+
+fn start_panda_event_handler(channel_rx: mpsc::Receiver<LoResEvent>, pool: SqlitePool) {
+    tokio::spawn(async move {
+        let mut events_rx = channel_rx;
+
+        // Start the event loop to handle events
+        while let Some(event) = events_rx.recv().await {
+            handle_event(event, &pool).await;
+        }
+    });
 }

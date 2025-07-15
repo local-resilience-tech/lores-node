@@ -6,7 +6,9 @@ publish = false
 
 [dependencies]
 iroh = "0.34.1"
-iroh-io = "0.6.2"
+anyhow = "1.0.98"
+async-trait = "0.1.88"
+axum = "0.8.4"
 experimental-node = { git = "https://github.com/p2panda/experimental-node", rev = "95f3a74c298d8b663fee2f3339dbce5f812ba26f" }
 p2panda-blobs = "0.3.1"
 p2panda-core = "0.3.1"
@@ -15,32 +17,17 @@ p2panda-store = "0.3.1"
 p2panda-stream = "0.3.1"
 p2panda-discovery = { version = "0.3.1", features = ["mdns"] }
 p2panda-sync = { version = "0.3.1", features = ["log-sync"] }
-serde = "1.0.216"
-serde_json = "1"
-anyhow = "1.0.98"
-rand = "0.8.5"
-ciborium = "0.2.2"
-rocket_db_pools = { version = "0.2.0", features = ["sqlx_sqlite"] }
-sqlx = { version = "0.7.4", features = ["macros", "migrate"] }
-dotenvy = "0.15.7"
-thiserror = "2.0.9"
-uuid = { version = "1.11.0", features = ["v4"] }
 hex = "0.4.3"
-rocket_cors = "0.6.0"
-tokio-util = "0.7.10"
-env_logger = "0.11.2"
-log = "0.4.20"
-tokio-stream = "0.1.17"
-async-trait = "0.1.85"
-tracing = "0.1.41"
-futures-util = "0.3.31"
+lazy_static = "1.5.0"
+serde = "1.0.219"
+serde_json = "1"
+sqlx = { version = "0.8.6", features = ["runtime-tokio-native-tls", "sqlite"] }
 tempfile = "3.17.1"
-
-[dependencies.rocket]
-version = "0.5.1"
-features = ["json"]
-
-[dev-dependencies]
-sqlx-cli = { version = "0.7.4", default-features = false, features = [
-  "sqlite",
-] }
+tokio = { version = "1.45.1", features = ["macros", "rt-multi-thread"] }
+tower = "0.5.2"
+tower-http = { version = "0.6.6", features = ["cors", "fs", "trace"] }
+utoipa = "5.3.1"
+utoipa-axum = "0.2.0"
+utoipa-swagger-ui = { version = "9.0.2", features = ["axum"] }
+tracing = "0.1.41"
+tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }

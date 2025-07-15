@@ -1,6 +1,0 @@
-[default]
-frontend_asset_path = ""
-log_level = "normal"
-
-[release]
-frontend_asset_path = "../frontend/dist"

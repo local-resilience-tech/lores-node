@@ -1,24 +1,12 @@
-use crate::{
-    infra::db::MainDb,
-    repos::{
-        entities::PrivateKeyRow,
-        helpers::{NETWORK_CONFIG_ID, NODE_CONFIG_ID},
-    },
+use crate::repos::{
+    entities::PrivateKeyRow,
+    helpers::{NETWORK_CONFIG_ID, NODE_CONFIG_ID},
 };
 use hex;
 use p2panda_core::{identity::PRIVATE_KEY_LEN, PrivateKey};
-use rocket_db_pools::Connection;
-use sqlx;
-use thiserror::Error;
+use sqlx::SqlitePool;
 
 pub struct ThisP2PandaNodeRepo {}
-
-#[derive(Debug, Error, Responder)]
-pub enum ThisP2PandaNodeRepoError {
-    #[error("Internal server error: {0}")]
-    #[response(status = 500)]
-    InternalServerError(String),
-}
 
 #[derive(Clone)]
 pub struct SimplifiedNodeAddress {
@@ -30,9 +18,7 @@ impl ThisP2PandaNodeRepo {
         ThisP2PandaNodeRepo {}
     }
 
-    pub async fn get_network_name(&self, db: &MainDb) -> Result<Option<String>, ThisP2PandaNodeRepoError> {
-        let mut connection = db.sqlite_pool().acquire().await.unwrap();
-
+    pub async fn get_network_name(&self, pool: &SqlitePool) -> Result<Option<String>, sqlx::Error> {
         let result = sqlx::query!(
             "
             SELECT network_name
@@ -42,9 +28,8 @@ impl ThisP2PandaNodeRepo {
             ",
             NETWORK_CONFIG_ID
         )
-        .fetch_optional(&mut *connection)
-        .await
-        .map_err(|_| ThisP2PandaNodeRepoError::InternalServerError("Database error".to_string()))?;
+        .fetch_optional(pool)
+        .await?;
 
         match result {
             None => return Ok(None),
@@ -52,31 +37,10 @@ impl ThisP2PandaNodeRepo {
         }
     }
 
-    // TODO: I don't know how to handle the DB connection in these two different ways, this is a
-    // temporary solution
-    pub async fn get_network_name_conn(&self, connection: &mut Connection<MainDb>) -> Result<Option<String>, ThisP2PandaNodeRepoError> {
-        let result = sqlx::query!(
-            "
-            SELECT network_name
-            FROM network_configs
-            WHERE network_configs.id = ?
-            LIMIT 1
-            ",
-            NETWORK_CONFIG_ID
-        )
-        .fetch_optional(&mut ***connection)
-        .await
-        .map_err(|_| ThisP2PandaNodeRepoError::InternalServerError("Database error".to_string()))?;
-
-        match result {
-            None => return Ok(None),
-            Some(result) => return Ok(result.network_name),
-        }
-    }
-
-    pub async fn get_bootstrap_details(&self, db: &MainDb) -> Result<Option<SimplifiedNodeAddress>, ThisP2PandaNodeRepoError> {
-        let mut connection = db.sqlite_pool().acquire().await.unwrap();
-
+    pub async fn get_bootstrap_details(
+        &self,
+        pool: &SqlitePool,
+    ) -> Result<Option<SimplifiedNodeAddress>, sqlx::Error> {
         let result = sqlx::query!(
             "
             SELECT bootstrap_node_id
@@ -86,9 +50,8 @@ impl ThisP2PandaNodeRepo {
             ",
             NETWORK_CONFIG_ID
         )
-        .fetch_optional(&mut *connection)
-        .await
-        .map_err(|_| ThisP2PandaNodeRepoError::InternalServerError("Database error".to_string()))?;
+        .fetch_optional(pool)
+        .await?;
 
         match result {
             None => return Ok(None),
@@ -101,13 +64,11 @@ impl ThisP2PandaNodeRepo {
 
     pub async fn set_network_config(
         &self,
-        db: &mut Connection<MainDb>,
+        pool: &SqlitePool,
         network_name: String,
         peer_address: Option<SimplifiedNodeAddress>,
-    ) -> Result<(), ThisP2PandaNodeRepoError> {
-        let bootstrap_node_id = peer_address
-            .as_ref()
-            .map(|peer| peer.node_id.clone());
+    ) -> Result<(), sqlx::Error> {
+        let bootstrap_node_id = peer_address.as_ref().map(|peer| peer.node_id.clone());
 
         let _region = sqlx::query!(
             "
@@ -119,18 +80,21 @@ impl ThisP2PandaNodeRepo {
             bootstrap_node_id,
             NETWORK_CONFIG_ID
         )
-        .execute(&mut ***db)
+        .execute(pool)
         .await;
 
         return Ok(());
     }
 
-    pub async fn get_or_create_private_key(&self, db: &MainDb) -> Result<PrivateKey, ThisP2PandaNodeRepoError> {
-        let private_key = self.get_private_key(db).await?;
+    pub async fn get_or_create_private_key(
+        &self,
+        pool: &SqlitePool,
+    ) -> Result<PrivateKey, sqlx::Error> {
+        let private_key = self.get_private_key(pool).await?;
 
         match private_key {
             None => {
-                let new_private_key: PrivateKey = self.create_private_key(db).await?;
+                let new_private_key: PrivateKey = self.create_private_key(pool).await?;
                 return Ok(new_private_key);
             }
             Some(private_key) => {
@@ -139,25 +103,25 @@ impl ThisP2PandaNodeRepo {
         }
     }
 
-    async fn get_private_key(&self, db: &MainDb) -> Result<Option<PrivateKey>, ThisP2PandaNodeRepoError> {
-        let private_key_hex: Option<String> = self.get_private_key_hex(db).await?;
+    async fn get_private_key(&self, pool: &SqlitePool) -> Result<Option<PrivateKey>, sqlx::Error> {
+        let private_key_hex: Option<String> = self.get_private_key_hex(pool).await?;
 
         match private_key_hex {
             None => return Ok(None),
             Some(private_key_hex) => {
                 let private_key = Self::build_private_key_from_hex(private_key_hex)
-                    .ok_or(ThisP2PandaNodeRepoError::InternalServerError("Failed to build private key".to_string()))?;
+                    .ok_or_else(|| sqlx::Error::Decode("Failed to build private key".into()))?;
 
                 return Ok(Some(private_key));
             }
         }
     }
 
-    async fn create_private_key(&self, db: &MainDb) -> Result<PrivateKey, ThisP2PandaNodeRepoError> {
+    async fn create_private_key(&self, pool: &SqlitePool) -> Result<PrivateKey, sqlx::Error> {
         let new_private_key = PrivateKey::new();
         let public_key = new_private_key.public_key();
 
-        self.set_private_key_hex(db, new_private_key.to_hex(), public_key.to_hex())
+        self.set_private_key_hex(pool, new_private_key.to_hex(), public_key.to_hex())
             .await?;
 
         println!("Created new private key");
@@ -165,9 +129,12 @@ impl ThisP2PandaNodeRepo {
         return Ok(new_private_key);
     }
 
-    async fn set_private_key_hex(&self, db: &MainDb, private_key_hex: String, public_key_hex: String) -> Result<(), ThisP2PandaNodeRepoError> {
-        let mut connection = db.sqlite_pool().acquire().await.unwrap();
-
+    async fn set_private_key_hex(
+        &self,
+        pool: &SqlitePool,
+        private_key_hex: String,
+        public_key_hex: String,
+    ) -> Result<(), sqlx::Error> {
         let _region = sqlx::query!(
             "
             UPDATE node_configs
@@ -178,19 +145,13 @@ impl ThisP2PandaNodeRepo {
             public_key_hex,
             NODE_CONFIG_ID
         )
-        .execute(&mut *connection)
-        .await
-        .map_err(|error| {
-            println!("Failed to set private key hex: {:?}", error);
-            ThisP2PandaNodeRepoError::InternalServerError("Database error".to_string())
-        })?;
+        .execute(pool)
+        .await?;
 
-        return Ok(());
+        Ok(())
     }
 
-    async fn get_private_key_hex(&self, db: &MainDb) -> Result<Option<String>, ThisP2PandaNodeRepoError> {
-        let mut connection = db.sqlite_pool().acquire().await.unwrap();
-
+    async fn get_private_key_hex(&self, pool: &SqlitePool) -> Result<Option<String>, sqlx::Error> {
         let result = sqlx::query_as!(
             PrivateKeyRow,
             "
@@ -201,11 +162,10 @@ impl ThisP2PandaNodeRepo {
             ",
             NODE_CONFIG_ID
         )
-        .fetch_one(&mut *connection)
-        .await
-        .map_err(|_| ThisP2PandaNodeRepoError::InternalServerError("Database error".to_string()))?;
+        .fetch_one(pool)
+        .await?;
 
-        return Ok(result.private_key_hex);
+        Ok(result.private_key_hex)
     }
 
     // TODO: This should be in p2panda-core, submit a PR

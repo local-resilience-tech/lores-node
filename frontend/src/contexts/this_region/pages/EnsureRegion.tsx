@@ -1,19 +1,16 @@
 import { useEffect, useState } from "react"
-import { RegionDetails } from "../types"
 import { Container } from "@chakra-ui/react"
-import ThisRegionApi from "../api"
 import SetRegion from "../components/SetRegion"
 import { NewRegionData } from "../components/NewRegion"
-import { ApiResult } from "../../shared/types"
 import { Outlet } from "react-router-dom"
 import { RegionContext } from "../provider_contexts"
 import { Loading, useLoading } from "../../shared"
+import { getApi } from "../../../api"
+import { Region } from "../../../api/Api"
 
-const regionApi = new ThisRegionApi()
-
-const getRegion = async (): Promise<RegionDetails | null> => {
-  const result = await regionApi.show()
-  if ("Ok" in result) return result.Ok
+const getRegion = async (): Promise<Region | null> => {
+  const result = await getApi().api.showRegion()
+  if (result.status === 200) return result.data
   return null
 }
 
@@ -22,7 +19,7 @@ export default function EnsureRegion({
 }: {
   children?: React.ReactNode
 }) {
-  const [regionDetails, setRegionDetails] = useState<RegionDetails | null>(null)
+  const [regionDetails, setRegionDetails] = useState<Region | null>(null)
   const [loading, withLoading] = useLoading(true)
 
   const fetchRegion = async () => {
@@ -34,16 +31,22 @@ export default function EnsureRegion({
   }
 
   const onSubmitNewRegion = (data: NewRegionData) => {
-    regionApi.bootstrap(data.name, null).then((result: ApiResult<any, any>) => {
-      if ("Ok" in result) {
-        const newRegion: RegionDetails = {
-          network_id: result.Ok.id,
+    getApi()
+      .api.bootstrap({
+        network_name: data.name,
+        bootstrap_peer: null,
+      })
+      .then((result) => {
+        if (result.status === 200) {
+          console.log("Successfully bootstrapped", result)
+          const newRegion: Region = {
+            network_id: data.name,
+          }
+          setRegionDetails(newRegion)
+        } else {
+          console.log("Failed to bootstrap", result)
         }
-        setRegionDetails(newRegion)
-      } else {
-        console.log("Failed to bootstrap", result)
-      }
-    })
+      })
   }
 
   useEffect(() => {

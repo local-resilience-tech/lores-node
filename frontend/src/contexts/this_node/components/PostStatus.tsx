@@ -1,18 +1,18 @@
-import { Input, NativeSelect, Select, VStack } from "@chakra-ui/react"
+import { Input, NativeSelect, VStack } from "@chakra-ui/react"
 import { Field, Button, FormActions } from "../../../components"
 import { useForm } from "react-hook-form"
-import { PostStatusData } from "../api"
+import type { NodeStatusData } from "../../../api/Api"
 
 export default function PostStatus({
   onSubmit,
 }: {
-  onSubmit: (data: PostStatusData) => void
+  onSubmit: (data: NodeStatusData) => void
 }) {
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<PostStatusData>()
+  } = useForm<NodeStatusData>()
 
   return (
     <form onSubmit={handleSubmit(onSubmit)}>

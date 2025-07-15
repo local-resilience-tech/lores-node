@@ -1,2 +1,2 @@
 pub mod fairing;
-mod handler_map;
+pub mod handler_map;

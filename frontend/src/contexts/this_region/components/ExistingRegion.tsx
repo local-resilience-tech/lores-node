@@ -5,20 +5,24 @@ import {
   BootstrapPeer,
 } from "../../this_p2panda_node"
 import { useState } from "react"
-import ThisRegionApi from "../api"
-
-const regionApi = new ThisRegionApi()
+import { getApi } from "../../../api"
 
 export default function ExistingRegion() {
   const [bootstrapData, setBootstrapData] = useState<BootstrapNodeData | null>(
     null,
   )
 
-  const onSubmitBootstrapNode = (data: BootstrapNodeData) => {
+  const onSubmitBootstrapNode = async (data: BootstrapNodeData) => {
     const peer: BootstrapPeer = {
       node_id: data.node_id,
     }
-    regionApi.bootstrap(data.network_name, peer)
+    const result = await getApi().api.bootstrap({
+      network_name: data.network_name,
+      bootstrap_peer: peer,
+    })
+    if (result.status !== 200) {
+      console.error("Failed to bootstrap the network", result)
+    }
 
     // temp
     setBootstrapData(data)

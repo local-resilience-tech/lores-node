@@ -1,15 +1,17 @@
 import { VStack, Text, Table, Box } from "@chakra-ui/react"
 import { useEffect, useState } from "react"
-import ThisP2PandaNodeApi from "../api"
-import { P2PandaNodeDetails } from "../types"
-import { Button } from "../../../components"
-
-const api = new ThisP2PandaNodeApi()
+import { getApi } from "../../../api"
+import type { P2PandaNodeDetails } from "../../../api/Api"
 
 const getNode = async (): Promise<P2PandaNodeDetails | null> => {
-  const result = await api.showNode()
-  if ("Ok" in result) return result.Ok
-  return null
+  const result = await getApi().api.showThisPandaNode()
+
+  if (result.status !== 200) {
+    console.warn("Network not started", result)
+    return null
+  }
+
+  return result.data
 }
 
 export default function ThisP2PandaNode() {
@@ -29,11 +31,11 @@ export default function ThisP2PandaNode() {
     return <></>
   }
 
-  const restartNode = () => async () => {
-    console.log("restarting node")
-    await api.restart()
-    fetchNode()
-  }
+  // const restartNode = () => async () => {
+  //   console.log("restarting node")
+  //   await api.restart()
+  //   fetchNode()
+  // }
 
   return (
     <VStack alignItems={"stretch"}>

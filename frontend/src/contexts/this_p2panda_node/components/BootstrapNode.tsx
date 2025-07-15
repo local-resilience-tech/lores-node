@@ -1,4 +1,4 @@
-import { Input, Box, Text } from "@chakra-ui/react"
+import { Input, Text } from "@chakra-ui/react"
 import { Field, FormActions, Button, FormFields } from "../../../components"
 import { useForm } from "react-hook-form"
 

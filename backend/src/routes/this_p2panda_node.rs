@@ -1,27 +1,47 @@
-use iroh::NodeAddr;
-use p2panda_net::NodeAddress;
-use rocket::serde::json::Json;
-use rocket::serde::{Deserialize, Serialize};
-use rocket::{Route, State};
+use axum::{http::StatusCode, response::IntoResponse, Extension, Json};
+use serde::{Deserialize, Serialize};
+use utoipa::ToSchema;
+use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::panda_comms::container::P2PandaContainer;
-use crate::repos::this_p2panda_node::ThisP2PandaNodeRepoError;
 
-#[derive(sqlx::FromRow, Serialize, Deserialize)]
-#[serde(crate = "rocket::serde")]
-pub struct NodeDetails {
-    pub panda_node_id: String,
-    pub iroh_node_addr: NodeAddr,
-    pub peers: Vec<NodeAddress>,
+pub fn router() -> OpenApiRouter {
+    OpenApiRouter::new().routes(routes!(show_this_panda_node))
 }
 
-#[get("/", format = "json")]
-async fn show(panda_container: &State<P2PandaContainer>) -> Result<Json<NodeDetails>, ThisP2PandaNodeRepoError> {
-    let public_key: String = panda_container
-        .get_public_key()
-        .await
-        .unwrap()
-        .to_string();
+#[derive(Serialize, ToSchema)]
+pub struct IrohNodeAddr {
+    pub node_id: String,
+    pub relay_url: Option<String>,
+    pub direct_addresses: Vec<String>,
+}
+
+#[derive(Serialize, ToSchema)]
+pub struct PandaNodeAddress {
+    pub public_key: String,
+    pub direct_addresses: Vec<String>,
+    pub relay_url: Option<String>,
+}
+
+#[derive(sqlx::FromRow, Serialize, ToSchema)]
+pub struct P2PandaNodeDetails {
+    pub panda_node_id: String,
+    pub iroh_node_addr: IrohNodeAddr,
+    pub peers: Vec<PandaNodeAddress>,
+}
+
+#[utoipa::path(get, path = "/", responses(
+    (status = 200, body = P2PandaNodeDetails),
+    (status = 503, description = "Network not started", body = String),
+),)]
+async fn show_this_panda_node(
+    Extension(panda_container): Extension<P2PandaContainer>,
+) -> impl IntoResponse {
+    if !panda_container.is_started().await {
+        return (StatusCode::SERVICE_UNAVAILABLE, Json("Network not started")).into_response();
+    }
+
+    let public_key: String = panda_container.get_public_key().await.unwrap().to_string();
     println!("public key: {}", public_key);
 
     let node_addr = panda_container.get_node_addr().await;
@@ -36,38 +56,42 @@ async fn show(panda_container: &State<P2PandaContainer>) -> Result<Json<NodeDeta
         println!("peers: {:?}", peers);
     }
 
-    let node_details = NodeDetails {
+    let node_details = P2PandaNodeDetails {
         panda_node_id: public_key,
-        iroh_node_addr: node_addr,
-        peers: peers.unwrap(),
+        iroh_node_addr: IrohNodeAddr {
+            node_id: node_addr.node_id.to_string(),
+            relay_url: node_addr.relay_url.map(|url| url.to_string()),
+            direct_addresses: node_addr
+                .direct_addresses
+                .iter()
+                .map(|addr| addr.to_string())
+                .collect(),
+        },
+        peers: peers
+            .unwrap()
+            .into_iter()
+            .map(|peer| PandaNodeAddress {
+                public_key: peer.public_key.to_string(),
+                direct_addresses: peer
+                    .direct_addresses
+                    .iter()
+                    .map(|addr| addr.to_string())
+                    .collect(),
+                relay_url: peer.relay_url.map(|url| url.to_string()),
+            })
+            .collect(),
     };
 
-    Ok(Json(node_details))
+    (StatusCode::OK, Json(node_details)).into_response()
 }
 
-#[post("/restart", format = "json")]
-async fn restart(panda_container: &State<P2PandaContainer>) -> Result<Json<String>, ThisP2PandaNodeRepoError> {
-    panda_container.restart().await.map_err(|e| {
-        println!("got error: {}", e);
-        ThisP2PandaNodeRepoError::InternalServerError(e.to_string())
-    })?;
-
-    Ok(Json("Restarted".to_string()))
-}
-
-#[derive(Deserialize)]
-#[serde(crate = "rocket::serde")]
+#[derive(Deserialize, ToSchema)]
 pub struct BootstrapNodePeer {
     pub node_id: String,
 }
 
-#[derive(Deserialize)]
-#[serde(crate = "rocket::serde")]
+#[derive(Deserialize, ToSchema)]
 pub struct BootstrapNodeData {
     pub network_name: String,
     pub bootstrap_peer: Option<BootstrapNodePeer>,
-}
-
-pub fn routes() -> Vec<Route> {
-    routes![show, restart]
 }

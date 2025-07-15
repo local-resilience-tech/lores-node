@@ -1,6 +1,6 @@
 pub mod current_node_statuses;
 pub mod entities;
-pub mod helpers;
+mod helpers;
 pub mod node_statuses;
 pub mod nodes;
 pub mod this_node;

@@ -1,64 +1,96 @@
+use axum::{http::StatusCode, response::IntoResponse, Extension, Json};
 use p2panda_core::PublicKey;
-use rocket::serde::json::Json;
-use rocket::{Route, State};
-use rocket_db_pools::Connection;
+use sqlx::SqlitePool;
+use utoipa_axum::{router::OpenApiRouter, routes};
 
-use crate::infra::db::MainDb;
-use crate::panda_comms::container::{build_public_key_from_hex, P2PandaContainer};
-use crate::repos::entities::{NodeDetails, Region};
-use crate::repos::nodes::NodesRepo;
-use crate::repos::this_p2panda_node::{SimplifiedNodeAddress, ThisP2PandaNodeRepo, ThisP2PandaNodeRepoError};
+use crate::{
+    panda_comms::container::{build_public_key_from_hex, P2PandaContainer},
+    repos::{
+        entities::{NodeDetails, Region},
+        nodes::NodesRepo,
+        this_p2panda_node::{SimplifiedNodeAddress, ThisP2PandaNodeRepo},
+    },
+    routes::this_p2panda_node::BootstrapNodeData,
+};
 
-use super::this_p2panda_node::BootstrapNodeData;
+pub fn router() -> OpenApiRouter {
+    OpenApiRouter::new()
+        .routes(routes!(show_region))
+        .routes(routes!(show_region_nodes))
+        .routes(routes!(bootstrap))
+}
 
-#[get("/", format = "json")]
-async fn show(mut db: Connection<MainDb>) -> Result<Json<Option<Region>>, ThisP2PandaNodeRepoError> {
+#[utoipa::path(get, path = "/", responses(
+    (status = 200, body = Option<Region>, description = "Returns the current region's network ID if available"),
+    (status = INTERNAL_SERVER_ERROR, body = ()),
+),)]
+async fn show_region(Extension(pool): Extension<SqlitePool>) -> impl IntoResponse {
     let repo = ThisP2PandaNodeRepo::init();
 
-    repo.get_network_name_conn(&mut db)
+    repo.get_network_name(&pool)
         .await
         .map(|network_id| match network_id {
             Some(network_id) => {
                 println!("got network id {}", network_id);
-                Json(Some(Region { network_id }))
+                (StatusCode::OK, Json(Some(Region { network_id })))
             }
             None => {
                 println!("no network id");
-                Json(None)
+                (StatusCode::OK, Json(None))
             }
         })
+        .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, Json(())))
+        .into_response()
 }
 
-#[get("/nodes", format = "json")]
-async fn nodes(mut db: Connection<MainDb>) -> Result<Json<Vec<NodeDetails>>, ThisP2PandaNodeRepoError> {
+#[utoipa::path(get, path = "/nodes", responses(
+    (status = 200, body = Vec<NodeDetails>),
+    (status = INTERNAL_SERVER_ERROR, body = ()),
+),)]
+async fn show_region_nodes(Extension(pool): Extension<SqlitePool>) -> impl IntoResponse {
     let repo = NodesRepo::init();
 
-    let nodes = repo
-        .all(&mut db)
+    repo.all(&pool)
         .await
-        .map_err(|_| ThisP2PandaNodeRepoError::InternalServerError("Database error".to_string()))?;
-
-    Ok(Json(nodes))
+        .map(|nodes| (StatusCode::OK, Json(nodes)))
+        .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, Json(())))
+        .into_response()
 }
 
-#[post("/bootstrap", format = "json", data = "<data>")]
+#[utoipa::path(
+    post,
+    path = "/bootstrap",
+    request_body(content = BootstrapNodeData, content_type = "application/json"),
+    responses(
+        (status = 200, body = ()),
+        (status = INTERNAL_SERVER_ERROR, body = String),
+    )
+)]
 async fn bootstrap(
-    mut db: Connection<MainDb>,
-    data: Json<BootstrapNodeData>,
-    panda_container: &State<P2PandaContainer>,
-) -> Result<Json<()>, ThisP2PandaNodeRepoError> {
+    Extension(pool): Extension<SqlitePool>,
+    Extension(panda_container): Extension<P2PandaContainer>,
+    axum::extract::Json(data): axum::extract::Json<BootstrapNodeData>,
+) -> impl IntoResponse {
     let repo = ThisP2PandaNodeRepo::init();
 
     let bootstrap_peer = &data.bootstrap_peer;
 
-    let peer_address: Option<SimplifiedNodeAddress> = bootstrap_peer
-        .as_ref()
-        .map(|peer| SimplifiedNodeAddress {
+    let peer_address: Option<SimplifiedNodeAddress> =
+        bootstrap_peer.as_ref().map(|peer| SimplifiedNodeAddress {
             node_id: peer.node_id.clone(),
         });
 
-    repo.set_network_config(&mut db, data.network_name.clone(), peer_address.clone())
-        .await?;
+    let result = repo
+        .set_network_config(&pool, data.network_name.clone(), peer_address.clone())
+        .await;
+    if let Err(e) = result {
+        eprintln!("Failed to set network config: {:?}", e);
+        return (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "Failed to set network config".to_string(),
+        )
+            .into_response();
+    }
 
     panda_container
         .set_network_name(data.network_name.clone())
@@ -74,12 +106,13 @@ async fn bootstrap(
 
     // start the container
     if let Err(e) = panda_container.start().await {
-        println!("Failed to start P2PandaContainer: {:?}", e);
+        eprintln!("Failed to start P2PandaContainer: {:?}", e);
+        return (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json("Failed to start P2PandaContainer".to_string()),
+        )
+            .into_response();
     }
 
-    Ok(Json(()))
-}
-
-pub fn routes() -> Vec<Route> {
-    routes![show, nodes, bootstrap]
+    (StatusCode::OK, ()).into_response()
 }

@@ -3,7 +3,9 @@ use p2panda_core::cbor::{decode_cbor, encode_cbor, DecodeError, EncodeError};
 
 use super::lores_events::{LoResEvent, LoResEventHeader, LoResEventPayload, LoResWireEvent};
 
-pub fn encode_lores_event_payload(event_payload: LoResEventPayload) -> Result<Vec<u8>, EncodeError> {
+pub fn encode_lores_event_payload(
+    event_payload: LoResEventPayload,
+) -> Result<Vec<u8>, EncodeError> {
     encode_lores_wire_event(LoResWireEvent::LoResEventPayload(event_payload))
 }
 
@@ -21,25 +23,32 @@ fn decode_lores_wire_event(encoded_payload: &[u8]) -> Result<LoResWireEvent, Dec
         }
         Err(e) => {
             // Handle the error
-            log::error!("Failed to decode payload: {}", e);
+            eprintln!("Failed to decode payload: {}", e);
             return Err(e);
         }
     }
 }
 
-pub fn decode_lores_event_payload(encoded_payload: &[u8]) -> Result<LoResEventPayload, anyhow::Error> {
+pub fn decode_lores_event_payload(
+    encoded_payload: &[u8],
+) -> Result<LoResEventPayload, anyhow::Error> {
     let wire_event: LoResWireEvent = decode_lores_wire_event(encoded_payload)?;
 
     match wire_event {
         LoResWireEvent::LoResEventPayload(payload) => Ok(payload),
         LoResWireEvent::DeprecatedLoResEventPayload(_) => {
             println!("Received deprecated LoResEventPayload, which is no longer supported.");
-            Err(anyhow::anyhow!("Received deprecated LoResEventPayload, which is no longer supported."))
+            Err(anyhow::anyhow!(
+                "Received deprecated LoResEventPayload, which is no longer supported."
+            ))
         }
     }
 }
 
-pub fn decode_lores_event(header: LoResEventHeader, encoded_payload: &[u8]) -> Result<LoResEvent, anyhow::Error> {
+pub fn decode_lores_event(
+    header: LoResEventHeader,
+    encoded_payload: &[u8],
+) -> Result<LoResEvent, anyhow::Error> {
     let decoded_payload: LoResEventPayload = decode_lores_event_payload(encoded_payload)?;
 
     let lores_event = LoResEvent {

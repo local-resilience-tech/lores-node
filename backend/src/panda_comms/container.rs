@@ -9,9 +9,9 @@ use p2panda_node::node::Node;
 use p2panda_node::stream::{EventData, StreamEvent};
 use p2panda_node::topic::{Topic, TopicMap};
 use p2panda_store::MemoryStore;
-use rocket::tokio::{self};
 use std::sync::Arc;
 use tokio::sync::{broadcast, mpsc, Mutex};
+use tokio::{self};
 
 use crate::panda_comms::lores_events::LoResEventHeader;
 
@@ -22,6 +22,7 @@ const RELAY_URL: &str = "https://staging-euw1-1.relay.iroh.network/";
 const TOPIC_NAME: &str = "lores_mesh";
 const LOG_ID: &str = "lores_mesh";
 
+#[derive(Clone)]
 pub struct P2PandaContainer {
     params: Arc<Mutex<NodeParams>>,
     node_api: Arc<Mutex<Option<NodeApi<NodeExtensions>>>>,
@@ -40,7 +41,11 @@ impl P2PandaContainer {
         let params = Arc::new(Mutex::new(NodeParams::default()));
         let node_api = Arc::new(Mutex::new(None));
 
-        P2PandaContainer { params, node_api, events_tx }
+        P2PandaContainer {
+            params,
+            node_api,
+            events_tx,
+        }
     }
 
     pub async fn get_params(&self) -> NodeParams {
@@ -77,7 +82,7 @@ impl P2PandaContainer {
         // let node = self.node.lock().await;
         // let node = node
         //     .as_ref()
-        //     .ok_or(anyhow::Error::msg("Network not started"))?;
+        //     .ok_or(anyhow::Error::msg("Trying to shutdown but network not started"))?;
 
         // node.shutdown().await?;
         // self.set_node(None).await;
@@ -111,7 +116,12 @@ impl P2PandaContainer {
             .await
     }
 
-    async fn start_for(&self, private_key: PrivateKey, network_name: String, boostrap_node_id: Option<PublicKey>) -> Result<()> {
+    async fn start_for(
+        &self,
+        private_key: PrivateKey,
+        network_name: String,
+        boostrap_node_id: Option<PublicKey>,
+    ) -> Result<()> {
         let relay_url: RelayUrl = RELAY_URL.parse().unwrap();
         let temp_blobs_root_dir = tempfile::tempdir().expect("temp dir");
 
@@ -154,9 +164,16 @@ impl P2PandaContainer {
         Ok(())
     }
 
+    pub async fn is_started(&self) -> bool {
+        let node_api = self.node_api.lock().await;
+        node_api.is_some()
+    }
+
     pub async fn get_public_key(&self) -> Result<String, Box<dyn std::error::Error>> {
         let node_api = self.node_api.lock().await;
-        let node_api = node_api.as_ref().ok_or("Network not started")?;
+        let node_api = node_api
+            .as_ref()
+            .ok_or("Trying to get public key but network not started")?;
 
         let node_id = node_api.node.network.node_id();
         Ok(node_id.to_string())
@@ -183,9 +200,9 @@ impl P2PandaContainer {
 
     pub async fn publish_persisted(&self, event_payload: LoResEventPayload) -> Result<()> {
         let mut node_api = self.node_api.lock().await;
-        let node_api = node_api
-            .as_mut()
-            .ok_or(anyhow::Error::msg("Network not started"))?;
+        let node_api = node_api.as_mut().ok_or(anyhow::Error::msg(
+            "Trying to publish but network not started",
+        ))?;
 
         let encoded_payload = encode_lores_event_payload(event_payload)?;
 
@@ -220,10 +237,7 @@ impl P2PandaContainer {
                         println!("Gossip joined: {:?}", topic_id);
                         println!(
                             "Peers: {:?}",
-                            peers
-                                .iter()
-                                .map(|peer| peer.to_hex())
-                                .collect::<Vec<_>>()
+                            peers.iter().map(|peer| peer.to_hex()).collect::<Vec<_>>()
                         );
                     }
                     SystemEvent::GossipLeft { topic_id } => {
@@ -278,7 +292,8 @@ impl P2PandaContainer {
                             operation_id: header.hash(),
                         };
 
-                        let result: Result<LoResEvent, _> = decode_lores_event(lores_header, &payload);
+                        let result: Result<LoResEvent, _> =
+                            decode_lores_event(lores_header, &payload);
 
                         if let Ok(lores_event) = result {
                             let send_result = events_tx.send(lores_event).await;

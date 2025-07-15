@@ -1,5 +1,4 @@
-use sqlx::Sqlite;
-use thiserror::Error;
+use sqlx::SqlitePool;
 
 pub struct NodeStatusRow {
     pub operation_id: String,
@@ -9,13 +8,6 @@ pub struct NodeStatusRow {
     pub state: Option<String>,
 }
 
-#[derive(Debug, Error, Responder)]
-pub enum NodeStatusesError {
-    #[error("Internal server error: {0}")]
-    #[response(status = 500)]
-    InternalServerError(String),
-}
-
 pub struct NodeStatusesRepo {}
 
 impl NodeStatusesRepo {
@@ -23,9 +15,11 @@ impl NodeStatusesRepo {
         NodeStatusesRepo {}
     }
 
-    pub async fn upsert(&self, pool: &sqlx::Pool<Sqlite>, status: NodeStatusRow) -> Result<(), NodeStatusesError> {
-        let mut connection = pool.acquire().await.unwrap();
-
+    pub async fn upsert(
+        &self,
+        pool: &SqlitePool,
+        status: NodeStatusRow,
+    ) -> Result<(), sqlx::Error> {
         let timestamp = status.posted_timestamp as i64;
 
         let _node = sqlx::query!(
@@ -36,9 +30,8 @@ impl NodeStatusesRepo {
             status.state,
             timestamp
         )
-        .execute(&mut *connection)
-        .await
-        .map_err(|e| NodeStatusesError::InternalServerError(e.to_string()))?;
+        .execute(pool)
+        .await?;
 
         Ok(())
     }

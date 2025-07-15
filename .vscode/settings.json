@@ -5,9 +5,10 @@
     "**/.git": true,
     "**/.svn": true,
     "**/.hg": true,
-    "**/CVS": true,
     "**/.DS_Store": true,
     "**/Thumbs.db": true,
+    "**/CVS": true,
+    "**/.ruby-lsp": true,
     "**/.classpath": true,
     "**/.project": true,
     "**/.settings": true,
@@ -15,7 +16,8 @@
     "backend/target": true,
     "frontend/dist": true,
     "node_modules": true,
-    "backend/.sqlx": true
+    "backend/.sqlx": true,
+    "backend-rocket/target": true
   },
   "explorerExclude.backup": {},
   "rust-analyzer.cargo.sysroot": "discover",

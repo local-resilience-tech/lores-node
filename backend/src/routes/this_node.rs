@@ -1,55 +1,103 @@
-use rocket::serde::json::Json;
-use rocket::serde::Deserialize;
-use rocket::Route;
-use rocket::{post, State};
-use rocket_db_pools::Connection;
+use axum::{http::StatusCode, response::IntoResponse, Extension, Json};
+use serde::Deserialize;
+use sqlx::SqlitePool;
+use utoipa::ToSchema;
+use utoipa_axum::{router::OpenApiRouter, routes};
 
-use crate::infra::db::MainDb;
-use crate::panda_comms::container::P2PandaContainer;
-use crate::panda_comms::lores_events::{LoResEventPayload, NodeAnnouncedDataV1, NodeStatusPostedDataV1, NodeUpdatedDataV1};
-use crate::repos::entities::Node;
-use crate::repos::this_node::{ThisNodeRepo, ThisNodeRepoError};
+use crate::{
+    panda_comms::{
+        container::P2PandaContainer,
+        lores_events::{
+            LoResEventPayload, NodeAnnouncedDataV1, NodeStatusPostedDataV1, NodeUpdatedDataV1,
+        },
+    },
+    repos::{entities::Node, this_node::ThisNodeRepo},
+};
 
-#[derive(Deserialize)]
-#[serde(crate = "rocket::serde")]
+pub fn router() -> OpenApiRouter {
+    OpenApiRouter::new()
+        .routes(routes!(show_this_node))
+        .routes(routes!(create_this_node))
+        .routes(routes!(update_this_node))
+        .routes(routes!(post_node_status))
+}
+
+#[utoipa::path(get, path = "/", responses(
+    (status = 200, body = Option<Node>),
+    (status = INTERNAL_SERVER_ERROR, body = String, description = "Internal Server Error"),
+))]
+async fn show_this_node(Extension(pool): Extension<SqlitePool>) -> impl IntoResponse {
+    let repo = ThisNodeRepo::init();
+
+    let node = repo.find(&pool).await;
+
+    match node {
+        Ok(node) => (StatusCode::OK, Json(node)).into_response(),
+        Err(err) => {
+            eprintln!("Error fetching node: {}", err);
+            (StatusCode::INTERNAL_SERVER_ERROR, "Internal Server Error").into_response()
+        }
+    }
+}
+
+#[derive(Deserialize, ToSchema)]
 struct CreateNodeDetails {
     name: String,
 }
 
-#[derive(Deserialize, Debug)]
-#[serde(crate = "rocket::serde")]
+#[utoipa::path(
+    post,
+    path = "/",
+    responses(
+        (status = CREATED, body = Node),
+        (status = INTERNAL_SERVER_ERROR, body = String, description = "Internal Server Error"),
+    ),
+    request_body(content = CreateNodeDetails, content_type = "application/json"),
+)]
+async fn create_this_node(
+    Extension(panda_container): Extension<P2PandaContainer>,
+    axum::extract::Json(data): axum::extract::Json<CreateNodeDetails>,
+) -> impl IntoResponse {
+    let event_payload = LoResEventPayload::NodeAnnounced(NodeAnnouncedDataV1 {
+        name: data.name.clone(),
+    });
+
+    let result = panda_container.publish_persisted(event_payload).await;
+
+    match result {
+        Ok(_) => {
+            let node = Node {
+                id: "1".to_string(),
+                name: data.name.clone(),
+            };
+            (StatusCode::CREATED, Json(node)).into_response()
+        }
+        Err(e) => {
+            eprintln!("Error publishing event: {}", e);
+            (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response()
+        }
+    }
+}
+
+#[derive(Deserialize, ToSchema, Debug)]
 struct UpdateNodeDetails {
     name: String,
     public_ipv4: String,
 }
 
-#[post("/create", data = "<data>")]
-async fn create(data: Json<CreateNodeDetails>, panda_container: &State<P2PandaContainer>) -> Result<Json<Node>, ThisNodeRepoError> {
-    let event_payload = LoResEventPayload::NodeAnnounced(NodeAnnouncedDataV1 { name: data.name.clone() });
-
-    panda_container
-        .publish_persisted(event_payload)
-        .await
-        .map_err(|e| {
-            println!("got error: {}", e);
-            ThisNodeRepoError::InternalServerError(e.to_string())
-        })?;
-
-    return Ok(Json(Node {
-        id: "1".to_string(),
-        name: data.name.clone(),
-    }));
-}
-
-#[get("/", format = "json")]
-async fn show(mut db: Connection<MainDb>) -> Result<Json<Node>, ThisNodeRepoError> {
-    let repo = ThisNodeRepo::init();
-
-    repo.find(&mut db).await.map(|node| Json(node))
-}
-
-#[patch("/", format = "json", data = "<data>")]
-async fn update(data: Json<UpdateNodeDetails>, panda_container: &State<P2PandaContainer>) -> Result<Json<Node>, ThisNodeRepoError> {
+#[utoipa::path(
+    put,
+    path = "/",
+    responses(
+        (status = OK, body = Node),
+        (status = INTERNAL_SERVER_ERROR, body = String, description = "Internal Server Error"),
+    ),
+    request_body(content = UpdateNodeDetails, content_type = "application/json"),
+)]
+async fn update_this_node(
+    Extension(panda_container): Extension<P2PandaContainer>,
+    axum::extract::Json(data): axum::extract::Json<UpdateNodeDetails>,
+) -> impl IntoResponse {
     println!("update node: {:?}", data);
 
     let event_payload = LoResEventPayload::NodeUpdated(NodeUpdatedDataV1 {
@@ -57,37 +105,56 @@ async fn update(data: Json<UpdateNodeDetails>, panda_container: &State<P2PandaCo
         public_ipv4: data.public_ipv4.clone(),
     });
 
-    panda_container
-        .publish_persisted(event_payload)
-        .await
-        .map_err(|e| {
-            println!("got error: {}", e);
-            ThisNodeRepoError::InternalServerError(e.to_string())
-        })?;
+    let result = panda_container.publish_persisted(event_payload).await;
 
-    return Ok(Json(Node {
-        id: "1".to_string(),
-        name: data.name.clone(),
-    }));
+    match result {
+        Ok(_) => {
+            let node = Node {
+                id: "1".to_string(),
+                name: data.name.clone(),
+            };
+            (StatusCode::OK, Json(node)).into_response()
+        }
+        Err(e) => {
+            eprintln!("Error publishing event: {}", e);
+            (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response()
+        }
+    }
 }
 
-#[post("/status", format = "json", data = "<data>")]
-async fn post_status(data: Json<NodeStatusPostedDataV1>, panda_container: &State<P2PandaContainer>) -> Result<(), ThisNodeRepoError> {
+#[derive(Deserialize, ToSchema, Debug)]
+struct NodeStatusData {
+    pub text: Option<String>,
+    pub state: Option<String>,
+}
+
+#[utoipa::path(
+    post,
+    path = "/status",
+    responses(
+        (status = OK, body = ()),
+        (status = INTERNAL_SERVER_ERROR, body = String),
+    ),
+    request_body(content = NodeStatusData, content_type = "application/json"),
+)]
+async fn post_node_status(
+    Extension(panda_container): Extension<P2PandaContainer>,
+    axum::extract::Json(data): axum::extract::Json<NodeStatusData>,
+) -> impl IntoResponse {
     println!("post status: {:?}", data);
 
-    let event_payload = LoResEventPayload::NodeStatusPosted(data.into_inner());
+    let event_payload = LoResEventPayload::NodeStatusPosted(NodeStatusPostedDataV1 {
+        text: data.text.clone(),
+        state: data.state.clone(),
+    });
 
-    panda_container
-        .publish_persisted(event_payload)
-        .await
-        .map_err(|e| {
-            println!("got error: {}", e);
-            ThisNodeRepoError::InternalServerError(e.to_string())
-        })?;
+    let result = panda_container.publish_persisted(event_payload).await;
 
-    return Ok(());
-}
-
-pub fn routes() -> Vec<Route> {
-    routes![create, show, update, post_status]
+    match result {
+        Ok(_) => (StatusCode::OK, Json(())).into_response(),
+        Err(e) => {
+            eprintln!("Error publishing event: {}", e);
+            (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response()
+        }
+    }
 }
