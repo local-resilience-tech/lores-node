@@ -28,11 +28,8 @@ RUN cp /app/target/$(cat /app/.platform)/release/lores-node /app/lores-node
 # RUNNER
 FROM ubuntu AS runner
 COPY --from=rustbuilder /app/lores-node /app/backend/lores-node
-COPY --from=rustbuilder /app/Rocket.toml /app/backend/Rocket.toml
 COPY --from=vitebuilder /app/dist /app/frontend
-ENV ROCKET_ADDRESS=0.0.0.0
-ENV ROCKET_PORT=8000
-ENV ROCKET_FRONTEND_ASSET_PATH=/app/frontend
+ENV FRONTEND_PATH=/app/frontend
 ENV DATABASE_URL=sqlite:/app/lores-node.db
 EXPOSE 8000
 EXPOSE 2022/udp
