@@ -9,14 +9,14 @@ iroh = "0.34.1"
 anyhow = "1.0.98"
 async-trait = "0.1.88"
 axum = "0.8.4"
-experimental-node = { git = "https://github.com/p2panda/experimental-node", rev = "95f3a74c298d8b663fee2f3339dbce5f812ba26f" }
-p2panda-blobs = "0.3.1"
-p2panda-core = "0.3.1"
-p2panda-net = "0.3.1"
-p2panda-store = "0.3.1"
-p2panda-stream = "0.3.1"
-p2panda-discovery = { version = "0.3.1", features = ["mdns"] }
-p2panda-sync = { version = "0.3.1", features = ["log-sync"] }
+experimental-node = { git = "https://github.com/p2panda/experimental-node", rev = "ec5ccfa01613a8a487acf2883cf7cb1046b41c94" }
+p2panda-blobs = "0.4.0"
+p2panda-core = "0.4.0"
+p2panda-net = "0.4.0"
+p2panda-store = "0.4.0"
+p2panda-stream = "0.4.0"
+p2panda-discovery = { version = "0.4.0", features = ["mdns"] }
+p2panda-sync = { version = "0.4.0", features = ["log-sync"] }
 hex = "0.4.3"
 lazy_static = "1.5.0"
 serde = "1.0.219"
