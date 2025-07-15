@@ -17,7 +17,8 @@
     "frontend/dist": true,
     "node_modules": true,
     "backend/.sqlx": true,
-    "backend-rocket/target": true
+    "backend-rocket/target": true,
+    "frontend/node_modules": true
   },
   "explorerExclude.backup": {},
   "rust-analyzer.cargo.sysroot": "discover",

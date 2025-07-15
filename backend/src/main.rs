@@ -1,4 +1,4 @@
-use axum::Extension;
+use axum::{routing::get, Extension};
 use p2panda_core::PublicKey;
 use sqlx::SqlitePool;
 use tokio::sync::mpsc;
@@ -20,6 +20,7 @@ use crate::{
         lores_events::LoResEvent,
     },
     repos::this_p2panda_node::ThisP2PandaNodeRepo,
+    static_server::frontend_handler,
 };
 
 mod api;
@@ -28,6 +29,7 @@ mod infra;
 mod panda_comms;
 mod repos;
 mod routes;
+mod static_server;
 
 #[macro_use]
 extern crate lazy_static;
@@ -74,6 +76,7 @@ async fn main() {
 
     let router = router
         .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", api.clone()))
+        .fallback_service(get(frontend_handler))
         .layer(cors)
         .layer(TraceLayer::new_for_http())
         .layer(Extension(pool))
