@@ -18,7 +18,7 @@ use crate::panda_comms::lores_events::LoResEventHeader;
 use super::event_encoding::{decode_lores_event, encode_lores_event_payload};
 use super::lores_events::{LoResEvent, LoResEventPayload};
 
-const RELAY_URL: &str = "https://staging-euw1-1.relay.iroh.network/";
+const RELAY_URL: &str = "https://wiese.liebechaos.org/";
 const TOPIC_NAME: &str = "lores_mesh";
 const LOG_ID: &str = "lores_mesh";
 
@@ -154,7 +154,13 @@ impl P2PandaContainer {
             .await?;
 
         // subscribe to main topic
-        node_api.subscribe_persisted(TOPIC_NAME).await?;
+        let result = node_api.subscribe_persisted(TOPIC_NAME).await;
+        match result {
+            Ok(_) => println!("Subscribed to topic: {}", TOPIC_NAME),
+            Err(err) => {
+                eprintln!("Failed to subscribe to topic {}: {}", TOPIC_NAME, err);
+            }
+        }
 
         // put the node in the container
         self.set_node_api(Some(node_api)).await;
