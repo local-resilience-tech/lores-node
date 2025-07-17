@@ -1,4 +1,4 @@
-import { Heading, VStack } from "@chakra-ui/react"
+import { Divider, Stack, Title, Box } from "@mantine/core"
 import EditNodeForm from "../components/EditNodeForm"
 import ManageStatus from "../components/ManageStatus"
 import type { Node, UpdateNodeDetails } from "../../../api/Api"
@@ -21,15 +21,16 @@ export default function EditNode({ node }: { node: Node }) {
   }
 
   return (
-    <VStack gap={4} align="stretch">
-      <Heading as="h1" size="2xl">
-        Edit This Node
-      </Heading>
-      <EditNodeForm node={node} onSubmit={updateNode} />
-      <Heading as="h1" size="2xl">
-        Node Status
-      </Heading>
-      <ManageStatus />
-    </VStack>
+    <Stack gap="lg">
+      <Stack>
+        <Title order={1}>Edit This Node</Title>
+        <EditNodeForm node={node} onSubmit={updateNode} />
+      </Stack>
+      <Divider />
+      <Stack>
+        <Title order={2}>Node Status</Title>
+        <ManageStatus />
+      </Stack>
+    </Stack>
   )
 }

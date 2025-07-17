@@ -1,4 +1,4 @@
-import { VStack } from "@chakra-ui/react"
+import { Stack, Text } from "@mantine/core"
 import PostStatus from "./PostStatus"
 import { getApi } from "../../../api"
 import type { NodeStatusData } from "../../../api/Api"
@@ -20,9 +20,9 @@ export default function ManageStatus() {
   }
 
   return (
-    <VStack gap={4} align="stretch">
+    <Stack>
       <PostStatus onSubmit={postStatus} />
-      <p>Display current status here</p>
-    </VStack>
+      <Text c="dimmed">Display current status here</Text>
+    </Stack>
   )
 }
