@@ -86,12 +86,7 @@ async fn show_this_panda_node(
 }
 
 #[derive(Deserialize, ToSchema)]
-pub struct BootstrapNodePeer {
-    pub node_id: String,
-}
-
-#[derive(Deserialize, ToSchema)]
 pub struct BootstrapNodeData {
     pub network_name: String,
-    pub bootstrap_peer: Option<BootstrapNodePeer>,
+    pub node_id: Option<String>,
 }

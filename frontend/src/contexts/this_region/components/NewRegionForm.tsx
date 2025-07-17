@@ -1,17 +1,16 @@
-import { Text, TextInput, Button, Stack } from "@mantine/core"
+import { TextInput, Button, Stack } from "@mantine/core"
 import { useForm } from "@mantine/form"
+import { BootstrapNodeData } from "../../../api/Api"
 
 export interface NewRegionData {
   name: string
 }
 
-export type SubmitNewRegionFunc = (data: NewRegionData) => void
+interface NewRegionFormProps {
+  onSubmit: (data: BootstrapNodeData) => void
+}
 
-export default function NewRegion({
-  onSubmitNewRegion,
-}: {
-  onSubmitNewRegion: SubmitNewRegionFunc
-}) {
+export default function NewRegionForm({ onSubmit }: NewRegionFormProps) {
   const form = useForm<NewRegionData>({
     mode: "controlled",
     initialValues: {
@@ -28,8 +27,16 @@ export default function NewRegion({
     },
   })
 
+  const handleSubmit = (values: NewRegionData) => {
+    const data: BootstrapNodeData = {
+      network_name: values.name,
+      node_id: null,
+    }
+    onSubmit(data)
+  }
+
   return (
-    <form onSubmit={form.onSubmit(onSubmitNewRegion)}>
+    <form onSubmit={form.onSubmit(handleSubmit)}>
       <Stack>
         <Stack>
           <TextInput

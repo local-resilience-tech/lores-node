@@ -73,11 +73,9 @@ async fn bootstrap(
 ) -> impl IntoResponse {
     let repo = ThisP2PandaNodeRepo::init();
 
-    let bootstrap_peer = &data.bootstrap_peer;
-
     let peer_address: Option<SimplifiedNodeAddress> =
-        bootstrap_peer.as_ref().map(|peer| SimplifiedNodeAddress {
-            node_id: peer.node_id.clone(),
+        data.node_id.as_ref().map(|node_id| SimplifiedNodeAddress {
+            node_id: node_id.clone(),
         });
 
     let result = repo

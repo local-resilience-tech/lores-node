@@ -1,13 +1,15 @@
 import { Stack, Title, Text, Tabs, Box } from "@mantine/core"
-import NewRegion, { SubmitNewRegionFunc } from "./NewRegion"
-import ExistingRegion from "./ExistingRegion"
-import { IconMapPinPlus, IconMapPlus } from "@tabler/icons-react"
+import NewRegionForm from "./NewRegionForm"
 
-export default function SetRegion({
-  onSubmitNewRegion,
-}: {
-  onSubmitNewRegion: SubmitNewRegionFunc
-}) {
+import { IconMapPinPlus, IconMapPlus } from "@tabler/icons-react"
+import { BootstrapNodeData } from "../../../api/Api"
+import { BootstrapNodeForm } from "../../this_p2panda_node"
+
+interface SetRegionProps {
+  onSubmit: (data: BootstrapNodeData) => void
+}
+
+export default function SetRegion({ onSubmit }: SetRegionProps) {
   return (
     <Stack gap="lg">
       <Stack>
@@ -37,10 +39,10 @@ export default function SetRegion({
           </Tabs.Tab>
         </Tabs.List>
         <Tabs.Panel value="join" pt="md">
-          <ExistingRegion />
+          <BootstrapNodeForm onSubmit={onSubmit} />
         </Tabs.Panel>
         <Tabs.Panel value="new" pt="md">
-          <NewRegion onSubmitNewRegion={onSubmitNewRegion} />
+          <NewRegionForm onSubmit={onSubmit} />
         </Tabs.Panel>
       </Tabs>
     </Stack>

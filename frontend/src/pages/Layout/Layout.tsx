@@ -7,10 +7,13 @@ import packageJson from "../../../package.json"
 import pangaLogoUrl from "../../assets/deepsea-panda.svg"
 
 import classes from "./Layout.module.css"
+import { useAppSelector } from "../../store"
 
 export default function Layout() {
   const [opened, { toggle }] = useDisclosure()
   const iconSize = 20
+
+  const region = useAppSelector((state) => state.region)
 
   return (
     <AppShell
@@ -25,28 +28,30 @@ export default function Layout() {
         </Group>
       </AppShell.Header>
       <AppShell.Navbar p={0}>
-        <AppShell.Section className={classes.menu_section}>
-          <NavLink
-            label="P2Panda"
-            href="/p2panda_node"
-            leftSection={
-              <img src={pangaLogoUrl} alt="P2Panda Icon" width={iconSize} />
-            }
-            onClick={toggle}
-          />
-          <NavLink
-            label="Nodes"
-            href="/nodes"
-            leftSection={<IconAffiliate size={iconSize} />}
-            onClick={toggle}
-          />
-          <NavLink
-            label="This Node"
-            href="/this_node"
-            leftSection={<IconHome size={iconSize} />}
-            onClick={toggle}
-          />
-        </AppShell.Section>
+        {region && (
+          <AppShell.Section className={classes.menu_section}>
+            <NavLink
+              label="Nodes"
+              href="/nodes"
+              leftSection={<IconAffiliate size={iconSize} />}
+              onClick={toggle}
+            />
+            <NavLink
+              label="This Node"
+              href="/this_node"
+              leftSection={<IconHome size={iconSize} />}
+              onClick={toggle}
+            />
+            <NavLink
+              label="P2Panda"
+              href="/p2panda_node"
+              leftSection={
+                <img src={pangaLogoUrl} alt="P2Panda Icon" width={iconSize} />
+              }
+              onClick={toggle}
+            />
+          </AppShell.Section>
+        )}
 
         <AppShell.Section className={classes.footer_section}>
           <NavLink

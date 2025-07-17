@@ -1,9 +1,11 @@
 import { useDispatch, useSelector, useStore } from "react-redux"
 import { configureStore } from "@reduxjs/toolkit"
+import regionReducer from "./region"
 import nodesReducer from "./nodes"
 
 const store = configureStore({
   reducer: {
+    region: regionReducer,
     nodes: nodesReducer,
   },
 })

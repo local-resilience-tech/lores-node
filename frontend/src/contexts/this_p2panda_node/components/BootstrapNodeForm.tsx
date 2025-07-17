@@ -1,14 +1,10 @@
 import { Text, TextInput, Button, Stack } from "@mantine/core"
 import { useForm } from "@mantine/form"
-
-export interface BootstrapNodeData {
-  network_name: string
-  node_id: string
-}
+import { BootstrapNodeData } from "../../../api/Api"
 
 export type SubmitBootstrapNodeFunc = (data: BootstrapNodeData) => void
 
-export default function BootstrapNode({
+export default function BootstrapNodeForm({
   onSubmit,
 }: {
   onSubmit: SubmitBootstrapNodeFunc
