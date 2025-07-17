@@ -1,4 +1,4 @@
-import { Container } from "@chakra-ui/react"
+import { Container } from "@mantine/core"
 import { useEffect, useState } from "react"
 import NewNode, { NewNodeData } from "../components/NewNode"
 import { Loading, useLoading } from "../../shared"
@@ -56,7 +56,7 @@ export default function EnsureNode() {
   if (loading) return <Loading />
 
   return (
-    <Container maxWidth={"2xl"}>
+    <Container>
       {node == null && <NewNode onSubmitNewNode={onSubmitNewNode} />}
       {node != null && <EditNode node={node} />}
     </Container>

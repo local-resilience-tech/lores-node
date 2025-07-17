@@ -1,11 +1,14 @@
-import { Link, VStack, Card, Text, DataList } from "@chakra-ui/react"
+import { Stack, Card, Text, Box, Table, useMantineTheme } from "@mantine/core"
 import { NodeDetailsWithStatus } from "../../this_node"
+import { Anchor } from "../../../components"
 
-const IpLink = ({ ip }: { ip: string }) => {
+const IpLink = ({ ip }: { ip: string | undefined | null }) => {
+  if (!ip) return <Text c="dimmed">unknown</Text>
+
   return (
-    <Link href={`https://${ip}`} target="_blank" rel="noopener noreferrer">
+    <Anchor href={`https://${ip}`} newWindow>
       {ip}
-    </Link>
+    </Anchor>
   )
 }
 
@@ -14,36 +17,44 @@ export default function NodesList({
 }: {
   nodes: NodeDetailsWithStatus[]
 }) {
+  const theme = useMantineTheme()
+
   return (
-    <VStack alignItems="stretch" gap={4}>
+    <Stack>
       {nodes.map((node) => (
-        <Card.Root key={node.id}>
-          <Card.Body gap="2">
-            <Card.Title mt="2">{node.name}</Card.Title>
-            <Text fontSize="xs" fontFamily="mono" mt={-2}>
-              {node.id}
-            </Text>
-            <DataList.Root orientation="horizontal">
-              <DataList.Item key="message">
-                <DataList.ItemLabel>Message</DataList.ItemLabel>
-                <DataList.ItemValue>{node.status_text}</DataList.ItemValue>
-              </DataList.Item>
-              <DataList.Item key="ip">
-                <DataList.ItemLabel>IP</DataList.ItemLabel>
-                <DataList.ItemValue>
-                  {node.public_ipv4 || "unknown"}
-                </DataList.ItemValue>
-              </DataList.Item>
-              <DataList.Item key="state">
-                <DataList.ItemLabel>State</DataList.ItemLabel>
-                <DataList.ItemValue>
-                  {node.state || "unknown"}
-                </DataList.ItemValue>
-              </DataList.Item>
-            </DataList.Root>
-          </Card.Body>
-        </Card.Root>
+        <Card key={node.id} withBorder>
+          <Stack>
+            <Box>
+              <Text fw={500}>{node.name}</Text>
+              <Text size="xs" ff="mono">
+                {node.id}
+              </Text>
+            </Box>
+            <Card.Section>
+              <Table layout="fixed" bgcolor={theme.colors.dark[7]}>
+                <Table.Tbody>
+                  <Table.Tr>
+                    <Table.Th w={160}>Message</Table.Th>
+                    <Table.Td>{node.status_text}</Table.Td>
+                  </Table.Tr>
+
+                  <Table.Tr>
+                    <Table.Th>IP</Table.Th>
+                    <Table.Td>
+                      <IpLink ip={node.public_ipv4} />
+                    </Table.Td>
+                  </Table.Tr>
+
+                  <Table.Tr>
+                    <Table.Th>State</Table.Th>
+                    <Table.Td>{node.state || "unknown"}</Table.Td>
+                  </Table.Tr>
+                </Table.Tbody>
+              </Table>
+            </Card.Section>
+          </Stack>
+        </Card>
       ))}
-    </VStack>
+    </Stack>
   )
 }

@@ -1,4 +1,5 @@
-import { Container, Center, Spinner } from "@chakra-ui/react"
+import { Container, Loader, Center } from "@mantine/core"
+
 import { useState } from "react"
 
 type WithLoadingType = (fn: () => Promise<void>) => Promise<void>
@@ -19,9 +20,9 @@ export const useLoading = (
 
 export default function Loading() {
   return (
-    <Container maxWidth={"2xl"}>
+    <Container>
       <Center>
-        <Spinner size="lg" opacity={0.5} />
+        <Loader />
       </Center>
     </Container>
   )

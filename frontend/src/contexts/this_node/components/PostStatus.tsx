@@ -1,6 +1,6 @@
-import { Input, NativeSelect, VStack } from "@chakra-ui/react"
-import { Field, Button, FormActions } from "../../../components"
-import { useForm } from "react-hook-form"
+import { Stack, TextInput, Button, Select } from "@mantine/core"
+import { useForm } from "@mantine/form"
+
 import type { NodeStatusData } from "../../../api/Api"
 
 export default function PostStatus({
@@ -8,55 +8,55 @@ export default function PostStatus({
 }: {
   onSubmit: (data: NodeStatusData) => void
 }) {
-  const {
-    register,
-    handleSubmit,
-    formState: { errors, isSubmitting },
-  } = useForm<NodeStatusData>()
+  const form = useForm<NodeStatusData>({
+    mode: "controlled",
+    initialValues: {},
+    validate: {
+      text: (value) => {
+        if (!value) return "This is required"
+        if (value.length > 255) return "Must be less than 255 characters"
+        return null
+      },
+      state: (value) => {
+        if (!value) return null // Optional field
+        const validStates = ["active", "inactive", "maintenance", "development"]
+        if (!validStates.includes(value)) return "Invalid state"
+        return null
+      },
+    },
+  })
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)}>
-      <VStack gap={4} align="stretch">
-        <Field
-          label="Text"
-          helperText={`Describe the status of your node. This will be displayed to other nodes.`}
-          invalid={!!errors.text}
-          errorText={errors.text?.message}
-        >
-          <Input
-            {...register("text", {
-              required: "This is required",
-              maxLength: {
-                value: 255,
-                message: "Must be less than 255 characters",
-              },
-            })}
+    <form onSubmit={form.onSubmit(onSubmit)}>
+      <Stack>
+        <Stack>
+          <TextInput
+            label="Text"
+            placeholder="Enter status text"
+            description="Describe the status of your node. This will be displayed to other nodes."
+            key="text"
+            {...form.getInputProps("text")}
           />
-        </Field>
 
-        <Field
-          label="State"
-          helperText={`Optional: Set the state of your node. This can help other nodes understand your node's current status.`}
-          invalid={!!errors.state}
-          errorText={errors.state?.message}
-        >
-          <NativeSelect.Root size="sm" width="240px">
-            <NativeSelect.Field placeholder="Select state">
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
-              <option value="maintenance">Maintenance</option>
-              <option value="development">Development</option>
-            </NativeSelect.Field>
-            <NativeSelect.Indicator />
-          </NativeSelect.Root>
-        </Field>
+          <Select
+            label="State"
+            description={`Optional: Set the state of your node. This can help other nodes understand your node's current status.`}
+            placeholder="Select state"
+            data={[
+              { value: "active", label: "Active" },
+              { value: "inactive", label: "Inactive" },
+              { value: "maintenance", label: "Maintenance" },
+              { value: "development", label: "Development" },
+            ]}
+            key="state"
+            {...form.getInputProps("state")}
+          />
+        </Stack>
 
-        <FormActions>
-          <Button loading={isSubmitting} type="submit">
-            Post
-          </Button>
-        </FormActions>
-      </VStack>
+        <Button loading={form.submitting} type="submit">
+          Post
+        </Button>
+      </Stack>
     </form>
   )
 }
