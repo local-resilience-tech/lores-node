@@ -1,4 +1,4 @@
-import { Container, Heading, VStack } from "@chakra-ui/react"
+import { Container, Stack, Title } from "@mantine/core"
 import { useContext, useEffect, useState } from "react"
 import { RegionContext } from "../provider_contexts"
 import NodesList from "../components/NodesList"
@@ -37,16 +37,13 @@ export default function Nodes() {
   if (loading) return <Loading />
 
   return (
-    <Container maxWidth={"2xl"}>
-      <VStack alignItems={"stretch"}>
-        <Heading as="h1" size="2xl">
-          {regionDetails.network_id}
-        </Heading>
-        <Heading as="h2" size="lg">
-          Nodes
-        </Heading>
+    <Container>
+      <Stack>
+        <Title order={1}>Nodes</Title>
+        <Title order={2}>{regionDetails.network_id}</Title>
+
         {nodes && <NodesList nodes={nodes} />}
-      </VStack>
+      </Stack>
     </Container>
   )
 }
