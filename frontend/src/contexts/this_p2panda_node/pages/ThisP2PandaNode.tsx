@@ -1,4 +1,4 @@
-import { VStack, Text, Table, Box } from "@chakra-ui/react"
+import { Stack, Title, Container, Table, Box } from "@mantine/core"
 import { useEffect, useState } from "react"
 import { getApi } from "../../../api"
 import type { P2PandaNodeDetails } from "../../../api/Api"
@@ -38,43 +38,45 @@ export default function ThisP2PandaNode() {
   // }
 
   return (
-    <VStack alignItems={"stretch"}>
-      <Text textStyle="xl">This P2Panda Node</Text>
-      {/* <Box mb={4}>
+    <Container>
+      <Stack>
+        <Title order={1}>This P2Panda Node</Title>
+        {/* <Box mb={4}>
         <Button onClick={restartNode()}>Restart Node</Button>
       </Box> */}
-      <Table.Root variant="line">
-        <Table.Header>
-          <Table.Row>
-            <Table.ColumnHeader>Key</Table.ColumnHeader>
-            <Table.ColumnHeader>Value</Table.ColumnHeader>
-          </Table.Row>
-        </Table.Header>
-        <Table.Body>
-          <Table.Row>
-            <Table.Cell>Panda Node Id</Table.Cell>
-            <Table.Cell>
-              <pre>{node.panda_node_id}</pre>
-            </Table.Cell>
-          </Table.Row>
-          <Table.Row>
-            <Table.Cell>Iroh Node Addr</Table.Cell>
-            <Table.Cell>
-              <Box maxW={"md"}>
-                <pre>{JSON.stringify(node.iroh_node_addr, null, 2)}</pre>
-              </Box>
-            </Table.Cell>
-          </Table.Row>
-          <Table.Row>
-            <Table.Cell>Peers</Table.Cell>
-            <Table.Cell>
-              <Box maxW={"md"}>
-                <pre>{JSON.stringify(node.peers, null, 2)}</pre>
-              </Box>
-            </Table.Cell>
-          </Table.Row>
-        </Table.Body>
-      </Table.Root>
-    </VStack>
+        <Table>
+          <Table.Thead>
+            <Table.Tr>
+              <Table.Th>Key</Table.Th>
+              <Table.Th>Value</Table.Th>
+            </Table.Tr>
+          </Table.Thead>
+          <Table.Tbody>
+            <Table.Tr>
+              <Table.Td>Panda Node Id</Table.Td>
+              <Table.Td>
+                <pre>{node.panda_node_id}</pre>
+              </Table.Td>
+            </Table.Tr>
+            <Table.Tr>
+              <Table.Td>Iroh Node Addr</Table.Td>
+              <Table.Td>
+                <Box maw={"md"}>
+                  <pre>{JSON.stringify(node.iroh_node_addr, null, 2)}</pre>
+                </Box>
+              </Table.Td>
+            </Table.Tr>
+            <Table.Tr>
+              <Table.Td>Peers</Table.Td>
+              <Table.Td>
+                <Box maw={"md"}>
+                  <pre>{JSON.stringify(node.peers, null, 2)}</pre>
+                </Box>
+              </Table.Td>
+            </Table.Tr>
+          </Table.Tbody>
+        </Table>
+      </Stack>
+    </Container>
   )
 }
