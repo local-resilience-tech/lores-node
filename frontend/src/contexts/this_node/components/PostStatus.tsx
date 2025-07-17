@@ -1,5 +1,4 @@
 import { Stack, TextInput, Button, Select } from "@mantine/core"
-import { FormActions } from "../../../components"
 import { useForm } from "@mantine/form"
 
 import type { NodeStatusData } from "../../../api/Api"
@@ -30,33 +29,33 @@ export default function PostStatus({
   return (
     <form onSubmit={form.onSubmit(onSubmit)}>
       <Stack>
-        <TextInput
-          label="Text"
-          placeholder="Enter status text"
-          description="Describe the status of your node. This will be displayed to other nodes."
-          key="text"
-          {...form.getInputProps("text")}
-        />
+        <Stack>
+          <TextInput
+            label="Text"
+            placeholder="Enter status text"
+            description="Describe the status of your node. This will be displayed to other nodes."
+            key="text"
+            {...form.getInputProps("text")}
+          />
 
-        <Select
-          label="State"
-          description={`Optional: Set the state of your node. This can help other nodes understand your node's current status.`}
-          placeholder="Select state"
-          data={[
-            { value: "active", label: "Active" },
-            { value: "inactive", label: "Inactive" },
-            { value: "maintenance", label: "Maintenance" },
-            { value: "development", label: "Development" },
-          ]}
-          key="state"
-          {...form.getInputProps("state")}
-        />
+          <Select
+            label="State"
+            description={`Optional: Set the state of your node. This can help other nodes understand your node's current status.`}
+            placeholder="Select state"
+            data={[
+              { value: "active", label: "Active" },
+              { value: "inactive", label: "Inactive" },
+              { value: "maintenance", label: "Maintenance" },
+              { value: "development", label: "Development" },
+            ]}
+            key="state"
+            {...form.getInputProps("state")}
+          />
+        </Stack>
 
-        <FormActions>
-          <Button loading={form.submitting} type="submit">
-            Post
-          </Button>
-        </FormActions>
+        <Button loading={form.submitting} type="submit">
+          Post
+        </Button>
       </Stack>
     </form>
   )

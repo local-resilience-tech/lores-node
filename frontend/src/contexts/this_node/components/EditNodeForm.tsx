@@ -1,5 +1,4 @@
 import { useForm } from "@mantine/form"
-import { FormActions } from "../../../components"
 import type { Node, UpdateNodeDetails } from "../../../api/Api"
 import { Button, Stack, TextInput } from "@mantine/core"
 
@@ -36,27 +35,27 @@ export default function EditNodeForm({
   return (
     <form onSubmit={form.onSubmit(onSubmit)}>
       <Stack>
-        <TextInput
-          label="Node name"
-          placeholder="Enter node name"
-          description="A name to identify your Node - use lowercase letters and no spaces"
-          key="name"
-          {...form.getInputProps("name")}
-        />
+        <Stack>
+          <TextInput
+            label="Node name"
+            placeholder="Enter node name"
+            description="A name to identify your Node - use lowercase letters and no spaces"
+            key="name"
+            {...form.getInputProps("name")}
+          />
 
-        <TextInput
-          label="Public IPv4"
-          placeholder="Enter public IPv4"
-          description="The public IPv4 address of your node"
-          key="public_ipv4"
-          {...form.getInputProps("public_ipv4")}
-        />
+          <TextInput
+            label="Public IPv4"
+            placeholder="Enter public IPv4"
+            description="The public IPv4 address of your node"
+            key="public_ipv4"
+            {...form.getInputProps("public_ipv4")}
+          />
+        </Stack>
 
-        <FormActions>
-          <Button loading={form.submitting} type="submit">
-            Update
-          </Button>
-        </FormActions>
+        <Button loading={form.submitting} type="submit">
+          Update
+        </Button>
       </Stack>
     </form>
   )
