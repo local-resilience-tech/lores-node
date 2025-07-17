@@ -1,6 +1,6 @@
-import { Box, Text } from "@chakra-ui/react"
+import { Box, Text } from "@mantine/core"
 import {
-  BootstrapNode,
+  BootstrapNodeForm,
   BootstrapNodeData,
   BootstrapPeer,
 } from "../../this_p2panda_node"
@@ -29,7 +29,7 @@ export default function ExistingRegion() {
   }
 
   if (bootstrapData == null) {
-    return <BootstrapNode onSubmit={onSubmitBootstrapNode} />
+    return <BootstrapNodeForm onSubmit={onSubmitBootstrapNode} />
   }
 
   return (

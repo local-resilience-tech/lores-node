@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import { Container } from "@chakra-ui/react"
+import { Container } from "@mantine/core"
 import SetRegion from "../components/SetRegion"
 import { NewRegionData } from "../components/NewRegion"
 import { Outlet } from "react-router-dom"
@@ -56,7 +56,7 @@ export default function EnsureRegion({
   if (loading) return <Loading />
 
   return (
-    <Container maxWidth={"2xl"}>
+    <Container>
       {regionDetails == null && (
         <SetRegion onSubmitNewRegion={onSubmitNewRegion} />
       )}

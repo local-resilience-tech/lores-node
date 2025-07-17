@@ -1,7 +1,5 @@
-import { Input } from "@chakra-ui/react"
-import { useForm } from "react-hook-form"
-
-import { Field, FormActions, Button, FormFields } from "../../../components"
+import { Text, TextInput, Button, Stack } from "@mantine/core"
+import { useForm } from "@mantine/form"
 
 export interface NewRegionData {
   name: string
@@ -14,42 +12,41 @@ export default function NewRegion({
 }: {
   onSubmitNewRegion: SubmitNewRegionFunc
 }) {
-  const {
-    register,
-    handleSubmit,
-    formState: { errors, isSubmitting },
-  } = useForm<NewRegionData>()
+  const form = useForm<NewRegionData>({
+    mode: "controlled",
+    initialValues: {
+      name: "",
+    },
+    validate: {
+      name: (value) => {
+        if (!value) return "This is required"
+        if (value.length > 50) return "Must be less than 50 characters"
+        if (!/^[a-z]+(-[a-z]+)*$/.test(value))
+          return "Lowercase letters only, no spaces, hyphens allowed"
+        return null
+      },
+    },
+  })
 
   return (
-    <form onSubmit={handleSubmit(onSubmitNewRegion)}>
-      <FormFields>
-        <Field
-          label="Region Name"
-          helperText={`A name to identify your Region - use lowercase letters and no spaces`}
-          invalid={!!errors.name}
-          errorText={errors.name?.message}
-        >
-          <Input
-            {...register("name", {
-              required: "This is required",
-              maxLength: {
-                value: 50,
-                message: "Must be less than 50 characters",
-              },
-              pattern: {
-                value: /^[a-z]+(-[a-z]+)*$/,
-                message: "Lowercase letters only, no spaces, hyphens allowed",
-              },
-            })}
+    <form onSubmit={form.onSubmit(onSubmitNewRegion)}>
+      <Stack>
+        <Stack>
+          <TextInput
+            label="Region Name"
+            placeholder="Enter region name"
+            description="A name to identify your Region - use lowercase letters and no spaces"
+            key="name"
+            {...form.getInputProps("name")}
           />
-        </Field>
-      </FormFields>
+        </Stack>
 
-      <FormActions>
-        <Button loading={isSubmitting} type="submit">
-          Create Region
-        </Button>
-      </FormActions>
+        <Stack>
+          <Button loading={form.submitting} type="submit">
+            Create Region
+          </Button>
+        </Stack>
+      </Stack>
     </form>
   )
 }
