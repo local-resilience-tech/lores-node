@@ -1,4 +1,11 @@
-import { Anchor, AppShell, Burger, Container, Group } from "@mantine/core"
+import {
+  Anchor,
+  AppShell,
+  Badge,
+  Burger,
+  Container,
+  Group,
+} from "@mantine/core"
 import { NavLink } from "../../components"
 import { Outlet } from "react-router-dom"
 import { useDisclosure } from "@mantine/hooks"
@@ -15,6 +22,7 @@ export default function Layout() {
 
   const region = useAppSelector((state) => state.region)
   const node = useAppSelector((state) => state.thisNode)
+  const nodesCount = useAppSelector((state) => state.nodes?.length)
 
   return (
     <AppShell
@@ -35,6 +43,9 @@ export default function Layout() {
               label="Nodes"
               href="/nodes"
               leftSection={<IconAffiliate size={iconSize} />}
+              rightSection={
+                nodesCount !== undefined && <Badge circle>{nodesCount}</Badge>
+              }
               onClick={toggle}
             />
             <NavLink
