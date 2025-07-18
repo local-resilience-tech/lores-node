@@ -2,7 +2,6 @@ import { useEffect, useState } from "react"
 import { Container } from "@mantine/core"
 import SetRegion from "../components/SetRegion"
 import { Outlet } from "react-router-dom"
-import { RegionContext } from "../provider_contexts"
 import { Loading, useLoading } from "../../shared"
 import { getApi } from "../../../api"
 import { BootstrapNodeData, Region } from "../../../api/Api"
@@ -58,9 +57,7 @@ export default function EnsureRegion({
   return (
     <Container>
       {!region && <SetRegion onSubmit={onSubmit} />}
-      <RegionContext.Provider value={region}>
-        {region && (children || <Outlet />)}
-      </RegionContext.Provider>
+      {region && (children || <Outlet />)}
     </Container>
   )
 }

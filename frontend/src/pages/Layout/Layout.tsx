@@ -14,6 +14,7 @@ export default function Layout() {
   const iconSize = 20
 
   const region = useAppSelector((state) => state.region)
+  const node = useAppSelector((state) => state.thisNode)
 
   return (
     <AppShell
@@ -37,7 +38,7 @@ export default function Layout() {
               onClick={toggle}
             />
             <NavLink
-              label="This Node"
+              label={node ? node.name : "This Node"}
               href="/this_node"
               leftSection={<IconHome size={iconSize} />}
               onClick={toggle}
