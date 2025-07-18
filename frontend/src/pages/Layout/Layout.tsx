@@ -40,6 +40,7 @@ export default function Layout() {
             <NavLink
               label={node ? node.name : "This Node"}
               href="/this_node"
+              key={node ? node.id : "this_node"}
               leftSection={<IconHome size={iconSize} />}
               onClick={toggle}
             />
