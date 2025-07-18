@@ -11,12 +11,8 @@
  */
 
 export interface BootstrapNodeData {
-  bootstrap_peer?: null | BootstrapNodePeer;
   network_name: string;
-}
-
-export interface BootstrapNodePeer {
-  node_id: string;
+  node_id?: string | null;
 }
 
 export interface CreateNodeDetails {
@@ -245,7 +241,7 @@ export class HttpClient<SecurityDataType = unknown> {
 
 /**
  * @title lores-node
- * @version 0.6.2
+ * @version 0.7.5
  * @license
  */
 export class Api<

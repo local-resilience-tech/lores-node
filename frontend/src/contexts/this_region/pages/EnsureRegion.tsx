@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react"
 import { Container } from "@mantine/core"
 import SetRegion from "../components/SetRegion"
-import { NewRegionData } from "../components/NewRegion"
 import { Outlet } from "react-router-dom"
-import { RegionContext } from "../provider_contexts"
 import { Loading, useLoading } from "../../shared"
 import { getApi } from "../../../api"
-import { Region } from "../../../api/Api"
+import { BootstrapNodeData, Region } from "../../../api/Api"
+import { regionLoaded } from "../../../store/region"
+import { useAppDispatch, useAppSelector } from "../../../store"
 
 const getRegion = async (): Promise<Region | null> => {
   const result = await getApi().api.showRegion()
@@ -19,30 +19,29 @@ export default function EnsureRegion({
 }: {
   children?: React.ReactNode
 }) {
-  const [regionDetails, setRegionDetails] = useState<Region | null>(null)
+  const region = useAppSelector((state) => state.region)
+  const dispatch = useAppDispatch()
+
   const [loading, withLoading] = useLoading(true)
 
   const fetchRegion = async () => {
     withLoading(async () => {
       const newRegion = await getRegion()
       console.log("EFFECT: fetchRegion", newRegion)
-      setRegionDetails(newRegion)
+      dispatch(regionLoaded(newRegion))
     })
   }
 
-  const onSubmitNewRegion = (data: NewRegionData) => {
+  const onSubmit = async (data: BootstrapNodeData) => {
     getApi()
-      .api.bootstrap({
-        network_name: data.name,
-        bootstrap_peer: null,
-      })
+      .api.bootstrap(data)
       .then((result) => {
         if (result.status === 200) {
           console.log("Successfully bootstrapped", result)
           const newRegion: Region = {
-            network_id: data.name,
+            network_id: data.network_name,
           }
-          setRegionDetails(newRegion)
+          dispatch(regionLoaded(newRegion))
         } else {
           console.log("Failed to bootstrap", result)
         }
@@ -57,12 +56,8 @@ export default function EnsureRegion({
 
   return (
     <Container>
-      {regionDetails == null && (
-        <SetRegion onSubmitNewRegion={onSubmitNewRegion} />
-      )}
-      <RegionContext.Provider value={regionDetails}>
-        {regionDetails != null && (children || <Outlet />)}
-      </RegionContext.Provider>
+      {!region && <SetRegion onSubmit={onSubmit} />}
+      {region && (children || <Outlet />)}
     </Container>
   )
 }

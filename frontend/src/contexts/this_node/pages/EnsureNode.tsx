@@ -1,10 +1,12 @@
 import { Container } from "@mantine/core"
-import { useEffect, useState } from "react"
+import { useEffect } from "react"
 import NewNode, { NewNodeData } from "../components/NewNode"
 import { Loading, useLoading } from "../../shared"
 import EditNode from "./EditNode"
 import { getApi } from "../../../api"
 import type { Node } from "../../../api/Api"
+import { useAppDispatch, useAppSelector } from "../../../store"
+import { thisNodeLoaded } from "../../../store/this_node"
 
 const getNode = async (): Promise<Node | null> => {
   const result = await getApi().api.showThisNode()
@@ -18,12 +20,13 @@ const getNode = async (): Promise<Node | null> => {
 }
 
 export default function EnsureNode() {
-  const [node, setNode] = useState<Node | null>(null)
+  const node = useAppSelector((state) => state.thisNode)
+  const dispatch = useAppDispatch()
   const [loading, withLoading] = useLoading(true)
 
   const updateNode = (newNode: Node | null) => {
     console.log("Updating node", newNode)
-    setNode(newNode)
+    dispatch(thisNodeLoaded(newNode))
   }
 
   const fetchNode = async () => {

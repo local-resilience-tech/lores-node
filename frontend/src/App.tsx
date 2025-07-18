@@ -4,11 +4,14 @@ import { EnsureNode } from "./contexts/this_node"
 import { ThisP2PandaNode } from "./contexts/this_p2panda_node"
 import { EnsureRegion, Nodes } from "./contexts/this_region"
 import { MantineProvider } from "@mantine/core"
+import { Provider as ReduxProvider } from "react-redux"
 import { theme } from "./mantine-theme"
 
 // Import styles of packages that you've installed.
 // All packages except `@mantine/hooks` require styles imports
 import "@mantine/core/styles.css"
+
+import store from "./store"
 
 const router = createBrowserRouter([
   {
@@ -32,7 +35,9 @@ const router = createBrowserRouter([
 function App() {
   return (
     <MantineProvider defaultColorScheme="dark" theme={theme}>
-      <RouterProvider router={router} />
+      <ReduxProvider store={store}>
+        <RouterProvider router={router} />
+      </ReduxProvider>
     </MantineProvider>
   )
 }
