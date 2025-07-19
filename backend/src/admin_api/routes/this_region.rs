@@ -4,6 +4,7 @@ use sqlx::SqlitePool;
 use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::{
+    admin_api::routes::this_p2panda_node::BootstrapNodeData,
     config::LoresNodeConfig,
     panda_comms::container::{build_public_key_from_hex, P2PandaContainer},
     repos::{
@@ -11,7 +12,6 @@ use crate::{
         nodes::NodesRepo,
         this_p2panda_node::{SimplifiedNodeAddress, ThisP2PandaNodeRepo},
     },
-    routes::this_p2panda_node::BootstrapNodeData,
 };
 
 pub fn router() -> OpenApiRouter {

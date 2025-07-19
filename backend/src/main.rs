@@ -12,7 +12,7 @@ use utoipa_axum::router::OpenApiRouter;
 use utoipa_swagger_ui::SwaggerUi;
 
 use crate::{
-    api::api_router,
+    admin_api::api_router,
     config::LoresNodeConfig,
     events::handler_map::handle_event,
     infra::db,
@@ -24,13 +24,12 @@ use crate::{
     static_server::frontend_handler,
 };
 
-mod api;
+mod admin_api;
 mod config;
 mod events;
 mod infra;
 mod panda_comms;
 mod repos;
-mod routes;
 mod static_server;
 
 #[macro_use]

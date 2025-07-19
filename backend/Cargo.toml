@@ -8,7 +8,7 @@ publish = false
 iroh = "0.34.1"
 anyhow = "1.0.98"
 async-trait = "0.1.88"
-axum = "0.8.4"
+axum = { version = "0.8.4", features = ["ws"] }
 experimental-node = { git = "https://github.com/p2panda/experimental-node", rev = "ec5ccfa01613a8a487acf2883cf7cb1046b41c94" }
 p2panda-blobs = "0.4.0"
 p2panda-core = "0.4.0"
@@ -33,3 +33,4 @@ tracing = "0.1.41"
 tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }
 openssl = { version = "0.10.73", features = ["vendored"] }
 confy = "1.0.0"
+futures-util = "0.3.31"
