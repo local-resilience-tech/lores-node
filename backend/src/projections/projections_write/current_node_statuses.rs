@@ -7,11 +7,11 @@ pub struct CurrentNodeStatusRow {
     pub state: Option<String>,
 }
 
-pub struct CurrentNodeStatusesRepo {}
+pub struct CurrentNodeStatusesWriteRepo {}
 
-impl CurrentNodeStatusesRepo {
+impl CurrentNodeStatusesWriteRepo {
     pub fn init() -> Self {
-        CurrentNodeStatusesRepo {}
+        CurrentNodeStatusesWriteRepo {}
     }
 
     pub async fn upsert(

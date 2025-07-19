@@ -1,8 +1,6 @@
 use sqlx::SqlitePool;
 
-use super::entities::{Node, NodeDetails};
-
-pub struct NodesRepo {}
+use super::super::entities::Node;
 
 pub struct NodeUpdateRow {
     pub id: String,
@@ -10,9 +8,11 @@ pub struct NodeUpdateRow {
     pub public_ipv4: Option<String>,
 }
 
-impl NodesRepo {
+pub struct NodesWriteRepo {}
+
+impl NodesWriteRepo {
     pub fn init() -> Self {
-        NodesRepo {}
+        NodesWriteRepo {}
     }
 
     pub async fn upsert(&self, pool: &SqlitePool, node: Node) -> Result<(), sqlx::Error> {
@@ -39,16 +39,5 @@ impl NodesRepo {
         .await?;
 
         Ok(())
-    }
-
-    pub async fn all(&self, pool: &SqlitePool) -> Result<Vec<NodeDetails>, sqlx::Error> {
-        let nodes = sqlx::query_as!(
-            NodeDetails,
-            "SELECT id, name, public_ipv4, s.text as status_text, s.state as state FROM nodes LEFT JOIN current_node_statuses AS s ON nodes.id = s.node_id"
-        )
-        .fetch_all(pool)
-        .await?;
-
-        Ok(nodes)
     }
 }

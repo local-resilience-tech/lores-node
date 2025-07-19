@@ -2,11 +2,13 @@ use sqlx::Sqlite;
 
 use crate::{
     panda_comms::lores_events::{LoResEvent, LoResEventPayload},
-    repos::{
-        current_node_statuses::{CurrentNodeStatusRow, CurrentNodeStatusesRepo},
+    projections::{
         entities::Node,
-        node_statuses::{NodeStatusRow, NodeStatusesRepo},
-        nodes::{NodeUpdateRow, NodesRepo},
+        projections_write::{
+            current_node_statuses::{CurrentNodeStatusRow, CurrentNodeStatusesWriteRepo},
+            node_statuses::{NodeStatusRow, NodeStatusesWriteRepo},
+            nodes::{NodeUpdateRow, NodesWriteRepo},
+        },
     },
 };
 
@@ -24,7 +26,7 @@ pub async fn handle_event(event: LoResEvent, pool: &sqlx::Pool<Sqlite>) {
             upsert_node(pool, node).await;
         }
         LoResEventPayload::NodeUpdated(payload) => {
-            let repo = NodesRepo::init();
+            let repo = NodesWriteRepo::init();
 
             println!("Node updated: {:?}", payload);
 
@@ -50,7 +52,7 @@ pub async fn handle_event(event: LoResEvent, pool: &sqlx::Pool<Sqlite>) {
             }
         }
         LoResEventPayload::NodeStatusPosted(payload) => {
-            let repo = NodeStatusesRepo::init();
+            let repo = NodeStatusesWriteRepo::init();
 
             println!("Node status posted: {:?}", payload);
 
@@ -73,7 +75,7 @@ pub async fn handle_event(event: LoResEvent, pool: &sqlx::Pool<Sqlite>) {
                 println!("Node status posted successfully");
             }
 
-            let repo = CurrentNodeStatusesRepo::init();
+            let repo = CurrentNodeStatusesWriteRepo::init();
 
             let result = repo
                 .upsert(
@@ -97,7 +99,7 @@ pub async fn handle_event(event: LoResEvent, pool: &sqlx::Pool<Sqlite>) {
 }
 
 async fn upsert_node(pool: &sqlx::Pool<Sqlite>, node: Node) {
-    let repo = NodesRepo::init();
+    let repo = NodesWriteRepo::init();
 
     repo.upsert(pool, node).await.unwrap();
 }

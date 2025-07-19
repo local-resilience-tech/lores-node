@@ -8,11 +8,11 @@ pub struct NodeStatusRow {
     pub state: Option<String>,
 }
 
-pub struct NodeStatusesRepo {}
+pub struct NodeStatusesWriteRepo {}
 
-impl NodeStatusesRepo {
+impl NodeStatusesWriteRepo {
     pub fn init() -> Self {
-        NodeStatusesRepo {}
+        NodeStatusesWriteRepo {}
     }
 
     pub async fn upsert(

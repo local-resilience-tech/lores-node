@@ -17,10 +17,10 @@ use crate::{
     events::handler_map::handle_event,
     infra::db,
     panda_comms::{
+        config::ThisP2PandaNodeRepo,
         container::{build_public_key_from_hex, P2PandaContainer},
         lores_events::LoResEvent,
     },
-    repos::this_p2panda_node::ThisP2PandaNodeRepo,
     static_server::frontend_handler,
 };
 
@@ -29,7 +29,7 @@ mod config;
 mod events;
 mod infra;
 mod panda_comms;
-mod repos;
+mod projections;
 mod static_server;
 
 #[macro_use]

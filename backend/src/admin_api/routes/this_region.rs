@@ -6,11 +6,13 @@ use utoipa_axum::{router::OpenApiRouter, routes};
 use crate::{
     admin_api::routes::this_p2panda_node::BootstrapNodeData,
     config::LoresNodeConfig,
-    panda_comms::container::{build_public_key_from_hex, P2PandaContainer},
-    repos::{
+    panda_comms::{
+        config::{SimplifiedNodeAddress, ThisP2PandaNodeRepo},
+        container::{build_public_key_from_hex, P2PandaContainer},
+    },
+    projections::{
         entities::{NodeDetails, Region},
-        nodes::NodesRepo,
-        this_p2panda_node::{SimplifiedNodeAddress, ThisP2PandaNodeRepo},
+        projections_read::nodes::NodesReadRepo,
     },
 };
 
@@ -44,7 +46,7 @@ async fn show_region(Extension(config): Extension<LoresNodeConfig>) -> impl Into
     (status = INTERNAL_SERVER_ERROR, body = ()),
 ),)]
 async fn show_region_nodes(Extension(pool): Extension<SqlitePool>) -> impl IntoResponse {
-    let repo = NodesRepo::init();
+    let repo = NodesReadRepo::init();
 
     repo.all(&pool)
         .await

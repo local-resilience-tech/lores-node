@@ -1,11 +1,12 @@
-use super::entities::Node;
 use sqlx::SqlitePool;
 
-pub struct ThisNodeRepo {}
+use super::super::entities::Node;
 
-impl ThisNodeRepo {
+pub struct ThisNodeReadRepo {}
+
+impl ThisNodeReadRepo {
     pub fn init() -> Self {
-        ThisNodeRepo {}
+        ThisNodeReadRepo {}
     }
 
     pub async fn find(
