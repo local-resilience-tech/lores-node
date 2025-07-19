@@ -5,6 +5,7 @@ use utoipa::ToSchema;
 use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::{
+    config::LoresNodeConfig,
     panda_comms::{
         container::P2PandaContainer,
         lores_events::{
@@ -26,16 +27,27 @@ pub fn router() -> OpenApiRouter {
     (status = 200, body = Option<Node>),
     (status = INTERNAL_SERVER_ERROR, body = String, description = "Internal Server Error"),
 ))]
-async fn show_this_node(Extension(pool): Extension<SqlitePool>) -> impl IntoResponse {
+async fn show_this_node(
+    Extension(pool): Extension<SqlitePool>,
+    Extension(config): Extension<LoresNodeConfig>,
+) -> impl IntoResponse {
     let repo = ThisNodeRepo::init();
 
-    let node = repo.find(&pool).await;
+    match config.public_key_hex {
+        Some(public_key_hex) => {
+            let node = repo.find(&pool, public_key_hex).await;
 
-    match node {
-        Ok(node) => (StatusCode::OK, Json(node)).into_response(),
-        Err(err) => {
-            eprintln!("Error fetching node: {}", err);
-            (StatusCode::INTERNAL_SERVER_ERROR, "Internal Server Error").into_response()
+            match node {
+                Ok(node) => (StatusCode::OK, Json(node)).into_response(),
+                Err(err) => {
+                    eprintln!("Error fetching node: {}", err);
+                    (StatusCode::INTERNAL_SERVER_ERROR, "Internal Server Error").into_response()
+                }
+            }
+        }
+        None => {
+            eprintln!("No public key hex found in config");
+            return (StatusCode::INTERNAL_SERVER_ERROR, "Public key not found").into_response();
         }
     }
 }
