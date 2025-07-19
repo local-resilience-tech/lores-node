@@ -4,6 +4,7 @@ use sqlx::SqlitePool;
 use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::{
+    config::LoresNodeConfig,
     panda_comms::container::{build_public_key_from_hex, P2PandaContainer},
     repos::{
         entities::{NodeDetails, Region},
@@ -24,23 +25,18 @@ pub fn router() -> OpenApiRouter {
     (status = 200, body = Option<Region>, description = "Returns the current region's network ID if available"),
     (status = INTERNAL_SERVER_ERROR, body = ()),
 ),)]
-async fn show_region(Extension(pool): Extension<SqlitePool>) -> impl IntoResponse {
-    let repo = ThisP2PandaNodeRepo::init();
-
-    repo.get_network_name(&pool)
-        .await
-        .map(|network_id| match network_id {
-            Some(network_id) => {
-                println!("got network id {}", network_id);
-                (StatusCode::OK, Json(Some(Region { network_id })))
-            }
-            None => {
-                println!("no network id");
-                (StatusCode::OK, Json(None))
-            }
-        })
-        .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, Json(())))
-        .into_response()
+async fn show_region(Extension(config): Extension<LoresNodeConfig>) -> impl IntoResponse {
+    match config.network_name {
+        Some(network_id) => {
+            println!("got network id {}", network_id);
+            (StatusCode::OK, Json(Some(Region { network_id })))
+        }
+        None => {
+            println!("no network id");
+            (StatusCode::OK, Json(None))
+        }
+    }
+    .into_response()
 }
 
 #[utoipa::path(get, path = "/nodes", responses(
@@ -67,7 +63,7 @@ async fn show_region_nodes(Extension(pool): Extension<SqlitePool>) -> impl IntoR
     )
 )]
 async fn bootstrap(
-    Extension(pool): Extension<SqlitePool>,
+    Extension(mut config): Extension<LoresNodeConfig>,
     Extension(panda_container): Extension<P2PandaContainer>,
     axum::extract::Json(data): axum::extract::Json<BootstrapNodeData>,
 ) -> impl IntoResponse {
@@ -78,17 +74,7 @@ async fn bootstrap(
             node_id: node_id.clone(),
         });
 
-    let result = repo
-        .set_network_config(&pool, data.network_name.clone(), peer_address.clone())
-        .await;
-    if let Err(e) = result {
-        eprintln!("Failed to set network config: {:?}", e);
-        return (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            "Failed to set network config".to_string(),
-        )
-            .into_response();
-    }
+    repo.set_network_config(&mut config, data.network_name.clone(), peer_address.clone());
 
     panda_container
         .set_network_name(data.network_name.clone())
