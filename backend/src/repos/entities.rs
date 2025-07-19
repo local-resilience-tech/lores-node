@@ -28,8 +28,3 @@ pub struct NodeConfig {
 pub struct Region {
     pub network_id: String,
 }
-
-#[derive(sqlx::FromRow, Serialize, Deserialize, ToSchema)]
-pub struct PrivateKeyRow {
-    pub private_key_hex: Option<String>,
-}

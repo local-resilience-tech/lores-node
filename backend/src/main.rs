@@ -13,6 +13,7 @@ use utoipa_swagger_ui::SwaggerUi;
 
 use crate::{
     api::api_router,
+    config::LoresNodeConfig,
     events::handler_map::handle_event,
     infra::db,
     panda_comms::{
@@ -24,6 +25,7 @@ use crate::{
 };
 
 mod api;
+mod config;
 mod events;
 mod infra;
 mod panda_comms;
@@ -57,6 +59,9 @@ async fn main() {
         .allow_methods(cors::Any)
         .allow_headers(cors::Any);
 
+    // CONFIG
+    let mut config = config::LoresNodeConfig::load();
+
     // DATABASE
     let pool = db::prepare_database()
         .await
@@ -66,7 +71,7 @@ async fn main() {
     let (channel_tx, channel_rx): (mpsc::Sender<LoResEvent>, mpsc::Receiver<LoResEvent>) =
         mpsc::channel(32);
     let container = P2PandaContainer::new(channel_tx);
-    start_panda(&pool, &container).await;
+    start_panda(&mut config, &container).await;
     start_panda_event_handler(channel_rx, pool.clone());
 
     // ROUTES
@@ -80,6 +85,7 @@ async fn main() {
         .layer(cors)
         .layer(TraceLayer::new_for_http())
         .layer(Extension(pool))
+        .layer(Extension(config))
         .layer(Extension(container));
 
     // SERVICE
@@ -94,32 +100,24 @@ async fn main() {
     axum::serve(listener, app).await.unwrap();
 }
 
-async fn start_panda(pool: &SqlitePool, container: &P2PandaContainer) {
+async fn start_panda(config: &mut LoresNodeConfig, container: &P2PandaContainer) {
     let repo = ThisP2PandaNodeRepo::init();
 
-    match repo.get_network_name(pool).await {
-        Ok(network_name) => {
-            if let Some(network_name) = network_name {
-                println!("Got network name: {:?}", network_name);
-                container.set_network_name(network_name).await;
-            }
+    match config.network_name.clone() {
+        Some(network_name) => {
+            println!("Using network name: {:?}", network_name);
+            container.set_network_name(network_name.clone()).await;
         }
-        Err(_) => {
-            println!("Failed to get network name");
+        None => {
+            println!("No network name set");
         }
     }
 
-    match repo.get_or_create_private_key(pool).await {
-        Ok(private_key) => {
-            println!("Got private key");
-            container.set_private_key(private_key).await;
-        }
-        Err(_) => {
-            println!("Failed to get private key");
-        }
-    }
+    container
+        .set_private_key(repo.get_or_create_private_key(config))
+        .await;
 
-    let bootstrap_details = repo.get_bootstrap_details(pool).await.unwrap();
+    let bootstrap_details = repo.get_bootstrap_details(config);
     let bootstrap_node_id: Option<PublicKey> = match &bootstrap_details {
         Some(details) => build_public_key_from_hex(details.node_id.clone()),
         None => None,

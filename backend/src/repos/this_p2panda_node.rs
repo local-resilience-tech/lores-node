@@ -1,10 +1,6 @@
-use crate::repos::{
-    entities::PrivateKeyRow,
-    helpers::{NETWORK_CONFIG_ID, NODE_CONFIG_ID},
-};
+use crate::config::LoresNodeConfig;
 use hex;
 use p2panda_core::{identity::PRIVATE_KEY_LEN, PrivateKey};
-use sqlx::SqlitePool;
 
 pub struct ThisP2PandaNodeRepo {}
 
@@ -18,154 +14,63 @@ impl ThisP2PandaNodeRepo {
         ThisP2PandaNodeRepo {}
     }
 
-    pub async fn get_network_name(&self, pool: &SqlitePool) -> Result<Option<String>, sqlx::Error> {
-        let result = sqlx::query!(
-            "
-            SELECT network_name
-            FROM network_configs
-            WHERE network_configs.id = ?
-            LIMIT 1
-            ",
-            NETWORK_CONFIG_ID
-        )
-        .fetch_optional(pool)
-        .await?;
-
-        match result {
-            None => return Ok(None),
-            Some(result) => return Ok(result.network_name),
-        }
+    pub fn get_bootstrap_details(&self, config: &LoresNodeConfig) -> Option<SimplifiedNodeAddress> {
+        config
+            .bootstrap_node_id
+            .clone()
+            .map(|bootstrap_node_id| SimplifiedNodeAddress {
+                node_id: bootstrap_node_id,
+            })
     }
 
-    pub async fn get_bootstrap_details(
+    pub fn set_network_config(
         &self,
-        pool: &SqlitePool,
-    ) -> Result<Option<SimplifiedNodeAddress>, sqlx::Error> {
-        let result = sqlx::query!(
-            "
-            SELECT bootstrap_node_id
-            FROM network_configs
-            WHERE network_configs.id = ?
-            LIMIT 1
-            ",
-            NETWORK_CONFIG_ID
-        )
-        .fetch_optional(pool)
-        .await?;
-
-        match result {
-            None => return Ok(None),
-            Some(result) => match result.bootstrap_node_id {
-                None => return Ok(None),
-                Some(node_id) => Ok(Some(SimplifiedNodeAddress { node_id })),
-            },
-        }
-    }
-
-    pub async fn set_network_config(
-        &self,
-        pool: &SqlitePool,
+        config: &mut LoresNodeConfig,
         network_name: String,
         peer_address: Option<SimplifiedNodeAddress>,
-    ) -> Result<(), sqlx::Error> {
-        let bootstrap_node_id = peer_address.as_ref().map(|peer| peer.node_id.clone());
-
-        let _region = sqlx::query!(
-            "
-            UPDATE network_configs
-            SET network_name = ?, bootstrap_node_id = ?
-            WHERE network_configs.id = ?
-            ",
-            network_name,
-            bootstrap_node_id,
-            NETWORK_CONFIG_ID
-        )
-        .execute(pool)
-        .await;
-
-        return Ok(());
+    ) {
+        config.bootstrap_node_id = peer_address.as_ref().map(|peer| peer.node_id.clone());
+        config.network_name = Some(network_name.clone());
+        config.save();
     }
 
-    pub async fn get_or_create_private_key(
-        &self,
-        pool: &SqlitePool,
-    ) -> Result<PrivateKey, sqlx::Error> {
-        let private_key = self.get_private_key(pool).await?;
+    pub fn get_or_create_private_key(&self, config: &mut LoresNodeConfig) -> PrivateKey {
+        let private_key = self.get_private_key(config);
 
         match private_key {
-            None => {
-                let new_private_key: PrivateKey = self.create_private_key(pool).await?;
-                return Ok(new_private_key);
-            }
-            Some(private_key) => {
-                return Ok(private_key);
-            }
+            None => self.create_private_key(config),
+            Some(private_key) => private_key,
         }
     }
 
-    async fn get_private_key(&self, pool: &SqlitePool) -> Result<Option<PrivateKey>, sqlx::Error> {
-        let private_key_hex: Option<String> = self.get_private_key_hex(pool).await?;
-
-        match private_key_hex {
-            None => return Ok(None),
-            Some(private_key_hex) => {
-                let private_key = Self::build_private_key_from_hex(private_key_hex)
-                    .ok_or_else(|| sqlx::Error::Decode("Failed to build private key".into()))?;
-
-                return Ok(Some(private_key));
-            }
-        }
+    fn get_private_key(&self, config: &LoresNodeConfig) -> Option<PrivateKey> {
+        config
+            .private_key_hex
+            .clone()
+            .map(|hex| Self::build_private_key_from_hex(hex))
+            .flatten()
     }
 
-    async fn create_private_key(&self, pool: &SqlitePool) -> Result<PrivateKey, sqlx::Error> {
+    fn create_private_key(&self, config: &mut LoresNodeConfig) -> PrivateKey {
         let new_private_key = PrivateKey::new();
         let public_key = new_private_key.public_key();
 
-        self.set_private_key_hex(pool, new_private_key.to_hex(), public_key.to_hex())
-            .await?;
+        self.set_private_key_hex(config, new_private_key.to_hex(), public_key.to_hex());
 
         println!("Created new private key");
 
-        return Ok(new_private_key);
+        return new_private_key;
     }
 
-    async fn set_private_key_hex(
+    fn set_private_key_hex(
         &self,
-        pool: &SqlitePool,
+        config: &mut LoresNodeConfig,
         private_key_hex: String,
         public_key_hex: String,
-    ) -> Result<(), sqlx::Error> {
-        let _region = sqlx::query!(
-            "
-            UPDATE node_configs
-            SET private_key_hex = ?, public_key_hex = ?
-            WHERE node_configs.id = ?
-            ",
-            private_key_hex,
-            public_key_hex,
-            NODE_CONFIG_ID
-        )
-        .execute(pool)
-        .await?;
-
-        Ok(())
-    }
-
-    async fn get_private_key_hex(&self, pool: &SqlitePool) -> Result<Option<String>, sqlx::Error> {
-        let result = sqlx::query_as!(
-            PrivateKeyRow,
-            "
-            SELECT private_key_hex
-            FROM node_configs
-            WHERE node_configs.id = ?
-            LIMIT 1
-            ",
-            NODE_CONFIG_ID
-        )
-        .fetch_one(pool)
-        .await?;
-
-        Ok(result.private_key_hex)
+    ) {
+        config.public_key_hex = Some(public_key_hex.clone());
+        config.private_key_hex = Some(private_key_hex.clone());
+        config.save();
     }
 
     // TODO: This should be in p2panda-core, submit a PR
