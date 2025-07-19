@@ -3,7 +3,8 @@ use sqlx::Sqlite;
 
 use crate::{
     event_handlers::{
-        node_status_posted::NodeStatusPostedHandler, node_updated::NodeUpdatedHandler,
+        handler_utilities::HandlerResult, node_status_posted::NodeStatusPostedHandler,
+        node_updated::NodeUpdatedHandler,
     },
     panda_comms::lores_events::{LoResEvent, LoResEventPayload},
 };
@@ -17,15 +18,23 @@ pub async fn handle_event(event: LoResEvent, pool: &sqlx::Pool<Sqlite>) {
     let header = event.header.clone();
     let payload = event.payload.clone();
 
-    match payload {
+    let result: HandlerResult = match payload {
         LoResEventPayload::NodeAnnounced(payload) => {
-            NodeAnnouncedHandler::handle(header, payload, pool).await;
+            NodeAnnouncedHandler::handle(header, payload, pool).await
         }
         LoResEventPayload::NodeUpdated(payload) => {
-            NodeUpdatedHandler::handle(header, payload, pool).await;
+            NodeUpdatedHandler::handle(header, payload, pool).await
         }
         LoResEventPayload::NodeStatusPosted(payload) => {
-            NodeStatusPostedHandler::handle(header, payload, pool).await;
+            NodeStatusPostedHandler::handle(header, payload, pool).await
         }
+    };
+
+    if !result.client_events.is_empty() {
+        // Here you would typically send the client events to the appropriate clients.
+        // For example, using a WebSocket or similar mechanism.
+        println!("Client events to send: {:?}", result.client_events);
+    } else {
+        println!("No client events to send.");
     }
 }

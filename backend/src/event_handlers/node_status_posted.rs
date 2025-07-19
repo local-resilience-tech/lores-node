@@ -1,11 +1,16 @@
 use sqlx::Sqlite;
 
 use crate::{
+    admin_api::client_events::ClientEvent,
     event_handlers::handler_utilities::HandlerResult,
     panda_comms::lores_events::{LoResEventHeader, NodeStatusPostedDataV1},
-    projections::projections_write::{
-        current_node_statuses::{CurrentNodeStatusRow, CurrentNodeStatusesWriteRepo},
-        node_statuses::{NodeStatusRow, NodeStatusesWriteRepo},
+    projections::{
+        entities::NodeDetails,
+        projections_read::nodes::NodesReadRepo,
+        projections_write::{
+            current_node_statuses::{CurrentNodeStatusRow, CurrentNodeStatusesWriteRepo},
+            node_statuses::{NodeStatusRow, NodeStatusesWriteRepo},
+        },
     },
 };
 
@@ -17,6 +22,27 @@ impl NodeStatusPostedHandler {
         payload: NodeStatusPostedDataV1,
         pool: &sqlx::Pool<Sqlite>,
     ) -> HandlerResult {
+        let result = Self::write_projections(header, payload, pool).await;
+        match result {
+            Ok(Some(details)) => HandlerResult {
+                client_events: vec![ClientEvent::NodeUpdated(details)],
+            },
+            Ok(None) => {
+                println!("Node not found for status posting.");
+                HandlerResult::default()
+            }
+            Err(e) => {
+                eprintln!("Error posting node status: {}", e);
+                HandlerResult::default()
+            }
+        }
+    }
+
+    pub async fn write_projections(
+        header: LoResEventHeader,
+        payload: NodeStatusPostedDataV1,
+        pool: &sqlx::Pool<Sqlite>,
+    ) -> Result<Option<NodeDetails>, sqlx::Error> {
         let repo = NodeStatusesWriteRepo::init();
 
         println!("Node status posted: {:?}", payload);
@@ -60,6 +86,10 @@ impl NodeStatusPostedHandler {
             println!("Current node status posted successfully");
         }
 
-        HandlerResult::default()
+        let read_repo = NodesReadRepo::init();
+
+        read_repo
+            .find_detailed(pool, header.author_node_id.clone())
+            .await
     }
 }
