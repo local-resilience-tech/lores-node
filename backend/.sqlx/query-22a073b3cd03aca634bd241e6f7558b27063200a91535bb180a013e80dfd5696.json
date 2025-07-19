@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "\n            SELECT nodes.id as id, nodes.name as name\n            FROM nodes\n            INNER JOIN node_configs ON node_configs.public_key_hex = nodes.id\n            WHERE node_configs.id = ? LIMIT 1\n            ",
+  "query": "\n            SELECT nodes.id as id, nodes.name as name\n            FROM nodes\n            WHERE nodes.id = ?\n            LIMIT 1\n            ",
   "describe": {
     "columns": [
       {
@@ -22,5 +22,5 @@
       false
     ]
   },
-  "hash": "edff7a887c7c95765461bef3f161e6bb855c714d76d02268eeadf10336f10ee0"
+  "hash": "22a073b3cd03aca634bd241e6f7558b27063200a91535bb180a013e80dfd5696"
 }
