@@ -1,7 +1,4 @@
-use crate::repos::{
-    entities::PrivateKeyRow,
-    helpers::{NETWORK_CONFIG_ID, NODE_CONFIG_ID},
-};
+use crate::{config::LoresNodeConfig, repos::helpers::NETWORK_CONFIG_ID};
 use hex;
 use p2panda_core::{identity::PRIVATE_KEY_LEN, PrivateKey};
 use sqlx::SqlitePool;
@@ -88,13 +85,13 @@ impl ThisP2PandaNodeRepo {
 
     pub async fn get_or_create_private_key(
         &self,
-        pool: &SqlitePool,
+        config: &mut LoresNodeConfig,
     ) -> Result<PrivateKey, sqlx::Error> {
-        let private_key = self.get_private_key(pool).await?;
+        let private_key = self.get_private_key(config).await?;
 
         match private_key {
             None => {
-                let new_private_key: PrivateKey = self.create_private_key(pool).await?;
+                let new_private_key: PrivateKey = self.create_private_key(config).await?;
                 return Ok(new_private_key);
             }
             Some(private_key) => {
@@ -103,8 +100,11 @@ impl ThisP2PandaNodeRepo {
         }
     }
 
-    async fn get_private_key(&self, pool: &SqlitePool) -> Result<Option<PrivateKey>, sqlx::Error> {
-        let private_key_hex: Option<String> = self.get_private_key_hex(pool).await?;
+    async fn get_private_key(
+        &self,
+        config: &LoresNodeConfig,
+    ) -> Result<Option<PrivateKey>, sqlx::Error> {
+        let private_key_hex: Option<String> = config.private_key_hex.clone();
 
         match private_key_hex {
             None => return Ok(None),
@@ -117,11 +117,14 @@ impl ThisP2PandaNodeRepo {
         }
     }
 
-    async fn create_private_key(&self, pool: &SqlitePool) -> Result<PrivateKey, sqlx::Error> {
+    async fn create_private_key(
+        &self,
+        config: &mut LoresNodeConfig,
+    ) -> Result<PrivateKey, sqlx::Error> {
         let new_private_key = PrivateKey::new();
         let public_key = new_private_key.public_key();
 
-        self.set_private_key_hex(pool, new_private_key.to_hex(), public_key.to_hex())
+        self.set_private_key_hex(config, new_private_key.to_hex(), public_key.to_hex())
             .await?;
 
         println!("Created new private key");
@@ -131,41 +134,15 @@ impl ThisP2PandaNodeRepo {
 
     async fn set_private_key_hex(
         &self,
-        pool: &SqlitePool,
+        config: &mut LoresNodeConfig,
         private_key_hex: String,
         public_key_hex: String,
     ) -> Result<(), sqlx::Error> {
-        let _region = sqlx::query!(
-            "
-            UPDATE node_configs
-            SET private_key_hex = ?, public_key_hex = ?
-            WHERE node_configs.id = ?
-            ",
-            private_key_hex,
-            public_key_hex,
-            NODE_CONFIG_ID
-        )
-        .execute(pool)
-        .await?;
+        config.public_key_hex = Some(public_key_hex.clone());
+        config.private_key_hex = Some(private_key_hex.clone());
+        config.save();
 
         Ok(())
-    }
-
-    async fn get_private_key_hex(&self, pool: &SqlitePool) -> Result<Option<String>, sqlx::Error> {
-        let result = sqlx::query_as!(
-            PrivateKeyRow,
-            "
-            SELECT private_key_hex
-            FROM node_configs
-            WHERE node_configs.id = ?
-            LIMIT 1
-            ",
-            NODE_CONFIG_ID
-        )
-        .fetch_one(pool)
-        .await?;
-
-        Ok(result.private_key_hex)
     }
 
     // TODO: This should be in p2panda-core, submit a PR
