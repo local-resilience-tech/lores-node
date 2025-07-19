@@ -18,7 +18,10 @@ impl ThisP2PandaNodeRepo {
         ThisP2PandaNodeRepo {}
     }
 
-    pub async fn get_network_name(&self, pool: &SqlitePool) -> Result<Option<String>, sqlx::Error> {
+    pub async fn get_network_name(
+        &self,
+        config_db: &SqlitePool,
+    ) -> Result<Option<String>, sqlx::Error> {
         let result = sqlx::query!(
             "
             SELECT network_name
@@ -28,7 +31,7 @@ impl ThisP2PandaNodeRepo {
             ",
             NETWORK_CONFIG_ID
         )
-        .fetch_optional(pool)
+        .fetch_optional(config_db)
         .await?;
 
         match result {
@@ -39,7 +42,7 @@ impl ThisP2PandaNodeRepo {
 
     pub async fn get_bootstrap_details(
         &self,
-        pool: &SqlitePool,
+        config_db: &SqlitePool,
     ) -> Result<Option<SimplifiedNodeAddress>, sqlx::Error> {
         let result = sqlx::query!(
             "
@@ -50,7 +53,7 @@ impl ThisP2PandaNodeRepo {
             ",
             NETWORK_CONFIG_ID
         )
-        .fetch_optional(pool)
+        .fetch_optional(config_db)
         .await?;
 
         match result {
@@ -64,7 +67,7 @@ impl ThisP2PandaNodeRepo {
 
     pub async fn set_network_config(
         &self,
-        pool: &SqlitePool,
+        config_db: &SqlitePool,
         network_name: String,
         peer_address: Option<SimplifiedNodeAddress>,
     ) -> Result<(), sqlx::Error> {
@@ -80,7 +83,7 @@ impl ThisP2PandaNodeRepo {
             bootstrap_node_id,
             NETWORK_CONFIG_ID
         )
-        .execute(pool)
+        .execute(config_db)
         .await;
 
         return Ok(());
@@ -88,13 +91,13 @@ impl ThisP2PandaNodeRepo {
 
     pub async fn get_or_create_private_key(
         &self,
-        pool: &SqlitePool,
+        config_db: &SqlitePool,
     ) -> Result<PrivateKey, sqlx::Error> {
-        let private_key = self.get_private_key(pool).await?;
+        let private_key = self.get_private_key(config_db).await?;
 
         match private_key {
             None => {
-                let new_private_key: PrivateKey = self.create_private_key(pool).await?;
+                let new_private_key: PrivateKey = self.create_private_key(config_db).await?;
                 return Ok(new_private_key);
             }
             Some(private_key) => {
@@ -103,8 +106,11 @@ impl ThisP2PandaNodeRepo {
         }
     }
 
-    async fn get_private_key(&self, pool: &SqlitePool) -> Result<Option<PrivateKey>, sqlx::Error> {
-        let private_key_hex: Option<String> = self.get_private_key_hex(pool).await?;
+    async fn get_private_key(
+        &self,
+        config_db: &SqlitePool,
+    ) -> Result<Option<PrivateKey>, sqlx::Error> {
+        let private_key_hex: Option<String> = self.get_private_key_hex(config_db).await?;
 
         match private_key_hex {
             None => return Ok(None),
@@ -117,11 +123,11 @@ impl ThisP2PandaNodeRepo {
         }
     }
 
-    async fn create_private_key(&self, pool: &SqlitePool) -> Result<PrivateKey, sqlx::Error> {
+    async fn create_private_key(&self, config_db: &SqlitePool) -> Result<PrivateKey, sqlx::Error> {
         let new_private_key = PrivateKey::new();
         let public_key = new_private_key.public_key();
 
-        self.set_private_key_hex(pool, new_private_key.to_hex(), public_key.to_hex())
+        self.set_private_key_hex(config_db, new_private_key.to_hex(), public_key.to_hex())
             .await?;
 
         println!("Created new private key");
@@ -131,7 +137,7 @@ impl ThisP2PandaNodeRepo {
 
     async fn set_private_key_hex(
         &self,
-        pool: &SqlitePool,
+        config_db: &SqlitePool,
         private_key_hex: String,
         public_key_hex: String,
     ) -> Result<(), sqlx::Error> {
@@ -145,13 +151,16 @@ impl ThisP2PandaNodeRepo {
             public_key_hex,
             NODE_CONFIG_ID
         )
-        .execute(pool)
+        .execute(config_db)
         .await?;
 
         Ok(())
     }
 
-    async fn get_private_key_hex(&self, pool: &SqlitePool) -> Result<Option<String>, sqlx::Error> {
+    async fn get_private_key_hex(
+        &self,
+        config_db: &SqlitePool,
+    ) -> Result<Option<String>, sqlx::Error> {
         let result = sqlx::query_as!(
             PrivateKeyRow,
             "
@@ -162,7 +171,7 @@ impl ThisP2PandaNodeRepo {
             ",
             NODE_CONFIG_ID
         )
-        .fetch_one(pool)
+        .fetch_one(config_db)
         .await?;
 
         Ok(result.private_key_hex)

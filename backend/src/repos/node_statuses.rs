@@ -17,7 +17,7 @@ impl NodeStatusesRepo {
 
     pub async fn upsert(
         &self,
-        pool: &SqlitePool,
+        config_db: &SqlitePool,
         status: NodeStatusRow,
     ) -> Result<(), sqlx::Error> {
         let timestamp = status.posted_timestamp as i64;
@@ -30,7 +30,7 @@ impl NodeStatusesRepo {
             status.state,
             timestamp
         )
-        .execute(pool)
+        .execute(config_db)
         .await?;
 
         Ok(())

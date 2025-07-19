@@ -58,7 +58,7 @@ async fn main() {
         .allow_headers(cors::Any);
 
     // DATABASE
-    let pool = db::prepare_database()
+    let config_db = db::prepare_database("config")
         .await
         .expect("Failed to prepare database");
 
@@ -66,8 +66,8 @@ async fn main() {
     let (channel_tx, channel_rx): (mpsc::Sender<LoResEvent>, mpsc::Receiver<LoResEvent>) =
         mpsc::channel(32);
     let container = P2PandaContainer::new(channel_tx);
-    start_panda(&pool, &container).await;
-    start_panda_event_handler(channel_rx, pool.clone());
+    start_panda(&config_db, &container).await;
+    start_panda_event_handler(channel_rx, config_db.clone());
 
     // ROUTES
     let (router, api) = OpenApiRouter::with_openapi(ApiDoc::openapi())
@@ -79,7 +79,7 @@ async fn main() {
         .fallback_service(get(frontend_handler))
         .layer(cors)
         .layer(TraceLayer::new_for_http())
-        .layer(Extension(pool))
+        .layer(Extension(config_db))
         .layer(Extension(container));
 
     // SERVICE
@@ -94,10 +94,10 @@ async fn main() {
     axum::serve(listener, app).await.unwrap();
 }
 
-async fn start_panda(pool: &SqlitePool, container: &P2PandaContainer) {
+async fn start_panda(config_db: &SqlitePool, container: &P2PandaContainer) {
     let repo = ThisP2PandaNodeRepo::init();
 
-    match repo.get_network_name(pool).await {
+    match repo.get_network_name(config_db).await {
         Ok(network_name) => {
             if let Some(network_name) = network_name {
                 println!("Got network name: {:?}", network_name);
@@ -109,7 +109,7 @@ async fn start_panda(pool: &SqlitePool, container: &P2PandaContainer) {
         }
     }
 
-    match repo.get_or_create_private_key(pool).await {
+    match repo.get_or_create_private_key(config_db).await {
         Ok(private_key) => {
             println!("Got private key");
             container.set_private_key(private_key).await;
@@ -119,7 +119,7 @@ async fn start_panda(pool: &SqlitePool, container: &P2PandaContainer) {
         }
     }
 
-    let bootstrap_details = repo.get_bootstrap_details(pool).await.unwrap();
+    let bootstrap_details = repo.get_bootstrap_details(config_db).await.unwrap();
     let bootstrap_node_id: Option<PublicKey> = match &bootstrap_details {
         Some(details) => build_public_key_from_hex(details.node_id.clone()),
         None => None,
@@ -131,13 +131,13 @@ async fn start_panda(pool: &SqlitePool, container: &P2PandaContainer) {
     }
 }
 
-fn start_panda_event_handler(channel_rx: mpsc::Receiver<LoResEvent>, pool: SqlitePool) {
+fn start_panda_event_handler(channel_rx: mpsc::Receiver<LoResEvent>, config_db: SqlitePool) {
     tokio::spawn(async move {
         let mut events_rx = channel_rx;
 
         // Start the event loop to handle events
         while let Some(event) = events_rx.recv().await {
-            handle_event(event, &pool).await;
+            handle_event(event, &config_db).await;
         }
     });
 }
