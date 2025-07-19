@@ -1,4 +1,4 @@
-use sqlx::Sqlite;
+use sqlx::{Sqlite, SqlitePool};
 
 use crate::{
     admin_api::client_events::ClientEvent,
@@ -22,27 +22,42 @@ impl NodeStatusPostedHandler {
         payload: NodeStatusPostedDataV1,
         pool: &sqlx::Pool<Sqlite>,
     ) -> HandlerResult {
+        let author_node_id = header.author_node_id.clone();
         let result = Self::write_projections(header, payload, pool).await;
+
         match result {
-            Ok(Some(details)) => HandlerResult {
-                client_events: vec![ClientEvent::NodeUpdated(details)],
-            },
-            Ok(None) => {
-                println!("Node not found for status posting.");
-                HandlerResult::default()
+            Ok(()) => {
+                let client_events = Self::client_events(pool, author_node_id).await;
+                HandlerResult { client_events }
             }
+
             Err(e) => {
-                eprintln!("Error posting node status: {}", e);
+                eprintln!("Error handling node announcement: {}", e);
                 HandlerResult::default()
             }
         }
     }
 
-    pub async fn write_projections(
+    async fn client_events(pool: &SqlitePool, node_id: String) -> Vec<ClientEvent> {
+        let node_details = Self::read_projections(pool, node_id).await;
+        match node_details {
+            Ok(Some(details)) => vec![ClientEvent::NodeUpdated(details)],
+            Ok(None) => {
+                println!("Node not found for announcement.");
+                vec![]
+            }
+            Err(e) => {
+                eprintln!("Error reading node details: {}", e);
+                vec![]
+            }
+        }
+    }
+
+    async fn write_projections(
         header: LoResEventHeader,
         payload: NodeStatusPostedDataV1,
-        pool: &sqlx::Pool<Sqlite>,
-    ) -> Result<Option<NodeDetails>, sqlx::Error> {
+        pool: &SqlitePool,
+    ) -> Result<(), sqlx::Error> {
         let repo = NodeStatusesWriteRepo::init();
 
         println!("Node status posted: {:?}", payload);
@@ -86,10 +101,14 @@ impl NodeStatusPostedHandler {
             println!("Current node status posted successfully");
         }
 
-        let read_repo = NodesReadRepo::init();
+        Ok(())
+    }
 
-        read_repo
-            .find_detailed(pool, header.author_node_id.clone())
-            .await
+    async fn read_projections(
+        pool: &SqlitePool,
+        node_id: String,
+    ) -> Result<Option<NodeDetails>, sqlx::Error> {
+        let read_repo = NodesReadRepo::init();
+        read_repo.find_detailed(pool, node_id).await
     }
 }
