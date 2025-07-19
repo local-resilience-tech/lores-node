@@ -12,7 +12,7 @@ use crate::{
             LoResEventPayload, NodeAnnouncedDataV1, NodeStatusPostedDataV1, NodeUpdatedDataV1,
         },
     },
-    projections::{entities::Node, projections_read::this_node::ThisNodeReadRepo},
+    projections::{entities::Node, projections_read::nodes::NodesReadRepo},
 };
 
 pub fn router() -> OpenApiRouter {
@@ -31,7 +31,7 @@ async fn show_this_node(
     Extension(pool): Extension<SqlitePool>,
     Extension(config): Extension<LoresNodeConfig>,
 ) -> impl IntoResponse {
-    let repo = ThisNodeReadRepo::init();
+    let repo = NodesReadRepo::init();
 
     match config.public_key_hex {
         Some(public_key_hex) => {

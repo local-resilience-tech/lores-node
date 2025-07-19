@@ -1,6 +1,7 @@
 use sqlx::Sqlite;
 
 use crate::{
+    event_handlers::handler_utilities::HandlerResult,
     panda_comms::lores_events::{LoResEventHeader, NodeStatusPostedDataV1},
     projections::projections_write::{
         current_node_statuses::{CurrentNodeStatusRow, CurrentNodeStatusesWriteRepo},
@@ -15,7 +16,7 @@ impl NodeStatusPostedHandler {
         header: LoResEventHeader,
         payload: NodeStatusPostedDataV1,
         pool: &sqlx::Pool<Sqlite>,
-    ) {
+    ) -> HandlerResult {
         let repo = NodeStatusesWriteRepo::init();
 
         println!("Node status posted: {:?}", payload);
@@ -58,5 +59,7 @@ impl NodeStatusPostedHandler {
         } else {
             println!("Current node status posted successfully");
         }
+
+        HandlerResult::default()
     }
 }

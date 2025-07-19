@@ -1,6 +1,7 @@
 use sqlx::Sqlite;
 
 use crate::{
+    event_handlers::handler_utilities::HandlerResult,
     panda_comms::lores_events::{LoResEventHeader, NodeAnnouncedDataV1},
     projections::{entities::Node, projections_write::nodes::NodesWriteRepo},
 };
@@ -12,7 +13,7 @@ impl NodeAnnouncedHandler {
         header: LoResEventHeader,
         payload: NodeAnnouncedDataV1,
         pool: &sqlx::Pool<Sqlite>,
-    ) {
+    ) -> HandlerResult {
         println!("Node announced: {:?}", payload);
 
         let node = Node {
@@ -20,5 +21,7 @@ impl NodeAnnouncedHandler {
             name: payload.name.clone(),
         };
         NodesWriteRepo::init().upsert(pool, node).await.unwrap();
+
+        HandlerResult::default()
     }
 }

@@ -1,6 +1,7 @@
 use self::routes::{this_node, this_p2panda_node, this_region};
 use utoipa_axum::router::OpenApiRouter;
 
+pub mod client_events;
 mod routes;
 
 pub fn api_router() -> OpenApiRouter {

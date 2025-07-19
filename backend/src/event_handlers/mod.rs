@@ -8,6 +8,7 @@ use crate::{
     panda_comms::lores_events::{LoResEvent, LoResEventPayload},
 };
 
+mod handler_utilities;
 mod node_announced;
 mod node_status_posted;
 mod node_updated;

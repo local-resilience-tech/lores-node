@@ -1,9 +1,12 @@
 use sqlx::Sqlite;
 
 use crate::{
+    admin_api::client_events::ClientEvent,
+    event_handlers::handler_utilities::HandlerResult,
     panda_comms::lores_events::{LoResEventHeader, NodeUpdatedDataV1},
     projections::{
-        entities::Node,
+        entities::{Node, NodeDetails},
+        projections_read::nodes::NodesReadRepo,
         projections_write::nodes::{NodeUpdateRow, NodesWriteRepo},
     },
 };
@@ -15,7 +18,29 @@ impl NodeUpdatedHandler {
         header: LoResEventHeader,
         payload: NodeUpdatedDataV1,
         pool: &sqlx::Pool<Sqlite>,
-    ) {
+    ) -> HandlerResult {
+        let result = Self::write_projections(header, payload, pool).await;
+
+        match result {
+            Ok(Some(node_details)) => HandlerResult {
+                client_events: vec![ClientEvent::NodeUpdated(node_details)],
+            },
+            Ok(None) => {
+                println!("Node not found for update.");
+                HandlerResult::default()
+            }
+            Err(e) => {
+                eprintln!("Error updating node: {}", e);
+                HandlerResult::default()
+            }
+        }
+    }
+
+    async fn write_projections(
+        header: LoResEventHeader,
+        payload: NodeUpdatedDataV1,
+        pool: &sqlx::Pool<Sqlite>,
+    ) -> Result<Option<NodeDetails>, sqlx::Error> {
         let repo = NodesWriteRepo::init();
 
         println!("Node updated: {:?}", payload);
@@ -25,7 +50,7 @@ impl NodeUpdatedHandler {
             id: header.author_node_id.clone(),
             name: payload.name.clone(),
         };
-        NodesWriteRepo::init().upsert(pool, node).await.unwrap();
+        repo.upsert(pool, node).await?;
 
         let node = NodeUpdateRow {
             id: header.author_node_id.clone(),
@@ -33,12 +58,12 @@ impl NodeUpdatedHandler {
             public_ipv4: Some(payload.public_ipv4.clone()),
         };
 
-        let result = repo.update(pool, node).await;
+        repo.update(pool, node).await?;
 
-        if let Err(e) = result {
-            println!("Error updating node: {}", e);
-        } else {
-            println!("Node updated successfully");
-        }
+        let read_repo = NodesReadRepo::init();
+
+        read_repo
+            .find_detailed(pool, header.author_node_id.clone())
+            .await
     }
 }
