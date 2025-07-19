@@ -19,6 +19,7 @@
               #   published: 80
             environment:
               DATABASE_URL: "sqlite:/data/lores-node.db"
+              CONFIG_PATH: "/data/config.toml"
             volumes:
               - data:/data
             networks:
