@@ -31,6 +31,7 @@ COPY --from=rustbuilder /app/lores-node /app/backend/lores-node
 COPY --from=vitebuilder /app/dist /app/frontend
 ENV FRONTEND_PATH=/app/frontend
 ENV DATABASE_URL=sqlite:/app/lores-node.db
+ENV CONFIG_PATH=/app/config.toml
 EXPOSE 8000
 EXPOSE 2022/udp
 EXPOSE 2023/udp
