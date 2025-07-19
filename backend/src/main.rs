@@ -12,7 +12,7 @@ use utoipa_axum::router::OpenApiRouter;
 use utoipa_swagger_ui::SwaggerUi;
 
 use crate::{
-    admin_api::api_router,
+    admin_api::{api_router, realtime::RealtimeState},
     config::LoresNodeConfig,
     event_handlers::handle_event,
     infra::db,
@@ -66,12 +66,15 @@ async fn main() {
         .await
         .expect("Failed to prepare database");
 
+    // REALTIME COMMS
+    let realtime_state = RealtimeState::new();
+
     // P2PANDA
     let (channel_tx, channel_rx): (mpsc::Sender<LoResEvent>, mpsc::Receiver<LoResEvent>) =
         mpsc::channel(32);
     let container = P2PandaContainer::new(channel_tx);
     start_panda(&mut config, &container).await;
-    start_panda_event_handler(channel_rx, pool.clone());
+    start_panda_event_handler(channel_rx, pool.clone(), realtime_state.clone());
 
     // ROUTES
     let (router, api) = OpenApiRouter::with_openapi(ApiDoc::openapi())
@@ -85,7 +88,8 @@ async fn main() {
         .layer(TraceLayer::new_for_http())
         .layer(Extension(pool))
         .layer(Extension(config))
-        .layer(Extension(container));
+        .layer(Extension(container))
+        .layer(Extension(realtime_state));
 
     // SERVICE
 
@@ -128,13 +132,17 @@ async fn start_panda(config: &mut LoresNodeConfig, container: &P2PandaContainer)
     }
 }
 
-fn start_panda_event_handler(channel_rx: mpsc::Receiver<LoResEvent>, pool: SqlitePool) {
+fn start_panda_event_handler(
+    channel_rx: mpsc::Receiver<LoResEvent>,
+    pool: SqlitePool,
+    realtime_state: RealtimeState,
+) {
     tokio::spawn(async move {
         let mut events_rx = channel_rx;
 
         // Start the event loop to handle events
         while let Some(event) = events_rx.recv().await {
-            handle_event(event, &pool).await;
+            handle_event(event, &pool, &realtime_state).await;
         }
     });
 }

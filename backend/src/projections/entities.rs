@@ -8,7 +8,7 @@ pub struct Node {
     pub name: String,
 }
 
-#[derive(sqlx::FromRow, Serialize, Deserialize, ToSchema, Debug)]
+#[derive(sqlx::FromRow, Serialize, Deserialize, ToSchema, Debug, Clone)]
 pub struct NodeDetails {
     pub id: String,
     pub name: String,
