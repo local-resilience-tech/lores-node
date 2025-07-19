@@ -24,10 +24,10 @@ pub fn router() -> OpenApiRouter {
     (status = 200, body = Option<Region>, description = "Returns the current region's network ID if available"),
     (status = INTERNAL_SERVER_ERROR, body = ()),
 ),)]
-async fn show_region(Extension(config_db): Extension<SqlitePool>) -> impl IntoResponse {
+async fn show_region(Extension(projection_db): Extension<SqlitePool>) -> impl IntoResponse {
     let repo = ThisP2PandaNodeRepo::init();
 
-    repo.get_network_name(&config_db)
+    repo.get_network_name(&projection_db)
         .await
         .map(|network_id| match network_id {
             Some(network_id) => {
@@ -47,10 +47,10 @@ async fn show_region(Extension(config_db): Extension<SqlitePool>) -> impl IntoRe
     (status = 200, body = Vec<NodeDetails>),
     (status = INTERNAL_SERVER_ERROR, body = ()),
 ),)]
-async fn show_region_nodes(Extension(config_db): Extension<SqlitePool>) -> impl IntoResponse {
+async fn show_region_nodes(Extension(projection_db): Extension<SqlitePool>) -> impl IntoResponse {
     let repo = NodesRepo::init();
 
-    repo.all(&config_db)
+    repo.all(&projection_db)
         .await
         .map(|nodes| (StatusCode::OK, Json(nodes)))
         .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, Json(())))
@@ -67,7 +67,7 @@ async fn show_region_nodes(Extension(config_db): Extension<SqlitePool>) -> impl 
     )
 )]
 async fn bootstrap(
-    Extension(config_db): Extension<SqlitePool>,
+    Extension(projection_db): Extension<SqlitePool>,
     Extension(panda_container): Extension<P2PandaContainer>,
     axum::extract::Json(data): axum::extract::Json<BootstrapNodeData>,
 ) -> impl IntoResponse {
@@ -79,7 +79,11 @@ async fn bootstrap(
         });
 
     let result = repo
-        .set_network_config(&config_db, data.network_name.clone(), peer_address.clone())
+        .set_network_config(
+            &projection_db,
+            data.network_name.clone(),
+            peer_address.clone(),
+        )
         .await;
     if let Err(e) = result {
         eprintln!("Failed to set network config: {:?}", e);

@@ -10,7 +10,7 @@ use crate::{
     },
 };
 
-pub async fn handle_event(event: LoResEvent, config_db: &sqlx::Pool<Sqlite>) {
+pub async fn handle_event(event: LoResEvent, projection_db: &sqlx::Pool<Sqlite>) {
     let header = event.header;
 
     match event.payload {
@@ -21,7 +21,7 @@ pub async fn handle_event(event: LoResEvent, config_db: &sqlx::Pool<Sqlite>) {
                 id: header.author_node_id.clone(),
                 name: payload.name.clone(),
             };
-            upsert_node(config_db, node).await;
+            upsert_node(projection_db, node).await;
         }
         LoResEventPayload::NodeUpdated(payload) => {
             let repo = NodesRepo::init();
@@ -33,7 +33,7 @@ pub async fn handle_event(event: LoResEvent, config_db: &sqlx::Pool<Sqlite>) {
                 id: header.author_node_id.clone(),
                 name: payload.name.clone(),
             };
-            upsert_node(config_db, node).await;
+            upsert_node(projection_db, node).await;
 
             let node = NodeUpdateRow {
                 id: header.author_node_id.clone(),
@@ -41,7 +41,7 @@ pub async fn handle_event(event: LoResEvent, config_db: &sqlx::Pool<Sqlite>) {
                 public_ipv4: Some(payload.public_ipv4.clone()),
             };
 
-            let result = repo.update(config_db, node).await;
+            let result = repo.update(projection_db, node).await;
 
             if let Err(e) = result {
                 println!("Error updating node: {}", e);
@@ -56,7 +56,7 @@ pub async fn handle_event(event: LoResEvent, config_db: &sqlx::Pool<Sqlite>) {
 
             let result = repo
                 .upsert(
-                    config_db,
+                    projection_db,
                     NodeStatusRow {
                         operation_id: header.operation_id.to_hex(),
                         author_node_id: header.author_node_id.clone(),
@@ -77,7 +77,7 @@ pub async fn handle_event(event: LoResEvent, config_db: &sqlx::Pool<Sqlite>) {
 
             let result = repo
                 .upsert(
-                    config_db,
+                    projection_db,
                     CurrentNodeStatusRow {
                         author_node_id: header.author_node_id.clone(),
                         posted_timestamp: header.timestamp,
@@ -96,8 +96,8 @@ pub async fn handle_event(event: LoResEvent, config_db: &sqlx::Pool<Sqlite>) {
     }
 }
 
-async fn upsert_node(config_db: &sqlx::Pool<Sqlite>, node: Node) {
+async fn upsert_node(projection_db: &sqlx::Pool<Sqlite>, node: Node) {
     let repo = NodesRepo::init();
 
-    repo.upsert(config_db, node).await.unwrap();
+    repo.upsert(projection_db, node).await.unwrap();
 }

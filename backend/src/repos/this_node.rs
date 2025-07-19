@@ -9,7 +9,7 @@ impl ThisNodeRepo {
         ThisNodeRepo {}
     }
 
-    pub async fn find(&self, config_db: &SqlitePool) -> Result<Option<Node>, sqlx::Error> {
+    pub async fn find(&self, projection_db: &SqlitePool) -> Result<Option<Node>, sqlx::Error> {
         let node = sqlx::query_as!(
             Node,
             "
@@ -20,7 +20,7 @@ impl ThisNodeRepo {
             ",
             NODE_CONFIG_ID
         )
-        .fetch_optional(config_db)
+        .fetch_optional(projection_db)
         .await?;
 
         return Ok(node);

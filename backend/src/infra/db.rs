@@ -24,7 +24,7 @@ pub async fn prepare_database(name: &str) -> anyhow::Result<Pool<Sqlite>> {
         .filename(filename.clone())
         .create_if_missing(true);
 
-    // prepare connection config_db
+    // prepare connection projection_db
     let pool = SqlitePool::connect_with(options).await;
 
     if pool.is_err() {

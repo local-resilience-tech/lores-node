@@ -15,14 +15,14 @@ impl NodesRepo {
         NodesRepo {}
     }
 
-    pub async fn upsert(&self, config_db: &SqlitePool, node: Node) -> Result<(), sqlx::Error> {
+    pub async fn upsert(&self, projection_db: &SqlitePool, node: Node) -> Result<(), sqlx::Error> {
         let _node = sqlx::query!(
             "INSERT INTO nodes (id, name) VALUES (?, ?) ON CONFLICT(id) DO UPDATE SET name = ?",
             node.id,
             node.name,
             node.name
         )
-        .execute(config_db)
+        .execute(projection_db)
         .await?;
 
         Ok(())
@@ -30,7 +30,7 @@ impl NodesRepo {
 
     pub async fn update(
         &self,
-        config_db: &SqlitePool,
+        projection_db: &SqlitePool,
         node: NodeUpdateRow,
     ) -> Result<(), sqlx::Error> {
         let _node = sqlx::query!(
@@ -39,18 +39,18 @@ impl NodesRepo {
             node.public_ipv4,
             node.id
         )
-        .execute(config_db)
+        .execute(projection_db)
         .await?;
 
         Ok(())
     }
 
-    pub async fn all(&self, config_db: &SqlitePool) -> Result<Vec<NodeDetails>, sqlx::Error> {
+    pub async fn all(&self, projection_db: &SqlitePool) -> Result<Vec<NodeDetails>, sqlx::Error> {
         let nodes = sqlx::query_as!(
             NodeDetails,
             "SELECT id, name, public_ipv4, s.text as status_text, s.state as state FROM nodes LEFT JOIN current_node_statuses AS s ON nodes.id = s.node_id"
         )
-        .fetch_all(config_db)
+        .fetch_all(projection_db)
         .await?;
 
         Ok(nodes)

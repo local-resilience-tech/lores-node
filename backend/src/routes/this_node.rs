@@ -26,10 +26,10 @@ pub fn router() -> OpenApiRouter {
     (status = 200, body = Option<Node>),
     (status = INTERNAL_SERVER_ERROR, body = String, description = "Internal Server Error"),
 ))]
-async fn show_this_node(Extension(config_db): Extension<SqlitePool>) -> impl IntoResponse {
+async fn show_this_node(Extension(projection_db): Extension<SqlitePool>) -> impl IntoResponse {
     let repo = ThisNodeRepo::init();
 
-    let node = repo.find(&config_db).await;
+    let node = repo.find(&projection_db).await;
 
     match node {
         Ok(node) => (StatusCode::OK, Json(node)).into_response(),
