@@ -33,7 +33,7 @@ pub enum LoResWireEvent {
     DeprecatedLoResEventPayload(DeprecatedLoResEventPayload),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct LoResEventHeader {
     pub author_node_id: String,
 
@@ -43,7 +43,7 @@ pub struct LoResEventHeader {
     pub operation_id: Hash,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct LoResEvent {
     pub header: LoResEventHeader,
     pub payload: LoResEventPayload,

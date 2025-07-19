@@ -14,7 +14,7 @@ use utoipa_swagger_ui::SwaggerUi;
 use crate::{
     admin_api::api_router,
     config::LoresNodeConfig,
-    events::handler_map::handle_event,
+    event_handlers::handle_event,
     infra::db,
     panda_comms::{
         config::ThisP2PandaNodeRepo,
@@ -26,7 +26,7 @@ use crate::{
 
 mod admin_api;
 mod config;
-mod events;
+mod event_handlers;
 mod infra;
 mod panda_comms;
 mod projections;
