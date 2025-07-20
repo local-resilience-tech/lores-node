@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT id, name, public_ipv4, s.text as status_text, s.state as state FROM nodes LEFT JOIN current_node_statuses AS s ON nodes.id = s.node_id",
+  "query": "\n            SELECT id, name, public_ipv4, s.text as status_text, s.state as state\n            FROM nodes\n            LEFT JOIN current_node_statuses AS s ON nodes.id = s.node_id",
   "describe": {
     "columns": [
       {
@@ -40,5 +40,5 @@
       true
     ]
   },
-  "hash": "0b91e81072b4c41a61c8371d65eb0311e0c990580b0bd89342038c0999a92577"
+  "hash": "5707c0aaf6e8aa322b9655b1b6d887d82d04171c22692fd5b42df146ecc9caa7"
 }
