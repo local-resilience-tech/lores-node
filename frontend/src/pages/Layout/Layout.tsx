@@ -14,7 +14,9 @@ import packageJson from "../../../package.json"
 import pangaLogoUrl from "../../assets/deepsea-panda.svg"
 
 import classes from "./Layout.module.css"
-import { useAppSelector } from "../../store"
+import { handleClientEvent, useAppSelector } from "../../store"
+import useWebSocket from "react-use-websocket"
+import { getSocketUrl } from "../../api"
 
 export default function Layout() {
   const [opened, { toggle }] = useDisclosure()
@@ -23,6 +25,22 @@ export default function Layout() {
   const region = useAppSelector((state) => state.region)
   const node = useAppSelector((state) => state.thisNode)
   const nodesCount = useAppSelector((state) => state.nodes?.length)
+
+  const {} = useWebSocket(getSocketUrl(), {
+    share: true,
+    onOpen: (event) => {
+      console.log("WebSocket connection opened", event)
+    },
+    onClose: () => {
+      console.log("WebSocket connection closed")
+    },
+    onMessage: (event) => {
+      console.log("WebSocket message received", event)
+
+      handleClientEvent(JSON.parse(event.data))
+    },
+    heartbeat: false,
+  })
 
   return (
     <AppShell

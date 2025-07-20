@@ -15,6 +15,10 @@ export interface BootstrapNodeData {
   node_id?: string | null;
 }
 
+export type ClientEvent = {
+  NodeUpdated: NodeDetails;
+};
+
 export interface CreateNodeDetails {
   name: string;
 }
@@ -241,13 +245,27 @@ export class HttpClient<SecurityDataType = unknown> {
 
 /**
  * @title lores-node
- * @version 0.7.5
+ * @version 0.8.1
  * @license
  */
 export class Api<
   SecurityDataType extends unknown,
 > extends HttpClient<SecurityDataType> {
   api = {
+    /**
+     * No description
+     *
+     * @name DummyEvent
+     * @request GET:/api/dummy_event
+     */
+    dummyEvent: (params: RequestParams = {}) =>
+      this.request<null | ClientEvent, any>({
+        path: `/api/dummy_event`,
+        method: "GET",
+        format: "json",
+        ...params,
+      }),
+
     /**
      * No description
      *

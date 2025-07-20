@@ -12,7 +12,10 @@ use utoipa_axum::router::OpenApiRouter;
 use utoipa_swagger_ui::SwaggerUi;
 
 use crate::{
-    admin_api::{api_router, realtime::RealtimeState},
+    admin_api::{
+        api_router,
+        realtime::{self, RealtimeState},
+    },
     config::LoresNodeConfig,
     event_handlers::handle_event,
     infra::db,
@@ -83,6 +86,7 @@ async fn main() {
 
     let router = router
         .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", api.clone()))
+        .route("/ws", get(realtime::handler))
         .fallback_service(get(frontend_handler))
         .layer(cors)
         .layer(TraceLayer::new_for_http())

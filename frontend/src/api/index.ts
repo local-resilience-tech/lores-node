@@ -12,3 +12,8 @@ export function getApi() {
     withCredentials: false,
   })
 }
+
+export function getSocketUrl(): string {
+  const apiUrl = getApiUrl()
+  return apiUrl.replace(/^https?/, "ws") + "ws"
+}
