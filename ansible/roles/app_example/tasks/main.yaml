@@ -1,0 +1,31 @@
+---
+- name: Ensure that the example app directory exists
+  ansible.builtin.file:
+    path: /etc/lores-node/apps/example
+    state: directory
+    mode: "0755"
+
+- name: Copy the config directory for the app example
+  ansible.builtin.copy:
+    src: ../apps/example/config/
+    dest: /etc/lores-node/apps/example/config
+    mode: "0644"
+
+- name: Copy the compose file for the app example
+  ansible.builtin.copy:
+    src: ../apps/example/compose.yml
+    dest: /etc/lores-node/apps/example/compose.yml
+    mode: "0644"
+
+- name: Deploy example app
+  community.docker.docker_stack:
+    state: present
+    name: lores-app-example
+    detach: false
+    compose:
+      - /etc/lores-node/apps/example/compose.yml
+      - version: "3.8"
+        services:
+          web:
+            volumes:
+              - /etc/lores-node/apps/example/config:/lores_config

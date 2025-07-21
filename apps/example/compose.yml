@@ -1,0 +1,13 @@
+version: "3.8"
+services:
+  web:
+    image: nginx
+    volumes:
+      - ./config:/lores_config
+    ports:
+      - "8080:80"
+    environment:
+      - NGINX_HOST=foobar.com
+      - NGINX_PORT=80
+volumes:
+  config:

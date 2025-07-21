@@ -6,3 +6,4 @@
     - traefik
     - shepherd
     - lores_node
+    - app_example

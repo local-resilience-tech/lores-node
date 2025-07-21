@@ -1,3 +1,16 @@
+---
+- name: Ensure that the main LoRes Node directory exists
+  ansible.builtin.file:
+    path: /etc/lores-node
+    state: directory
+    mode: "0755"
+
+- name: Ensure that the app directory exists
+  ansible.builtin.file:
+    path: /etc/lores-node/apps
+    state: directory
+    mode: "0755"
+
 - name: Ensure LoRes Node stack is configured
   community.docker.docker_stack:
     state: present
