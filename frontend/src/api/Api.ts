@@ -245,7 +245,7 @@ export class HttpClient<SecurityDataType = unknown> {
 
 /**
  * @title lores-node
- * @version 0.8.1
+ * @version 0.8.2
  * @license
  */
 export class Api<
@@ -261,6 +261,20 @@ export class Api<
     dummyEvent: (params: RequestParams = {}) =>
       this.request<null | ClientEvent, any>({
         path: `/api/dummy_event`,
+        method: "GET",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @name ShowAllNodes
+     * @request GET:/api/nodes
+     */
+    showAllNodes: (params: RequestParams = {}) =>
+      this.request<NodeDetails[], any>({
+        path: `/api/nodes`,
         method: "GET",
         format: "json",
         ...params,
@@ -368,20 +382,6 @@ export class Api<
         method: "POST",
         body: data,
         type: ContentType.Json,
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @name ShowRegionNodes
-     * @request GET:/api/this_region/nodes
-     */
-    showRegionNodes: (params: RequestParams = {}) =>
-      this.request<NodeDetails[], any>({
-        path: `/api/this_region/nodes`,
-        method: "GET",
         format: "json",
         ...params,
       }),

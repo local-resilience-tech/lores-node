@@ -1,6 +1,5 @@
 use axum::{http::StatusCode, response::IntoResponse, Extension, Json};
 use p2panda_core::PublicKey;
-use sqlx::SqlitePool;
 use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::{
@@ -10,16 +9,12 @@ use crate::{
         config::{SimplifiedNodeAddress, ThisP2PandaNodeRepo},
         container::{build_public_key_from_hex, P2PandaContainer},
     },
-    projections::{
-        entities::{NodeDetails, Region},
-        projections_read::nodes::NodesReadRepo,
-    },
+    projections::entities::Region,
 };
 
 pub fn router() -> OpenApiRouter {
     OpenApiRouter::new()
         .routes(routes!(show_region))
-        .routes(routes!(show_region_nodes))
         .routes(routes!(bootstrap))
 }
 
@@ -39,20 +34,6 @@ async fn show_region(Extension(config): Extension<LoresNodeConfig>) -> impl Into
         }
     }
     .into_response()
-}
-
-#[utoipa::path(get, path = "/nodes", responses(
-    (status = 200, body = Vec<NodeDetails>),
-    (status = INTERNAL_SERVER_ERROR, body = ()),
-),)]
-async fn show_region_nodes(Extension(pool): Extension<SqlitePool>) -> impl IntoResponse {
-    let repo = NodesReadRepo::init();
-
-    repo.all(&pool)
-        .await
-        .map(|nodes| (StatusCode::OK, Json(nodes)))
-        .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, Json(())))
-        .into_response()
 }
 
 #[utoipa::path(

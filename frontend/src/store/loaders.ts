@@ -29,7 +29,7 @@ const getRegion = async (): Promise<Region | null> => {
 }
 
 const getNodes = async (): Promise<NodeDetails[] | null> => {
-  const result = await getApi().api.showRegionNodes()
+  const result = await getApi().api.showAllNodes()
   if (result.status === 200) return result.data
   return null
 }
