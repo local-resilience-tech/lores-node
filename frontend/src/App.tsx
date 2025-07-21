@@ -1,4 +1,9 @@
-import { Navigate, RouterProvider, createBrowserRouter } from "react-router-dom"
+import {
+  LoaderFunction,
+  Navigate,
+  RouterProvider,
+  createBrowserRouter,
+} from "react-router-dom"
 import { Layout } from "./pages"
 import { EnsureNode } from "./contexts/this_node"
 import { ThisP2PandaNode } from "./contexts/this_p2panda_node"
@@ -11,12 +16,23 @@ import { theme } from "./mantine-theme"
 // All packages except `@mantine/hooks` require styles imports
 import "@mantine/core/styles.css"
 
-import store from "./store"
+import store, { AppStore, loadInitialData } from "./store"
+
+function withStore(
+  func: (store: AppStore) => any,
+  store: AppStore
+): LoaderFunction<any> {
+  const wrappedFunc: LoaderFunction<any> = async () => {
+    return func(store)
+  }
+  return wrappedFunc
+}
 
 const router = createBrowserRouter([
   {
     path: "/",
     element: <Layout />,
+    loader: withStore(loadInitialData, store),
     children: [
       {
         path: "",

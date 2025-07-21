@@ -1,18 +1,10 @@
-import { useEffect, useState } from "react"
 import { Container } from "@mantine/core"
 import SetRegion from "../components/SetRegion"
 import { Outlet } from "react-router-dom"
-import { Loading, useLoading } from "../../shared"
 import { getApi } from "../../../api"
 import { BootstrapNodeData, Region } from "../../../api/Api"
 import { regionLoaded } from "../../../store/region"
 import { useAppDispatch, useAppSelector } from "../../../store"
-
-const getRegion = async (): Promise<Region | null> => {
-  const result = await getApi().api.showRegion()
-  if (result.status === 200) return result.data
-  return null
-}
 
 export default function EnsureRegion({
   children,
@@ -21,16 +13,6 @@ export default function EnsureRegion({
 }) {
   const region = useAppSelector((state) => state.region)
   const dispatch = useAppDispatch()
-
-  const [loading, withLoading] = useLoading(true)
-
-  const fetchRegion = async () => {
-    withLoading(async () => {
-      const newRegion = await getRegion()
-      console.log("EFFECT: fetchRegion", newRegion)
-      dispatch(regionLoaded(newRegion))
-    })
-  }
 
   const onSubmit = async (data: BootstrapNodeData) => {
     getApi()
@@ -47,12 +29,6 @@ export default function EnsureRegion({
         }
       })
   }
-
-  useEffect(() => {
-    fetchRegion()
-  }, [])
-
-  if (loading) return <Loading />
 
   return (
     <Container>

@@ -4,6 +4,7 @@ import regionReducer from "./region"
 import nodesReducer, { nodeUpdated } from "./nodes"
 import thisNodeReducer from "./this_node"
 import { ClientEvent } from "../api/Api"
+import { loadInitialData } from "./loaders"
 
 const store = configureStore({
   reducer: {
@@ -22,6 +23,8 @@ export const useAppSelector = useSelector.withTypes<RootState>()
 export const useAppStore = useStore.withTypes<AppStore>()
 
 export default store
+
+export { loadInitialData } from "./loaders"
 
 export async function handleClientEvent(event: ClientEvent) {
   console.log("Handling client event:", event)
