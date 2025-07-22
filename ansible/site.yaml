@@ -7,3 +7,6 @@
     - shepherd
     - lores_node
     - app_example
+  vars:
+    host_apps_path: /etc/lores-node/apps
+    client_config_path: /lores_config

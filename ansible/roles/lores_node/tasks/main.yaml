@@ -35,6 +35,7 @@
               CONFIG_PATH: "/data/config.toml"
             volumes:
               - data:/data
+              - "apps:{{ host_apps_path }}"
             networks:
               - proxy
             deploy:
@@ -62,3 +63,4 @@
 
         volumes:
           data:
+          apps:
