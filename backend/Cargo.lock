@@ -1072,7 +1072,7 @@ dependencies = [
 [[package]]
 name = "experimental-node"
 version = "0.1.0"
-source = "git+https://github.com/p2panda/experimental-node?rev=ec5ccfa01613a8a487acf2883cf7cb1046b41c94#ec5ccfa01613a8a487acf2883cf7cb1046b41c94"
+source = "git+https://github.com/p2panda/experimental-node?rev=b7a61e634b90f79a37ea02d7eeade264da34b9cc#b7a61e634b90f79a37ea02d7eeade264da34b9cc"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -1087,6 +1087,7 @@ dependencies = [
  "p2panda-stream",
  "p2panda-sync",
  "serde",
+ "sqlx",
  "tempfile",
  "thiserror 2.0.12",
  "tokio",
@@ -3064,7 +3065,10 @@ version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "30dc5241ef3a96c83fbd7d62b2645b60f56cb021185527b16381c44cc382224e"
 dependencies = [
+ "ciborium",
+ "hex",
  "p2panda-core",
+ "sqlx",
  "thiserror 2.0.12",
  "trait-variant",
 ]

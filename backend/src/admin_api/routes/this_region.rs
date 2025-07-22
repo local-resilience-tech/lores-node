@@ -48,6 +48,7 @@ async fn show_region(Extension(config): Extension<LoresNodeConfig>) -> impl Into
 async fn bootstrap(
     Extension(mut config): Extension<LoresNodeConfig>,
     Extension(panda_container): Extension<P2PandaContainer>,
+    Extension(operation_pool): Extension<sqlx::SqlitePool>,
     axum::extract::Json(data): axum::extract::Json<BootstrapNodeData>,
 ) -> impl IntoResponse {
     let repo = ThisP2PandaNodeRepo::init();
@@ -72,7 +73,7 @@ async fn bootstrap(
         .await;
 
     // start the container
-    if let Err(e) = panda_container.start().await {
+    if let Err(e) = panda_container.start(&operation_pool).await {
         eprintln!("Failed to start P2PandaContainer: {:?}", e);
         return (
             StatusCode::INTERNAL_SERVER_ERROR,
