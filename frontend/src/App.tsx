@@ -7,16 +7,16 @@ import {
 import { Layout } from "./pages"
 import { EnsureNode } from "./contexts/this_node"
 import { ThisP2PandaNode } from "./contexts/this_p2panda_node"
+import { Apps } from "./contexts/apps"
 import { EnsureRegion, Nodes } from "./contexts/this_region"
 import { MantineProvider } from "@mantine/core"
 import { Provider as ReduxProvider } from "react-redux"
 import { theme } from "./mantine-theme"
+import store, { AppStore, loadInitialData } from "./store"
 
 // Import styles of packages that you've installed.
 // All packages except `@mantine/hooks` require styles imports
 import "@mantine/core/styles.css"
-
-import store, { AppStore, loadInitialData } from "./store"
 
 function withStore(
   func: (store: AppStore) => any,
@@ -40,6 +40,7 @@ const router = createBrowserRouter([
         children: [
           { path: "", element: <Navigate to="nodes" replace /> },
           { path: "nodes", element: <Nodes /> },
+          { path: "apps", element: <Apps /> },
           { path: "this_node", element: <EnsureNode /> },
         ],
       },

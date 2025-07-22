@@ -2,14 +2,15 @@ import { useDispatch, useSelector, useStore } from "react-redux"
 import { configureStore } from "@reduxjs/toolkit"
 import regionReducer from "./region"
 import nodesReducer, { nodeUpdated } from "./nodes"
+import appsReducer from "./apps"
 import thisNodeReducer from "./this_node"
 import { ClientEvent } from "../api/Api"
-import { loadInitialData } from "./loaders"
 
 const store = configureStore({
   reducer: {
     region: regionReducer,
     nodes: nodesReducer,
+    apps: appsReducer,
     thisNode: thisNodeReducer,
   },
 })

@@ -2,14 +2,21 @@ import {
   Anchor,
   AppShell,
   Badge,
+  Breadcrumbs,
   Burger,
   Container,
   Group,
+  Text,
 } from "@mantine/core"
 import { NavLink } from "../../components"
 import { Outlet } from "react-router-dom"
 import { useDisclosure } from "@mantine/hooks"
-import { IconAffiliate, IconBrandGithub, IconHome } from "@tabler/icons-react"
+import {
+  IconAffiliate,
+  IconApps,
+  IconBrandGithub,
+  IconHome,
+} from "@tabler/icons-react"
 import packageJson from "../../../package.json"
 import pangaLogoUrl from "../../assets/deepsea-panda.svg"
 
@@ -25,6 +32,7 @@ export default function Layout() {
   const region = useAppSelector((state) => state.region)
   const node = useAppSelector((state) => state.thisNode)
   const nodesCount = useAppSelector((state) => state.nodes?.length)
+  const appsCount = useAppSelector((state) => state.apps?.length)
 
   const {} = useWebSocket(getSocketUrl(), {
     share: true,
@@ -52,6 +60,10 @@ export default function Layout() {
         <Group h="100%" px="md">
           <Burger opened={opened} onClick={toggle} hiddenFrom="sm" size="sm" />
           <Anchor href="/">LoRes Mesh</Anchor>
+          <Breadcrumbs>
+            {region && <Text>{region.network_id}</Text>}
+            {node && <Text>{node.name}</Text>}
+          </Breadcrumbs>
         </Group>
       </AppShell.Header>
       <AppShell.Navbar p={0}>
@@ -73,6 +85,16 @@ export default function Layout() {
               leftSection={<IconHome size={iconSize} />}
               onClick={toggle}
             />
+            <NavLink
+              label="Apps"
+              href="/apps"
+              leftSection={<IconApps size={iconSize} />}
+              onClick={toggle}
+              rightSection={
+                appsCount !== undefined && <Badge circle>{appsCount}</Badge>
+              }
+            />
+
             <NavLink
               label="P2Panda"
               href="/p2panda_node"
