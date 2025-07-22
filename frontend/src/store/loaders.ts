@@ -1,6 +1,5 @@
 import { AppStore } from "."
 import { getApi } from "../api"
-import { App, NodeDetails, Region } from "../api/Api"
 import { appsLoaded } from "./apps"
 import { nodesLoaded } from "./nodes"
 import { regionLoaded } from "./region"

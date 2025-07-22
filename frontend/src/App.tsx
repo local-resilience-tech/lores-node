@@ -5,9 +5,9 @@ import {
   createBrowserRouter,
 } from "react-router-dom"
 import { Layout } from "./pages"
-import { EnsureNode } from "./contexts/this_node"
+import { EnsureNode, EditNode } from "./contexts/this_node"
 import { ThisP2PandaNode } from "./contexts/this_p2panda_node"
-import { Apps } from "./contexts/apps"
+import { LocalApps, AllApps } from "./contexts/apps"
 import { EnsureRegion, Nodes } from "./contexts/this_region"
 import { MantineProvider } from "@mantine/core"
 import { Provider as ReduxProvider } from "react-redux"
@@ -17,7 +17,6 @@ import store, { AppStore, loadInitialData } from "./store"
 // Import styles of packages that you've installed.
 // All packages except `@mantine/hooks` require styles imports
 import "@mantine/core/styles.css"
-import EditNode from "./contexts/this_node/pages/EditNode"
 
 function withStore(
   func: (store: AppStore) => any,
@@ -45,7 +44,7 @@ const router = createBrowserRouter([
             element: <EnsureNode />,
             children: [
               { path: "", element: <EditNode /> },
-              { path: "apps", element: <Apps /> },
+              { path: "apps", element: <LocalApps /> },
               { path: "p2panda_node", element: <ThisP2PandaNode /> },
             ],
           },
@@ -54,6 +53,7 @@ const router = createBrowserRouter([
             children: [
               { path: "", element: <Navigate to="nodes" replace /> },
               { path: "nodes", element: <Nodes /> },
+              { path: "apps", element: <AllApps /> },
             ],
           },
         ],

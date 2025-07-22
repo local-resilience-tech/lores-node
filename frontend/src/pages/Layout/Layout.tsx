@@ -81,7 +81,7 @@ export default function Layout() {
             onClick={toggle}
           />
           <NavLink
-            label="Apps"
+            label="Local Apps"
             href="/this_node/apps"
             leftSection={<IconApps size={iconSize} />}
             onClick={toggle}
@@ -111,6 +111,12 @@ export default function Layout() {
               rightSection={
                 nodesCount !== undefined && <Badge circle>{nodesCount}</Badge>
               }
+              onClick={toggle}
+            />
+            <NavLink
+              label="All Apps"
+              href="/this_region/apps"
+              leftSection={<IconApps size={iconSize} />}
               onClick={toggle}
             />
           </AppShell.Section>

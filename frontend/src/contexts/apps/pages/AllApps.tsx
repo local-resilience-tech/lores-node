@@ -2,15 +2,13 @@ import { Container, Stack, Title } from "@mantine/core"
 import { useAppSelector } from "../../../store"
 import AppsList from "../components/AppsList"
 
-export default function Apps() {
-  const apps = useAppSelector((state) => state.apps)
-
+export default function AllApps() {
   return (
     <Container>
       <Stack>
-        <Title order={1}>Apps</Title>
+        <Title order={1}>All Apps</Title>
 
-        {apps && <AppsList apps={apps} />}
+        <AppsList apps={[]} />
       </Stack>
     </Container>
   )

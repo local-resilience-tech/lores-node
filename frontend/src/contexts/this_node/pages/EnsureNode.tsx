@@ -22,7 +22,7 @@ const getNode = async (): Promise<Node | null> => {
 export default function EnsureNode() {
   const node = useAppSelector((state) => state.thisNode)
   const dispatch = useAppDispatch()
-  const [loading, withLoading] = useLoading(true)
+  const [loading, withLoading] = useLoading(false)
 
   const updateNode = (newNode: Node | null) => {
     console.log("Updating node", newNode)
@@ -59,9 +59,13 @@ export default function EnsureNode() {
   if (loading) return <Loading />
 
   return (
-    <Container>
-      {node == null && <NewNode onSubmitNewNode={onSubmitNewNode} />}
+    <>
+      {node == null && (
+        <Container>
+          <NewNode onSubmitNewNode={onSubmitNewNode} />
+        </Container>
+      )}
       {node != null && <Outlet />}
-    </Container>
+    </>
   )
 }
