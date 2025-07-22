@@ -2,8 +2,6 @@ version: "3.8"
 services:
   web:
     image: nginx
-    volumes:
-      - ./config:/lores_config
     ports:
       - "8080:80"
     environment:

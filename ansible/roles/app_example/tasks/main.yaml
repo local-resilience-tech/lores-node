@@ -24,7 +24,7 @@
     detach: false
     compose:
       - "{{ host_apps_path }}/example/compose.yml"
-      - version: "1.0"
+      - version: "3.8"
         services:
           web:
             volumes:

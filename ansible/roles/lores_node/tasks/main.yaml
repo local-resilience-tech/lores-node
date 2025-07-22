@@ -33,9 +33,10 @@
             environment:
               DATABASE_URL: "sqlite:/data/lores-node.db"
               CONFIG_PATH: "/data/config.toml"
+              APPS_PATH: "/apps"
             volumes:
               - data:/data
-              - "apps:{{ host_apps_path }}"
+              - "{{ host_apps_path }}:/apps"
             networks:
               - proxy
             deploy:
