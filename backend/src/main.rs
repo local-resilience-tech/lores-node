@@ -66,9 +66,12 @@ async fn main() {
     let mut config = config::LoresNodeConfig::load();
 
     // DATABASE
-    let pool = db::prepare_database()
+    let pool = db::prepare_main_database()
         .await
         .expect("Failed to prepare database");
+    let operation_pool = db::prepare_operation_database()
+        .await
+        .expect("Failed to prepare operation database");
 
     // REALTIME COMMS
     let realtime_state = RealtimeState::new();
@@ -77,7 +80,7 @@ async fn main() {
     let (channel_tx, channel_rx): (mpsc::Sender<LoResEvent>, mpsc::Receiver<LoResEvent>) =
         mpsc::channel(32);
     let container = P2PandaContainer::new(channel_tx);
-    start_panda(&mut config, &container).await;
+    start_panda(&mut config, &container, &operation_pool).await;
     start_panda_event_handler(channel_rx, pool.clone(), realtime_state.clone());
 
     // ROUTES
@@ -92,6 +95,7 @@ async fn main() {
         .layer(cors)
         .layer(TraceLayer::new_for_http())
         .layer(Extension(pool))
+        .layer(Extension(operation_pool))
         .layer(Extension(config))
         .layer(Extension(container))
         .layer(Extension(realtime_state));
@@ -108,7 +112,11 @@ async fn main() {
     axum::serve(listener, app).await.unwrap();
 }
 
-async fn start_panda(config: &mut LoresNodeConfig, container: &P2PandaContainer) {
+async fn start_panda(
+    config: &mut LoresNodeConfig,
+    container: &P2PandaContainer,
+    operation_pool: &SqlitePool,
+) {
     let repo = ThisP2PandaNodeRepo::init();
 
     match config.network_name.clone() {
@@ -132,7 +140,7 @@ async fn start_panda(config: &mut LoresNodeConfig, container: &P2PandaContainer)
     };
     container.set_bootstrap_node_id(bootstrap_node_id).await;
 
-    if let Err(e) = container.start().await {
+    if let Err(e) = container.start(operation_pool).await {
         println!("Failed to start P2PandaContainer on liftoff: {:?}", e);
     }
 }

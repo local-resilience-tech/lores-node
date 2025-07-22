@@ -8,7 +8,8 @@ use p2panda_node::extensions::{LogId, NodeExtensions};
 use p2panda_node::node::Node;
 use p2panda_node::stream::{EventData, StreamEvent};
 use p2panda_node::topic::{Topic, TopicMap};
-use p2panda_store::MemoryStore;
+use p2panda_store::SqliteStore;
+use sqlx::SqlitePool;
 use std::sync::Arc;
 use tokio::sync::{broadcast, mpsc, Mutex};
 use tokio::{self};
@@ -90,7 +91,7 @@ impl P2PandaContainer {
     //     Ok(())
     // }
 
-    pub async fn start(&self) -> Result<()> {
+    pub async fn start(&self, store_pool: &SqlitePool) -> Result<()> {
         println!("Starting client");
 
         let params = self.get_params().await;
@@ -112,7 +113,7 @@ impl P2PandaContainer {
         let private_key = private_key.unwrap();
         let network_name = network_name.unwrap();
 
-        self.start_for(private_key, network_name, boostrap_node_id)
+        self.start_for(private_key, network_name, boostrap_node_id, store_pool)
             .await
     }
 
@@ -121,11 +122,13 @@ impl P2PandaContainer {
         private_key: PrivateKey,
         network_name: String,
         boostrap_node_id: Option<PublicKey>,
+        store_pool: &SqlitePool,
     ) -> Result<()> {
         let relay_url: RelayUrl = RELAY_URL.parse().unwrap();
         let temp_blobs_root_dir = tempfile::tempdir().expect("temp dir");
 
-        let store = MemoryStore::<LogId, NodeExtensions>::new();
+        let store = SqliteStore::<LogId, NodeExtensions>::new(store_pool.clone());
+
         let topic_map = TopicMap::new();
 
         println!(

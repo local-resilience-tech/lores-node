@@ -9,11 +9,11 @@ iroh = "0.34.1"
 anyhow = "1.0.98"
 async-trait = "0.1.88"
 axum = { version = "0.8.4", features = ["ws"] }
-experimental-node = { git = "https://github.com/p2panda/experimental-node", rev = "ec5ccfa01613a8a487acf2883cf7cb1046b41c94" }
+experimental-node = { git = "https://github.com/p2panda/experimental-node", rev = "b7a61e634b90f79a37ea02d7eeade264da34b9cc" }
 p2panda-blobs = "0.4.0"
 p2panda-core = "0.4.0"
 p2panda-net = "0.4.0"
-p2panda-store = "0.4.0"
+p2panda-store = { version = "0.4.0", features = ["sqlite"] }
 p2panda-stream = "0.4.0"
 p2panda-discovery = { version = "0.4.0", features = ["mdns"] }
 p2panda-sync = { version = "0.4.0", features = ["log-sync"] }
