@@ -6,6 +6,7 @@ import { Link } from "react-router-dom"
 
 export type NavLinkProps = MantineNavLinkProps & {
   href: string
+  onClick?: (event: React.MouseEvent<HTMLAnchorElement>) => void
 }
 
 export default function NavLink({ href, ...innerProps }: NavLinkProps) {
