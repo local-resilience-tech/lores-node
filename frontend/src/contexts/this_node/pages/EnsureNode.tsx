@@ -7,6 +7,7 @@ import { getApi } from "../../../api"
 import type { Node } from "../../../api/Api"
 import { useAppDispatch, useAppSelector } from "../../../store"
 import { thisNodeLoaded } from "../../../store/this_node"
+import { Outlet } from "react-router"
 
 const getNode = async (): Promise<Node | null> => {
   const result = await getApi().api.showThisNode()
@@ -61,7 +62,7 @@ export default function EnsureNode() {
   return (
     <Container>
       {node == null && <NewNode onSubmitNewNode={onSubmitNewNode} />}
-      {node != null && <EditNode node={node} />}
+      {node != null && <Outlet />}
     </Container>
   )
 }

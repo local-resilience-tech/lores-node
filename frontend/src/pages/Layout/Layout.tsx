@@ -7,6 +7,7 @@ import {
   Container,
   Group,
   Text,
+  Title,
 } from "@mantine/core"
 import { NavLink } from "../../components"
 import { Outlet } from "react-router-dom"
@@ -67,39 +68,48 @@ export default function Layout() {
         </Group>
       </AppShell.Header>
       <AppShell.Navbar p={0}>
+        <AppShell.Section className={classes.menu_section}>
+          <Text className={classes.section_title}>
+            {node?.name || "This Node"}
+          </Text>
+
+          <NavLink
+            label="Node status"
+            href="/this_node"
+            key={node ? node.id : "this_node"}
+            leftSection={<IconHome size={iconSize} />}
+            onClick={toggle}
+          />
+          <NavLink
+            label="Apps"
+            href="/this_node/apps"
+            leftSection={<IconApps size={iconSize} />}
+            onClick={toggle}
+            rightSection={
+              appsCount !== undefined && <Badge circle>{appsCount}</Badge>
+            }
+          />
+          <NavLink
+            label="P2Panda"
+            href="/this_node/p2panda_node"
+            leftSection={
+              <img src={pangaLogoUrl} alt="P2Panda Icon" width={iconSize} />
+            }
+            onClick={toggle}
+          />
+        </AppShell.Section>
+
         {region && (
           <AppShell.Section className={classes.menu_section}>
+            <Text className={classes.section_title}>
+              {region?.network_id || "This Region"}
+            </Text>
             <NavLink
               label="Nodes"
-              href="/nodes"
+              href="/this_region/nodes"
               leftSection={<IconAffiliate size={iconSize} />}
               rightSection={
                 nodesCount !== undefined && <Badge circle>{nodesCount}</Badge>
-              }
-              onClick={toggle}
-            />
-            <NavLink
-              label={node ? node.name : "This Node"}
-              href="/this_node"
-              key={node ? node.id : "this_node"}
-              leftSection={<IconHome size={iconSize} />}
-              onClick={toggle}
-            />
-            <NavLink
-              label="Apps"
-              href="/apps"
-              leftSection={<IconApps size={iconSize} />}
-              onClick={toggle}
-              rightSection={
-                appsCount !== undefined && <Badge circle>{appsCount}</Badge>
-              }
-            />
-
-            <NavLink
-              label="P2Panda"
-              href="/p2panda_node"
-              leftSection={
-                <img src={pangaLogoUrl} alt="P2Panda Icon" width={iconSize} />
               }
               onClick={toggle}
             />

@@ -3,8 +3,13 @@ import EditNodeForm from "../components/EditNodeForm"
 import ManageStatus from "../components/ManageStatus"
 import type { Node, UpdateNodeDetails } from "../../../api/Api"
 import { getApi } from "../../../api"
+import { useAppSelector } from "../../../store"
 
-export default function EditNode({ node }: { node: Node }) {
+export default function EditNode() {
+  const node = useAppSelector((state) => state.thisNode)
+
+  if (!node) return null
+
   const updateNode = async (data: UpdateNodeDetails) => {
     getApi()
       .api.updateThisNode(data)

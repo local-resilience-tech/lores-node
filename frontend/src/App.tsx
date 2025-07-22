@@ -17,6 +17,7 @@ import store, { AppStore, loadInitialData } from "./store"
 // Import styles of packages that you've installed.
 // All packages except `@mantine/hooks` require styles imports
 import "@mantine/core/styles.css"
+import EditNode from "./contexts/this_node/pages/EditNode"
 
 function withStore(
   func: (store: AppStore) => any,
@@ -38,13 +39,25 @@ const router = createBrowserRouter([
         path: "",
         element: <EnsureRegion />,
         children: [
-          { path: "", element: <Navigate to="nodes" replace /> },
-          { path: "nodes", element: <Nodes /> },
-          { path: "apps", element: <Apps /> },
-          { path: "this_node", element: <EnsureNode /> },
+          { path: "", element: <Navigate to="/this_region/nodes" replace /> },
+          {
+            path: "this_node",
+            element: <EnsureNode />,
+            children: [
+              { path: "", element: <EditNode /> },
+              { path: "apps", element: <Apps /> },
+              { path: "p2panda_node", element: <ThisP2PandaNode /> },
+            ],
+          },
+          {
+            path: "this_region",
+            children: [
+              { path: "", element: <Navigate to="nodes" replace /> },
+              { path: "nodes", element: <Nodes /> },
+            ],
+          },
         ],
       },
-      { path: "p2panda_node", element: <ThisP2PandaNode /> },
     ],
   },
 ])
