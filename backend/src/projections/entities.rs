@@ -28,3 +28,9 @@ pub struct NodeConfig {
 pub struct Region {
     pub network_id: String,
 }
+
+#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
+pub struct App {
+    pub name: String,
+    pub version: String,
+}

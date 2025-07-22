@@ -10,6 +10,11 @@
  * ---------------------------------------------------------------
  */
 
+export interface App {
+  name: string;
+  version: string;
+}
+
 export interface BootstrapNodeData {
   network_name: string;
   node_id?: string | null;
@@ -252,6 +257,20 @@ export class Api<
   SecurityDataType extends unknown,
 > extends HttpClient<SecurityDataType> {
   api = {
+    /**
+     * No description
+     *
+     * @name ShowAllApps
+     * @request GET:/api/apps
+     */
+    showAllApps: (params: RequestParams = {}) =>
+      this.request<App[], any>({
+        path: `/api/apps`,
+        method: "GET",
+        format: "json",
+        ...params,
+      }),
+
     /**
      * No description
      *
