@@ -18,10 +18,17 @@ pub struct NodeStatusPostedDataV1 {
 }
 
 #[derive(serde::Deserialize, serde::Serialize, Clone, PartialEq, Debug)]
+pub struct AppRegisteredDataV1 {
+    pub name: String,
+    pub version: String,
+}
+
+#[derive(serde::Deserialize, serde::Serialize, Clone, PartialEq, Debug)]
 pub enum LoResEventPayload {
     NodeAnnounced(NodeAnnouncedDataV1),
     NodeUpdated(NodeUpdatedDataV1),
     NodeStatusPosted(NodeStatusPostedDataV1),
+    AppRegistered(AppRegisteredDataV1),
 }
 
 #[derive(serde::Deserialize, serde::Serialize, Clone, PartialEq, Debug)]

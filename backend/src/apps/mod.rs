@@ -2,6 +2,7 @@ use anyhow::Result;
 use std::{
     env,
     fs::{self, DirEntry},
+    path::PathBuf,
 };
 
 use crate::projections::entities::App;
@@ -14,23 +15,22 @@ lazy_static! {
 pub fn find_installed_apps() -> Vec<App> {
     find_app_dirs()
         .into_iter()
-        .map(load_app_config)
+        .map(|entry| entry.file_name().into_string().ok())
+        .filter(|name| name.is_some())
+        .map(|name| load_app_config(name.unwrap()))
         .filter_map(|app| app)
         .collect::<Vec<App>>()
 }
 
-fn load_app_config(path: DirEntry) -> Option<App> {
-    let config_file_path = path.path().join("config/app.toml");
+pub fn load_app_config(app_name: String) -> Option<App> {
+    let path = app_path(app_name);
+    let config_file_path = path.join("config/app.toml");
 
     match fs::read_to_string(config_file_path.clone()) {
         Ok(file_contents) => match toml::from_str::<App>(&file_contents) {
             Ok(contents) => Some(contents),
             Err(e) => {
-                eprintln!(
-                    "Could not parse TOML for `{}`: {}",
-                    path.path().display(),
-                    e
-                );
+                eprintln!("Could not parse TOML for `{}`: {}", path.display(), e);
                 None
             }
         },
@@ -39,6 +39,10 @@ fn load_app_config(path: DirEntry) -> Option<App> {
             None
         }
     }
+}
+
+fn app_path(app_name: String) -> PathBuf {
+    PathBuf::from(APPS_PATH.clone()).join(app_name)
 }
 
 fn find_app_dirs() -> Vec<DirEntry> {

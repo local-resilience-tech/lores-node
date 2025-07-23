@@ -29,6 +29,10 @@ pub async fn handle_event(event: LoResEvent, pool: &SqlitePool, realtime_state: 
         LoResEventPayload::NodeStatusPosted(payload) => {
             NodeStatusPostedHandler::handle(header, payload, pool).await
         }
+        _ => {
+            eprintln!("Unhandled LoResEventPayload: {:?}", payload);
+            HandlerResult::default()
+        }
     };
 
     if !result.client_events.is_empty() {
