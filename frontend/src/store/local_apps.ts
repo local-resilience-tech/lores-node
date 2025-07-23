@@ -3,15 +3,15 @@ import type { LocalApp } from "../api/Api"
 
 export type AppsState = LocalApp[] | null
 
-const appsSlice = createSlice({
-  name: "apps",
+const localAppsSlice = createSlice({
+  name: "local_apps",
   initialState: null as AppsState,
   reducers: {
-    appsLoaded: (_state, action: PayloadAction<AppsState>) => {
+    localAppsLoaded: (_state, action: PayloadAction<AppsState>) => {
       return action.payload
     },
   },
 })
 
-export const { appsLoaded } = appsSlice.actions
-export default appsSlice.reducer
+export const { localAppsLoaded } = localAppsSlice.actions
+export default localAppsSlice.reducer

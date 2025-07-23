@@ -15,7 +15,7 @@ use crate::{
 
 pub fn router() -> OpenApiRouter {
     OpenApiRouter::new()
-        .routes(routes!(show_all_apps))
+        .routes(routes!(show_all_local_apps))
         .routes(routes!(register_app))
 }
 
@@ -23,7 +23,7 @@ pub fn router() -> OpenApiRouter {
     (status = 200, body = Vec<LocalApp>),
     (status = INTERNAL_SERVER_ERROR, body = ()),
 ),)]
-async fn show_all_apps() -> impl IntoResponse {
+async fn show_all_local_apps() -> impl IntoResponse {
     let apps = find_installed_apps();
     (StatusCode::OK, Json(apps)).into_response()
 }

@@ -33,7 +33,7 @@ export default function Layout() {
   const region = useAppSelector((state) => state.region)
   const node = useAppSelector((state) => state.thisNode)
   const nodesCount = useAppSelector((state) => state.nodes?.length)
-  const appsCount = useAppSelector((state) => state.apps?.length)
+  const localAppsCount = useAppSelector((state) => state.localApps?.length)
 
   const {} = useWebSocket(getSocketUrl(), {
     share: true,
@@ -86,7 +86,9 @@ export default function Layout() {
             leftSection={<IconApps size={iconSize} />}
             onClick={toggle}
             rightSection={
-              appsCount !== undefined && <Badge circle>{appsCount}</Badge>
+              localAppsCount !== undefined && (
+                <Badge circle>{localAppsCount}</Badge>
+              )
             }
           />
           <NavLink

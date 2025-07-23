@@ -5,7 +5,7 @@ import { LocalApp } from "../../../api/Api"
 import { getApi } from "../../../api"
 
 export default function LocalApps() {
-  const apps = useAppSelector((state) => state.apps)
+  const apps = useAppSelector((state) => state.localApps)
 
   const onAppRegister = (app: LocalApp) => {
     // Handle app registration logic here

@@ -282,10 +282,10 @@ export class Api<
     /**
      * No description
      *
-     * @name ShowAllApps
+     * @name ShowAllLocalApps
      * @request GET:/api/local_apps
      */
-    showAllApps: (params: RequestParams = {}) =>
+    showAllLocalApps: (params: RequestParams = {}) =>
       this.request<LocalApp[], any>({
         path: `/api/local_apps`,
         method: "GET",
