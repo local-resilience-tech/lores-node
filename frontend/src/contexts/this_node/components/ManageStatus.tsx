@@ -22,7 +22,6 @@ export default function ManageStatus() {
   return (
     <Stack>
       <PostStatus onSubmit={postStatus} />
-      <Text c="dimmed">Display current status here</Text>
     </Stack>
   )
 }

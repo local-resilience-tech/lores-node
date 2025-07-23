@@ -31,7 +31,7 @@
               # - target: 80
               #   published: 80
             environment:
-              DATABASE_URL: "sqlite:/data/lores-node.db"
+              DATABASE_URL: "sqlite:/data/main.sqlite"
               OPERATION_DATABASE_URL: "sqlite:/data/operations.sqlite"
               CONFIG_PATH: "/data/config.toml"
               APPS_PATH: "/apps"

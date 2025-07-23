@@ -15,6 +15,10 @@ export interface App {
   version: string;
 }
 
+export interface AppIdentifier {
+  name: string;
+}
+
 export interface BootstrapNodeData {
   network_name: string;
   node_id?: string | null;
@@ -250,27 +254,13 @@ export class HttpClient<SecurityDataType = unknown> {
 
 /**
  * @title lores-node
- * @version 0.8.2
+ * @version 0.9.0
  * @license
  */
 export class Api<
   SecurityDataType extends unknown,
 > extends HttpClient<SecurityDataType> {
   api = {
-    /**
-     * No description
-     *
-     * @name ShowAllApps
-     * @request GET:/api/apps
-     */
-    showAllApps: (params: RequestParams = {}) =>
-      this.request<App[], any>({
-        path: `/api/apps`,
-        method: "GET",
-        format: "json",
-        ...params,
-      }),
-
     /**
      * No description
      *
@@ -281,6 +271,36 @@ export class Api<
       this.request<null | ClientEvent, any>({
         path: `/api/dummy_event`,
         method: "GET",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @name ShowAllApps
+     * @request GET:/api/local_apps
+     */
+    showAllApps: (params: RequestParams = {}) =>
+      this.request<App[], any>({
+        path: `/api/local_apps`,
+        method: "GET",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @name RegisterApp
+     * @request POST:/api/local_apps/register
+     */
+    registerApp: (data: AppIdentifier, params: RequestParams = {}) =>
+      this.request<any, any>({
+        path: `/api/local_apps/register`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
         format: "json",
         ...params,
       }),

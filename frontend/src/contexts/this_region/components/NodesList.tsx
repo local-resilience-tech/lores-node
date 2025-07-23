@@ -37,13 +37,13 @@ export default function NodesList({
                     <Table.Th w={160}>Message</Table.Th>
                     <Table.Td>{node.status_text}</Table.Td>
                   </Table.Tr>
-
+                  {/*
                   <Table.Tr>
                     <Table.Th>IP</Table.Th>
                     <Table.Td>
                       <IpLink ip={node.public_ipv4} />
                     </Table.Td>
-                  </Table.Tr>
+                  </Table.Tr> */}
 
                   <Table.Tr>
                     <Table.Th>State</Table.Th>
