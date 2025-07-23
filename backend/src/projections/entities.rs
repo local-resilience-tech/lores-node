@@ -34,3 +34,10 @@ pub struct App {
     pub name: String,
     pub version: String,
 }
+
+#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
+pub struct AppInstallation {
+    pub app_name: String,
+    pub node_id: String,
+    pub version: String,
+}

@@ -17,9 +17,8 @@ impl NodesWriteRepo {
 
     pub async fn upsert(&self, pool: &SqlitePool, node: Node) -> Result<(), sqlx::Error> {
         let _node = sqlx::query!(
-            "INSERT INTO nodes (id, name) VALUES (?, ?) ON CONFLICT(id) DO UPDATE SET name = ?",
+            "INSERT INTO nodes (id, name) VALUES (?, ?) ON CONFLICT(id) DO UPDATE SET name = excluded.name",
             node.id,
-            node.name,
             node.name
         )
         .execute(pool)

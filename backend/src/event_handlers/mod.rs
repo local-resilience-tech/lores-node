@@ -4,12 +4,13 @@ use sqlx::SqlitePool;
 use crate::{
     admin_api::realtime::RealtimeState,
     event_handlers::{
-        handler_utilities::HandlerResult, node_status_posted::NodeStatusPostedHandler,
-        node_updated::NodeUpdatedHandler,
+        app_registered::AppRegisteredHandler, handler_utilities::HandlerResult,
+        node_status_posted::NodeStatusPostedHandler, node_updated::NodeUpdatedHandler,
     },
     panda_comms::lores_events::{LoResEvent, LoResEventPayload},
 };
 
+mod app_registered;
 mod handler_utilities;
 mod node_announced;
 mod node_status_posted;
@@ -29,10 +30,12 @@ pub async fn handle_event(event: LoResEvent, pool: &SqlitePool, realtime_state: 
         LoResEventPayload::NodeStatusPosted(payload) => {
             NodeStatusPostedHandler::handle(header, payload, pool).await
         }
-        _ => {
-            eprintln!("Unhandled LoResEventPayload: {:?}", payload);
-            HandlerResult::default()
-        }
+        LoResEventPayload::AppRegistered(payload) => {
+            AppRegisteredHandler::handle(header, payload, pool).await
+        } // _ => {
+          //     eprintln!("Unhandled LoResEventPayload: {:?}", payload);
+          //     HandlerResult::default()
+          // }
     };
 
     if !result.client_events.is_empty() {

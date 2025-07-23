@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "\n            INSERT INTO apps (name)\n            VALUES (?)\n            ON CONFLICT(name) DO NOTHING",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": []
+  },
+  "hash": "50f8306557e4d1ebbaec7a3fb8339ef426b65f1d36493d7d54e809a4c701d23d"
+}

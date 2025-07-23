@@ -22,14 +22,14 @@ impl CurrentNodeStatusesWriteRepo {
         let timestamp = status.posted_timestamp as i64;
 
         let _node = sqlx::query!(
-            "INSERT INTO current_node_statuses (node_id, text, state, posted_at) VALUES (?, ?, ?, ?) ON CONFLICT(node_id) DO UPDATE SET text = ?, state = ?, posted_at = ?",
+            "
+            INSERT INTO current_node_statuses (node_id, text, state, posted_at)
+            VALUES (?, ?, ?, ?)
+            ON CONFLICT(node_id) DO UPDATE SET text = excluded.text, state = excluded.state, posted_at = excluded.posted_at",
             status.author_node_id,
             status.text,
             status.state,
             timestamp,
-            status.text,
-            status.state,
-            timestamp
         )
         .execute(pool)
         .await?;
