@@ -3,7 +3,18 @@ import type { Node } from "../api/Api"
 
 export type NodesState = Node[] | null
 
-const nodesSlice = createSlice({
+export type NodesMap = Map<string, Node>
+
+export function hashById(nodes: Node[] | null): NodesMap {
+  if (!nodes) return new Map<string, Node>()
+
+  return nodes.reduce((acc, node) => {
+    acc.set(node.id, node)
+    return acc
+  }, new Map<string, Node>())
+}
+
+export const nodesSlice = createSlice({
   name: "nodes",
   initialState: null as NodesState,
   reducers: {

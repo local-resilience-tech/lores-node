@@ -14,6 +14,12 @@ export interface AppIdentifier {
   name: string;
 }
 
+export interface AppInstallation {
+  app_name: string;
+  node_id: string;
+  version: string;
+}
+
 export interface BootstrapNodeData {
   network_name: string;
   node_id?: string | null;
@@ -72,7 +78,8 @@ export interface Region {
   network_id: string;
 }
 
-export interface RegionApp {
+export interface RegionAppWithInstallations {
+  installations: AppInstallation[];
   name: string;
 }
 
@@ -330,7 +337,7 @@ export class Api<
      * @request GET:/api/region_apps
      */
     showAllRegionApps: (params: RequestParams = {}) =>
-      this.request<RegionApp[], any>({
+      this.request<RegionAppWithInstallations[], any>({
         path: `/api/region_apps`,
         method: "GET",
         format: "json",

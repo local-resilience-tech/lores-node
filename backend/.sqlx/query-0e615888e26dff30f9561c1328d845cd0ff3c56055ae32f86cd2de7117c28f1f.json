@@ -1,0 +1,32 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT app_name, node_id, version FROM app_installations",
+  "describe": {
+    "columns": [
+      {
+        "name": "app_name",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "node_id",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "version",
+        "ordinal": 2,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "0e615888e26dff30f9561c1328d845cd0ff3c56055ae32f86cd2de7117c28f1f"
+}

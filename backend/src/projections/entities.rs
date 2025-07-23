@@ -41,6 +41,12 @@ pub struct RegionApp {
 }
 
 #[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
+pub struct RegionAppWithInstallations {
+    pub name: String,
+    pub installations: Vec<AppInstallation>,
+}
+
+#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
 pub struct AppInstallation {
     pub app_name: String,
     pub node_id: String,

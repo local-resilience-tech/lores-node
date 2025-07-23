@@ -1,7 +1,7 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit"
-import type { RegionApp } from "../api/Api"
+import type { RegionAppWithInstallations } from "../api/Api"
 
-export type AppsState = RegionApp[] | null
+export type AppsState = RegionAppWithInstallations[] | null
 
 const regionAppsSlice = createSlice({
   name: "region_apps",
