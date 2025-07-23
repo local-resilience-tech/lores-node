@@ -3,6 +3,7 @@ import { configureStore } from "@reduxjs/toolkit"
 import regionReducer from "./region"
 import nodesReducer, { nodeUpdated } from "./nodes"
 import localAppsReducer from "./local_apps"
+import regionAppsReducer from "./region_apps"
 import thisNodeReducer from "./this_node"
 import { ClientEvent } from "../api/Api"
 
@@ -11,6 +12,7 @@ const store = configureStore({
     region: regionReducer,
     nodes: nodesReducer,
     localApps: localAppsReducer,
+    regionApps: regionAppsReducer,
     thisNode: thisNodeReducer,
   },
 })
