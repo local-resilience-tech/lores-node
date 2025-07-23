@@ -48,6 +48,12 @@ export interface LocalApp {
   version: string;
 }
 
+export interface LogCount {
+  node_id: string;
+  /** @format int64 */
+  total: number;
+}
+
 export interface Node {
   id: string;
   name: string;
@@ -64,6 +70,10 @@ export interface NodeDetails {
 export interface NodeStatusData {
   state?: string | null;
   text?: string | null;
+}
+
+export interface P2PandaLogCounts {
+  counts: LogCount[];
 }
 
 export interface P2PandaNodeDetails {
@@ -419,6 +429,20 @@ export class Api<
     showThisPandaNode: (params: RequestParams = {}) =>
       this.request<P2PandaNodeDetails, string>({
         path: `/api/this_p2panda_node`,
+        method: "GET",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @name P2PandaLogCounts
+     * @request GET:/api/this_p2panda_node/event_log
+     */
+    p2PandaLogCounts: (params: RequestParams = {}) =>
+      this.request<P2PandaLogCounts, any>({
+        path: `/api/this_p2panda_node/event_log`,
         method: "GET",
         format: "json",
         ...params,

@@ -3,10 +3,18 @@ use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use utoipa_axum::{router::OpenApiRouter, routes};
 
-use crate::panda_comms::container::P2PandaContainer;
+use crate::{
+    panda_comms::{
+        container::P2PandaContainer,
+        log_access::{find_log_count, LogCount},
+    },
+    OperationPoolState,
+};
 
 pub fn router() -> OpenApiRouter {
-    OpenApiRouter::new().routes(routes!(show_this_panda_node))
+    OpenApiRouter::new()
+        .routes(routes!(show_this_panda_node))
+        .routes(routes!(p2panda_log_counts))
 }
 
 #[derive(Serialize, ToSchema)]
@@ -28,6 +36,12 @@ pub struct P2PandaNodeDetails {
     pub panda_node_id: String,
     pub iroh_node_addr: IrohNodeAddr,
     pub peers: Vec<PandaNodeAddress>,
+}
+
+#[derive(Deserialize, ToSchema)]
+pub struct BootstrapNodeData {
+    pub network_name: String,
+    pub node_id: Option<String>,
 }
 
 #[utoipa::path(get, path = "/", responses(
@@ -85,8 +99,23 @@ async fn show_this_panda_node(
     (StatusCode::OK, Json(node_details)).into_response()
 }
 
-#[derive(Deserialize, ToSchema)]
-pub struct BootstrapNodeData {
-    pub network_name: String,
-    pub node_id: Option<String>,
+#[derive(Serialize, ToSchema)]
+struct P2PandaLogCounts {
+    pub counts: Vec<LogCount>,
+}
+
+#[utoipa::path(get, path = "/event_log", responses(
+    (status = 200, body = P2PandaLogCounts)
+),)]
+async fn p2panda_log_counts(
+    Extension(pool_state): Extension<OperationPoolState>,
+) -> impl IntoResponse {
+    let pool = pool_state.pool;
+
+    let counts = find_log_count(&pool).await.unwrap_or_else(|e| {
+        eprint!("Error finding log count: {}", e);
+        vec![]
+    });
+
+    (StatusCode::OK, Json(P2PandaLogCounts { counts })).into_response()
 }

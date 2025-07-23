@@ -39,6 +39,11 @@ mod static_server;
 #[macro_use]
 extern crate lazy_static;
 
+#[derive(Clone)]
+struct OperationPoolState {
+    pool: SqlitePool,
+}
+
 #[tokio::main]
 async fn main() {
     #[derive(OpenApi)]
@@ -95,7 +100,9 @@ async fn main() {
         .layer(cors)
         .layer(TraceLayer::new_for_http())
         .layer(Extension(pool))
-        .layer(Extension(operation_pool))
+        .layer(Extension(OperationPoolState {
+            pool: operation_pool,
+        }))
         .layer(Extension(config))
         .layer(Extension(container))
         .layer(Extension(realtime_state));

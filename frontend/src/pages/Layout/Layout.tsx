@@ -17,6 +17,7 @@ import {
   IconApps,
   IconBrandGithub,
   IconHome,
+  IconTimelineEventText,
 } from "@tabler/icons-react"
 import packageJson from "../../../package.json"
 import pangaLogoUrl from "../../assets/deepsea-panda.svg"
@@ -81,7 +82,7 @@ export default function Layout() {
             onClick={toggle}
           />
           <NavLink
-            label="Local Apps"
+            label="Local apps"
             href="/this_node/apps"
             leftSection={<IconApps size={iconSize} />}
             onClick={toggle}
@@ -90,14 +91,6 @@ export default function Layout() {
                 <Badge circle>{localAppsCount}</Badge>
               )
             }
-          />
-          <NavLink
-            label="P2Panda"
-            href="/this_node/p2panda_node"
-            leftSection={
-              <img src={pangaLogoUrl} alt="P2Panda Icon" width={iconSize} />
-            }
-            onClick={toggle}
           />
         </AppShell.Section>
 
@@ -116,7 +109,7 @@ export default function Layout() {
               onClick={toggle}
             />
             <NavLink
-              label="All Apps"
+              label="All apps"
               href="/this_region/apps"
               leftSection={<IconApps size={iconSize} />}
               onClick={toggle}
@@ -125,6 +118,21 @@ export default function Layout() {
         )}
 
         <AppShell.Section className={classes.footer_section}>
+          <Text className={classes.section_title}>Debug</Text>
+          <NavLink
+            label="P2Panda node"
+            href="/debug/p2panda_node"
+            leftSection={
+              <img src={pangaLogoUrl} alt="P2Panda Icon" width={iconSize} />
+            }
+            onClick={toggle}
+          />
+          <NavLink
+            label="Event log"
+            href="/debug/event_log"
+            leftSection={<IconTimelineEventText size={iconSize} />}
+            onClick={toggle}
+          />
           <NavLink
             c="dimmed"
             label={"v" + packageJson.version}

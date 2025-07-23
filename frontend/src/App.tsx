@@ -6,7 +6,7 @@ import {
 } from "react-router-dom"
 import { Layout } from "./pages"
 import { EnsureNode, EditNode } from "./contexts/this_node"
-import { ThisP2PandaNode } from "./contexts/this_p2panda_node"
+import { EventLog, ThisP2PandaNode } from "./contexts/this_p2panda_node"
 import { LocalApps, RegionApps } from "./contexts/apps"
 import { EnsureRegion, Nodes } from "./contexts/this_region"
 import { MantineProvider } from "@mantine/core"
@@ -45,7 +45,6 @@ const router = createBrowserRouter([
             children: [
               { path: "", element: <EditNode /> },
               { path: "apps", element: <LocalApps /> },
-              { path: "p2panda_node", element: <ThisP2PandaNode /> },
             ],
           },
           {
@@ -54,6 +53,13 @@ const router = createBrowserRouter([
               { path: "", element: <Navigate to="nodes" replace /> },
               { path: "nodes", element: <Nodes /> },
               { path: "apps", element: <RegionApps /> },
+            ],
+          },
+          {
+            path: "debug",
+            children: [
+              { path: "p2panda_node", element: <ThisP2PandaNode /> },
+              { path: "event_log", element: <EventLog /> },
             ],
           },
         ],
