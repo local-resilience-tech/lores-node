@@ -10,7 +10,7 @@ use crate::{
         container::P2PandaContainer,
         lores_events::{AppRegisteredDataV1, LoResEventPayload},
     },
-    projections::entities::App,
+    projections::entities::LocalApp,
 };
 
 pub fn router() -> OpenApiRouter {
@@ -20,7 +20,7 @@ pub fn router() -> OpenApiRouter {
 }
 
 #[utoipa::path(get, path = "/", responses(
-    (status = 200, body = Vec<App>),
+    (status = 200, body = Vec<LocalApp>),
     (status = INTERNAL_SERVER_ERROR, body = ()),
 ),)]
 async fn show_all_apps() -> impl IntoResponse {

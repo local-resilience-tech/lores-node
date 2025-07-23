@@ -1,6 +1,6 @@
 import { Container, Stack, Title } from "@mantine/core"
-import { useAppSelector } from "../../../store"
-import AppsList from "../components/AppsList"
+
+import RegionAppsList from "../components/RegionAppsList"
 
 export default function AllApps() {
   return (
@@ -8,7 +8,7 @@ export default function AllApps() {
       <Stack>
         <Title order={1}>All Apps</Title>
 
-        <AppsList apps={[]} />
+        <RegionAppsList apps={[]} />
       </Stack>
     </Container>
   )

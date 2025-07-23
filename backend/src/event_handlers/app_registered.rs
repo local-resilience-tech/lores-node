@@ -4,7 +4,7 @@ use crate::{
     event_handlers::handler_utilities::{handle_db_write_error, HandlerResult},
     panda_comms::lores_events::{AppRegisteredDataV1, LoResEventHeader},
     projections::{
-        entities::{App, AppInstallation},
+        entities::{AppInstallation, RegionApp},
         projections_write::{app_installations::AppInstallationsWriteRepo, apps::AppsWriteRepo},
     },
 };
@@ -33,9 +33,8 @@ impl AppRegisteredHandler {
         pool: &SqlitePool,
     ) -> Result<(), sqlx::Error> {
         let repo = AppsWriteRepo::init();
-        let app = App {
+        let app = RegionApp {
             name: payload.name.clone(),
-            version: payload.version.clone(),
         };
         repo.upsert(pool, app).await?;
 

@@ -1,12 +1,12 @@
 import { Button, Table } from "@mantine/core"
-import { App } from "../../../api/Api"
+import { LocalApp } from "../../../api/Api"
 
 interface AppsListProps {
-  apps: App[]
-  onRegister?: (app: App) => void
+  apps: LocalApp[]
+  onRegister?: (app: LocalApp) => void
 }
 
-export default function AppsList({ apps, onRegister }: AppsListProps) {
+export default function LocalAppsList({ apps, onRegister }: AppsListProps) {
   return (
     <Table>
       <Table.Thead>

@@ -1,6 +1,6 @@
 use sqlx::SqlitePool;
 
-use super::super::entities::App;
+use super::super::entities::RegionApp;
 
 pub struct AppsWriteRepo {}
 
@@ -9,7 +9,7 @@ impl AppsWriteRepo {
         AppsWriteRepo {}
     }
 
-    pub async fn upsert(&self, pool: &SqlitePool, app: App) -> Result<(), sqlx::Error> {
+    pub async fn upsert(&self, pool: &SqlitePool, app: RegionApp) -> Result<(), sqlx::Error> {
         let _app = sqlx::query!(
             "
             INSERT INTO apps (name)

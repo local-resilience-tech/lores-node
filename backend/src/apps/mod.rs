@@ -5,29 +5,29 @@ use std::{
     path::PathBuf,
 };
 
-use crate::projections::entities::App;
+use crate::projections::entities::LocalApp;
 
 lazy_static! {
     pub static ref APPS_PATH: String =
         env::var("APPS_PATH").unwrap_or_else(|_| "../apps".to_string());
 }
 
-pub fn find_installed_apps() -> Vec<App> {
+pub fn find_installed_apps() -> Vec<LocalApp> {
     find_app_dirs()
         .into_iter()
         .map(|entry| entry.file_name().into_string().ok())
         .filter(|name| name.is_some())
         .map(|name| load_app_config(name.unwrap()))
         .filter_map(|app| app)
-        .collect::<Vec<App>>()
+        .collect::<Vec<LocalApp>>()
 }
 
-pub fn load_app_config(app_name: String) -> Option<App> {
+pub fn load_app_config(app_name: String) -> Option<LocalApp> {
     let path = app_path(app_name);
     let config_file_path = path.join("config/app.toml");
 
     match fs::read_to_string(config_file_path.clone()) {
-        Ok(file_contents) => match toml::from_str::<App>(&file_contents) {
+        Ok(file_contents) => match toml::from_str::<LocalApp>(&file_contents) {
             Ok(contents) => Some(contents),
             Err(e) => {
                 eprintln!("Could not parse TOML for `{}`: {}", path.display(), e);

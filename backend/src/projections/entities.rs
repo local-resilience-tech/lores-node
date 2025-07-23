@@ -30,9 +30,14 @@ pub struct Region {
 }
 
 #[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
-pub struct App {
+pub struct LocalApp {
     pub name: String,
     pub version: String,
+}
+
+#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
+pub struct RegionApp {
+    pub name: String,
 }
 
 #[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]

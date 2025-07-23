@@ -1,7 +1,7 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit"
-import type { App } from "../api/Api"
+import type { LocalApp } from "../api/Api"
 
-export type AppsState = App[] | null
+export type AppsState = LocalApp[] | null
 
 const appsSlice = createSlice({
   name: "apps",

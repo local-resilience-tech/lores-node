@@ -10,11 +10,6 @@
  * ---------------------------------------------------------------
  */
 
-export interface App {
-  name: string;
-  version: string;
-}
-
 export interface AppIdentifier {
   name: string;
 }
@@ -36,6 +31,11 @@ export interface IrohNodeAddr {
   direct_addresses: string[];
   node_id: string;
   relay_url?: string | null;
+}
+
+export interface LocalApp {
+  name: string;
+  version: string;
 }
 
 export interface Node {
@@ -70,6 +70,10 @@ export interface PandaNodeAddress {
 
 export interface Region {
   network_id: string;
+}
+
+export interface RegionApp {
+  name: string;
 }
 
 export interface UpdateNodeDetails {
@@ -282,7 +286,7 @@ export class Api<
      * @request GET:/api/local_apps
      */
     showAllApps: (params: RequestParams = {}) =>
-      this.request<App[], any>({
+      this.request<LocalApp[], any>({
         path: `/api/local_apps`,
         method: "GET",
         format: "json",
@@ -314,6 +318,20 @@ export class Api<
     showAllNodes: (params: RequestParams = {}) =>
       this.request<NodeDetails[], any>({
         path: `/api/nodes`,
+        method: "GET",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @name ShowAllRegionApps
+     * @request GET:/api/region_apps
+     */
+    showAllRegionApps: (params: RequestParams = {}) =>
+      this.request<RegionApp[], any>({
+        path: `/api/region_apps`,
         method: "GET",
         format: "json",
         ...params,

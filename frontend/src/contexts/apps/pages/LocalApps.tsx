@@ -1,13 +1,13 @@
 import { Container, Stack, Title } from "@mantine/core"
 import { useAppSelector } from "../../../store"
-import AppsList from "../components/AppsList"
-import { App } from "../../../api/Api"
+import LocalAppsList from "../components/LocalAppsList"
+import { LocalApp } from "../../../api/Api"
 import { getApi } from "../../../api"
 
 export default function LocalApps() {
   const apps = useAppSelector((state) => state.apps)
 
-  const onAppRegister = (app: App) => {
+  const onAppRegister = (app: LocalApp) => {
     // Handle app registration logic here
     console.log("Registering app:", app)
     getApi().api.registerApp({ name: app.name })
@@ -18,7 +18,7 @@ export default function LocalApps() {
       <Stack>
         <Title order={1}>Local Apps</Title>
 
-        {apps && <AppsList apps={apps} onRegister={onAppRegister} />}
+        {apps && <LocalAppsList apps={apps} onRegister={onAppRegister} />}
       </Stack>
     </Container>
   )
