@@ -25,9 +25,13 @@ export interface BootstrapNodeData {
   node_id?: string | null;
 }
 
-export type ClientEvent = {
-  NodeUpdated: NodeDetails;
-};
+export type ClientEvent =
+  | {
+      NodeUpdated: NodeDetails;
+    }
+  | {
+      RegionAppUpdated: RegionAppWithInstallations;
+    };
 
 export interface CreateNodeDetails {
   name: string;
@@ -265,7 +269,7 @@ export class HttpClient<SecurityDataType = unknown> {
 
 /**
  * @title lores-node
- * @version 0.9.1
+ * @version 0.9.2
  * @license
  */
 export class Api<

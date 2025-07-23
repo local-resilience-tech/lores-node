@@ -3,7 +3,7 @@ import { configureStore } from "@reduxjs/toolkit"
 import regionReducer from "./region"
 import nodesReducer, { nodeUpdated } from "./nodes"
 import localAppsReducer from "./local_apps"
-import regionAppsReducer from "./region_apps"
+import regionAppsReducer, { regionAppUpdated } from "./region_apps"
 import thisNodeReducer from "./this_node"
 import { ClientEvent } from "../api/Api"
 
@@ -32,8 +32,10 @@ export { loadInitialData } from "./loaders"
 export async function handleClientEvent(event: ClientEvent) {
   console.log("Handling client event:", event)
 
-  if (event.NodeUpdated) {
+  if ("NodeUpdated" in event) {
     store.dispatch(nodeUpdated(event.NodeUpdated))
+  } else if ("RegionAppUpdated" in event) {
+    store.dispatch(regionAppUpdated(event.RegionAppUpdated))
   } else {
     console.warn("Unhandled event type:", event)
   }

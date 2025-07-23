@@ -48,4 +48,29 @@ impl AppsReadRepo {
 
         Ok(region_apps)
     }
+
+    pub async fn find_with_installations(
+        &self,
+        pool: &SqlitePool,
+        name: String,
+    ) -> Result<Option<RegionAppWithInstallations>, sqlx::Error> {
+        let installations = sqlx::query_as!(
+            AppInstallation,
+            "SELECT app_name, node_id, version FROM app_installations WHERE app_name = ?",
+            name
+        )
+        .fetch_all(pool)
+        .await?;
+
+        if installations.is_empty() {
+            return Ok(None);
+        }
+
+        let region_app = RegionAppWithInstallations {
+            name: name.clone(),
+            installations,
+        };
+
+        Ok(Some(region_app))
+    }
 }
