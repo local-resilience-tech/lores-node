@@ -5,7 +5,7 @@ services:
   backend:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile-development
     ports:
       - "8000:8000"
       - "2022:2022/udp"
@@ -14,5 +14,6 @@ services:
       - FRONTEND_PATH=/app/frontend
       - DATABASE_URL=sqlite:/app/backend/main.sqlite
       - CONFIG_PATH=/app/backend/config.toml
+      - APPS_PATH=/local_apps
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
