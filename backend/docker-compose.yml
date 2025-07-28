@@ -1,6 +1,5 @@
 # This docker compose file is used for backend development and local testing. The production
 # docker build is in the root directory of this repository.
-version: "3.8"
 services:
   backend:
     build:
@@ -14,6 +13,8 @@ services:
       - FRONTEND_PATH=/app/frontend
       - DATABASE_URL=sqlite:/app/main.sqlite
       - CONFIG_PATH=/app/config.toml
+      - APP_REPOS_PATH=/app/app_repos
       - APPS_PATH=/local_apps
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+      - ./data/app_repos:/app/app_repos

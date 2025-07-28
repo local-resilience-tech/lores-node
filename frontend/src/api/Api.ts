@@ -22,6 +22,7 @@ export interface AppInstallation {
 
 export interface AppRepo {
   git_url: string;
+  name: string;
 }
 
 export interface BootstrapNodeData {

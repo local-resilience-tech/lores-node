@@ -1,15 +1,10 @@
 use axum::{http::StatusCode, response::IntoResponse, Json};
-use serde::Deserialize;
-use utoipa::ToSchema;
 use utoipa_axum::{router::OpenApiRouter, routes};
+
+use crate::app_repos::{git::clone_git_app_repo, AppRepo};
 
 pub fn router() -> OpenApiRouter {
     OpenApiRouter::new().routes(routes!(create_app_repo))
-}
-
-#[derive(Deserialize, ToSchema)]
-struct AppRepo {
-    pub git_url: String,
 }
 
 #[utoipa::path(
@@ -24,6 +19,13 @@ struct AppRepo {
 async fn create_app_repo(Json(payload): Json<AppRepo>) -> impl IntoResponse {
     println!("Registering app repository: {}", payload.git_url);
 
-    // Logic to handle app repository registration
-    (StatusCode::CREATED, Json(()))
+    let result = clone_git_app_repo(&payload).await;
+
+    match result {
+        Ok(_) => (StatusCode::CREATED, Json(())),
+        Err(e) => {
+            eprintln!("Error cloning app repository: {:?}", e);
+            (StatusCode::INTERNAL_SERVER_ERROR, Json(()))
+        }
+    }
 }

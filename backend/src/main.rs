@@ -28,6 +28,7 @@ use crate::{
 };
 
 mod admin_api;
+mod app_repos;
 mod apps;
 mod config;
 mod event_handlers;

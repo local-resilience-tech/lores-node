@@ -12,9 +12,16 @@ export default function InstallAppRepositoryForm({
 }: InstallAppRepositoryFormProps) {
   const form = useForm<AppRepo>({
     initialValues: {
+      name: "",
       git_url: "",
     },
     validate: {
+      name: (value) => {
+        if (!value) return "Name is required"
+        if (/[^a-zA-Z0-9_-]/.test(value))
+          return "Name can only contain lowercase letters, numbers, underscores, and hyphens"
+        return null
+      },
       git_url: (value) => {
         if (!value) return "Git URL is required"
         if (!validateUrl(value)) return "Invalid URL format"
@@ -30,6 +37,12 @@ export default function InstallAppRepositoryForm({
     <form onSubmit={form.onSubmit(onSubmit)}>
       <Stack gap="lg">
         <Stack gap="md">
+          <TextInput
+            label="Name"
+            description="A short name for the app repository, which must be a valid folder name"
+            placeholder="eg: example-app"
+            {...form.getInputProps("name")}
+          />
           <TextInput
             label="Git url"
             description="Use the https clone url of the repository"
