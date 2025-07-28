@@ -4,7 +4,7 @@ use utoipa::ToSchema;
 use utoipa_axum::{router::OpenApiRouter, routes};
 
 pub fn router() -> OpenApiRouter {
-    OpenApiRouter::new().routes(routes!(register_app_repo))
+    OpenApiRouter::new().routes(routes!(create_app_repo))
 }
 
 #[derive(Deserialize, ToSchema)]
@@ -21,7 +21,7 @@ struct AppRepo {
     ),
     request_body(content = AppRepo, content_type = "application/json")
 )]
-async fn register_app_repo(Json(payload): Json<AppRepo>) -> impl IntoResponse {
+async fn create_app_repo(Json(payload): Json<AppRepo>) -> impl IntoResponse {
     println!("Registering app repository: {}", payload.git_url);
 
     // Logic to handle app repository registration

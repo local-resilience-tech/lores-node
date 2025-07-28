@@ -293,10 +293,10 @@ export class Api<
     /**
      * No description
      *
-     * @name RegisterAppRepo
+     * @name CreateAppRepo
      * @request POST:/api/app_repos
      */
-    registerAppRepo: (data: AppRepo, params: RequestParams = {}) =>
+    createAppRepo: (data: AppRepo, params: RequestParams = {}) =>
       this.request<any, any>({
         path: `/api/app_repos`,
         method: "POST",

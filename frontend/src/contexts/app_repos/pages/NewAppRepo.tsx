@@ -1,8 +1,22 @@
 import { Container, Stack, Title, Text } from "@mantine/core"
 import AppRepoForm from "../components/AppRepoForm"
 import { Anchor } from "../../../components"
+import { AppRepo } from "../../../api/Api"
+import { getApi } from "../../../api"
 
 export default function NewLocalApp() {
+  const handleSubmit = async (values: AppRepo) => {
+    getApi()
+      .api.createAppRepo(values)
+      .then(() => {
+        console.log("App repository created successfully")
+      })
+      .catch((error) => {
+        console.error("Error creating app repository:", error)
+        throw error
+      })
+  }
+
   return (
     <Container>
       <Stack mb="xl">
@@ -21,7 +35,7 @@ export default function NewLocalApp() {
           file.
         </Text>
       </Stack>
-      <AppRepoForm />
+      <AppRepoForm onSubmit={handleSubmit} />
     </Container>
   )
 }
