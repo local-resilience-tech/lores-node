@@ -38,6 +38,8 @@ Back End: Open a terminal in the backend directory and run `cargo run`. If you m
 
 To access it in the browser, access the front end at the port that vite uses by default, which is http://localhost:5173/. The backend is at http://localhost:8000/.
 
+If you're developing functionality related to installing apps, you're better off running the docker container for developig the backend. To do this, open a terminal in the backend directory and run `sudo docker compose up --build`. This is instead of using "cargo run" directly. If you make changes to the backend code you'll need to stop this (with CONTROL-C) and then run it again.
+
 ## Running Local Version in Release Mode
 
 To run the app locally in release mode you can build it and run it using docker.
