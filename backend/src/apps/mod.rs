@@ -47,6 +47,13 @@ fn app_path(app_name: String) -> PathBuf {
 
 fn find_app_dirs() -> Vec<DirEntry> {
     println!("Finding apps using path: {}", *APPS_PATH);
-    let paths = fs::read_dir(APPS_PATH.clone()).unwrap();
-    paths.filter_map(Result::ok).collect()
+    let read_result = fs::read_dir(APPS_PATH.clone());
+
+    match read_result {
+        Ok(paths) => paths.filter_map(Result::ok).collect(),
+        Err(e) => {
+            eprintln!("Error reading apps directory: {}", e);
+            vec![]
+        }
+    }
 }

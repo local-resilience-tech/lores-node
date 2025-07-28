@@ -65,7 +65,8 @@ async fn main() {
     let cors = CorsLayer::new()
         .allow_origin(cors::Any)
         .allow_methods(cors::Any)
-        .allow_headers(cors::Any);
+        .allow_headers(cors::Any)
+        .expose_headers(cors::Any);
 
     // CONFIG
     let mut config = config::LoresNodeConfig::load();

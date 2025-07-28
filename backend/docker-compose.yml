@@ -1,0 +1,18 @@
+# This docker compose file is used for backend development and local testing. The production
+# docker build is in the root directory of this repository.
+version: "3.8"
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+      - "2022:2022/udp"
+      - "2023:2023/udp"
+    environment:
+      - FRONTEND_PATH=/app/frontend
+      - DATABASE_URL=sqlite:/app/backend/main.sqlite
+      - CONFIG_PATH=/app/backend/config.toml
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock

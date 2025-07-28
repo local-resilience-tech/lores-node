@@ -17,6 +17,7 @@ import store, { AppStore, loadInitialData } from "./store"
 // Import styles of packages that you've installed.
 // All packages except `@mantine/hooks` require styles imports
 import "@mantine/core/styles.css"
+import NewLocalApp from "./contexts/apps/pages/NewLocalApp"
 
 function withStore(
   func: (store: AppStore) => any,
@@ -44,7 +45,13 @@ const router = createBrowserRouter([
             element: <EnsureNode />,
             children: [
               { path: "", element: <EditNode /> },
-              { path: "apps", element: <LocalApps /> },
+              {
+                path: "apps",
+                children: [
+                  { path: "", element: <LocalApps /> },
+                  { path: "new", element: <NewLocalApp /> },
+                ],
+              },
             ],
           },
           {
