@@ -20,6 +20,10 @@ export interface AppInstallation {
   version: string;
 }
 
+export interface AppRepo {
+  git_url: string;
+}
+
 export interface BootstrapNodeData {
   network_name: string;
   node_id?: string | null;
@@ -286,6 +290,22 @@ export class Api<
   SecurityDataType extends unknown,
 > extends HttpClient<SecurityDataType> {
   api = {
+    /**
+     * No description
+     *
+     * @name RegisterAppRepo
+     * @request POST:/api/app_repos
+     */
+    registerAppRepo: (data: AppRepo, params: RequestParams = {}) =>
+      this.request<any, any>({
+        path: `/api/app_repos`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
     /**
      * No description
      *

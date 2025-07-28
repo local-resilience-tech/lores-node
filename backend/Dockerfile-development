@@ -8,34 +8,50 @@
 # your existing cargo installation, which should avoid rebuilding the dependencies
 # every time you change a file.
 
-# BACKEND BUILDER
-FROM rust:1 AS rustbuilder
+FROM rust:1 AS chef
+# We only pay the installation cost once,
+# it will be cached from the second build onwards
+RUN cargo install cargo-chef
+WORKDIR app
 
+FROM rust:1 AS runtime_base
+WORKDIR /app
 RUN --mount=target=/var/lib/apt/lists,type=cache,sharing=locked \
     --mount=target=/var/cache/apt,type=cache,sharing=locked \
     rm -f /etc/apt/apt.conf.d/docker-clean \
     && apt-get update \
     && apt-get -y --no-install-recommends install \
         docker.io
-
-WORKDIR /app/backend
-
-COPY ./Cargo.toml /app/backend/Cargo.toml
-COPY ./Cargo.lock /app/backend/Cargo.lock
-RUN mkdir -p src
-RUN touch src/main.rs
-RUN cargo fetch
-RUN rm -f src/main.rs
-
-COPY ./src /app/backend/src
-COPY ./config.toml /app/backend/config.toml
-COPY ./migrations /app/backend/migrations
-COPY ./main.sqlite /app/backend/main.sqlite
-COPY ./operations.sqlite /app/backend/operations.sqlite
 RUN mkdir -p /local_apps
+
+FROM chef AS planner
+COPY ./src src
+COPY ./Cargo.toml ./Cargo.toml
+COPY ./Cargo.lock ./Cargo.lock
+RUN cargo chef prepare --recipe-path recipe.json
+
+FROM chef AS builder
+COPY --from=planner /app/recipe.json recipe.json
+RUN cargo chef cook --recipe-path recipe.json
+
+COPY ./src src
+COPY ./Cargo.toml Cargo.toml
+COPY ./Cargo.lock Cargo.lock
+COPY ./config.toml config.toml
+COPY ./migrations migrations
+COPY ./main.sqlite main.sqlite
+ENV DATABASE_URL=sqlite:/app/main.sqlite
+RUN cargo build --bin lores-node
+
+FROM runtime_base AS runtime
+COPY --from=builder /app/target/debug/lores-node lores-node
+COPY ./config.toml config.toml
+COPY ./migrations migrations
+COPY ./main.sqlite main.sqlite
+COPY ./operations.sqlite operations.sqlite
 
 EXPOSE 8000
 EXPOSE 2022/udp
 EXPOSE 2023/udp
 
-CMD ["cargo", "run"]
+CMD ["./lores-node"]

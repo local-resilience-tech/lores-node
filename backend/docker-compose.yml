@@ -12,8 +12,8 @@ services:
       - "2023:2023/udp"
     environment:
       - FRONTEND_PATH=/app/frontend
-      - DATABASE_URL=sqlite:/app/backend/main.sqlite
-      - CONFIG_PATH=/app/backend/config.toml
+      - DATABASE_URL=sqlite:/app/main.sqlite
+      - CONFIG_PATH=/app/config.toml
       - APPS_PATH=/local_apps
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock

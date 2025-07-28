@@ -1,11 +1,11 @@
 use axum::{http::StatusCode, response::IntoResponse, Json};
 use utoipa_axum::{router::OpenApiRouter, routes};
 
-use crate::admin_api::routes::region_apps;
-
 use self::{
     client_events::ClientEvent,
-    routes::{local_apps, nodes, this_node, this_p2panda_node, this_region},
+    routes::{
+        app_repos, local_apps, nodes, region_apps, this_node, this_p2panda_node, this_region,
+    },
 };
 
 pub mod client_events;
@@ -18,6 +18,7 @@ pub fn api_router() -> OpenApiRouter {
         .nest("/this_p2panda_node", this_p2panda_node::router())
         .nest("/this_node", this_node::router())
         .nest("/nodes", nodes::router())
+        .nest("/app_repos", app_repos::router())
         .nest("/local_apps", local_apps::router())
         .nest("/region_apps", region_apps::router())
         .routes(routes!(dummy_event))
