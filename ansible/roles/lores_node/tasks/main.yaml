@@ -5,9 +5,15 @@
     state: directory
     mode: "0755"
 
+- name: Ensure the app repos directory exists
+  ansible.builtin.file:
+    path: "{{ host_app_repos_path }}"
+    state: directory
+    mode: "0755"
+
 - name: Ensure that the app directory exists
   ansible.builtin.file:
-    path: /etc/lores-node/apps
+    path: "{{ host_apps_path }}"
     state: directory
     mode: "0755"
 
@@ -35,9 +41,11 @@
               OPERATION_DATABASE_URL: "sqlite:/data/operations.sqlite"
               CONFIG_PATH: "/data/config.toml"
               APPS_PATH: "/apps"
+              APP_REPOS_PATH: "/app_repos"
             volumes:
               - data:/data
               - "{{ host_apps_path }}:/apps"
+              - "{{ host_app_repos_path }}:/app_repos"
             networks:
               - proxy
             deploy:
@@ -66,3 +74,4 @@
         volumes:
           data:
           apps:
+          app_repos:
