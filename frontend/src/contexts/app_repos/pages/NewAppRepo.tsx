@@ -1,12 +1,12 @@
 import { Container, Stack, Title, Text } from "@mantine/core"
-import InstallAppRepositoryForm from "../components/InstallAppRepositoryForm"
+import AppRepoForm from "../components/AppRepoForm"
 import { Anchor } from "../../../components"
 
 export default function NewLocalApp() {
   return (
     <Container>
       <Stack mb="xl">
-        <Title order={1}>Install a new local app</Title>
+        <Title order={1}>Install a new app repository</Title>
         <Text>
           An app for LoRes Mesh is a{" "}
           <Anchor href="https://docs.docker.com/reference/cli/docker/stack/">
@@ -16,14 +16,12 @@ export default function NewLocalApp() {
           image registry.
         </Text>
         <Text>
-          The docker compose file should be placed in a git repository so that
-          we can pull it and treat tags on the repository as version numbers.
-          It's fine to have multipole apps in the same repository, as long as
-          they are in different paths, which is why we ask for an optional path
-          below.
+          An app repository is a git repository that contains one or more
+          folders, each containing a different app with it's own docker compose
+          file.
         </Text>
       </Stack>
-      <InstallAppRepositoryForm />
+      <AppRepoForm />
     </Container>
   )
 }

@@ -15,6 +15,7 @@ import { useDisclosure } from "@mantine/hooks"
 import {
   IconAffiliate,
   IconApps,
+  IconBrandGit,
   IconBrandGithub,
   IconHome,
   IconTimelineEventText,
@@ -91,6 +92,12 @@ export default function Layout() {
                 <Badge circle>{localAppsCount}</Badge>
               )
             }
+          />
+          <NavLink
+            label="App repositories"
+            href="/this_node/app_repos"
+            leftSection={<IconBrandGit size={iconSize} />}
+            onClick={toggle}
           />
         </AppShell.Section>
 
