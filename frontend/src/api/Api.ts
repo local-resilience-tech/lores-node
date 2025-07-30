@@ -20,7 +20,7 @@ export interface AppInstallation {
   version: string;
 }
 
-export interface AppRepo {
+export interface AppRepoSource {
   git_url: string;
   name: string;
 }
@@ -284,7 +284,7 @@ export class HttpClient<SecurityDataType = unknown> {
 
 /**
  * @title lores-node
- * @version 0.9.4
+ * @version 0.9.7
  * @license
  */
 export class Api<
@@ -297,7 +297,7 @@ export class Api<
      * @name CreateAppRepo
      * @request POST:/api/app_repos
      */
-    createAppRepo: (data: AppRepo, params: RequestParams = {}) =>
+    createAppRepo: (data: AppRepoSource, params: RequestParams = {}) =>
       this.request<any, any>({
         path: `/api/app_repos`,
         method: "POST",

@@ -1,16 +1,16 @@
 import { Button, Stack, TextInput } from "@mantine/core"
 import { useForm } from "@mantine/form"
 import { validateUrl } from "@the-node-forge/url-validator"
-import { AppRepo } from "../../../api/Api"
+import { AppRepoSource } from "../../../api/Api"
 
 interface InstallAppRepositoryFormProps {
-  onSubmit: (values: AppRepo) => Promise<void>
+  onSubmit: (values: AppRepoSource) => Promise<void>
 }
 
 export default function InstallAppRepositoryForm({
   onSubmit,
 }: InstallAppRepositoryFormProps) {
-  const form = useForm<AppRepo>({
+  const form = useForm<AppRepoSource>({
     initialValues: {
       name: "",
       git_url: "",

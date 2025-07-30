@@ -1,7 +1,7 @@
 use git2::Repository;
 use std::{env, path::PathBuf};
 
-use super::AppRepo;
+use super::AppRepoSource;
 
 lazy_static! {
     pub static ref APP_REPOS_PATH: String = env::var("APP_REPOS_PATH")
@@ -13,7 +13,7 @@ pub enum CreateRepoError {
     InvalidName,
 }
 
-pub async fn clone_git_app_repo(repo: &AppRepo) -> Result<(), CreateRepoError> {
+pub async fn clone_git_app_repo(repo: &AppRepoSource) -> Result<(), CreateRepoError> {
     let git_url = repo.git_url.clone();
     let name = repo.name.clone();
 

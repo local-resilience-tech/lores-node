@@ -1,11 +1,11 @@
 import { Container, Stack, Title, Text } from "@mantine/core"
 import AppRepoForm from "../components/AppRepoForm"
 import { Anchor } from "../../../components"
-import { AppRepo } from "../../../api/Api"
+import { AppRepoSource } from "../../../api/Api"
 import { getApi } from "../../../api"
 
 export default function NewLocalApp() {
-  const handleSubmit = async (values: AppRepo) => {
+  const handleSubmit = async (values: AppRepoSource) => {
     getApi()
       .api.createAppRepo(values)
       .then(() => {

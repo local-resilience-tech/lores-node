@@ -1,7 +1,7 @@
 use axum::{http::StatusCode, response::IntoResponse, Json};
 use utoipa_axum::{router::OpenApiRouter, routes};
 
-use crate::app_repos::{git::clone_git_app_repo, AppRepo};
+use crate::app_repos::{git::clone_git_app_repo, AppRepoSource};
 
 pub fn router() -> OpenApiRouter {
     OpenApiRouter::new().routes(routes!(create_app_repo))
@@ -14,9 +14,9 @@ pub fn router() -> OpenApiRouter {
         (status = 201, body = ()),
         (status = INTERNAL_SERVER_ERROR, body = ()),
     ),
-    request_body(content = AppRepo, content_type = "application/json")
+    request_body(content = AppRepoSource, content_type = "application/json")
 )]
-async fn create_app_repo(Json(payload): Json<AppRepo>) -> impl IntoResponse {
+async fn create_app_repo(Json(payload): Json<AppRepoSource>) -> impl IntoResponse {
     println!("Registering app repository: {}", payload.git_url);
 
     let result = clone_git_app_repo(&payload).await;
