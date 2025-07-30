@@ -14,14 +14,14 @@ FROM rust:1 AS chef
 RUN cargo install cargo-chef
 WORKDIR app
 
-FROM rust:1 AS runtime_base
+FROM ubuntu AS runtime_base
 WORKDIR /app
 RUN --mount=target=/var/lib/apt/lists,type=cache,sharing=locked \
     --mount=target=/var/cache/apt,type=cache,sharing=locked \
     rm -f /etc/apt/apt.conf.d/docker-clean \
     && apt-get update \
     && apt-get -y --no-install-recommends install \
-        docker.io
+        docker.io libssl-dev ca-certificates pkg-config libgit2-dev
 RUN mkdir -p /local_apps
 
 FROM chef AS planner

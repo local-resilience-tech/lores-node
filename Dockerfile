@@ -1,3 +1,12 @@
+## RUNTIME BASE
+FROM ubuntu AS runtime_base
+RUN --mount=target=/var/lib/apt/lists,type=cache,sharing=locked \
+    --mount=target=/var/cache/apt,type=cache,sharing=locked \
+    rm -f /etc/apt/apt.conf.d/docker-clean \
+    && apt-get update \
+    && apt-get -y --no-install-recommends install \
+        docker.io libssl-dev ca-certificates pkg-config libgit2-dev
+
 # FRONTEND BUILDER
 FROM --platform=$BUILDPLATFORM node:22 AS vitebuilder
 WORKDIR /app
@@ -26,7 +35,7 @@ RUN RUSTFLAGS=-g SQLX_OFFLINE=true cargo build --release --target $(cat /app/.pl
 RUN cp /app/target/$(cat /app/.platform)/release/lores-node /app/lores-node
 
 # RUNNER
-FROM ubuntu AS runner
+FROM runtime_base AS runner
 COPY --from=rustbuilder /app/lores-node /app/backend/lores-node
 COPY --from=vitebuilder /app/dist /app/frontend
 ENV FRONTEND_PATH=/app/frontend

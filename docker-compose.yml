@@ -1,0 +1,19 @@
+# This docker compose file is used for local testing.
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+      - "2022:2022/udp"
+      - "2023:2023/udp"
+    environment:
+      - FRONTEND_PATH=/app/frontend
+      - DATABASE_URL=sqlite:/app/main.sqlite
+      - CONFIG_PATH=/app/config.toml
+      - APP_REPOS_PATH=/app/app_repos
+      - APPS_PATH=/local_apps
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - .backend/data/app_repos:/app/app_repos
