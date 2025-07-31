@@ -31,6 +31,7 @@ fn list_installed_app_repo_paths() -> Vec<PathBuf> {
         .unwrap()
         .filter_map(Result::ok)
         .map(|entry| entry.path())
+        .filter(|p| p.is_dir())
         .collect()
 }
 

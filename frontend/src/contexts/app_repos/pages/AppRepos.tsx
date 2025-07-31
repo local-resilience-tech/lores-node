@@ -2,9 +2,11 @@ import { ActionIcon, Container, Group, Stack, Title } from "@mantine/core"
 import { IconPlus } from "@tabler/icons-react"
 import { useNavigate } from "react-router-dom"
 import AppRepoList from "../components/AppRepoList"
+import { useAppSelector } from "../../../store"
 
 export default function LocalApps() {
   const navigate = useNavigate()
+  const repos = useAppSelector((state) => state.appRepos)
 
   return (
     <Container>
@@ -15,7 +17,7 @@ export default function LocalApps() {
             <IconPlus />
           </ActionIcon>
         </Group>
-        <AppRepoList />
+        <AppRepoList repos={repos} />
       </Stack>
     </Container>
   )

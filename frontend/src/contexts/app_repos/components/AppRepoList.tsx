@@ -1,10 +1,27 @@
-export default function AppRepoList() {
-  // This component should render a list of app repositories.
-  // The implementation details are not provided in the context.
+import { Table } from "@mantine/core"
+import { AppRepo } from "../../../api/Api"
+
+export default function AppRepoList({
+  repos,
+}: {
+  repos: AppRepo[] | null | undefined
+}) {
+  if (repos === null || repos === undefined) return null
+
   return (
-    <div>
-      {/* Placeholder for app repository list */}
-      <p>App Repository List will be displayed here.</p>
-    </div>
+    <Table>
+      <Table.Thead>
+        <Table.Tr>
+          <Table.Th>Name</Table.Th>
+        </Table.Tr>
+      </Table.Thead>
+      <Table.Tbody>
+        {repos.map((repo) => (
+          <Table.Tr key={repo.name}>
+            <Table.Td>{repo.name}</Table.Td>
+          </Table.Tr>
+        ))}
+      </Table.Tbody>
+    </Table>
   )
 }
