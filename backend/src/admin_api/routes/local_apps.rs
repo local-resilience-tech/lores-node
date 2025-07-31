@@ -1,13 +1,14 @@
 use axum::{http::StatusCode, response::IntoResponse, Extension, Json};
-use serde::Deserialize;
 use tracing::event;
-use utoipa::ToSchema;
 use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::{
     local_apps::{
         app_definitions::AppDefinitionReference,
-        installed_apps::{find_installed_apps, load_app_config},
+        installed_apps::{
+            fs::{find_installed_apps, load_app_config},
+            AppIdentifier,
+        },
     },
     panda_comms::{
         container::P2PandaContainer,
@@ -30,11 +31,6 @@ pub fn router() -> OpenApiRouter {
 async fn list_local_apps() -> impl IntoResponse {
     let apps = find_installed_apps();
     (StatusCode::OK, Json(apps)).into_response()
-}
-
-#[derive(Deserialize, ToSchema, Debug)]
-struct AppIdentifier {
-    pub name: String,
 }
 
 #[utoipa::path(
@@ -61,7 +57,7 @@ async fn register_app(
     Extension(panda_container): Extension<P2PandaContainer>,
     Json(payload): Json<AppIdentifier>,
 ) -> impl IntoResponse {
-    match load_app_config(payload.name.clone()) {
+    match load_app_config(&payload) {
         Some(app) => {
             let event_payload = LoResEventPayload::AppRegistered(AppRegisteredDataV1 {
                 name: app.name.clone(),
