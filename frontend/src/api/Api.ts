@@ -10,6 +10,11 @@
  * ---------------------------------------------------------------
  */
 
+export interface AppDefinition {
+  name: string;
+  version: string;
+}
+
 export interface AppIdentifier {
   name: string;
 }
@@ -21,6 +26,7 @@ export interface AppInstallation {
 }
 
 export interface AppRepo {
+  apps: AppDefinition[];
   name: string;
 }
 
@@ -291,7 +297,7 @@ export class HttpClient<SecurityDataType = unknown> {
 
 /**
  * @title lores-node
- * @version 0.9.7
+ * @version 0.9.8
  * @license
  */
 export class Api<

@@ -3,7 +3,7 @@ use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::{
     admin_api::{client_events::ClientEvent, realtime::RealtimeState},
-    app_repos::{self, git::clone_git_app_repo, AppRepo, AppRepoSource},
+    local_apps::app_repos::{self, git::clone_git_app_repo, AppRepo, AppRepoSource},
 };
 
 pub fn router() -> OpenApiRouter {
@@ -33,6 +33,7 @@ async fn create_app_repo(
         Ok(_) => {
             let event = ClientEvent::AppRepoUpdated(AppRepo {
                 name: payload.name.clone(),
+                apps: vec![],
             });
             realtime_state.broadcast_app_event(event).await;
 

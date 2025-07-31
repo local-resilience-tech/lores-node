@@ -15,6 +15,7 @@ pub fn list_installed_app_repos() -> Vec<AppRepo> {
                 .and_then(|name| name.to_str())
                 .map(|name| AppRepo {
                     name: name.to_string(),
+                    apps: vec![],
                 })
         })
         .collect()

@@ -28,11 +28,10 @@ use crate::{
 };
 
 mod admin_api;
-mod app_repos;
-mod apps;
 mod config;
 mod event_handlers;
 mod infra;
+mod local_apps;
 mod panda_comms;
 mod projections;
 mod static_server;

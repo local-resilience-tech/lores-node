@@ -2,7 +2,7 @@ use serde::Serialize;
 use utoipa::ToSchema;
 
 use crate::{
-    app_repos::AppRepo,
+    local_apps::app_repos::AppRepo,
     projections::entities::{NodeDetails, RegionAppWithInstallations},
 };
 
