@@ -7,14 +7,14 @@ use crate::projections::{
 };
 
 pub fn router() -> OpenApiRouter {
-    OpenApiRouter::new().routes(routes!(show_all_region_apps))
+    OpenApiRouter::new().routes(routes!(list_region_apps))
 }
 
 #[utoipa::path(get, path = "/", responses(
     (status = 200, body = Vec<RegionAppWithInstallations>),
     (status = INTERNAL_SERVER_ERROR, body = ()),
 ),)]
-async fn show_all_region_apps(Extension(pool): Extension<SqlitePool>) -> impl IntoResponse {
+async fn list_region_apps(Extension(pool): Extension<SqlitePool>) -> impl IntoResponse {
     let repo = AppsReadRepo::init();
 
     repo.all_with_installations(&pool)

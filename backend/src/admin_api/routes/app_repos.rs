@@ -1,10 +1,12 @@
 use axum::{http::StatusCode, response::IntoResponse, Json};
 use utoipa_axum::{router::OpenApiRouter, routes};
 
-use crate::app_repos::{git::clone_git_app_repo, AppRepoSource};
+use crate::app_repos::{self, git::clone_git_app_repo, AppRepo, AppRepoSource};
 
 pub fn router() -> OpenApiRouter {
-    OpenApiRouter::new().routes(routes!(create_app_repo))
+    OpenApiRouter::new()
+        .routes(routes!(create_app_repo))
+        .routes(routes!(list_app_repos))
 }
 
 #[utoipa::path(
@@ -28,4 +30,18 @@ async fn create_app_repo(Json(payload): Json<AppRepoSource>) -> impl IntoRespons
             (StatusCode::INTERNAL_SERVER_ERROR, Json(()))
         }
     }
+}
+
+#[utoipa::path(
+    get,
+    path = "/",
+    responses(
+        (status = 200, body = [AppRepo]),
+        (status = INTERNAL_SERVER_ERROR, body = ()),
+    ),
+)]
+async fn list_app_repos() -> impl IntoResponse {
+    let repos = app_repos::installed::list_installed_app_repos();
+
+    (StatusCode::OK, Json(repos))
 }

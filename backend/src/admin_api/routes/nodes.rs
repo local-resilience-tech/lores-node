@@ -5,14 +5,14 @@ use utoipa_axum::{router::OpenApiRouter, routes};
 use crate::projections::{entities::NodeDetails, projections_read::nodes::NodesReadRepo};
 
 pub fn router() -> OpenApiRouter {
-    OpenApiRouter::new().routes(routes!(show_all_nodes))
+    OpenApiRouter::new().routes(routes!(list_nodes))
 }
 
 #[utoipa::path(get, path = "/", responses(
     (status = 200, body = Vec<NodeDetails>),
     (status = INTERNAL_SERVER_ERROR, body = ()),
 ),)]
-async fn show_all_nodes(Extension(pool): Extension<SqlitePool>) -> impl IntoResponse {
+async fn list_nodes(Extension(pool): Extension<SqlitePool>) -> impl IntoResponse {
     let repo = NodesReadRepo::init();
 
     repo.all(&pool)

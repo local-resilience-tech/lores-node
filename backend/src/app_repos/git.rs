@@ -1,12 +1,6 @@
 use git2::Repository;
-use std::{env, path::PathBuf};
 
-use super::AppRepoSource;
-
-lazy_static! {
-    pub static ref APP_REPOS_PATH: String = env::var("APP_REPOS_PATH")
-        .unwrap_or_else(|_| panic!("APP_REPOS_PATH environment variable is not set"));
-}
+use super::{installed::app_repos_path, AppRepoSource};
 
 #[derive(Debug)]
 pub enum CreateRepoError {
@@ -30,8 +24,4 @@ pub async fn clone_git_app_repo(repo: &AppRepoSource) -> Result<(), CreateRepoEr
 
     println!("Cloned repository: {}", git_repo.path().display());
     Ok(())
-}
-
-fn app_repos_path() -> PathBuf {
-    PathBuf::from(&*APP_REPOS_PATH)
 }

@@ -20,6 +20,10 @@ export interface AppInstallation {
   version: string;
 }
 
+export interface AppRepo {
+  name: string;
+}
+
 export interface AppRepoSource {
   git_url: string;
   name: string;
@@ -294,6 +298,20 @@ export class Api<
     /**
      * No description
      *
+     * @name ListAppRepos
+     * @request GET:/api/app_repos
+     */
+    listAppRepos: (params: RequestParams = {}) =>
+      this.request<AppRepo[], any>({
+        path: `/api/app_repos`,
+        method: "GET",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
      * @name CreateAppRepo
      * @request POST:/api/app_repos
      */
@@ -324,10 +342,10 @@ export class Api<
     /**
      * No description
      *
-     * @name ShowAllLocalApps
+     * @name ListLocalApps
      * @request GET:/api/local_apps
      */
-    showAllLocalApps: (params: RequestParams = {}) =>
+    listLocalApps: (params: RequestParams = {}) =>
       this.request<LocalApp[], any>({
         path: `/api/local_apps`,
         method: "GET",
@@ -354,10 +372,10 @@ export class Api<
     /**
      * No description
      *
-     * @name ShowAllNodes
+     * @name ListNodes
      * @request GET:/api/nodes
      */
-    showAllNodes: (params: RequestParams = {}) =>
+    listNodes: (params: RequestParams = {}) =>
       this.request<NodeDetails[], any>({
         path: `/api/nodes`,
         method: "GET",
@@ -368,10 +386,10 @@ export class Api<
     /**
      * No description
      *
-     * @name ShowAllRegionApps
+     * @name ListRegionApps
      * @request GET:/api/region_apps
      */
-    showAllRegionApps: (params: RequestParams = {}) =>
+    listRegionApps: (params: RequestParams = {}) =>
       this.request<RegionAppWithInstallations[], any>({
         path: `/api/region_apps`,
         method: "GET",

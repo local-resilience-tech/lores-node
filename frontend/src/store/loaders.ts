@@ -1,5 +1,6 @@
 import { AppStore } from "."
 import { getApi } from "../api"
+import { appReposLoaded } from "./app_repos"
 import { localAppsLoaded } from "./local_apps"
 import { nodesLoaded } from "./nodes"
 import { regionLoaded } from "./region"
@@ -13,6 +14,7 @@ export async function loadInitialData(store: AppStore) {
   if (state.localApps === null) loadLocalApps(store)
   if (state.thisNode === null) loadThisNode(store)
   if (state.regionApps === null) loadRegionApps(store)
+  if (state.appRepos === null) loadAppRepos(store)
 }
 
 async function loadRegion(store: AppStore) {
@@ -22,19 +24,25 @@ async function loadRegion(store: AppStore) {
 }
 
 async function loadNodes(store: AppStore) {
-  const result = await fetchApiData(() => getApi().api.showAllNodes())
+  const result = await fetchApiData(() => getApi().api.listNodes())
   console.log("EFFECT: fetchNodes", result)
   if (result) store.dispatch(nodesLoaded(result))
 }
 
+async function loadAppRepos(store: AppStore) {
+  const result = await fetchApiData(() => getApi().api.listAppRepos())
+  console.log("EFFECT: fetchAppRepos", result)
+  if (result) store.dispatch(appReposLoaded(result))
+}
+
 async function loadLocalApps(store: AppStore) {
-  const result = await fetchApiData(() => getApi().api.showAllLocalApps())
+  const result = await fetchApiData(() => getApi().api.listLocalApps())
   console.log("EFFECT: fetchApps", result)
   if (result) store.dispatch(localAppsLoaded(result))
 }
 
 async function loadRegionApps(store: AppStore) {
-  const result = await fetchApiData(() => getApi().api.showAllRegionApps())
+  const result = await fetchApiData(() => getApi().api.listRegionApps())
   console.log("EFFECT: fetchRegionApps", result)
   if (result) store.dispatch(regionAppsLoaded(result))
 }

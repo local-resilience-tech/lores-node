@@ -2,6 +2,7 @@ import { useDispatch, useSelector, useStore } from "react-redux"
 import { configureStore } from "@reduxjs/toolkit"
 import regionReducer from "./region"
 import nodesReducer, { nodeUpdated } from "./nodes"
+import appReposReducer from "./app_repos"
 import localAppsReducer from "./local_apps"
 import regionAppsReducer, { regionAppUpdated } from "./region_apps"
 import thisNodeReducer from "./this_node"
@@ -11,6 +12,7 @@ const store = configureStore({
   reducer: {
     region: regionReducer,
     nodes: nodesReducer,
+    appRepos: appReposReducer,
     localApps: localAppsReducer,
     regionApps: regionAppsReducer,
     thisNode: thisNodeReducer,
