@@ -30,11 +30,8 @@ async fn create_app_repo(
     let result = clone_git_app_repo(&payload).await;
 
     match result {
-        Ok(_) => {
-            let event = ClientEvent::AppRepoUpdated(AppRepo {
-                name: payload.name.clone(),
-                apps: vec![],
-            });
+        Ok(app_repo) => {
+            let event = ClientEvent::AppRepoUpdated(app_repo);
             realtime_state.broadcast_app_event(event).await;
 
             (StatusCode::CREATED, Json(()))
