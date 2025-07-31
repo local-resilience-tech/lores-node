@@ -5,7 +5,7 @@ use utoipa::ToSchema;
 use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::{
-    local_apps::app_definitions::{find_installed_apps, load_app_config},
+    local_apps::installed_apps::{find_installed_apps, load_app_config},
     panda_comms::{
         container::P2PandaContainer,
         lores_events::{AppRegisteredDataV1, LoResEventPayload},
