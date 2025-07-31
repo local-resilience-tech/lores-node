@@ -1,13 +1,13 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit"
 import type { AppRepo } from "../api/Api"
 
-export type AppsState = AppRepo[] | null
+export type AppReposState = AppRepo[] | null
 
 const appReposSlice = createSlice({
   name: "app_repos",
-  initialState: null as AppsState,
+  initialState: null as AppReposState,
   reducers: {
-    appReposLoaded: (_state, action: PayloadAction<AppsState>) => {
+    appReposLoaded: (_state, action: PayloadAction<AppReposState>) => {
       return action.payload
     },
     appRepoUpdated: (state, action: PayloadAction<AppRepo>) => {

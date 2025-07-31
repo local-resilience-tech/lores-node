@@ -15,6 +15,11 @@ export interface AppDefinition {
   version: string;
 }
 
+export interface AppDefinitionReference {
+  app_name: string;
+  repo_name: string;
+}
+
 export interface AppIdentifier {
   name: string;
 }
@@ -358,6 +363,22 @@ export class Api<
       this.request<LocalApp[], any>({
         path: `/api/local_apps`,
         method: "GET",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @name CreateApp
+     * @request POST:/api/local_apps
+     */
+    createApp: (data: AppDefinitionReference, params: RequestParams = {}) =>
+      this.request<any, any>({
+        path: `/api/local_apps`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
         format: "json",
         ...params,
       }),

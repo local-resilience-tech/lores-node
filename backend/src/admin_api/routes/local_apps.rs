@@ -5,7 +5,10 @@ use utoipa::ToSchema;
 use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::{
-    local_apps::installed_apps::{find_installed_apps, load_app_config},
+    local_apps::{
+        app_definitions::AppDefinitionReference,
+        installed_apps::{find_installed_apps, load_app_config},
+    },
     panda_comms::{
         container::P2PandaContainer,
         lores_events::{AppRegisteredDataV1, LoResEventPayload},
@@ -16,6 +19,7 @@ use crate::{
 pub fn router() -> OpenApiRouter {
     OpenApiRouter::new()
         .routes(routes!(list_local_apps))
+        .routes(routes!(create_app))
         .routes(routes!(register_app))
 }
 
@@ -31,6 +35,18 @@ async fn list_local_apps() -> impl IntoResponse {
 #[derive(Deserialize, ToSchema, Debug)]
 struct AppIdentifier {
     pub name: String,
+}
+
+#[utoipa::path(
+    post, path = "/",
+    responses(
+        (status = 200, body = ()),
+        (status = INTERNAL_SERVER_ERROR, body = ()),
+    ),
+    request_body(content = AppDefinitionReference, content_type = "application/json")
+)]
+async fn create_app(Json(_payload): Json<AppDefinitionReference>) -> impl IntoResponse {
+    (StatusCode::CREATED, ())
 }
 
 #[utoipa::path(
