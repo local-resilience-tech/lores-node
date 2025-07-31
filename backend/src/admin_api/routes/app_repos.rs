@@ -1,7 +1,10 @@
-use axum::{http::StatusCode, response::IntoResponse, Json};
+use axum::{http::StatusCode, response::IntoResponse, Extension, Json};
 use utoipa_axum::{router::OpenApiRouter, routes};
 
-use crate::app_repos::{self, git::clone_git_app_repo, AppRepo, AppRepoSource};
+use crate::{
+    admin_api::{client_events::ClientEvent, realtime::RealtimeState},
+    app_repos::{self, git::clone_git_app_repo, AppRepo, AppRepoSource},
+};
 
 pub fn router() -> OpenApiRouter {
     OpenApiRouter::new()
@@ -18,13 +21,23 @@ pub fn router() -> OpenApiRouter {
     ),
     request_body(content = AppRepoSource, content_type = "application/json")
 )]
-async fn create_app_repo(Json(payload): Json<AppRepoSource>) -> impl IntoResponse {
+async fn create_app_repo(
+    Extension(realtime_state): Extension<RealtimeState>,
+    Json(payload): Json<AppRepoSource>,
+) -> impl IntoResponse {
     println!("Registering app repository: {}", payload.git_url);
 
     let result = clone_git_app_repo(&payload).await;
 
     match result {
-        Ok(_) => (StatusCode::CREATED, Json(())),
+        Ok(_) => {
+            let event = ClientEvent::AppRepoUpdated(AppRepo {
+                name: payload.name.clone(),
+            });
+            realtime_state.broadcast_app_event(event).await;
+
+            (StatusCode::CREATED, Json(()))
+        }
         Err(e) => {
             eprintln!("Error cloning app repository: {:?}", e);
             (StatusCode::INTERNAL_SERVER_ERROR, Json(()))

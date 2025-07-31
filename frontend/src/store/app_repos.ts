@@ -10,8 +10,19 @@ const appReposSlice = createSlice({
     appReposLoaded: (_state, action: PayloadAction<AppsState>) => {
       return action.payload
     },
+    appRepoUpdated: (state, action: PayloadAction<AppRepo>) => {
+      state = state || []
+      const updatedRepo = action.payload
+      const index = state.findIndex((repo) => repo.name === updatedRepo.name)
+      if (index !== -1) {
+        state[index] = updatedRepo
+      } else {
+        state.push(updatedRepo)
+      }
+      return state
+    },
   },
 })
 
-export const { appReposLoaded } = appReposSlice.actions
+export const { appReposLoaded, appRepoUpdated } = appReposSlice.actions
 export default appReposSlice.reducer

@@ -40,6 +40,9 @@ export type ClientEvent =
     }
   | {
       RegionAppUpdated: RegionAppWithInstallations;
+    }
+  | {
+      AppRepoUpdated: AppRepo;
     };
 
 export interface CreateNodeDetails {

@@ -2,7 +2,7 @@ import { useDispatch, useSelector, useStore } from "react-redux"
 import { configureStore } from "@reduxjs/toolkit"
 import regionReducer from "./region"
 import nodesReducer, { nodeUpdated } from "./nodes"
-import appReposReducer from "./app_repos"
+import appReposReducer, { appRepoUpdated } from "./app_repos"
 import localAppsReducer from "./local_apps"
 import regionAppsReducer, { regionAppUpdated } from "./region_apps"
 import thisNodeReducer from "./this_node"
@@ -38,6 +38,8 @@ export async function handleClientEvent(event: ClientEvent) {
     store.dispatch(nodeUpdated(event.NodeUpdated))
   } else if ("RegionAppUpdated" in event) {
     store.dispatch(regionAppUpdated(event.RegionAppUpdated))
+  } else if ("AppRepoUpdated" in event) {
+    store.dispatch(appRepoUpdated(event.AppRepoUpdated))
   } else {
     console.warn("Unhandled event type:", event)
   }

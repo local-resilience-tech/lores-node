@@ -10,7 +10,7 @@ pub struct AppRepoSource {
     pub git_url: String,
 }
 
-#[derive(Deserialize, Serialize, ToSchema)]
+#[derive(Deserialize, Serialize, ToSchema, Debug, Clone)]
 pub struct AppRepo {
     pub name: String,
 }
