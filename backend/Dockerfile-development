@@ -50,7 +50,7 @@ COPY ./migrations migrations
 COPY ./main.sqlite main.sqlite
 COPY ./operations.sqlite operations.sqlite
 
-EXPOSE 8000
+EXPOSE 8200
 EXPOSE 2022/udp
 EXPOSE 2023/udp
 

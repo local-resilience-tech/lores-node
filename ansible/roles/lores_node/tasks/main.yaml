@@ -59,7 +59,7 @@
                 traefik.http.routers.site-manager.rule: "Host(`{{ inventory_hostname }}`)"
                 traefik.http.routers.site-manager.entryPoints: websecure
                 traefik.http.routers.site-manager.service: site-manager
-                traefik.http.services.site-manager.loadbalancer.server.port: 8000
+                traefik.http.services.site-manager.loadbalancer.server.port: 8200
                 shepherd.enable: "true"
             # healthcheck:
             #   test: ["CMD", "curl", "-f", "http://localhost/"]

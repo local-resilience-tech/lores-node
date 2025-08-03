@@ -112,10 +112,10 @@ async fn main() {
 
     let app = router.into_make_service();
 
-    // run our app with hyper, listening globally on port 8000
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:8000").await.unwrap();
+    // run our app with hyper, listening globally on port 8200
+    let listener = tokio::net::TcpListener::bind("0.0.0.0:8200").await.unwrap();
 
-    println!("Listening on http://localhost:8000, Ctrl+C to stop");
+    println!("Listening on http://localhost:8200, Ctrl+C to stop");
 
     axum::serve(listener, app).await.unwrap();
 }

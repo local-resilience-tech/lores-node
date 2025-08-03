@@ -5,7 +5,7 @@ services:
       context: .
       dockerfile: Dockerfile
     ports:
-      - "8000:8000"
+      - "8200:8200"
       - "2022:2022/udp"
       - "2023:2023/udp"
     environment:

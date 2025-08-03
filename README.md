@@ -36,7 +36,7 @@ When developing, it is recommended that you run the backend and frontend seperat
 Front End: Open a terminal in the frontend directory and run `npm run dev`. This will hot-reload any changes.
 Back End: Open a terminal in the backend directory and run `cargo run`. If you make changes to the backend, you'll need to halt it with CTRL-C and re-run.
 
-To access it in the browser, access the front end at the port that vite uses by default, which is http://localhost:5173/. The backend is at http://localhost:8000/.
+To access it in the browser, access the front end at the port that vite uses by default, which is http://localhost:5173/. The backend is at http://localhost:8200/.
 
 If you're developing functionality related to installing apps, you're better off running the docker container for developig the backend. To do this, open a terminal in the backend directory and run `sudo docker compose up --build`. This is instead of using "cargo run" directly. If you make changes to the backend code you'll need to stop this (with CONTROL-C) and then run it again.
 

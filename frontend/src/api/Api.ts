@@ -128,6 +128,10 @@ export interface RegionAppWithInstallations {
   name: string;
 }
 
+export interface Stack {
+  name: string;
+}
+
 export interface UpdateNodeDetails {
   name: string;
   public_ipv4: string;
@@ -447,6 +451,20 @@ export class Api<
     listRegionApps: (params: RequestParams = {}) =>
       this.request<RegionAppWithInstallations[], any>({
         path: `/api/region_apps`,
+        method: "GET",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @name ListStacks
+     * @request GET:/api/stacks
+     */
+    listStacks: (params: RequestParams = {}) =>
+      this.request<Stack[], any>({
+        path: `/api/stacks`,
         method: "GET",
         format: "json",
         ...params,
