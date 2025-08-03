@@ -3,13 +3,22 @@ import InstallAppRepositoryForm from "../components/InstallAppRepositoryForm"
 import { Anchor } from "../../../components"
 import { useAppSelector } from "../../../store"
 import { AppRepoAppReference } from "../../../api/Api"
+import { getApi } from "../../../api"
+import { useNavigate } from "react-router-dom"
 
 export default function NewLocalApp() {
   const appRepos = useAppSelector((state) => state.appRepos)
+  const navigate = useNavigate()
 
   const handleSubmit = async (values: AppRepoAppReference) => {
-    // Handle the form submission logic here, e.g., API call to install the app
-    console.log("Installing app:", values)
+    getApi()
+      .api.installAppDefinition(values)
+      .then(() => {
+        navigate("../")
+      })
+      .catch((error) => {
+        console.error("Error installing app definition:", error)
+      })
   }
 
   return (
