@@ -10,6 +10,10 @@
  * ---------------------------------------------------------------
  */
 
+export enum LocalAppInstallStatus {
+  Installed = "Installed",
+}
+
 export interface AppDefinition {
   name: string;
   version: string;
@@ -71,6 +75,7 @@ export interface IrohNodeAddr {
 
 export interface LocalApp {
   name: string;
+  status: LocalAppInstallStatus;
   version: string;
 }
 
@@ -305,7 +310,7 @@ export class HttpClient<SecurityDataType = unknown> {
 
 /**
  * @title lores-node
- * @version 0.9.9
+ * @version 0.9.10
  * @license
  */
 export class Api<
@@ -366,6 +371,20 @@ export class Api<
       this.request<LocalApp[], any>({
         path: `/api/local_apps`,
         method: "GET",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @name StartLocalApp
+     * @request POST:/api/local_apps/app/{app_name}/start
+     */
+    startLocalApp: (appName: string, params: RequestParams = {}) =>
+      this.request<any, any>({
+        path: `/api/local_apps/app/${appName}/start`,
+        method: "POST",
         format: "json",
         ...params,
       }),

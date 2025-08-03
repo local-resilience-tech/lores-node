@@ -14,7 +14,7 @@ use super::{
 };
 use crate::{
     local_apps::shared::app_definitions::config::app_config_from_string,
-    projections::entities::LocalApp,
+    projections::entities::{LocalApp, LocalAppInstallStatus},
 };
 
 lazy_static! {
@@ -28,6 +28,7 @@ pub fn find_installed_apps() -> Vec<LocalApp> {
         .map(|app_definition| LocalApp {
             name: app_definition.name.clone(),
             version: app_definition.version.clone(),
+            status: LocalAppInstallStatus::Installed,
         })
         .collect::<Vec<LocalApp>>()
 }
@@ -41,6 +42,7 @@ pub fn load_app_config(app_ref: &AppReference) -> Option<LocalApp> {
             Ok(app_definition) => Some(LocalApp {
                 name: app_definition.name,
                 version: app_definition.version,
+                status: LocalAppInstallStatus::Installed,
             }),
             Err(_) => {
                 eprintln!(

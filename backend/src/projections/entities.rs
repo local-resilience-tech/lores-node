@@ -30,9 +30,15 @@ pub struct Region {
 }
 
 #[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
+pub enum LocalAppInstallStatus {
+    Installed,
+}
+
+#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
 pub struct LocalApp {
     pub name: String,
     pub version: String,
+    pub status: LocalAppInstallStatus,
 }
 
 #[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]

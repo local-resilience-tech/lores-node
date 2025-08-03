@@ -1,4 +1,4 @@
-use axum::{http::StatusCode, response::IntoResponse, Extension, Json};
+use axum::{extract::Path, http::StatusCode, response::IntoResponse, Extension, Json};
 use tracing::event;
 use utoipa_axum::{router::OpenApiRouter, routes};
 
@@ -24,6 +24,7 @@ pub fn router() -> OpenApiRouter {
         .routes(routes!(list_local_apps))
         .routes(routes!(install_app_definition))
         .routes(routes!(register_app))
+        .routes(routes!(start_local_app))
 }
 
 #[utoipa::path(get, path = "/", responses(
@@ -108,4 +109,21 @@ async fn register_app(
         }
     }
     .into_response()
+}
+
+#[utoipa::path(
+    post,
+    path = "/app/{app_name}/start",
+    params(
+        ("app_name" = String, Path, description = "Name of the app to start"),
+    ),
+    responses(
+        (status = OK, body = ()),
+        (status = INTERNAL_SERVER_ERROR, body = ()),
+    ),
+)]
+async fn start_local_app(Path(app_name): Path<String>) -> impl IntoResponse {
+    println!("Starting local app: {}", app_name);
+
+    (StatusCode::OK, Json(()))
 }
