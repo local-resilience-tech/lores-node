@@ -4,6 +4,6 @@ use utoipa::ToSchema;
 pub mod fs;
 
 #[derive(Deserialize, ToSchema, Debug)]
-pub struct AppIdentifier {
-    pub name: String,
+pub struct AppReference {
+    pub app_name: String,
 }

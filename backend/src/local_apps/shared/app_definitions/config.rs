@@ -1,4 +1,4 @@
-use crate::local_apps::app_definitions::AppDefinition;
+use super::AppDefinition;
 
 pub fn app_config_from_string(file_contents: String) -> Result<AppDefinition, anyhow::Error> {
     match toml::from_str::<AppDefinition>(&file_contents) {

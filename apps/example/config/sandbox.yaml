@@ -1,4 +1,0 @@
-entryPoints:
-  web:
-    port: 8000
-    container: ... # No idea how I specify this

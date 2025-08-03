@@ -13,7 +13,7 @@ export default function LocalApps() {
   const onAppRegister = (app: LocalApp) => {
     // Handle app registration logic here
     console.log("Registering app:", app)
-    getApi().api.registerApp({ name: app.name })
+    getApi().api.registerApp({ app_name: app.name })
   }
 
   return (

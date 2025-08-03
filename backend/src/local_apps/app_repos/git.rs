@@ -1,7 +1,7 @@
 use git2::Repository;
 
 use super::{
-    installed::{app_repo_at_reference, app_repos_path},
+    fs::{app_repo_at_reference, app_repos_path},
     AppRepo, AppRepoReference, AppRepoSource,
 };
 
@@ -25,7 +25,9 @@ pub async fn clone_git_app_repo(repo: &AppRepoSource) -> Result<AppRepo, CreateR
 
     println!("Cloned repository: {}", git_repo.path().display());
 
-    let repo_ref = AppRepoReference { name: name.clone() };
+    let repo_ref = AppRepoReference {
+        repo_name: name.clone(),
+    };
 
     match app_repo_at_reference(&repo_ref) {
         Some(app_repo) => Ok(app_repo),

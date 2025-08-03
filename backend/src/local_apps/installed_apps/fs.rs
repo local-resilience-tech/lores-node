@@ -1,4 +1,3 @@
-use super::AppIdentifier;
 use anyhow::Result;
 use std::{
     env,
@@ -6,6 +5,10 @@ use std::{
     path::PathBuf,
 };
 
+use super::{
+    super::app_repos::{self, AppRepoAppReference},
+    AppReference,
+};
 use crate::projections::entities::LocalApp;
 
 lazy_static! {
@@ -18,15 +21,15 @@ pub fn find_installed_apps() -> Vec<LocalApp> {
         .into_iter()
         .map(|entry| entry.file_name().into_string().ok())
         .filter(|name| name.is_some())
-        .map(|name| AppIdentifier {
-            name: name.unwrap(),
+        .map(|name| AppReference {
+            app_name: name.unwrap(),
         })
         .map(|app_ref| load_app_config(&app_ref))
         .filter_map(|app| app)
         .collect::<Vec<LocalApp>>()
 }
 
-pub fn load_app_config(app_ref: &AppIdentifier) -> Option<LocalApp> {
+pub fn load_app_config(app_ref: &AppReference) -> Option<LocalApp> {
     let path = app_path(app_ref);
     let config_file_path = path.join("config/app.toml");
 
@@ -45,8 +48,17 @@ pub fn load_app_config(app_ref: &AppIdentifier) -> Option<LocalApp> {
     }
 }
 
-fn app_path(app_ref: &AppIdentifier) -> PathBuf {
-    PathBuf::from(APPS_PATH.clone()).join(&app_ref.name)
+pub fn install_app_definition(
+    source: &AppRepoAppReference,
+    target: &AppReference,
+) -> Result<(), ()> {
+    let source_path = app_repos::fs::app_repo_app_path(source);
+    let target_path = app_path(target);
+    copy_app_files(&source_path, &target_path)
+}
+
+fn app_path(app_ref: &AppReference) -> PathBuf {
+    PathBuf::from(APPS_PATH.clone()).join(&app_ref.app_name)
 }
 
 fn find_app_dirs() -> Vec<DirEntry> {
@@ -58,6 +70,40 @@ fn find_app_dirs() -> Vec<DirEntry> {
         Err(e) => {
             eprintln!("Error reading apps directory: {}", e);
             vec![]
+        }
+    }
+}
+
+fn copy_app_files(source: &PathBuf, target: &PathBuf) -> Result<(), ()> {
+    if !source.exists() {
+        eprintln!("Source path does not exist: {}", source.display());
+        return Err(());
+    }
+
+    if target.exists() {
+        eprintln!("Target path already exists: {}", target.display());
+        return Err(());
+    }
+
+    if let Err(e) = fs::create_dir_all(target) {
+        eprintln!(
+            "Failed to create target directory `{}`: {}",
+            target.display(),
+            e
+        );
+        return Err(());
+    }
+
+    match fs::copy(source, target) {
+        Ok(_) => Ok(()),
+        Err(e) => {
+            eprintln!(
+                "Failed to copy files from `{}` to `{}`: {}",
+                source.display(),
+                target.display(),
+                e
+            );
+            Err(())
         }
     }
 }

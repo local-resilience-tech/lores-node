@@ -52,7 +52,7 @@ async fn create_app_repo(
     ),
 )]
 async fn list_app_repos() -> impl IntoResponse {
-    let repos = app_repos::installed::list_installed_app_repos();
+    let repos = app_repos::fs::list_installed_app_repos();
 
     (StatusCode::OK, Json(repos))
 }

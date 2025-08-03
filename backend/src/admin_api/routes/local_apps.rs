@@ -6,8 +6,9 @@ use crate::{
     local_apps::{
         app_repos::AppRepoAppReference,
         installed_apps::{
+            self,
             fs::{find_installed_apps, load_app_config},
-            AppIdentifier,
+            AppReference,
         },
     },
     panda_comms::{
@@ -43,7 +44,30 @@ async fn list_local_apps() -> impl IntoResponse {
     request_body(content = AppRepoAppReference, content_type = "application/json")
 )]
 async fn install_app_definition(Json(_payload): Json<AppRepoAppReference>) -> impl IntoResponse {
-    (StatusCode::CREATED, ())
+    let source = AppRepoAppReference {
+        repo_name: "example_repo".to_string(),
+        app_name: "example_app".to_string(),
+    };
+    let target = AppReference {
+        app_name: "example_app".to_string(),
+    };
+
+    let result = installed_apps::fs::install_app_definition(&source, &target);
+
+    match result {
+        Ok(_) => {
+            event!(
+                tracing::Level::INFO,
+                "App definition installed: {}",
+                target.app_name
+            );
+            (StatusCode::CREATED, Json(()))
+        }
+        Err(e) => {
+            eprintln!("Error installing app definition: {:?}", e);
+            (StatusCode::INTERNAL_SERVER_ERROR, Json(()))
+        }
+    }
 }
 
 #[utoipa::path(
@@ -52,11 +76,11 @@ async fn install_app_definition(Json(_payload): Json<AppRepoAppReference>) -> im
         (status = 200, body = ()),
         (status = INTERNAL_SERVER_ERROR, body = ()),
     ),
-    request_body(content = AppIdentifier, content_type = "application/json")
+    request_body(content = AppReference, content_type = "application/json")
 )]
 async fn register_app(
     Extension(panda_container): Extension<P2PandaContainer>,
-    Json(payload): Json<AppIdentifier>,
+    Json(payload): Json<AppReference>,
 ) -> impl IntoResponse {
     match load_app_config(&payload) {
         Some(app) => {
@@ -77,7 +101,7 @@ async fn register_app(
             }
         }
         None => {
-            eprintln!("Failed to load app configuration for: {}", payload.name);
+            eprintln!("Failed to load app configuration for: {}", payload.app_name);
             (StatusCode::INTERNAL_SERVER_ERROR, ())
         }
     }

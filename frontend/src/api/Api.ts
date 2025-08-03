@@ -15,14 +15,14 @@ export interface AppDefinition {
   version: string;
 }
 
-export interface AppIdentifier {
-  name: string;
-}
-
 export interface AppInstallation {
   app_name: string;
   node_id: string;
   version: string;
+}
+
+export interface AppReference {
+  app_name: string;
 }
 
 export interface AppRepo {
@@ -392,7 +392,7 @@ export class Api<
      * @name RegisterApp
      * @request POST:/api/local_apps/register
      */
-    registerApp: (data: AppIdentifier, params: RequestParams = {}) =>
+    registerApp: (data: AppReference, params: RequestParams = {}) =>
       this.request<any, any>({
         path: `/api/local_apps/register`,
         method: "POST",

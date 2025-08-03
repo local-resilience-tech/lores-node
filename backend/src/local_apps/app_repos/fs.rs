@@ -1,8 +1,8 @@
 use std::{env, path::PathBuf};
 
 use super::{
-    super::app_definitions::{fs::app_definition_at_path, AppDefinition},
-    AppRepo, AppRepoReference,
+    super::shared::app_definitions::{fs::app_definition_at_path, AppDefinition},
+    AppRepo, AppRepoAppReference, AppRepoReference,
 };
 
 lazy_static! {
@@ -35,7 +35,7 @@ fn list_installed_app_repo_paths() -> Vec<PathBuf> {
 pub fn app_repo_at_reference(repo_ref: &AppRepoReference) -> Option<AppRepo> {
     let apps = app_definitions_in_repo(repo_ref);
     Some(AppRepo {
-        name: repo_ref.name.clone(),
+        name: repo_ref.repo_name.clone(),
         apps,
     })
 }
@@ -47,7 +47,7 @@ pub fn list_installed_app_repo_references() -> Vec<AppRepoReference> {
             path.file_name()
                 .and_then(|name| name.to_str())
                 .map(|name| AppRepoReference {
-                    name: name.to_string(),
+                    repo_name: name.to_string(),
                 })
         })
         .collect()
@@ -79,8 +79,12 @@ fn app_paths_in_repo_path(path: &PathBuf) -> Vec<PathBuf> {
         .collect()
 }
 
+pub fn app_repo_app_path(app_ref: &AppRepoAppReference) -> PathBuf {
+    app_repo_path(&app_ref.repo_ref()).join(&app_ref.app_name)
+}
+
 fn app_repo_path(repo_ref: &AppRepoReference) -> PathBuf {
-    app_repos_path().join(&repo_ref.name)
+    app_repos_path().join(&repo_ref.repo_name)
 }
 
 pub fn app_repos_path() -> PathBuf {
