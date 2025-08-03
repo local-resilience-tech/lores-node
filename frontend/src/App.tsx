@@ -20,6 +20,7 @@ import "@mantine/core/styles.css"
 import NewLocalApp from "./contexts/apps/pages/NewLocalApp"
 import AppRepos from "./contexts/app_repos/pages/AppRepos"
 import NewAppRepo from "./contexts/app_repos/pages/NewAppRepo"
+import { Stacks } from "./contexts/stacks"
 
 function withStore(
   func: (store: AppStore) => any,
@@ -76,6 +77,7 @@ const router = createBrowserRouter([
             children: [
               { path: "p2panda_node", element: <ThisP2PandaNode /> },
               { path: "event_log", element: <EventLog /> },
+              { path: "stacks", element: <Stacks /> },
             ],
           },
         ],

@@ -15,6 +15,7 @@ import { useDisclosure } from "@mantine/hooks"
 import {
   IconAffiliate,
   IconApps,
+  IconBrandDocker,
   IconBrandGit,
   IconBrandGithub,
   IconHome,
@@ -156,6 +157,12 @@ export default function Layout() {
             label="Event log"
             href="/debug/event_log"
             leftSection={<IconTimelineEventText size={iconSize} />}
+            onClick={toggle}
+          />
+          <NavLink
+            label="Docker stacks"
+            href="/debug/stacks"
+            leftSection={<IconBrandDocker size={iconSize} />}
             onClick={toggle}
           />
           <NavLink

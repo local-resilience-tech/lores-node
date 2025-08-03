@@ -67,6 +67,10 @@ export interface CreateNodeDetails {
   name: string;
 }
 
+export interface DockerStack {
+  name: string;
+}
+
 export interface IrohNodeAddr {
   direct_addresses: string[];
   node_id: string;
@@ -125,10 +129,6 @@ export interface Region {
 
 export interface RegionAppWithInstallations {
   installations: AppInstallation[];
-  name: string;
-}
-
-export interface Stack {
   name: string;
 }
 
@@ -463,7 +463,7 @@ export class Api<
      * @request GET:/api/stacks
      */
     listStacks: (params: RequestParams = {}) =>
-      this.request<Stack[], any>({
+      this.request<DockerStack[], any>({
         path: `/api/stacks`,
         method: "GET",
         format: "json",

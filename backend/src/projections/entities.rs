@@ -58,8 +58,3 @@ pub struct AppInstallation {
     pub node_id: String,
     pub version: String,
 }
-
-#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
-pub struct Stack {
-    pub name: String,
-}
