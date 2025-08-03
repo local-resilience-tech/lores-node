@@ -8,12 +8,12 @@ import {
   NativeSelect,
 } from "@mantine/core"
 import { useForm } from "@mantine/form"
-import { AppDefinitionReference, AppRepo } from "../../../api/Api"
+import { AppRepoAppReference, AppRepo } from "../../../api/Api"
 import { Anchor } from "../../../components"
 
 interface InstallAppRepositoryFormProps {
   appRepos: AppRepo[] | null
-  onSubmit: (values: AppDefinitionReference) => Promise<void>
+  onSubmit: (values: AppRepoAppReference) => Promise<void>
 }
 
 function PleaseInstallAppRepository() {
@@ -41,7 +41,7 @@ export default function InstallAppRepositoryForm({
     return <PleaseInstallAppRepository />
   }
 
-  const form = useForm<AppDefinitionReference>({
+  const form = useForm<AppRepoAppReference>({
     mode: "controlled",
     initialValues: {
       repo_name: "",

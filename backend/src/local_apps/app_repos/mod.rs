@@ -21,3 +21,9 @@ pub struct AppRepo {
 pub struct AppRepoReference {
     pub name: String,
 }
+
+#[derive(Deserialize, Serialize, ToSchema, Debug, Clone)]
+pub struct AppRepoAppReference {
+    pub repo_name: String,
+    pub app_name: String,
+}

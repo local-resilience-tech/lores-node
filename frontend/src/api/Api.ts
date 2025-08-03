@@ -15,11 +15,6 @@ export interface AppDefinition {
   version: string;
 }
 
-export interface AppDefinitionReference {
-  app_name: string;
-  repo_name: string;
-}
-
 export interface AppIdentifier {
   name: string;
 }
@@ -33,6 +28,11 @@ export interface AppInstallation {
 export interface AppRepo {
   apps: AppDefinition[];
   name: string;
+}
+
+export interface AppRepoAppReference {
+  app_name: string;
+  repo_name: string;
 }
 
 export interface AppRepoSource {
@@ -302,7 +302,7 @@ export class HttpClient<SecurityDataType = unknown> {
 
 /**
  * @title lores-node
- * @version 0.9.8
+ * @version 0.9.9
  * @license
  */
 export class Api<
@@ -370,12 +370,15 @@ export class Api<
     /**
      * No description
      *
-     * @name CreateApp
-     * @request POST:/api/local_apps
+     * @name InstallAppDefinition
+     * @request POST:/api/local_apps/definitions
      */
-    createApp: (data: AppDefinitionReference, params: RequestParams = {}) =>
+    installAppDefinition: (
+      data: AppRepoAppReference,
+      params: RequestParams = {},
+    ) =>
       this.request<any, any>({
-        path: `/api/local_apps`,
+        path: `/api/local_apps/definitions`,
         method: "POST",
         body: data,
         type: ContentType.Json,

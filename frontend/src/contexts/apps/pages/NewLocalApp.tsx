@@ -2,12 +2,12 @@ import { Container, Stack, Title, Text } from "@mantine/core"
 import InstallAppRepositoryForm from "../components/InstallAppRepositoryForm"
 import { Anchor } from "../../../components"
 import { useAppSelector } from "../../../store"
-import { AppDefinitionReference } from "../../../api/Api"
+import { AppRepoAppReference } from "../../../api/Api"
 
 export default function NewLocalApp() {
   const appRepos = useAppSelector((state) => state.appRepos)
 
-  const handleSubmit = async (values: AppDefinitionReference) => {
+  const handleSubmit = async (values: AppRepoAppReference) => {
     // Handle the form submission logic here, e.g., API call to install the app
     console.log("Installing app:", values)
   }
