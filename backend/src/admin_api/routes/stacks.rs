@@ -31,10 +31,44 @@ async fn list_stacks() -> impl IntoResponse {
     }
 }
 
-fn docker_stack_ls() -> Result<Vec<DockerStack>, anyhow::Error> {
-    // use rust to run the command `docker stack ls`
-    // and parse the output into a Vec<DockerStack>
+fn parse_table(output: &str) -> Vec<Vec<String>> {
+    let mut lines = output.lines();
+    let header = match lines.next() {
+        Some(h) => h,
+        None => return vec![],
+    };
 
+    let col_starts: Vec<usize> = header
+        .char_indices()
+        .filter_map(|(i, c)| {
+            if i == 0 || (c != ' ' && header.chars().nth(i - 1) == Some(' ')) {
+                Some(i)
+            } else {
+                None
+            }
+        })
+        .collect();
+
+    lines
+        .filter(|line| !line.trim().is_empty())
+        .map(|line| {
+            col_starts
+                .iter()
+                .enumerate()
+                .map(|(i, &start)| {
+                    let end = if i + 1 < col_starts.len() {
+                        col_starts[i + 1]
+                    } else {
+                        line.len()
+                    };
+                    line.get(start..end).unwrap_or("").trim().to_string()
+                })
+                .collect()
+        })
+        .collect()
+}
+
+fn docker_stack_ls() -> Result<Vec<DockerStack>, anyhow::Error> {
     let output = Command::new("docker")
         .arg("stack")
         .arg("ls")
@@ -44,11 +78,12 @@ fn docker_stack_ls() -> Result<Vec<DockerStack>, anyhow::Error> {
     let stdout_string = String::from_utf8(output.stdout)
         .map_err(|e| anyhow::anyhow!("Failed to convert output to string: {}", e))?;
 
-    let stacks: Vec<DockerStack> = stdout_string
-        .lines()
-        .map(|line| DockerStack {
-            name: line.to_string(),
-        })
+    let table = parse_table(&stdout_string);
+
+    let stacks: Vec<DockerStack> = table
+        .into_iter()
+        .filter_map(|row| row.get(0).cloned())
+        .map(|name| DockerStack { name })
         .collect();
 
     Ok(stacks)
