@@ -19,3 +19,7 @@ p.section_title {
   padding: 0 var(--mantine-spacing-md);
   text-align: center;
 }
+
+p.section_title span {
+  font-weight: bold;
+}

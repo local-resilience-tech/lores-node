@@ -72,7 +72,16 @@ export default function Layout() {
       <AppShell.Navbar p={0}>
         <AppShell.Section className={classes.menu_section}>
           <Text className={classes.section_title}>
-            {node?.name || "This Node"}
+            {node?.name ? (
+              <>
+                <Text span c="dimmed">
+                  Node:{" "}
+                </Text>
+                <Text span>{node.name}</Text>
+              </>
+            ) : (
+              "This Node"
+            )}
           </Text>
 
           <NavLink
@@ -104,7 +113,16 @@ export default function Layout() {
         {region && (
           <AppShell.Section className={classes.menu_section}>
             <Text className={classes.section_title}>
-              {region?.network_id || "This Region"}
+              {region?.network_id ? (
+                <>
+                  <Text span c="dimmed">
+                    Region:{" "}
+                  </Text>
+                  <Text span>{region.network_id}</Text>
+                </>
+              ) : (
+                "This Region"
+              )}
             </Text>
             <NavLink
               label="Nodes"
