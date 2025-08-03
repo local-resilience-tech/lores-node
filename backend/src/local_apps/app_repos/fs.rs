@@ -1,7 +1,7 @@
 use std::{env, path::PathBuf};
 
 use super::{
-    super::shared::app_definitions::{fs::app_definition_at_path, AppDefinition},
+    super::shared::app_definitions::{fs::app_definitions_in_path, AppDefinition},
     AppRepo, AppRepoAppReference, AppRepoReference,
 };
 
@@ -55,28 +55,6 @@ pub fn list_installed_app_repo_references() -> Vec<AppRepoReference> {
 
 fn app_definitions_in_repo(repo_ref: &AppRepoReference) -> Vec<AppDefinition> {
     app_definitions_in_path(app_repo_path(repo_ref))
-}
-
-fn app_definitions_in_path(path: PathBuf) -> Vec<AppDefinition> {
-    let app_paths = app_paths_in_repo_path(&path);
-    app_paths
-        .into_iter()
-        .filter_map(|app_path| app_definition_at_path(&app_path))
-        .collect()
-}
-
-fn app_paths_in_repo_path(path: &PathBuf) -> Vec<PathBuf> {
-    if !path.exists() {
-        eprintln!("App repo path does not exist: {}", path.display());
-        return vec![];
-    }
-
-    std::fs::read_dir(path)
-        .unwrap()
-        .filter_map(Result::ok)
-        .map(|entry| entry.path())
-        .filter(|p| p.is_dir())
-        .collect()
 }
 
 pub fn app_repo_app_path(app_ref: &AppRepoAppReference) -> PathBuf {

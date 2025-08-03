@@ -1,15 +1,21 @@
 use anyhow::Result;
 use std::{
     env,
-    fs::{self, DirEntry},
+    fs::{self},
     path::PathBuf,
 };
 
 use super::{
-    super::app_repos::{self, AppRepoAppReference},
+    super::{
+        app_repos::{self, AppRepoAppReference},
+        shared::app_definitions,
+    },
     AppReference,
 };
-use crate::projections::entities::LocalApp;
+use crate::{
+    local_apps::shared::app_definitions::config::app_config_from_string,
+    projections::entities::LocalApp,
+};
 
 lazy_static! {
     pub static ref APPS_PATH: String =
@@ -17,15 +23,12 @@ lazy_static! {
 }
 
 pub fn find_installed_apps() -> Vec<LocalApp> {
-    find_app_dirs()
+    app_definitions::fs::app_definitions_in_path(PathBuf::from(APPS_PATH.clone()))
         .into_iter()
-        .map(|entry| entry.file_name().into_string().ok())
-        .filter(|name| name.is_some())
-        .map(|name| AppReference {
-            app_name: name.unwrap(),
+        .map(|app_definition| LocalApp {
+            name: app_definition.name.clone(),
+            version: app_definition.version.clone(),
         })
-        .map(|app_ref| load_app_config(&app_ref))
-        .filter_map(|app| app)
         .collect::<Vec<LocalApp>>()
 }
 
@@ -34,10 +37,16 @@ pub fn load_app_config(app_ref: &AppReference) -> Option<LocalApp> {
     let config_file_path = path.join("config/app.toml");
 
     match fs::read_to_string(config_file_path.clone()) {
-        Ok(file_contents) => match toml::from_str::<LocalApp>(&file_contents) {
-            Ok(contents) => Some(contents),
-            Err(e) => {
-                eprintln!("Could not parse TOML for `{}`: {}", path.display(), e);
+        Ok(file_contents) => match app_config_from_string(file_contents) {
+            Ok(app_definition) => Some(LocalApp {
+                name: app_definition.name,
+                version: app_definition.version,
+            }),
+            Err(_) => {
+                eprintln!(
+                    "Failed to parse app definition at `{}`",
+                    config_file_path.display()
+                );
                 None
             }
         },
@@ -59,19 +68,6 @@ pub fn install_app_definition(
 
 fn app_path(app_ref: &AppReference) -> PathBuf {
     PathBuf::from(APPS_PATH.clone()).join(&app_ref.app_name)
-}
-
-fn find_app_dirs() -> Vec<DirEntry> {
-    println!("Finding apps using path: {}", *APPS_PATH);
-    let read_result = fs::read_dir(APPS_PATH.clone());
-
-    match read_result {
-        Ok(paths) => paths.filter_map(Result::ok).collect(),
-        Err(e) => {
-            eprintln!("Error reading apps directory: {}", e);
-            vec![]
-        }
-    }
 }
 
 fn copy_app_files(source: &PathBuf, target: &PathBuf) -> Result<(), ()> {
