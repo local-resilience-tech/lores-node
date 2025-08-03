@@ -36,3 +36,4 @@ confy = "1.0.0"
 futures-util = "0.3.31"
 toml = "0.9.2"
 git2 = { version = "0.20.2", features = ["vendored-openssl"] }
+copy_dir = "0.1.3"

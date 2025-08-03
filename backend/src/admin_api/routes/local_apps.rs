@@ -43,13 +43,10 @@ async fn list_local_apps() -> impl IntoResponse {
     ),
     request_body(content = AppRepoAppReference, content_type = "application/json")
 )]
-async fn install_app_definition(Json(_payload): Json<AppRepoAppReference>) -> impl IntoResponse {
-    let source = AppRepoAppReference {
-        repo_name: "example_repo".to_string(),
-        app_name: "example_app".to_string(),
-    };
+async fn install_app_definition(Json(payload): Json<AppRepoAppReference>) -> impl IntoResponse {
+    let source = payload.clone();
     let target = AppReference {
-        app_name: "example_app".to_string(),
+        app_name: payload.app_name.clone(),
     };
 
     let result = installed_apps::fs::install_app_definition(&source, &target);

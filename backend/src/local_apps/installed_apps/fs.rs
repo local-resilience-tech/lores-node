@@ -67,30 +67,15 @@ pub fn install_app_definition(
 }
 
 fn app_path(app_ref: &AppReference) -> PathBuf {
-    PathBuf::from(APPS_PATH.clone()).join(&app_ref.app_name)
+    apps_path().join(&app_ref.app_name)
+}
+
+fn apps_path() -> PathBuf {
+    PathBuf::from(APPS_PATH.clone())
 }
 
 fn copy_app_files(source: &PathBuf, target: &PathBuf) -> Result<(), ()> {
-    if !source.exists() {
-        eprintln!("Source path does not exist: {}", source.display());
-        return Err(());
-    }
-
-    if target.exists() {
-        eprintln!("Target path already exists: {}", target.display());
-        return Err(());
-    }
-
-    if let Err(e) = fs::create_dir_all(target) {
-        eprintln!(
-            "Failed to create target directory `{}`: {}",
-            target.display(),
-            e
-        );
-        return Err(());
-    }
-
-    match fs::copy(source, target) {
+    match copy_dir::copy_dir(source, target) {
         Ok(_) => Ok(()),
         Err(e) => {
             eprintln!(
