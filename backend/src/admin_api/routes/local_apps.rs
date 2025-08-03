@@ -3,6 +3,7 @@ use tracing::event;
 use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::{
+    admin_api::{client_events::ClientEvent, realtime::RealtimeState},
     local_apps::{
         app_repos::AppRepoAppReference,
         installed_apps::{
@@ -43,7 +44,10 @@ async fn list_local_apps() -> impl IntoResponse {
     ),
     request_body(content = AppRepoAppReference, content_type = "application/json")
 )]
-async fn install_app_definition(Json(payload): Json<AppRepoAppReference>) -> impl IntoResponse {
+async fn install_app_definition(
+    Extension(realtime_state): Extension<RealtimeState>,
+    Json(payload): Json<AppRepoAppReference>,
+) -> impl IntoResponse {
     let source = payload.clone();
     let target = AppReference {
         app_name: payload.app_name.clone(),
@@ -52,16 +56,17 @@ async fn install_app_definition(Json(payload): Json<AppRepoAppReference>) -> imp
     let result = installed_apps::fs::install_app_definition(&source, &target);
 
     match result {
-        Ok(_) => {
-            event!(
-                tracing::Level::INFO,
-                "App definition installed: {}",
-                target.app_name
-            );
+        Ok(local_app) => {
+            let event = ClientEvent::LocalAppUpdated(local_app.clone());
+            realtime_state.broadcast_app_event(event).await;
+
+            println!("App definition installed: {}", local_app.name);
+
             (StatusCode::CREATED, Json(()))
         }
         Err(e) => {
-            eprintln!("Error installing app definition: {:?}", e);
+            println!("Error installing app definition: {:?}", e);
+
             (StatusCode::INTERNAL_SERVER_ERROR, Json(()))
         }
     }

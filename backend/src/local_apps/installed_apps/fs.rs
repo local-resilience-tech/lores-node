@@ -60,10 +60,11 @@ pub fn load_app_config(app_ref: &AppReference) -> Option<LocalApp> {
 pub fn install_app_definition(
     source: &AppRepoAppReference,
     target: &AppReference,
-) -> Result<(), ()> {
+) -> Result<LocalApp, ()> {
     let source_path = app_repos::fs::app_repo_app_path(source);
     let target_path = app_path(target);
-    copy_app_files(&source_path, &target_path)
+    copy_app_files(&source_path, &target_path)?;
+    load_app_config(target).ok_or(())
 }
 
 fn app_path(app_ref: &AppReference) -> PathBuf {

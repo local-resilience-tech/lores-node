@@ -54,6 +54,9 @@ export type ClientEvent =
     }
   | {
       AppRepoUpdated: AppRepo;
+    }
+  | {
+      LocalAppUpdated: LocalApp;
     };
 
 export interface CreateNodeDetails {
