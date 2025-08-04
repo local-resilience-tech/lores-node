@@ -29,6 +29,7 @@ use crate::{
 
 mod admin_api;
 mod config;
+mod docker;
 mod event_handlers;
 mod infra;
 mod local_apps;

@@ -314,7 +314,7 @@ export class HttpClient<SecurityDataType = unknown> {
 
 /**
  * @title lores-node
- * @version 0.9.10
+ * @version 0.9.11
  * @license
  */
 export class Api<

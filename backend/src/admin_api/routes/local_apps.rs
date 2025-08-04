@@ -6,11 +6,8 @@ use crate::{
     admin_api::{client_events::ClientEvent, realtime::RealtimeState},
     local_apps::{
         app_repos::AppRepoAppReference,
-        installed_apps::{
-            self,
-            fs::{find_installed_apps, load_app_config},
-            AppReference,
-        },
+        installed_apps::{self, fs::load_app_config, AppReference},
+        stack_apps::find_deployed_local_apps,
     },
     panda_comms::{
         container::P2PandaContainer,
@@ -32,7 +29,7 @@ pub fn router() -> OpenApiRouter {
     (status = INTERNAL_SERVER_ERROR, body = ()),
 ),)]
 async fn list_local_apps() -> impl IntoResponse {
-    let apps = find_installed_apps();
+    let apps = find_deployed_local_apps();
     (StatusCode::OK, Json(apps)).into_response()
 }
 
