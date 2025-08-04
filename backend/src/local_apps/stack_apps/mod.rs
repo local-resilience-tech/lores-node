@@ -30,7 +30,7 @@ fn update_app_status_from_stacks(
         .cloned()
         .map(|mut app| {
             if app_in_docker_stacks(&app.name, deployed_stacks) {
-                app.status = LocalAppInstallStatus::Deployed;
+                app.status = LocalAppInstallStatus::StackDeployed;
             }
             app
         })

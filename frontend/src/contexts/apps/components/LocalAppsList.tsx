@@ -37,7 +37,7 @@ export default function LocalAppsList({
                   <Button onClick={() => onDeploy(app)}>Deploy</Button>
                 )}
                 {onRegister &&
-                  app.status === LocalAppInstallStatus.Deployed && (
+                  app.status === LocalAppInstallStatus.StackDeployed && (
                     <Button variant="outline" onClick={() => onRegister(app)}>
                       Register
                     </Button>
@@ -64,10 +64,10 @@ function LocalAppStatusBadge({ status }: { status: LocalAppInstallStatus }) {
           Installed
         </Badge>
       )
-    case LocalAppInstallStatus.Deployed:
+    case LocalAppInstallStatus.StackDeployed:
       return (
         <Badge color="blue" {...sharedProps} leftSection={<IconBrandDocker />}>
-          Deployed
+          Stack Deployed
         </Badge>
       )
   }

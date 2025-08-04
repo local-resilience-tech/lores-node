@@ -12,7 +12,7 @@
 
 export enum LocalAppInstallStatus {
   Installed = "Installed",
-  Deployed = "Deployed",
+  StackDeployed = "StackDeployed",
 }
 
 export interface AppDefinition {

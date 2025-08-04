@@ -32,7 +32,7 @@ pub struct Region {
 #[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
 pub enum LocalAppInstallStatus {
     Installed,
-    Deployed,
+    StackDeployed,
 }
 
 #[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
