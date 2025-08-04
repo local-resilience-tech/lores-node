@@ -1,15 +1,16 @@
-import { Button, Group, Table } from "@mantine/core"
-import { LocalApp } from "../../../api/Api"
+import { Badge, Button, Group, Table } from "@mantine/core"
+import { LocalApp, LocalAppInstallStatus } from "../../../api/Api"
+import { IconBrandDocker, IconDatabase } from "@tabler/icons-react"
 
 interface AppsListProps {
   apps: LocalApp[]
-  onStart?: (app: LocalApp) => void
+  onDeploy?: (app: LocalApp) => void
   onRegister?: (app: LocalApp) => void
 }
 
 export default function LocalAppsList({
   apps,
-  onStart,
+  onDeploy,
   onRegister,
 }: AppsListProps) {
   return (
@@ -27,15 +28,20 @@ export default function LocalAppsList({
           <Table.Tr key={app.name}>
             <Table.Td>{app.name}</Table.Td>
             <Table.Td>{app.version}</Table.Td>
-            <Table.Td>{app.status}</Table.Td>
+            <Table.Td>
+              <LocalAppStatusBadge status={app.status} />
+            </Table.Td>
             <Table.Td>
               <Group gap="xs">
-                {onStart && <Button onClick={() => onStart(app)}>Start</Button>}
-                {onRegister && (
-                  <Button variant="outline" onClick={() => onRegister(app)}>
-                    Register
-                  </Button>
+                {onDeploy && app.status === LocalAppInstallStatus.Installed && (
+                  <Button onClick={() => onDeploy(app)}>Deploy</Button>
                 )}
+                {onRegister &&
+                  app.status === LocalAppInstallStatus.Deployed && (
+                    <Button variant="outline" onClick={() => onRegister(app)}>
+                      Register
+                    </Button>
+                  )}
               </Group>
             </Table.Td>
           </Table.Tr>
@@ -43,4 +49,26 @@ export default function LocalAppsList({
       </Table.Tbody>
     </Table>
   )
+}
+
+function LocalAppStatusBadge({ status }: { status: LocalAppInstallStatus }) {
+  const sharedProps = {
+    size: "lg",
+    variant: "outline",
+  }
+
+  switch (status) {
+    case LocalAppInstallStatus.Installed:
+      return (
+        <Badge color="yellow" {...sharedProps} leftSection={<IconDatabase />}>
+          Installed
+        </Badge>
+      )
+    case LocalAppInstallStatus.Deployed:
+      return (
+        <Badge color="blue" {...sharedProps} leftSection={<IconBrandDocker />}>
+          Deployed
+        </Badge>
+      )
+  }
 }

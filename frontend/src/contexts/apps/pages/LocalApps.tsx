@@ -10,10 +10,10 @@ export default function LocalApps() {
   const apps = useAppSelector((state) => state.localApps)
   const navigate = useNavigate()
 
-  const onAppStart = (app: LocalApp) => {
-    // Handle app start logic here
-    console.log("Starting app:", app)
-    getApi().api.startLocalApp(app.name)
+  const onAppDeploy = (app: LocalApp) => {
+    // Handle app deploy logic here
+    console.log("Deploying app:", app)
+    getApi().api.deployLocalApp(app.name)
   }
 
   const onAppRegister = (app: LocalApp) => {
@@ -35,7 +35,7 @@ export default function LocalApps() {
         {apps && (
           <LocalAppsList
             apps={apps}
-            onStart={onAppStart}
+            onDeploy={onAppDeploy}
             onRegister={onAppRegister}
           />
         )}

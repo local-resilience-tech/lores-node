@@ -12,6 +12,7 @@
 
 export enum LocalAppInstallStatus {
   Installed = "Installed",
+  Deployed = "Deployed",
 }
 
 export interface AppDefinition {
@@ -69,6 +70,8 @@ export interface CreateNodeDetails {
 
 export interface DockerStack {
   name: string;
+  /** @format int64 */
+  services_count: number;
 }
 
 export interface IrohNodeAddr {
@@ -382,12 +385,12 @@ export class Api<
     /**
      * No description
      *
-     * @name StartLocalApp
-     * @request POST:/api/local_apps/app/{app_name}/start
+     * @name DeployLocalApp
+     * @request POST:/api/local_apps/app/{app_name}/deploy
      */
-    startLocalApp: (appName: string, params: RequestParams = {}) =>
+    deployLocalApp: (appName: string, params: RequestParams = {}) =>
       this.request<any, any>({
-        path: `/api/local_apps/app/${appName}/start`,
+        path: `/api/local_apps/app/${appName}/deploy`,
         method: "POST",
         format: "json",
         ...params,
