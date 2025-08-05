@@ -1,12 +1,12 @@
 import { ActionIcon, Container, Group, Stack, Title } from "@mantine/core"
 import { IconRefresh } from "@tabler/icons-react"
-import { DockerStack } from "../../../api/Api"
+import { DockerStackWithServices } from "../../../api/Api"
 import { useEffect, useState } from "react"
 import { getApi } from "../../../api"
 import StacksList from "../components/StacksList"
 
 export default function Stacks() {
-  const [stacks, setStacks] = useState<null | DockerStack[]>(null)
+  const [stacks, setStacks] = useState<null | DockerStackWithServices[]>(null)
 
   const loadStacks = async () => {
     getApi()

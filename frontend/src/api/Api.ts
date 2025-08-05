@@ -68,10 +68,17 @@ export interface CreateNodeDetails {
   name: string;
 }
 
-export interface DockerStack {
+export interface DockerService {
+  current_state: string;
+  id: string;
+  image: string;
   name: string;
-  /** @format int64 */
-  services_count: number;
+  node_name: string;
+}
+
+export interface DockerStackWithServices {
+  name: string;
+  services: DockerService[];
 }
 
 export interface IrohNodeAddr {
@@ -317,7 +324,7 @@ export class HttpClient<SecurityDataType = unknown> {
 
 /**
  * @title lores-node
- * @version 0.9.11
+ * @version 0.9.12
  * @license
  */
 export class Api<
@@ -466,7 +473,7 @@ export class Api<
      * @request GET:/api/stacks
      */
     listStacks: (params: RequestParams = {}) =>
-      this.request<DockerStack[], any>({
+      this.request<DockerStackWithServices[], any>({
         path: `/api/stacks`,
         method: "GET",
         format: "json",
