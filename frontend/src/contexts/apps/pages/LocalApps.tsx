@@ -10,17 +10,17 @@ export default function LocalApps() {
   const apps = useAppSelector((state) => state.localApps)
   const navigate = useNavigate()
 
-  const onAppDeploy = (app: LocalApp) => {
+  const onAppDeploy = async (app: LocalApp) => {
     console.log("Deploying app:", app)
     getApi().api.deployLocalApp(app.name)
   }
 
-  const onAppRemoveDeploy = (app: LocalApp) => {
+  const onAppRemoveDeploy = async (app: LocalApp) => {
     console.log("Deploying app:", app)
     getApi().api.removeDeploymentOfLocalApp(app.name)
   }
 
-  const onAppRegister = (app: LocalApp) => {
+  const onAppRegister = async (app: LocalApp) => {
     console.log("Registering app:", app)
     getApi().api.registerApp({ app_name: app.name })
   }

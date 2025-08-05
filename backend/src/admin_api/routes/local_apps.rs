@@ -4,15 +4,10 @@ use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::{
     admin_api::{client_events::ClientEvent, realtime::RealtimeState},
-    docker::docker_stack::{docker_stack_deploy, docker_stack_rm},
     local_apps::{
         app_repos::AppRepoAppReference,
-        installed_apps::{
-            self,
-            fs::{compose_file_path, load_app_config},
-            AppReference,
-        },
-        stack_apps::find_deployed_local_apps,
+        installed_apps::{self, fs::load_app_config, AppReference},
+        stack_apps::{self, find_deployed_local_apps},
     },
     panda_comms::{
         container::P2PandaContainer,
@@ -60,17 +55,90 @@ async fn install_app_definition(
     let result = installed_apps::fs::install_app_definition(&source, &target);
 
     match result {
-        Ok(local_app) => {
-            let event = ClientEvent::LocalAppUpdated(local_app.clone());
-            realtime_state.broadcast_app_event(event).await;
-
-            println!("App definition installed: {}", local_app.name);
+        Ok(app) => {
+            local_app_updated(&app, &realtime_state).await;
+            println!("App definition installed: {}", app.name);
 
             (StatusCode::CREATED, Json(()))
         }
         Err(e) => {
             println!("Error installing app definition: {:?}", e);
 
+            (StatusCode::INTERNAL_SERVER_ERROR, Json(()))
+        }
+    }
+}
+
+#[utoipa::path(
+    post,
+    path = "/app/{app_name}/deploy",
+    params(
+        ("app_name" = String, Path),
+    ),
+    responses(
+        (status = OK, body = ()),
+        (status = INTERNAL_SERVER_ERROR, body = ()),
+    ),
+)]
+async fn deploy_local_app(
+    Extension(realtime_state): Extension<RealtimeState>,
+    Path(app_name): Path<String>,
+) -> impl IntoResponse {
+    println!("Deploying local app: {}", app_name);
+
+    let app_ref = AppReference {
+        app_name: app_name.clone(),
+    };
+    let result = stack_apps::deploy_local_app(&app_ref);
+
+    match result {
+        Ok(app) => {
+            local_app_updated(&app, &realtime_state).await;
+
+            println!("Successfully deployed local app: {}", app_name);
+            (StatusCode::OK, Json(()))
+        }
+        Err(e) => {
+            eprintln!("Failed to deploy local app '{}': {}", app_name, e);
+            (StatusCode::INTERNAL_SERVER_ERROR, Json(()))
+        }
+    }
+}
+
+#[utoipa::path(
+    delete,
+    path = "/app/{app_name}/deploy",
+    params(
+        ("app_name" = String, Path),
+    ),
+    responses(
+        (status = OK, body = ()),
+        (status = INTERNAL_SERVER_ERROR, body = ()),
+    ),
+)]
+async fn remove_deployment_of_local_app(
+    Extension(realtime_state): Extension<RealtimeState>,
+    Path(app_name): Path<String>,
+) -> impl IntoResponse {
+    println!("Removing deployment of local app: {}", app_name);
+
+    let app_ref = AppReference {
+        app_name: app_name.clone(),
+    };
+    let result = stack_apps::remove_local_app(&app_ref);
+
+    match result {
+        Ok(app) => {
+            local_app_updated(&app, &realtime_state).await;
+
+            println!("Successfully removed local app: {}", app_name);
+            (StatusCode::OK, Json(()))
+        }
+        Err(e) => {
+            eprintln!(
+                "Failed to remove deployment of local app '{}': {}",
+                app_name, e
+            );
             (StatusCode::INTERNAL_SERVER_ERROR, Json(()))
         }
     }
@@ -114,57 +182,7 @@ async fn register_app(
     .into_response()
 }
 
-#[utoipa::path(
-    post,
-    path = "/app/{app_name}/deploy",
-    params(
-        ("app_name" = String, Path),
-    ),
-    responses(
-        (status = OK, body = ()),
-        (status = INTERNAL_SERVER_ERROR, body = ()),
-    ),
-)]
-async fn deploy_local_app(Path(app_name): Path<String>) -> impl IntoResponse {
-    println!("Deploying local app: {}", app_name);
-
-    let compose_file_path = compose_file_path(&AppReference {
-        app_name: app_name.clone(),
-    });
-
-    match docker_stack_deploy(&app_name, &compose_file_path) {
-        Ok(_) => {
-            println!("Successfully deployed local app: {}", app_name);
-            (StatusCode::OK, Json(()))
-        }
-        Err(e) => {
-            eprintln!("Failed to deploy local app '{}': {}", app_name, e);
-            (StatusCode::INTERNAL_SERVER_ERROR, Json(()))
-        }
-    }
-}
-
-#[utoipa::path(
-    delete,
-    path = "/app/{app_name}/deploy",
-    params(
-        ("app_name" = String, Path),
-    ),
-    responses(
-        (status = OK, body = ()),
-        (status = INTERNAL_SERVER_ERROR, body = ()),
-    ),
-)]
-async fn remove_deployment_of_local_app(Path(app_name): Path<String>) -> impl IntoResponse {
-    println!("Removing deployment of local app: {}", app_name);
-    match docker_stack_rm(&app_name) {
-        Ok(_) => (StatusCode::OK, Json(())),
-        Err(e) => {
-            eprintln!(
-                "Failed to remove deployment of local app '{}': {}",
-                app_name, e
-            );
-            (StatusCode::INTERNAL_SERVER_ERROR, Json(()))
-        }
-    }
+async fn local_app_updated(app: &LocalApp, realtime_state: &RealtimeState) {
+    let client_event = ClientEvent::LocalAppUpdated(app.clone());
+    realtime_state.broadcast_app_event(client_event).await;
 }

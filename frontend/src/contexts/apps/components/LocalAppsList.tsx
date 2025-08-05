@@ -1,12 +1,13 @@
 import { Badge, Button, Group, Table } from "@mantine/core"
 import { LocalApp, LocalAppInstallStatus } from "../../../api/Api"
 import { IconBrandDocker, IconDatabase } from "@tabler/icons-react"
+import { useLoading } from "../../shared"
 
 interface AppsListProps {
   apps: LocalApp[]
-  onDeploy?: (app: LocalApp) => void
-  onRemoveDeploy?: (app: LocalApp) => void
-  onRegister?: (app: LocalApp) => void
+  onDeploy?: (app: LocalApp) => Promise<Promise<void>>
+  onRemoveDeploy?: (app: LocalApp) => Promise<void>
+  onRegister?: (app: LocalApp) => Promise<void>
 }
 
 export default function LocalAppsList({
@@ -15,6 +16,17 @@ export default function LocalAppsList({
   onRemoveDeploy,
   onRegister,
 }: AppsListProps) {
+  const [loading, withLoading] = useLoading(false)
+
+  const handleButtonPress = (
+    app: LocalApp,
+    action: (app: LocalApp) => Promise<Promise<void>>
+  ) => {
+    withLoading(async () => {
+      await action(app)
+    })
+  }
+
   return (
     <Table>
       <Table.Thead>
@@ -36,7 +48,9 @@ export default function LocalAppsList({
             <Table.Td>
               <Group gap="xs">
                 {onDeploy && app.status === LocalAppInstallStatus.Installed && (
-                  <Button onClick={() => onDeploy(app)}>Deploy</Button>
+                  <Button onClick={() => onDeploy(app)} loading={loading}>
+                    Deploy
+                  </Button>
                 )}
                 {onRemoveDeploy &&
                   app.status === LocalAppInstallStatus.StackDeployed && (
@@ -44,13 +58,18 @@ export default function LocalAppsList({
                       variant="outline"
                       color="red"
                       onClick={() => onRemoveDeploy(app)}
+                      loading={loading}
                     >
                       Remove
                     </Button>
                   )}
                 {onRegister &&
                   app.status === LocalAppInstallStatus.StackDeployed && (
-                    <Button variant="outline" onClick={() => onRegister(app)}>
+                    <Button
+                      variant="outline"
+                      onClick={() => onRegister(app)}
+                      loading={loading}
+                    >
                       Register
                     </Button>
                   )}
