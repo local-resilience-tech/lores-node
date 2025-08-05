@@ -5,12 +5,14 @@ import { IconBrandDocker, IconDatabase } from "@tabler/icons-react"
 interface AppsListProps {
   apps: LocalApp[]
   onDeploy?: (app: LocalApp) => void
+  onRemoveDeploy?: (app: LocalApp) => void
   onRegister?: (app: LocalApp) => void
 }
 
 export default function LocalAppsList({
   apps,
   onDeploy,
+  onRemoveDeploy,
   onRegister,
 }: AppsListProps) {
   return (
@@ -36,6 +38,16 @@ export default function LocalAppsList({
                 {onDeploy && app.status === LocalAppInstallStatus.Installed && (
                   <Button onClick={() => onDeploy(app)}>Deploy</Button>
                 )}
+                {onRemoveDeploy &&
+                  app.status === LocalAppInstallStatus.StackDeployed && (
+                    <Button
+                      variant="outline"
+                      color="red"
+                      onClick={() => onRemoveDeploy(app)}
+                    >
+                      Remove
+                    </Button>
+                  )}
                 {onRegister &&
                   app.status === LocalAppInstallStatus.StackDeployed && (
                     <Button variant="outline" onClick={() => onRegister(app)}>

@@ -22,6 +22,7 @@ pub fn router() -> OpenApiRouter {
         .routes(routes!(install_app_definition))
         .routes(routes!(register_app))
         .routes(routes!(deploy_local_app))
+        .routes(routes!(remove_deployment_of_local_app))
 }
 
 #[utoipa::path(get, path = "/", responses(
@@ -121,6 +122,23 @@ async fn register_app(
 )]
 async fn deploy_local_app(Path(app_name): Path<String>) -> impl IntoResponse {
     println!("Deploying local app: {}", app_name);
+
+    (StatusCode::OK, Json(()))
+}
+
+#[utoipa::path(
+    delete,
+    path = "/app/{app_name}/deploy",
+    params(
+        ("app_name" = String, Path),
+    ),
+    responses(
+        (status = OK, body = ()),
+        (status = INTERNAL_SERVER_ERROR, body = ()),
+    ),
+)]
+async fn remove_deployment_of_local_app(Path(app_name): Path<String>) -> impl IntoResponse {
+    println!("Removing deployment of local app: {}", app_name);
 
     (StatusCode::OK, Json(()))
 }

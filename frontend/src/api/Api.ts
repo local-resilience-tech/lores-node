@@ -70,6 +70,7 @@ export interface CreateNodeDetails {
 
 export interface DockerService {
   current_state: string;
+  current_state_duration: string;
   id: string;
   image: string;
   name: string;
@@ -399,6 +400,20 @@ export class Api<
       this.request<any, any>({
         path: `/api/local_apps/app/${appName}/deploy`,
         method: "POST",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @name RemoveDeploymentOfLocalApp
+     * @request DELETE:/api/local_apps/app/{app_name}/deploy
+     */
+    removeDeploymentOfLocalApp: (appName: string, params: RequestParams = {}) =>
+      this.request<any, any>({
+        path: `/api/local_apps/app/${appName}/deploy`,
+        method: "DELETE",
         format: "json",
         ...params,
       }),

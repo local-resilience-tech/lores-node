@@ -11,13 +11,16 @@ export default function LocalApps() {
   const navigate = useNavigate()
 
   const onAppDeploy = (app: LocalApp) => {
-    // Handle app deploy logic here
     console.log("Deploying app:", app)
     getApi().api.deployLocalApp(app.name)
   }
 
+  const onAppRemoveDeploy = (app: LocalApp) => {
+    console.log("Deploying app:", app)
+    getApi().api.removeDeploymentOfLocalApp(app.name)
+  }
+
   const onAppRegister = (app: LocalApp) => {
-    // Handle app registration logic here
     console.log("Registering app:", app)
     getApi().api.registerApp({ app_name: app.name })
   }
@@ -36,6 +39,7 @@ export default function LocalApps() {
           <LocalAppsList
             apps={apps}
             onDeploy={onAppDeploy}
+            onRemoveDeploy={onAppRemoveDeploy}
             onRegister={onAppRegister}
           />
         )}
