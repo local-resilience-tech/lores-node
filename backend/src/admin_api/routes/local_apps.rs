@@ -4,9 +4,14 @@ use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::{
     admin_api::{client_events::ClientEvent, realtime::RealtimeState},
+    docker::docker_stack::{docker_stack_deploy, docker_stack_rm},
     local_apps::{
         app_repos::AppRepoAppReference,
-        installed_apps::{self, fs::load_app_config, AppReference},
+        installed_apps::{
+            self,
+            fs::{compose_file_path, load_app_config},
+            AppReference,
+        },
         stack_apps::find_deployed_local_apps,
     },
     panda_comms::{
@@ -123,7 +128,20 @@ async fn register_app(
 async fn deploy_local_app(Path(app_name): Path<String>) -> impl IntoResponse {
     println!("Deploying local app: {}", app_name);
 
-    (StatusCode::OK, Json(()))
+    let compose_file_path = compose_file_path(&AppReference {
+        app_name: app_name.clone(),
+    });
+
+    match docker_stack_deploy(&app_name, &compose_file_path) {
+        Ok(_) => {
+            println!("Successfully deployed local app: {}", app_name);
+            (StatusCode::OK, Json(()))
+        }
+        Err(e) => {
+            eprintln!("Failed to deploy local app '{}': {}", app_name, e);
+            (StatusCode::INTERNAL_SERVER_ERROR, Json(()))
+        }
+    }
 }
 
 #[utoipa::path(
@@ -139,6 +157,14 @@ async fn deploy_local_app(Path(app_name): Path<String>) -> impl IntoResponse {
 )]
 async fn remove_deployment_of_local_app(Path(app_name): Path<String>) -> impl IntoResponse {
     println!("Removing deployment of local app: {}", app_name);
-
-    (StatusCode::OK, Json(()))
+    match docker_stack_rm(&app_name) {
+        Ok(_) => (StatusCode::OK, Json(())),
+        Err(e) => {
+            eprintln!(
+                "Failed to remove deployment of local app '{}': {}",
+                app_name, e
+            );
+            (StatusCode::INTERNAL_SERVER_ERROR, Json(()))
+        }
+    }
 }

@@ -1,4 +1,4 @@
-use std::process::Command;
+use std::{path::PathBuf, process::Command};
 
 use super::{DockerService, DockerStack};
 
@@ -106,6 +106,50 @@ pub fn docker_stack_ps(stack_name: &str) -> Result<Vec<DockerService>, anyhow::E
         .collect();
 
     Ok(services)
+}
+
+pub fn docker_stack_rm(stack_name: &str) -> Result<(), anyhow::Error> {
+    let output = Command::new("docker")
+        .arg("stack")
+        .arg("rm")
+        .arg(stack_name)
+        .output()
+        .map_err(|e| anyhow::anyhow!("Failed to execute command: {}", e))?;
+
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        return Err(anyhow::anyhow!(
+            "Failed to remove stack '{}': {}",
+            stack_name,
+            stderr
+        ));
+    }
+
+    println!("Successfully removed stack: {}", stack_name);
+    Ok(())
+}
+
+pub fn docker_stack_deploy(stack_name: &str, compose_file: &PathBuf) -> Result<(), anyhow::Error> {
+    let output = Command::new("docker")
+        .arg("stack")
+        .arg("deploy")
+        .arg("--compose-file")
+        .arg(compose_file)
+        .arg(stack_name)
+        .output()
+        .map_err(|e| anyhow::anyhow!("Failed to execute command: {}", e))?;
+
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        return Err(anyhow::anyhow!(
+            "Failed to deploy stack '{}': {}",
+            stack_name,
+            stderr
+        ));
+    }
+
+    println!("Successfully deployed stack: {}", stack_name);
+    Ok(())
 }
 
 fn split_state_and_duration(state: &str) -> (String, String) {

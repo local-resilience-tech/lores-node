@@ -62,6 +62,10 @@ pub fn install_app_definition(
     load_app_config(target).ok_or(())
 }
 
+pub fn compose_file_path(app_ref: &AppReference) -> PathBuf {
+    app_path(app_ref).join("compose.yml")
+}
+
 fn app_path(app_ref: &AppReference) -> PathBuf {
     apps_path().join(&app_ref.app_name)
 }
