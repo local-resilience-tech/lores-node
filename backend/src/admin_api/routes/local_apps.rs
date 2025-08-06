@@ -77,7 +77,7 @@ async fn install_app_definition(
     ),
     responses(
         (status = OK, body = ()),
-        (status = INTERNAL_SERVER_ERROR, body = ()),
+        (status = INTERNAL_SERVER_ERROR, body = String),
     ),
 )]
 async fn deploy_local_app(
@@ -96,11 +96,11 @@ async fn deploy_local_app(
             local_app_updated(&app, &realtime_state).await;
 
             println!("Successfully deployed local app: {}", app_name);
-            (StatusCode::OK, Json(()))
+            (StatusCode::OK, Json(())).into_response()
         }
         Err(e) => {
             eprintln!("Failed to deploy local app '{}': {}", app_name, e);
-            (StatusCode::INTERNAL_SERVER_ERROR, Json(()))
+            (StatusCode::INTERNAL_SERVER_ERROR, Json(e.to_string())).into_response()
         }
     }
 }
@@ -113,7 +113,7 @@ async fn deploy_local_app(
     ),
     responses(
         (status = OK, body = ()),
-        (status = INTERNAL_SERVER_ERROR, body = ()),
+        (status = INTERNAL_SERVER_ERROR, body = String),
     ),
 )]
 async fn remove_deployment_of_local_app(
@@ -132,14 +132,14 @@ async fn remove_deployment_of_local_app(
             local_app_updated(&app, &realtime_state).await;
 
             println!("Successfully removed local app: {}", app_name);
-            (StatusCode::OK, Json(()))
+            (StatusCode::OK, Json(())).into_response()
         }
         Err(e) => {
             eprintln!(
                 "Failed to remove deployment of local app '{}': {}",
                 app_name, e
             );
-            (StatusCode::INTERNAL_SERVER_ERROR, Json(()))
+            (StatusCode::INTERNAL_SERVER_ERROR, Json(e.to_string())).into_response()
         }
     }
 }

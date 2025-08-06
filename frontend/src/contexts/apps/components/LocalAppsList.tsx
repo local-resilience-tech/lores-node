@@ -1,32 +1,35 @@
-import { Badge, Button, Group, Table } from "@mantine/core"
+import {
+  ActionIcon,
+  Badge,
+  Button,
+  Group,
+  HoverCard,
+  Table,
+  Text,
+} from "@mantine/core"
 import { LocalApp, LocalAppInstallStatus } from "../../../api/Api"
-import { IconBrandDocker, IconDatabase } from "@tabler/icons-react"
+import {
+  IconAlertCircle,
+  IconBrandDocker,
+  IconDatabase,
+} from "@tabler/icons-react"
 import { useLoading } from "../../shared"
 
 interface AppsListProps {
   apps: LocalApp[]
-  onDeploy?: (app: LocalApp) => Promise<Promise<void>>
+  appErrors?: Map<string, string>
+  onDeploy?: (app: LocalApp) => Promise<void>
   onRemoveDeploy?: (app: LocalApp) => Promise<void>
   onRegister?: (app: LocalApp) => Promise<void>
 }
 
 export default function LocalAppsList({
   apps,
+  appErrors,
   onDeploy,
   onRemoveDeploy,
   onRegister,
 }: AppsListProps) {
-  const [loading, withLoading] = useLoading(false)
-
-  const handleButtonPress = (
-    app: LocalApp,
-    action: (app: LocalApp) => Promise<Promise<void>>
-  ) => {
-    withLoading(async () => {
-      await action(app)
-    })
-  }
-
   return (
     <Table>
       <Table.Thead>
@@ -39,46 +42,98 @@ export default function LocalAppsList({
       </Table.Thead>
       <Table.Tbody>
         {apps.map((app) => (
-          <Table.Tr key={app.name}>
-            <Table.Td>{app.name}</Table.Td>
-            <Table.Td>{app.version}</Table.Td>
-            <Table.Td>
-              <LocalAppStatusBadge status={app.status} />
-            </Table.Td>
-            <Table.Td>
-              <Group gap="xs">
-                {onDeploy && app.status === LocalAppInstallStatus.Installed && (
-                  <Button onClick={() => onDeploy(app)} loading={loading}>
-                    Deploy
-                  </Button>
-                )}
-                {onRemoveDeploy &&
-                  app.status === LocalAppInstallStatus.StackDeployed && (
-                    <Button
-                      variant="outline"
-                      color="red"
-                      onClick={() => onRemoveDeploy(app)}
-                      loading={loading}
-                    >
-                      Remove
-                    </Button>
-                  )}
-                {onRegister &&
-                  app.status === LocalAppInstallStatus.StackDeployed && (
-                    <Button
-                      variant="outline"
-                      onClick={() => onRegister(app)}
-                      loading={loading}
-                    >
-                      Register
-                    </Button>
-                  )}
-              </Group>
-            </Table.Td>
-          </Table.Tr>
+          <LocalAppRow
+            key={app.name}
+            app={app}
+            onDeploy={onDeploy}
+            onRemoveDeploy={onRemoveDeploy}
+            onRegister={onRegister}
+            error={appErrors?.get(app.name)}
+          />
         ))}
       </Table.Tbody>
     </Table>
+  )
+}
+
+interface LocalAppRowProps {
+  app: LocalApp
+  error?: string
+  onDeploy?: (app: LocalApp) => Promise<void>
+  onRemoveDeploy?: (app: LocalApp) => Promise<void>
+  onRegister?: (app: LocalApp) => Promise<void>
+}
+
+function LocalAppRow({
+  app,
+  error,
+  onDeploy,
+  onRemoveDeploy,
+  onRegister,
+}: LocalAppRowProps) {
+  const [loading, withLoading] = useLoading(false)
+
+  const handleButtonPress = (
+    app: LocalApp,
+    action: (app: LocalApp) => Promise<void>
+  ) => {
+    withLoading(async () => {
+      await action(app)
+    })
+  }
+
+  return (
+    <Table.Tr key={app.name}>
+      <Table.Td>{app.name}</Table.Td>
+      <Table.Td>{app.version}</Table.Td>
+      <Table.Td>
+        <LocalAppStatusBadge status={app.status} />
+      </Table.Td>
+      <Table.Td>
+        <Group gap="xs">
+          {onDeploy && app.status === LocalAppInstallStatus.Installed && (
+            <Button
+              onClick={() => handleButtonPress(app, onDeploy)}
+              loading={loading}
+            >
+              Deploy
+            </Button>
+          )}
+          {onRemoveDeploy &&
+            app.status === LocalAppInstallStatus.StackDeployed && (
+              <Button
+                variant="outline"
+                color="red"
+                onClick={() => handleButtonPress(app, onRemoveDeploy)}
+                loading={loading}
+              >
+                Remove
+              </Button>
+            )}
+          {onRegister && app.status === LocalAppInstallStatus.StackDeployed && (
+            <Button
+              variant="outline"
+              onClick={() => handleButtonPress(app, onRegister)}
+              loading={loading}
+            >
+              Register
+            </Button>
+          )}
+          {error && (
+            <HoverCard width={280} shadow="md">
+              <HoverCard.Target>
+                <ActionIcon variant="transparent" color="red" size="lg">
+                  <IconAlertCircle />
+                </ActionIcon>
+              </HoverCard.Target>
+              <HoverCard.Dropdown>
+                <Text size="sm">{error}</Text>
+              </HoverCard.Dropdown>
+            </HoverCard>
+          )}
+        </Group>
+      </Table.Td>
+    </Table.Tr>
   )
 }
 

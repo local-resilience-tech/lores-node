@@ -397,7 +397,7 @@ export class Api<
      * @request POST:/api/local_apps/app/{app_name}/deploy
      */
     deployLocalApp: (appName: string, params: RequestParams = {}) =>
-      this.request<any, any>({
+      this.request<any, string>({
         path: `/api/local_apps/app/${appName}/deploy`,
         method: "POST",
         format: "json",
@@ -411,7 +411,7 @@ export class Api<
      * @request DELETE:/api/local_apps/app/{app_name}/deploy
      */
     removeDeploymentOfLocalApp: (appName: string, params: RequestParams = {}) =>
-      this.request<any, any>({
+      this.request<any, string>({
         path: `/api/local_apps/app/${appName}/deploy`,
         method: "DELETE",
         format: "json",
