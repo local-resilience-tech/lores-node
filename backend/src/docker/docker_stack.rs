@@ -22,7 +22,7 @@ pub fn docker_stack_ls() -> Result<Vec<DockerStack>, anyhow::Error> {
 
     let stdout_string = String::from_utf8(output.stdout)
         .map_err(|e| anyhow::anyhow!("Failed to convert output to string: {}", e))?;
-    let stdout_string = ensure_json_is_array(&stdout_string);
+    let stdout_string = json_object_lines_to_array(&stdout_string);
 
     println!("Docker stack ls output: {}", stdout_string);
 
@@ -82,7 +82,7 @@ pub fn docker_stack_ps(stack_name: &str) -> Result<Vec<DockerService>, anyhow::E
 
     let stdout_string = String::from_utf8(output.stdout)
         .map_err(|e| anyhow::anyhow!("Failed to convert output to string: {}", e))?;
-    let stdout_string = ensure_json_is_array(&stdout_string);
+    let stdout_string = json_object_lines_to_array(&stdout_string);
 
     println!("Docker stack ps output: {}", stdout_string);
 
@@ -161,10 +161,57 @@ fn split_state_and_duration(state: &str) -> (String, String) {
     }
 }
 
-fn ensure_json_is_array(input: &str) -> String {
-    if input.starts_with('[') && input.ends_with(']') {
-        input.to_string()
-    } else {
-        format!("[{}]", input)
+fn json_object_lines_to_array(input: &str) -> String {
+    let mut lines = input.lines().map(str::trim).filter(|line| !line.is_empty());
+    let first_line = lines.next().unwrap_or("");
+    let mut result = String::from("[");
+    result.push_str(first_line);
+
+    for line in lines {
+        result.push_str(",");
+        result.push_str(line);
+    }
+
+    result.push(']');
+    result
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_json_object_lines_to_array_empty() {
+        let input = "";
+        let expected = "[]";
+        let result = json_object_lines_to_array(input);
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_json_object_lines_to_array_single_line() {
+        let input = r#"{"Name":"stack1","Services":"2"}"#;
+        let expected = r#"[{"Name":"stack1","Services":"2"}]"#;
+        let result = json_object_lines_to_array(input);
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_json_object_lines_to_array_multiple_lines() {
+        let input = r#"{"Name":"stack1","Services":"2"}
+{"Name":"stack2","Services":"3"}"#;
+        let expected = r#"[{"Name":"stack1","Services":"2"},{"Name":"stack2","Services":"3"}]"#;
+        let result = json_object_lines_to_array(input);
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_json_object_lines_to_array_trailing_newline() {
+        let input = r#"{"Name":"stack1","Services":"2"}
+{"Name":"stack2","Services":"3"}
+"#;
+        let expected = r#"[{"Name":"stack1","Services":"2"},{"Name":"stack2","Services":"3"}]"#;
+        let result = json_object_lines_to_array(input);
+        assert_eq!(result, expected);
     }
 }
