@@ -46,6 +46,7 @@
               - data:/data
               - "{{ host_apps_path }}:/apps"
               - "{{ host_app_repos_path }}:/app_repos"
+              - /var/run/docker.sock:/var/run/docker.sock
             networks:
               - proxy
             deploy:
