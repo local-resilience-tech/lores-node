@@ -14,6 +14,7 @@ pub struct AppRepoSource {
 #[derive(Deserialize, Serialize, ToSchema, Debug, Clone)]
 pub struct AppRepo {
     pub name: String,
+    pub git_url: String,
     pub apps: Vec<AppDefinition>,
 }
 

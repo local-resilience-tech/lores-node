@@ -2,7 +2,8 @@ use std::{env, path::PathBuf};
 
 use super::{
     super::shared::app_definitions::{fs::app_definitions_in_path, AppDefinition},
-    AppRepo, AppRepoAppReference, AppRepoReference,
+    git::git_origin_url,
+    AppRepo, AppRepoAppReference, AppRepoReference, AppRepoSource,
 };
 
 lazy_static! {
@@ -11,9 +12,9 @@ lazy_static! {
 }
 
 pub fn list_installed_app_repos() -> Vec<AppRepo> {
-    list_installed_app_repo_references()
+    list_installed_app_repo_sources()
         .into_iter()
-        .filter_map(|repo_ref| app_repo_at_reference(&repo_ref))
+        .filter_map(|repo_src| app_repo_at_source(&repo_src))
         .collect()
 }
 
@@ -32,27 +33,41 @@ fn list_installed_app_repo_paths() -> Vec<PathBuf> {
         .collect()
 }
 
-pub fn app_repo_at_reference(repo_ref: &AppRepoReference) -> Option<AppRepo> {
-    let apps = app_definitions_in_repo(repo_ref);
+pub fn app_repo_at_source(repo_src: &AppRepoSource) -> Option<AppRepo> {
+    let repo_ref = AppRepoReference {
+        repo_name: repo_src.name.clone(),
+    };
+    let apps = app_definitions_in_repo(&repo_ref);
     Some(AppRepo {
-        name: repo_ref.repo_name.clone(),
+        name: repo_src.name.clone(),
+        git_url: repo_src.git_url.clone(),
         apps,
     })
 }
 
-pub fn list_installed_app_repo_references() -> Vec<AppRepoReference> {
+pub fn list_installed_app_repo_sources() -> Vec<AppRepoSource> {
     list_installed_app_repo_paths()
         .into_iter()
-        .filter_map(|path| {
-            path.file_name()
-                .and_then(|name| name.to_str())
-                .map(|name| AppRepoReference {
-                    repo_name: name.to_string(),
-                })
-        })
+        .filter_map(|path| app_repo_source_from_path(&path))
         .collect()
 }
 
+fn app_repo_source_from_path(path: &PathBuf) -> Option<AppRepoSource> {
+    let name = path.file_name()?.to_str()?;
+    let app_ref = AppRepoReference {
+        repo_name: name.to_string(),
+    };
+    match git_origin_url(&app_ref) {
+        Ok(url) => Some(AppRepoSource {
+            name: name.to_string(),
+            git_url: url,
+        }),
+        Err(_) => {
+            eprintln!("Failed to get git URL for app repo: {}", name);
+            None
+        }
+    }
+}
 fn app_definitions_in_repo(repo_ref: &AppRepoReference) -> Vec<AppDefinition> {
     app_definitions_in_path(app_repo_path(repo_ref))
 }
@@ -61,7 +76,7 @@ pub fn app_repo_app_path(app_ref: &AppRepoAppReference) -> PathBuf {
     app_repo_path(&app_ref.repo_ref()).join(&app_ref.app_name)
 }
 
-fn app_repo_path(repo_ref: &AppRepoReference) -> PathBuf {
+pub fn app_repo_path(repo_ref: &AppRepoReference) -> PathBuf {
     app_repos_path().join(&repo_ref.repo_name)
 }
 

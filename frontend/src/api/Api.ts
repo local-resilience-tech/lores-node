@@ -32,6 +32,7 @@ export interface AppReference {
 
 export interface AppRepo {
   apps: AppDefinition[];
+  git_url: string;
   name: string;
 }
 
@@ -325,7 +326,7 @@ export class HttpClient<SecurityDataType = unknown> {
 
 /**
  * @title lores-node
- * @version 0.9.12
+ * @version 0.9.14
  * @license
  */
 export class Api<
