@@ -36,6 +36,7 @@ export default function LocalAppsList({
         <Table.Tr>
           <Table.Th>Name</Table.Th>
           <Table.Th>Version</Table.Th>
+          <Table.Th>Latest</Table.Th>
           <Table.Th>Status</Table.Th>
           <Table.Th>Actions</Table.Th>
         </Table.Tr>
@@ -86,6 +87,7 @@ function LocalAppRow({
     <Table.Tr key={app.name}>
       <Table.Td>{app.name}</Table.Td>
       <Table.Td>{app.version}</Table.Td>
+      <Table.Td>X.X.X</Table.Td>
       <Table.Td>
         <LocalAppStatusBadge status={app.status} />
       </Table.Td>
@@ -95,6 +97,7 @@ function LocalAppRow({
             <Button
               onClick={() => handleButtonPress(app, onDeploy)}
               loading={loading}
+              size="xs"
             >
               Deploy
             </Button>
@@ -106,6 +109,7 @@ function LocalAppRow({
                 color="red"
                 onClick={() => handleButtonPress(app, onRemoveDeploy)}
                 loading={loading}
+                size="xs"
               >
                 Remove
               </Button>
@@ -115,6 +119,7 @@ function LocalAppRow({
               variant="outline"
               onClick={() => handleButtonPress(app, onRegister)}
               loading={loading}
+              size="xs"
             >
               Register
             </Button>

@@ -11,6 +11,8 @@ type AppErrors = Map<string, string>
 
 export default function LocalApps() {
   const apps = useAppSelector((state) => state.localApps)
+  const repos = useAppSelector((state) => state.appRepos)
+
   const navigate = useNavigate()
   const [appErrors, setAppErrors] = useState<AppErrors>(new Map())
 
