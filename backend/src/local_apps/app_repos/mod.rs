@@ -1,4 +1,3 @@
-use super::shared::app_definitions::AppDefinition;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
@@ -12,10 +11,16 @@ pub struct AppRepoSource {
 }
 
 #[derive(Deserialize, Serialize, ToSchema, Debug, Clone)]
+pub struct VersionedAppDefinition {
+    pub name: String,
+    pub versions: Vec<String>,
+}
+
+#[derive(Deserialize, Serialize, ToSchema, Debug, Clone)]
 pub struct AppRepo {
     pub name: String,
     pub git_url: String,
-    pub apps: Vec<AppDefinition>,
+    pub apps: Vec<VersionedAppDefinition>,
 }
 
 #[derive(Deserialize, Serialize, ToSchema, Debug, Clone)]

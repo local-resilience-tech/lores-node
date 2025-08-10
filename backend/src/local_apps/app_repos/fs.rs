@@ -1,9 +1,9 @@
 use std::{env, path::PathBuf};
 
 use super::{
-    super::shared::app_definitions::{fs::app_definitions_in_path, AppDefinition},
-    git::git_origin_url,
-    AppRepo, AppRepoAppReference, AppRepoReference, AppRepoSource,
+    super::shared::app_definitions::AppDefinition,
+    git::{git_origin_url, git_version_tags},
+    AppRepo, AppRepoAppReference, AppRepoReference, AppRepoSource, VersionedAppDefinition,
 };
 
 lazy_static! {
@@ -37,7 +37,8 @@ pub fn app_repo_at_source(repo_src: &AppRepoSource) -> Option<AppRepo> {
     let repo_ref = AppRepoReference {
         repo_name: repo_src.name.clone(),
     };
-    let apps = app_definitions_in_repo(&repo_ref);
+    let apps = versioned_app_definitions_in_repo(&repo_ref);
+
     Some(AppRepo {
         name: repo_src.name.clone(),
         git_url: repo_src.git_url.clone(),
@@ -68,8 +69,10 @@ fn app_repo_source_from_path(path: &PathBuf) -> Option<AppRepoSource> {
         }
     }
 }
-fn app_definitions_in_repo(repo_ref: &AppRepoReference) -> Vec<AppDefinition> {
-    app_definitions_in_path(app_repo_path(repo_ref))
+
+fn versioned_app_definitions_in_repo(repo_ref: &AppRepoReference) -> Vec<VersionedAppDefinition> {
+    let tag_versions = git_version_tags(repo_ref).unwrap_or_default();
+    combine_app_definitions(tag_versions)
 }
 
 pub fn app_repo_app_path(app_ref: &AppRepoAppReference) -> PathBuf {
@@ -82,4 +85,95 @@ pub fn app_repo_path(repo_ref: &AppRepoReference) -> PathBuf {
 
 pub fn app_repos_path() -> PathBuf {
     PathBuf::from(&*APP_REPOS_PATH)
+}
+
+pub fn combine_app_definitions(defs: Vec<AppDefinition>) -> Vec<VersionedAppDefinition> {
+    let mut combined: Vec<VersionedAppDefinition> = Vec::new();
+
+    for def in defs {
+        if let Some(existing) = combined.iter_mut().find(|d| d.name == def.name) {
+            if !existing.versions.contains(&def.version) {
+                existing.versions.push(def.version);
+            }
+        } else {
+            combined.push(VersionedAppDefinition {
+                name: def.name,
+                versions: vec![def.version],
+            });
+        }
+    }
+
+    combined
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_combine_app_definitions_empty() {
+        let defs: Vec<AppDefinition> = vec![];
+        let combined = combine_app_definitions(defs);
+        assert!(combined.is_empty());
+    }
+
+    #[test]
+    fn test_combine_app_definitions_single() {
+        let defs = vec![AppDefinition {
+            name: "app1".to_string(),
+            version: "1.0.0".to_string(),
+            // add other fields as needed
+        }];
+        let combined = combine_app_definitions(defs);
+        assert_eq!(combined.len(), 1);
+        assert_eq!(combined[0].name, "app1");
+        assert_eq!(combined[0].versions, vec!["1.0.0"]);
+    }
+
+    #[test]
+    fn test_combine_app_definitions_multiple_versions() {
+        let defs = vec![
+            AppDefinition {
+                name: "app1".to_string(),
+                version: "1.0.0".to_string(),
+            },
+            AppDefinition {
+                name: "app1".to_string(),
+                version: "1.1.0".to_string(),
+            },
+            AppDefinition {
+                name: "app2".to_string(),
+                version: "2.0.0".to_string(),
+            },
+        ];
+        let mut combined = combine_app_definitions(defs);
+        combined.sort_by(|a, b| a.name.cmp(&b.name));
+        assert_eq!(combined.len(), 2);
+
+        assert_eq!(combined[0].name, "app1");
+        let mut versions = combined[0].versions.clone();
+        versions.sort();
+        assert_eq!(versions, vec!["1.0.0", "1.1.0"]);
+
+        assert_eq!(combined[1].name, "app2");
+        assert_eq!(combined[1].versions, vec!["2.0.0"]);
+    }
+
+    #[test]
+    fn test_combine_app_definitions_removes_duplicates() {
+        let defs = vec![
+            AppDefinition {
+                name: "app1".to_string(),
+                version: "1.0.0".to_string(),
+            },
+            AppDefinition {
+                name: "app1".to_string(),
+                version: "1.0.0".to_string(),
+            },
+        ];
+        let combined = combine_app_definitions(defs);
+        assert_eq!(combined.len(), 1);
+        assert_eq!(combined[0].name, "app1");
+        assert_eq!(combined[0].versions, vec!["1.0.0"]);
+    }
 }
