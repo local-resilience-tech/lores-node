@@ -7,8 +7,9 @@ use utoipa_axum::{router::OpenApiRouter, routes};
 use crate::{
     admin_api::{client_events::ClientEvent, realtime::RealtimeState},
     local_apps::{
-        app_repos::AppRepoAppReference,
+        app_repos::{fs::app_repo_from_app_name, git::checkout_app_version, AppRepoAppReference},
         installed_apps::{self, fs::load_app_config, AppReference},
+        shared::app_definitions::AppVersionDefinition,
         stack_apps::{self, find_deployed_local_apps},
     },
     panda_comms::{
@@ -173,7 +174,28 @@ async fn upgrade_local_app(
         app_name, payload.target_version
     );
 
-    (StatusCode::OK, Json(()))
+    let app_ref = match app_repo_from_app_name(&app_name) {
+        Some(app_ref) => app_ref,
+        None => return (StatusCode::INTERNAL_SERVER_ERROR, ()),
+    };
+
+    let version_def = AppVersionDefinition {
+        name: app_name.clone(),
+        version: payload.target_version.clone(),
+    };
+
+    let result = checkout_app_version(&app_ref, &version_def);
+
+    match result {
+        Ok(_) => {
+            println!("Successfully upgraded local app: {}", app_name);
+            (StatusCode::OK, ())
+        }
+        Err(e) => {
+            eprintln!("Failed to upgrade local app '{}': {}", app_name, e);
+            (StatusCode::INTERNAL_SERVER_ERROR, ())
+        }
+    }
 }
 
 #[utoipa::path(

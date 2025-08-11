@@ -77,6 +77,28 @@ pub fn git_version_tags(repo: &AppRepoReference) -> Result<Vec<AppVersionDefinit
     Ok(definitions)
 }
 
+pub fn checkout_app_version(
+    repo_ref: &AppRepoReference,
+    app_version: &AppVersionDefinition,
+) -> Result<(), Error> {
+    fetch_origin_main(repo_ref)?;
+
+    let path = app_repo_path(repo_ref);
+    let repo = Repository::open(&path)?;
+
+    let tag_name = app_definition_to_tag(app_version);
+    let reference = format!("refs/tags/{}", tag_name);
+    let (object, reference) = repo.revparse_ext(&reference)?;
+
+    repo.checkout_tree(&object, None)?;
+
+    match reference {
+        Some(gref) => repo.set_head(gref.name().unwrap()),
+        None => repo.set_head_detached(object.id()),
+    }
+    .map_err(|e| Error::new(e))
+}
+
 fn fetch_origin_main(repo_ref: &AppRepoReference) -> Result<(), Error> {
     let path = app_repo_path(repo_ref);
     let git_repo = Repository::open(&path)?;
@@ -110,6 +132,10 @@ pub fn tag_to_app_definition(tag: &str) -> Option<AppVersionDefinition> {
         eprintln!("Invalid tag for AppDefinition: {}", tag);
         None
     }
+}
+
+fn app_definition_to_tag(def: &AppVersionDefinition) -> String {
+    format!("{}-v{}", def.name, def.version)
 }
 
 #[cfg(test)]
