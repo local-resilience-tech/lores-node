@@ -1,7 +1,7 @@
-use super::{config::app_config_from_string, AppDefinition};
+use super::{config::app_config_from_string, AppVersionDefinition};
 use std::path::PathBuf;
 
-pub fn app_definition_at_path(path: &PathBuf) -> Option<AppDefinition> {
+pub fn app_definition_at_path(path: &PathBuf) -> Option<AppVersionDefinition> {
     if !path.exists() {
         eprintln!("App definition path does not exist: {}", path.display());
         return None;
@@ -17,7 +17,7 @@ pub fn app_definition_at_path(path: &PathBuf) -> Option<AppDefinition> {
     }
 }
 
-pub fn app_definitions_in_path(path: PathBuf) -> Vec<AppDefinition> {
+pub fn app_definitions_in_path(path: PathBuf) -> Vec<AppVersionDefinition> {
     let app_paths = app_paths_in_path(&path);
     app_paths
         .into_iter()

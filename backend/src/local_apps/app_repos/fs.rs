@@ -1,9 +1,9 @@
 use std::{env, path::PathBuf};
 
 use super::{
-    super::shared::app_definitions::AppDefinition,
+    super::shared::app_definitions::AppVersionDefinition,
     git::{git_origin_url, git_version_tags},
-    AppRepo, AppRepoAppReference, AppRepoReference, AppRepoSource, VersionedAppDefinition,
+    AppDefinition, AppRepo, AppRepoAppReference, AppRepoReference, AppRepoSource,
 };
 
 lazy_static! {
@@ -70,7 +70,7 @@ fn app_repo_source_from_path(path: &PathBuf) -> Option<AppRepoSource> {
     }
 }
 
-fn versioned_app_definitions_in_repo(repo_ref: &AppRepoReference) -> Vec<VersionedAppDefinition> {
+fn versioned_app_definitions_in_repo(repo_ref: &AppRepoReference) -> Vec<AppDefinition> {
     let tag_versions = git_version_tags(repo_ref).unwrap_or_default();
     combine_app_definitions(tag_versions)
 }
@@ -87,8 +87,8 @@ pub fn app_repos_path() -> PathBuf {
     PathBuf::from(&*APP_REPOS_PATH)
 }
 
-pub fn combine_app_definitions(defs: Vec<AppDefinition>) -> Vec<VersionedAppDefinition> {
-    let mut combined: Vec<VersionedAppDefinition> = Vec::new();
+pub fn combine_app_definitions(defs: Vec<AppVersionDefinition>) -> Vec<AppDefinition> {
+    let mut combined: Vec<AppDefinition> = Vec::new();
 
     for def in defs {
         if let Some(existing) = combined.iter_mut().find(|d| d.name == def.name) {
@@ -96,7 +96,7 @@ pub fn combine_app_definitions(defs: Vec<AppDefinition>) -> Vec<VersionedAppDefi
                 existing.versions.push(def.version);
             }
         } else {
-            combined.push(VersionedAppDefinition {
+            combined.push(AppDefinition {
                 name: def.name,
                 versions: vec![def.version],
             });
@@ -112,14 +112,14 @@ mod tests {
 
     #[test]
     fn test_combine_app_definitions_empty() {
-        let defs: Vec<AppDefinition> = vec![];
+        let defs: Vec<AppVersionDefinition> = vec![];
         let combined = combine_app_definitions(defs);
         assert!(combined.is_empty());
     }
 
     #[test]
     fn test_combine_app_definitions_single() {
-        let defs = vec![AppDefinition {
+        let defs = vec![AppVersionDefinition {
             name: "app1".to_string(),
             version: "1.0.0".to_string(),
             // add other fields as needed
@@ -133,15 +133,15 @@ mod tests {
     #[test]
     fn test_combine_app_definitions_multiple_versions() {
         let defs = vec![
-            AppDefinition {
+            AppVersionDefinition {
                 name: "app1".to_string(),
                 version: "1.0.0".to_string(),
             },
-            AppDefinition {
+            AppVersionDefinition {
                 name: "app1".to_string(),
                 version: "1.1.0".to_string(),
             },
-            AppDefinition {
+            AppVersionDefinition {
                 name: "app2".to_string(),
                 version: "2.0.0".to_string(),
             },
@@ -162,11 +162,11 @@ mod tests {
     #[test]
     fn test_combine_app_definitions_removes_duplicates() {
         let defs = vec![
-            AppDefinition {
+            AppVersionDefinition {
                 name: "app1".to_string(),
                 version: "1.0.0".to_string(),
             },
-            AppDefinition {
+            AppVersionDefinition {
                 name: "app1".to_string(),
                 version: "1.0.0".to_string(),
             },

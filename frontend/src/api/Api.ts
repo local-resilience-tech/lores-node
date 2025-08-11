@@ -17,7 +17,7 @@ export enum LocalAppInstallStatus {
 
 export interface AppDefinition {
   name: string;
-  version: string;
+  versions: string[];
 }
 
 export interface AppInstallation {

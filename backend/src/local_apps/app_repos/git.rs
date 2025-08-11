@@ -1,7 +1,10 @@
 use anyhow::Error;
 use git2::Repository;
+use semver::VersionReq;
 
-use crate::local_apps::{app_repos::AppRepoReference, shared::app_definitions::AppDefinition};
+use crate::local_apps::{
+    app_repos::AppRepoReference, shared::app_definitions::AppVersionDefinition,
+};
 
 use super::{
     fs::{app_repo_at_source, app_repo_path},
@@ -53,7 +56,7 @@ pub fn git_origin_url(repo: &AppRepoReference) -> Result<String, Error> {
     }
 }
 
-pub fn git_version_tags(repo: &AppRepoReference) -> Result<Vec<AppDefinition>, Error> {
+pub fn git_version_tags(repo: &AppRepoReference) -> Result<Vec<AppVersionDefinition>, Error> {
     fetch_origin_main(repo)?;
 
     let path = app_repo_path(repo);
@@ -61,14 +64,14 @@ pub fn git_version_tags(repo: &AppRepoReference) -> Result<Vec<AppDefinition>, E
 
     let tags = git_repo.tag_names(None)?;
 
-    let definitions: Vec<AppDefinition> = tags
+    let definitions: Vec<AppVersionDefinition> = tags
         .into_iter()
         .filter(|tag| tag.is_some())
         .filter_map(|tag| {
             let tag = tag?;
             tag_to_app_definition(tag)
         })
-        .collect::<Vec<AppDefinition>>()
+        .collect::<Vec<AppVersionDefinition>>()
         .into();
 
     Ok(definitions)
@@ -87,14 +90,19 @@ fn fetch_origin_main(repo_ref: &AppRepoReference) -> Result<(), Error> {
     Ok(())
 }
 
-pub fn tag_to_app_definition(tag: &str) -> Option<AppDefinition> {
+pub fn tag_to_app_definition(tag: &str) -> Option<AppVersionDefinition> {
     // Expect format: "name-vX.Y.Z"
     let dash_pos = tag.rfind("-v")?;
     let (name, version_part) = tag.split_at(dash_pos);
     let version = &version_part[2..]; // skip "-v"
     let parts: Vec<&str> = version.split('.').collect();
     if parts.len() == 3 && parts.iter().all(|p| p.chars().all(|c| c.is_ascii_digit())) {
-        Some(AppDefinition {
+        // Check if version is valid semver
+        if VersionReq::parse(version).is_err() {
+            eprintln!("Invalid semver for AppDefinition: {}", tag);
+            return None;
+        }
+        Some(AppVersionDefinition {
             name: name.to_string(),
             version: version.to_string(),
         })
@@ -157,5 +165,38 @@ mod tests {
         let def = def.unwrap();
         assert_eq!(def.name, "foo");
         assert_eq!(def.version, "0.0.0");
+    }
+
+    #[test]
+    fn test_tag_to_app_definition_invalid_semver() {
+        // This is not a valid semver version requirement
+        let tag = "bar-v1.2.3.4";
+        let def = tag_to_app_definition(tag);
+        assert!(def.is_none());
+
+        let tag = "baz-v1.2.3-beta";
+        let def = tag_to_app_definition(tag);
+        // This will fail because parts.len() != 3, so it's not accepted
+        assert!(def.is_none());
+
+        let tag = "baz-v1.2.3";
+        let def = tag_to_app_definition(tag);
+        assert!(def.is_some());
+    }
+
+    #[test]
+    fn test_tag_to_app_definition_valid_semver_variants() {
+        // Only X.Y.Z is accepted, so pre-release and build metadata are not
+        let tag = "myapp-v1.2.3";
+        let def = tag_to_app_definition(tag);
+        assert!(def.is_some());
+
+        let tag = "myapp-v1.2.3-alpha";
+        let def = tag_to_app_definition(tag);
+        assert!(def.is_none());
+
+        let tag = "myapp-v1.2.3+build";
+        let def = tag_to_app_definition(tag);
+        assert!(def.is_none());
     }
 }

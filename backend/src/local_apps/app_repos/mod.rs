@@ -11,7 +11,7 @@ pub struct AppRepoSource {
 }
 
 #[derive(Deserialize, Serialize, ToSchema, Debug, Clone)]
-pub struct VersionedAppDefinition {
+pub struct AppDefinition {
     pub name: String,
     pub versions: Vec<String>,
 }
@@ -20,7 +20,7 @@ pub struct VersionedAppDefinition {
 pub struct AppRepo {
     pub name: String,
     pub git_url: String,
-    pub apps: Vec<VersionedAppDefinition>,
+    pub apps: Vec<AppDefinition>,
 }
 
 #[derive(Deserialize, Serialize, ToSchema, Debug, Clone)]

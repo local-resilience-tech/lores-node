@@ -8,7 +8,7 @@ use std::{
 use super::{
     super::{
         app_repos::{self, AppRepoAppReference},
-        shared::app_definitions::{self, AppDefinition},
+        shared::app_definitions::{self, AppVersionDefinition},
     },
     AppReference,
 };
@@ -22,7 +22,7 @@ lazy_static! {
         env::var("APPS_PATH").unwrap_or_else(|_| "../apps".to_string());
 }
 
-pub fn find_installed_apps() -> Vec<AppDefinition> {
+pub fn find_installed_apps() -> Vec<AppVersionDefinition> {
     app_definitions::fs::app_definitions_in_path(PathBuf::from(APPS_PATH.clone()))
 }
 
