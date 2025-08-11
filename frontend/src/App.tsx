@@ -7,7 +7,7 @@ import {
 import { Layout } from "./pages"
 import { EnsureNode, EditNode } from "./contexts/this_node"
 import { EventLog, ThisP2PandaNode } from "./contexts/this_p2panda_node"
-import { LocalApps, RegionApps } from "./contexts/apps"
+import { LocalApp, LocalApps, RegionApps } from "./contexts/apps"
 import { EnsureRegion, Nodes } from "./contexts/this_region"
 import { MantineProvider } from "@mantine/core"
 import { Provider as ReduxProvider } from "react-redux"
@@ -53,6 +53,7 @@ const router = createBrowserRouter([
                 children: [
                   { path: "", element: <LocalApps /> },
                   { path: "new", element: <NewLocalApp /> },
+                  { path: "app/:appName", element: <LocalApp /> },
                 ],
               },
               {

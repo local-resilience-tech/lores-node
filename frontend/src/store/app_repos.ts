@@ -1,5 +1,6 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit"
 import type { AppRepo } from "../api/Api"
+import { useAppSelector } from "."
 
 export type AppReposState = AppRepo[] | null
 
@@ -26,3 +27,11 @@ const appReposSlice = createSlice({
 
 export const { appReposLoaded, appRepoUpdated } = appReposSlice.actions
 export default appReposSlice.reducer
+
+export function useAppRepo(
+  repoName: string | undefined | null
+): AppRepo | undefined {
+  const repos: AppReposState = useAppSelector((state) => state.appRepos)
+  if (!repoName) return undefined
+  return (repos || []).find((repo) => repo.name === repoName)
+}

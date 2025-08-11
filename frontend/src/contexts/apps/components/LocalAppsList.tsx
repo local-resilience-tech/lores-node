@@ -1,6 +1,5 @@
 import {
   ActionIcon,
-  Badge,
   Button,
   Group,
   HoverCard,
@@ -13,12 +12,10 @@ import {
   LocalApp,
   LocalAppInstallStatus,
 } from "../../../api/Api"
-import {
-  IconAlertCircle,
-  IconBrandDocker,
-  IconDatabase,
-} from "@tabler/icons-react"
+import { IconAlertCircle } from "@tabler/icons-react"
 import { useLoading } from "../../shared"
+import { Anchor } from "../../../components"
+import LocalAppStatusBadge from "./LocalAppStatusBadge"
 
 export interface LocalAppWithRepo {
   app: LocalApp
@@ -99,7 +96,9 @@ function LocalAppRow({
 
   return (
     <Table.Tr key={app.name}>
-      <Table.Td>{app.name}</Table.Td>
+      <Table.Td>
+        <Anchor href={`app/${app.name}`}>{app.name}</Anchor>
+      </Table.Td>
       <Table.Td>{app.version}</Table.Td>
       <Table.Td>{repo_app_definition?.latest_version}</Table.Td>
       <Table.Td>
@@ -154,26 +153,4 @@ function LocalAppRow({
       </Table.Td>
     </Table.Tr>
   )
-}
-
-function LocalAppStatusBadge({ status }: { status: LocalAppInstallStatus }) {
-  const sharedProps = {
-    size: "lg",
-    variant: "outline",
-  }
-
-  switch (status) {
-    case LocalAppInstallStatus.Installed:
-      return (
-        <Badge color="yellow" {...sharedProps} leftSection={<IconDatabase />}>
-          Installed
-        </Badge>
-      )
-    case LocalAppInstallStatus.StackDeployed:
-      return (
-        <Badge color="blue" {...sharedProps} leftSection={<IconBrandDocker />}>
-          Stack Deployed
-        </Badge>
-      )
-  }
 }
