@@ -76,7 +76,7 @@ export default function InstallAppRepositoryForm({
             data={[
               "",
               ...apps.map((app) => ({
-                label: `${app.name} v${app.version}`,
+                label: `${app.name} v${app.latest_version}`,
                 value: app.name,
               })),
             ]}

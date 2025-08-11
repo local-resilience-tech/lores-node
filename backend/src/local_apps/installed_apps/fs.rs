@@ -7,8 +7,8 @@ use std::{
 
 use super::{
     super::{
-        app_repos::{self, AppRepoAppReference},
-        shared::app_definitions::{self, AppDefinition},
+        app_repos::{self, fs::app_repo_from_app_name, AppRepoAppReference},
+        shared::app_definitions::{self, AppVersionDefinition},
     },
     AppReference,
 };
@@ -22,7 +22,7 @@ lazy_static! {
         env::var("APPS_PATH").unwrap_or_else(|_| "../apps".to_string());
 }
 
-pub fn find_installed_apps() -> Vec<AppDefinition> {
+pub fn find_installed_apps() -> Vec<AppVersionDefinition> {
     app_definitions::fs::app_definitions_in_path(PathBuf::from(APPS_PATH.clone()))
 }
 
@@ -33,9 +33,11 @@ pub fn load_app_config(app_ref: &AppReference) -> Option<LocalApp> {
     match fs::read_to_string(config_file_path.clone()) {
         Ok(file_contents) => match app_config_from_string(file_contents) {
             Ok(app_definition) => Some(LocalApp {
-                name: app_definition.name,
+                name: app_definition.name.clone(),
                 version: app_definition.version,
                 status: LocalAppInstallStatus::Installed,
+                repo_name: app_repo_from_app_name(app_definition.name.as_str())
+                    .map(|repo| repo.repo_name),
             }),
             Err(_) => {
                 eprintln!(

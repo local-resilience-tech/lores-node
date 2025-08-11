@@ -16,8 +16,9 @@ export enum LocalAppInstallStatus {
 }
 
 export interface AppDefinition {
+  latest_version?: string | null;
   name: string;
-  version: string;
+  versions: string[];
 }
 
 export interface AppInstallation {
@@ -91,6 +92,7 @@ export interface IrohNodeAddr {
 
 export interface LocalApp {
   name: string;
+  repo_name?: string | null;
   status: LocalAppInstallStatus;
   version: string;
 }

@@ -1,4 +1,3 @@
-use super::shared::app_definitions::AppDefinition;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
@@ -9,6 +8,13 @@ pub mod git;
 pub struct AppRepoSource {
     pub name: String,
     pub git_url: String,
+}
+
+#[derive(Deserialize, Serialize, ToSchema, Debug, Clone)]
+pub struct AppDefinition {
+    pub name: String,
+    pub latest_version: Option<String>,
+    pub versions: Vec<String>,
 }
 
 #[derive(Deserialize, Serialize, ToSchema, Debug, Clone)]
