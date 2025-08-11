@@ -7,7 +7,7 @@ use std::{
 
 use super::{
     super::{
-        app_repos::{self, AppRepoAppReference},
+        app_repos::{self, fs::app_repo_from_app_name, AppRepoAppReference},
         shared::app_definitions::{self, AppVersionDefinition},
     },
     AppReference,
@@ -33,9 +33,11 @@ pub fn load_app_config(app_ref: &AppReference) -> Option<LocalApp> {
     match fs::read_to_string(config_file_path.clone()) {
         Ok(file_contents) => match app_config_from_string(file_contents) {
             Ok(app_definition) => Some(LocalApp {
-                name: app_definition.name,
+                name: app_definition.name.clone(),
                 version: app_definition.version,
                 status: LocalAppInstallStatus::Installed,
+                repo_name: app_repo_from_app_name(app_definition.name.as_str())
+                    .map(|repo| repo.repo_name),
             }),
             Err(_) => {
                 eprintln!(

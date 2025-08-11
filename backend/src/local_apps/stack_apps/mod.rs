@@ -6,7 +6,10 @@ use crate::{
     projections::entities::{LocalApp, LocalAppInstallStatus},
 };
 
-use super::installed_apps::{self, fs::compose_file_path, AppReference};
+use super::{
+    app_repos::fs::app_repo_from_app_name,
+    installed_apps::{self, fs::compose_file_path, AppReference},
+};
 
 pub fn find_deployed_local_apps() -> Vec<LocalApp> {
     let app_definitions = installed_apps::fs::find_installed_apps();
@@ -15,9 +18,11 @@ pub fn find_deployed_local_apps() -> Vec<LocalApp> {
     let local_apps = app_definitions
         .into_iter()
         .map(|app_definition| LocalApp {
-            name: app_definition.name,
+            name: app_definition.name.clone(),
             version: app_definition.version,
             status: LocalAppInstallStatus::Installed,
+            repo_name: app_repo_from_app_name(app_definition.name.as_str())
+                .map(|repo| repo.repo_name),
         })
         .collect();
 

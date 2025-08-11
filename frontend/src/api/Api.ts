@@ -92,6 +92,7 @@ export interface IrohNodeAddr {
 
 export interface LocalApp {
   name: string;
+  repo_name?: string | null;
   status: LocalAppInstallStatus;
   version: string;
 }

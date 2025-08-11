@@ -19,6 +19,15 @@ pub fn list_installed_app_repos() -> Vec<AppRepo> {
         .collect()
 }
 
+pub fn app_repo_from_app_name(app_name: &str) -> Option<AppRepoReference> {
+    list_installed_app_repos()
+        .into_iter()
+        .find(|repo| repo.apps.iter().any(|app| app.name == app_name))
+        .map(|repo| AppRepoReference {
+            repo_name: repo.name,
+        })
+}
+
 fn list_installed_app_repo_paths() -> Vec<PathBuf> {
     let path = app_repos_path();
     if !path.exists() {
