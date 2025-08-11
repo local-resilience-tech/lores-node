@@ -1,3 +1,4 @@
+use semver::Version;
 use std::{env, path::PathBuf};
 
 use super::{
@@ -103,7 +104,25 @@ pub fn combine_app_definitions(defs: Vec<AppVersionDefinition>) -> Vec<AppDefini
         }
     }
 
+    for app_def in &mut combined {
+        app_def.versions = sort_versions_latest_first(&app_def.versions);
+    }
+
     combined
+}
+
+fn sort_versions_latest_first(input_versions: &Vec<String>) -> Vec<String> {
+    let mut versions = input_versions
+        .iter()
+        .filter_map(|v| {
+            // Only include valid semver versions
+            Version::parse(&v).ok().map(|parsed| (v, parsed))
+        })
+        .collect::<Vec<_>>();
+
+    versions.sort_by(|a, b| b.1.cmp(&a.1)); // descending order
+
+    versions.into_iter().map(|(v, _)| v.clone()).collect()
 }
 
 #[cfg(test)]
@@ -175,5 +194,67 @@ mod tests {
         assert_eq!(combined.len(), 1);
         assert_eq!(combined[0].name, "app1");
         assert_eq!(combined[0].versions, vec!["1.0.0"]);
+    }
+
+    #[test]
+    fn test_sort_versions_basic() {
+        let input = vec![
+            "1.0.0".to_string(),
+            "2.0.0".to_string(),
+            "0.9.0".to_string(),
+        ];
+        let sorted = sort_versions_latest_first(&input);
+        assert_eq!(sorted, vec!["2.0.0", "1.0.0", "0.9.0"]);
+    }
+
+    #[test]
+    fn test_sort_versions_with_invalid_versions() {
+        let input = vec![
+            "1.0.0".to_string(),
+            "not-a-version".to_string(),
+            "2.0.0".to_string(),
+        ];
+        let sorted = sort_versions_latest_first(&input);
+        // "not-a-version" should be removed
+        assert_eq!(sorted, vec!["2.0.0", "1.0.0"]);
+    }
+
+    #[test]
+    fn test_sort_versions_all_invalid() {
+        let input = vec!["foo".to_string(), "bar".to_string(), "baz".to_string()];
+        let sorted = sort_versions_latest_first(&input);
+        // All invalid, so result should be empty
+        assert!(sorted.is_empty());
+    }
+
+    #[test]
+    fn test_sort_versions_with_prerelease() {
+        let input = vec![
+            "1.0.0-alpha".to_string(),
+            "1.0.0".to_string(),
+            "1.0.1-beta".to_string(),
+            "1.0.1".to_string(),
+        ];
+        let sorted = sort_versions_latest_first(&input);
+        // 1.0.1 > 1.0.1-beta > 1.0.0 > 1.0.0-alpha
+        assert_eq!(sorted, vec!["1.0.1", "1.0.1-beta", "1.0.0", "1.0.0-alpha"]);
+    }
+
+    #[test]
+    fn test_sort_versions_duplicates() {
+        let input = vec![
+            "1.0.0".to_string(),
+            "1.0.0".to_string(),
+            "2.0.0".to_string(),
+        ];
+        let sorted = sort_versions_latest_first(&input);
+        assert_eq!(sorted, vec!["2.0.0", "1.0.0", "1.0.0"]);
+    }
+
+    #[test]
+    fn test_sort_versions_empty() {
+        let input: Vec<String> = vec![];
+        let sorted = sort_versions_latest_first(&input);
+        assert!(sorted.is_empty());
     }
 }
