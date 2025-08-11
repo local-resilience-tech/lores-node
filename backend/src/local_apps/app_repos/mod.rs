@@ -13,6 +13,7 @@ pub struct AppRepoSource {
 #[derive(Deserialize, Serialize, ToSchema, Debug, Clone)]
 pub struct AppDefinition {
     pub name: String,
+    pub latest_version: Option<String>,
     pub versions: Vec<String>,
 }
 

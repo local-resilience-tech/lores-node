@@ -99,13 +99,15 @@ pub fn combine_app_definitions(defs: Vec<AppVersionDefinition>) -> Vec<AppDefini
         } else {
             combined.push(AppDefinition {
                 name: def.name,
-                versions: vec![def.version],
+                versions: vec![def.version.clone()],
+                latest_version: None,
             });
         }
     }
 
     for app_def in &mut combined {
         app_def.versions = sort_versions_latest_first(&app_def.versions);
+        app_def.latest_version = app_def.versions.first().cloned();
     }
 
     combined
@@ -170,12 +172,12 @@ mod tests {
         assert_eq!(combined.len(), 2);
 
         assert_eq!(combined[0].name, "app1");
-        let mut versions = combined[0].versions.clone();
-        versions.sort();
-        assert_eq!(versions, vec!["1.0.0", "1.1.0"]);
+        assert_eq!(combined[0].versions, vec!["1.1.0", "1.0.0"]);
+        assert_eq!(combined[0].latest_version, Some("1.1.0".to_string()));
 
         assert_eq!(combined[1].name, "app2");
         assert_eq!(combined[1].versions, vec!["2.0.0"]);
+        assert_eq!(combined[1].latest_version, Some("2.0.0".to_string()));
     }
 
     #[test]
