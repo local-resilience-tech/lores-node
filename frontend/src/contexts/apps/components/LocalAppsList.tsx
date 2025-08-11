@@ -7,7 +7,12 @@ import {
   Table,
   Text,
 } from "@mantine/core"
-import { LocalApp, LocalAppInstallStatus } from "../../../api/Api"
+import {
+  AppDefinition,
+  AppRepo,
+  LocalApp,
+  LocalAppInstallStatus,
+} from "../../../api/Api"
 import {
   IconAlertCircle,
   IconBrandDocker,
@@ -15,8 +20,14 @@ import {
 } from "@tabler/icons-react"
 import { useLoading } from "../../shared"
 
+export interface LocalAppWithRepo {
+  app: LocalApp
+  repo: AppRepo | undefined
+  repo_app_definition: AppDefinition | undefined
+}
+
 interface AppsListProps {
-  apps: LocalApp[]
+  apps: LocalAppWithRepo[]
   appErrors?: Map<string, string>
   onDeploy?: (app: LocalApp) => Promise<void>
   onRemoveDeploy?: (app: LocalApp) => Promise<void>
@@ -42,14 +53,15 @@ export default function LocalAppsList({
         </Table.Tr>
       </Table.Thead>
       <Table.Tbody>
-        {apps.map((app) => (
+        {apps.map((appWithRepo) => (
           <LocalAppRow
-            key={app.name}
-            app={app}
+            key={appWithRepo.app.name}
+            app={appWithRepo.app}
+            repo_app_definition={appWithRepo.repo_app_definition}
             onDeploy={onDeploy}
             onRemoveDeploy={onRemoveDeploy}
             onRegister={onRegister}
-            error={appErrors?.get(app.name)}
+            error={appErrors?.get(appWithRepo.app.name)}
           />
         ))}
       </Table.Tbody>
@@ -59,6 +71,7 @@ export default function LocalAppsList({
 
 interface LocalAppRowProps {
   app: LocalApp
+  repo_app_definition?: AppDefinition
   error?: string
   onDeploy?: (app: LocalApp) => Promise<void>
   onRemoveDeploy?: (app: LocalApp) => Promise<void>
@@ -67,6 +80,7 @@ interface LocalAppRowProps {
 
 function LocalAppRow({
   app,
+  repo_app_definition,
   error,
   onDeploy,
   onRemoveDeploy,
@@ -87,7 +101,7 @@ function LocalAppRow({
     <Table.Tr key={app.name}>
       <Table.Td>{app.name}</Table.Td>
       <Table.Td>{app.version}</Table.Td>
-      <Table.Td>X.X.X</Table.Td>
+      <Table.Td>{repo_app_definition?.latest_version}</Table.Td>
       <Table.Td>
         <LocalAppStatusBadge status={app.status} />
       </Table.Td>

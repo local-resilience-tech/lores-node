@@ -1,6 +1,6 @@
 import { ActionIcon, Container, Group, Stack, Title } from "@mantine/core"
 import { useAppSelector } from "../../../store"
-import LocalAppsList from "../components/LocalAppsList"
+import LocalAppsList, { LocalAppWithRepo } from "../components/LocalAppsList"
 import { LocalApp } from "../../../api/Api"
 import { getApi } from "../../../api"
 import { IconPlus } from "@tabler/icons-react"
@@ -12,6 +12,15 @@ type AppErrors = Map<string, string>
 export default function LocalApps() {
   const apps = useAppSelector((state) => state.localApps)
   const repos = useAppSelector((state) => state.appRepos)
+
+  let appsWithRepos: LocalAppWithRepo[] =
+    apps?.map((app) => {
+      const repo = repos?.find((r) => r.name === app.repo_name)
+      const repo_app_definition = repo?.apps?.find(
+        (def) => def.name === app.name
+      )
+      return { app, repo, repo_app_definition }
+    }) || []
 
   const navigate = useNavigate()
   const [appErrors, setAppErrors] = useState<AppErrors>(new Map())
@@ -55,7 +64,7 @@ export default function LocalApps() {
 
         {apps && (
           <LocalAppsList
-            apps={apps}
+            apps={appsWithRepos}
             onDeploy={onAppDeploy}
             onRemoveDeploy={onAppRemoveDeploy}
             onRegister={onAppRegister}
