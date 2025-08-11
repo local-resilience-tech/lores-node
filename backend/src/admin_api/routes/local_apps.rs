@@ -1,5 +1,7 @@
 use axum::{extract::Path, http::StatusCode, response::IntoResponse, Extension, Json};
+use serde::Deserialize;
 use tracing::event;
+use utoipa::ToSchema;
 use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::{
@@ -23,6 +25,7 @@ pub fn router() -> OpenApiRouter {
         .routes(routes!(register_app))
         .routes(routes!(deploy_local_app))
         .routes(routes!(remove_deployment_of_local_app))
+        .routes(routes!(upgrade_local_app))
 }
 
 #[utoipa::path(get, path = "/", responses(
@@ -144,13 +147,42 @@ async fn remove_deployment_of_local_app(
     }
 }
 
+#[derive(Deserialize, ToSchema, Debug)]
+struct LocalAppUpgradeParams {
+    target_version: String,
+}
+
+#[utoipa::path(
+    post,
+    path = "/app/{app_name}/upgrade",
+    params(
+        ("app_name" = String, Path),
+    ),
+    request_body(content = LocalAppUpgradeParams, content_type = "application/json"),
+    responses(
+        (status = OK, body = ()),
+        (status = INTERNAL_SERVER_ERROR, body = String),
+    ),
+)]
+async fn upgrade_local_app(
+    Path(app_name): Path<String>,
+    Json(payload): Json<LocalAppUpgradeParams>,
+) -> impl IntoResponse {
+    println!(
+        "Deploying local app {} to version {}",
+        app_name, payload.target_version
+    );
+
+    (StatusCode::OK, Json(()))
+}
+
 #[utoipa::path(
     post, path = "/register",
+    request_body(content = AppReference, content_type = "application/json"),
     responses(
         (status = 200, body = ()),
         (status = INTERNAL_SERVER_ERROR, body = ()),
-    ),
-    request_body(content = AppReference, content_type = "application/json")
+    )
 )]
 async fn register_app(
     Extension(panda_container): Extension<P2PandaContainer>,

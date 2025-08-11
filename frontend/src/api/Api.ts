@@ -97,6 +97,10 @@ export interface LocalApp {
   version: string;
 }
 
+export interface LocalAppUpgradeParams {
+  target_version: string;
+}
+
 export interface LogCount {
   node_id: string;
   /** @format int64 */
@@ -328,7 +332,7 @@ export class HttpClient<SecurityDataType = unknown> {
 
 /**
  * @title lores-node
- * @version 0.9.14
+ * @version 0.9.15
  * @license
  */
 export class Api<
@@ -417,6 +421,26 @@ export class Api<
       this.request<any, string>({
         path: `/api/local_apps/app/${appName}/deploy`,
         method: "DELETE",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @name UpgradeLocalApp
+     * @request POST:/api/local_apps/app/{app_name}/upgrade
+     */
+    upgradeLocalApp: (
+      appName: string,
+      data: LocalAppUpgradeParams,
+      params: RequestParams = {},
+    ) =>
+      this.request<any, string>({
+        path: `/api/local_apps/app/${appName}/upgrade`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
         format: "json",
         ...params,
       }),

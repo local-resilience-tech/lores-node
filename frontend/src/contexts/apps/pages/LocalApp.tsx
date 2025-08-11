@@ -5,6 +5,7 @@ import { useAppSelector } from "../../../store"
 import LocalAppDetails from "../components/LocalAppDetails"
 import { useAppRepo } from "../../../store/app_repos"
 import LocalAppUpgrades from "../components/LocalAppUpgrades"
+import { getApi } from "../../../api"
 
 export default function LocalApp() {
   const { appName } = useParams<{ appName: string }>()
@@ -23,6 +24,15 @@ export default function LocalApp() {
 
   const handleUpgrade = async (version: string) => {
     console.log("Upgrading app:", app.name, "to version:", version)
+    return getApi()
+      .api.upgradeLocalApp(app.name, { target_version: version })
+      .then((response) => {
+        console.log("Upgrade successful:", response)
+      })
+      .catch((error) => {
+        console.error("Upgrade failed:", error)
+        alert("Failed to upgrade app: " + error.message)
+      })
   }
 
   return (
