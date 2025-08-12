@@ -13,14 +13,13 @@ import { MantineProvider } from "@mantine/core"
 import { Provider as ReduxProvider } from "react-redux"
 import { theme } from "./mantine-theme"
 import store, { AppStore, loadInitialData } from "./store"
+import NewLocalApp from "./contexts/apps/pages/NewLocalApp"
+import { Stacks } from "./contexts/stacks"
+import { ShowAppRepo, NewAppRepo, AppRepos } from "./contexts/app_repos"
 
 // Import styles of packages that you've installed.
 // All packages except `@mantine/hooks` require styles imports
 import "@mantine/core/styles.css"
-import NewLocalApp from "./contexts/apps/pages/NewLocalApp"
-import AppRepos from "./contexts/app_repos/pages/AppRepos"
-import NewAppRepo from "./contexts/app_repos/pages/NewAppRepo"
-import { Stacks } from "./contexts/stacks"
 
 function withStore(
   func: (store: AppStore) => any,
@@ -61,6 +60,7 @@ const router = createBrowserRouter([
                 children: [
                   { path: "", element: <AppRepos /> },
                   { path: "new", element: <NewAppRepo /> },
+                  { path: "repo/:repoName", element: <ShowAppRepo /> },
                 ],
               },
             ],

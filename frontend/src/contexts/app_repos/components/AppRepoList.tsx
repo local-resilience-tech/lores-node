@@ -22,7 +22,11 @@ export default function AppRepoList({
       <Table.Tbody>
         {repos.map((repo) => (
           <Table.Tr key={repo.name}>
-            <Table.Td>{repo.name}</Table.Td>
+            <Table.Td>
+              <Anchor href={`/this_node/app_repos/repo/${repo.name}`}>
+                {repo.name}
+              </Anchor>
+            </Table.Td>
             <Table.Td maw={100}>
               <Anchor href={repo.git_url} newWindow>
                 <Text truncate="end">{repo.git_url}</Text>

@@ -90,8 +90,10 @@ export default function LocalAppUpgrades({
               got stuck in this state due to a crash during an upgrade. If you
               are confident that nothing else is using this repository, you can
               refresh it on the{" "}
-              <Anchor href="/this_node/app_repos">App repositories</Anchor>{" "}
-              page. Then come back here and try the upgrade again.
+              <Anchor href={`/this_node/app_repos/repo/${appRepo.name}`}>
+                {appRepo.name}
+              </Anchor>{" "}
+              repository page. Then come back here and try the upgrade again.
             </Text>
           )}
 
