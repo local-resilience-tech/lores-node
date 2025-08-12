@@ -1,19 +1,24 @@
-import { Alert, Button, Stack, Text } from "@mantine/core"
+import { Alert, Button, Stack, Text, Title } from "@mantine/core"
 import { AppDefinition, AppRepo, LocalApp } from "../../../api/Api"
 import { IconAlertCircle } from "@tabler/icons-react"
 import semver from "semver"
 import { useLoading } from "../../shared"
+import { Anchor } from "../../../components"
+
+export type UpgradeLocalAppError = "AppNotFound" | "InUse" | "ServerError"
 
 interface LocalAppUpgradesProps {
   app: LocalApp
   appRepo?: AppRepo
   onUpgrade: (version: string) => Promise<void>
+  upgradeError?: UpgradeLocalAppError | null
 }
 
 export default function LocalAppUpgrades({
   app,
   appRepo,
   onUpgrade,
+  upgradeError = null,
 }: LocalAppUpgradesProps) {
   const [upgradeLoading, withUpgradeLoading] = useLoading(false)
 
@@ -63,7 +68,7 @@ export default function LocalAppUpgrades({
       <Alert
         title="New version available"
         icon={<IconAlertCircle />}
-        color="green"
+        color={upgradeError ? "red" : "green"}
       >
         <Stack align="flex-start">
           <Text>
@@ -76,6 +81,39 @@ export default function LocalAppUpgrades({
           >
             Upgrade
           </Button>
+          {upgradeError === "InUse" && (
+            <Text c="red">
+              <strong>Upgrade failed - Repository in use.</strong>
+              <br />
+              The repository is checked out to another version, which generally
+              means that it's in-use for another upgrade. It's possible that it
+              got stuck in this state due to a crash during an upgrade. If you
+              are confident that nothing else is using this repository, you can
+              refresh it on the{" "}
+              <Anchor href="/this_node/app_repos">App repositories</Anchor>{" "}
+              page. Then come back here and try the upgrade again.
+            </Text>
+          )}
+
+          {upgradeError === "AppNotFound" && (
+            <Text c="red">
+              <strong>Upgrade failed - App not found.</strong>
+              <br />
+              The app definition for {app.name} is not found in the repository{" "}
+              {appRepo.name}. This may indicate that the app was removed from
+              the repository.
+            </Text>
+          )}
+
+          {upgradeError === "ServerError" && (
+            <Text c="red">
+              <strong>Upgrade failed - Server error.</strong>
+              <br />
+              An unexpected server error occurred while trying to upgrade the
+              app. Please try again later or contact the developers if the issue
+              persists.
+            </Text>
+          )}
         </Stack>
       </Alert>
     )

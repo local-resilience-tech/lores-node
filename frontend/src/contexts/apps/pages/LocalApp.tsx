@@ -4,8 +4,11 @@ import { useParams } from "react-router-dom"
 import { useAppSelector } from "../../../store"
 import LocalAppDetails from "../components/LocalAppDetails"
 import { useAppRepo } from "../../../store/app_repos"
-import LocalAppUpgrades from "../components/LocalAppUpgrades"
+import LocalAppUpgrades, {
+  UpgradeLocalAppError,
+} from "../components/LocalAppUpgrades"
 import { getApi } from "../../../api"
+import { useState } from "react"
 
 export default function LocalApp() {
   const { appName } = useParams<{ appName: string }>()
@@ -13,6 +16,9 @@ export default function LocalApp() {
     (state.localApps || []).find((a) => a.name === appName)
   )
   const appRepo = useAppRepo(app?.repo_name)
+  const [upgradeError, setUpgradeError] = useState<UpgradeLocalAppError | null>(
+    null
+  )
 
   if (!appName) {
     return <Container>Error: App name is required</Container>
@@ -31,7 +37,7 @@ export default function LocalApp() {
       })
       .catch((error) => {
         console.error("Upgrade failed:", error)
-        alert("Failed to upgrade app: " + error.message)
+        setUpgradeError(error.message)
       })
   }
 
@@ -66,6 +72,7 @@ export default function LocalApp() {
             app={app}
             appRepo={appRepo}
             onUpgrade={handleUpgrade}
+            upgradeError={upgradeError}
           />
         </Stack>
       </Stack>
