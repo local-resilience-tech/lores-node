@@ -3,10 +3,12 @@ import { useParams } from "react-router-dom"
 import { useAppSelector } from "../../../store"
 import { Anchor } from "../../../components"
 import AppRepoDetails from "../components/AppRepoDetails"
+import { AppRepo } from "../../../api/Api"
+import AppsForRepoList from "../components/AppsForRepoList"
 
 export default function ShowAppRepo() {
   const { repoName } = useParams<{ repoName: string }>()
-  const appRepo = useAppSelector((state) =>
+  const appRepo: AppRepo | undefined = useAppSelector((state) =>
     (state.appRepos || []).find((a) => a.name === repoName)
   )
 
@@ -39,6 +41,15 @@ export default function ShowAppRepo() {
           <Card>
             <Card.Section>
               <AppRepoDetails appRepo={appRepo} />
+            </Card.Section>
+          </Card>
+        </Stack>
+
+        <Stack gap="xs">
+          <Title order={2}>Apps</Title>
+          <Card>
+            <Card.Section>
+              <AppsForRepoList apps={appRepo.apps} />
             </Card.Section>
           </Card>
         </Stack>
