@@ -1,7 +1,6 @@
-use anyhow::Error;
 use git2::Repository;
 
-pub fn checkout_tag_detatched(repo: &Repository, tag_name: &str) -> Result<(), Error> {
+pub fn checkout_tag_detatched(repo: &Repository, tag_name: &str) -> Result<(), git2::Error> {
     let reference = format!("refs/tags/{}", tag_name);
     let (object, reference) = repo.revparse_ext(&reference)?;
 
@@ -11,10 +10,9 @@ pub fn checkout_tag_detatched(repo: &Repository, tag_name: &str) -> Result<(), E
         Some(gref) => repo.set_head(gref.name().unwrap()),
         None => repo.set_head_detached(object.id()),
     }
-    .map_err(|e| Error::new(e))
 }
 
-pub fn checkout_latest_main(repo: &Repository) -> Result<(), Error> {
+pub fn checkout_latest_main(repo: &Repository) -> Result<(), git2::Error> {
     // First fetch the latest changes from origin
     fetch_origin_main(repo)?;
 
@@ -35,7 +33,7 @@ pub fn checkout_latest_main(repo: &Repository) -> Result<(), Error> {
     Ok(())
 }
 
-pub fn fetch_origin_main(repo: &Repository) -> Result<(), Error> {
+pub fn fetch_origin_main(repo: &Repository) -> Result<(), git2::Error> {
     let mut fetch_options = git2::FetchOptions::new();
     fetch_options.download_tags(git2::AutotagOption::All);
     repo.find_remote("origin")?

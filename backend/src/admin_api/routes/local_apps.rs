@@ -1,5 +1,5 @@
 use axum::{extract::Path, http::StatusCode, response::IntoResponse, Extension, Json};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use tracing::event;
 use utoipa::ToSchema;
 use utoipa_axum::{router::OpenApiRouter, routes};
@@ -8,7 +8,8 @@ use crate::{
     admin_api::{client_events::ClientEvent, realtime::RealtimeState},
     local_apps::{
         app_repos::{
-            fs::app_repo_from_app_name, git_app_repos::with_checked_out_app_version,
+            fs::app_repo_from_app_name,
+            git_app_repos::{with_checked_out_app_version, CheckoutAppVersionError},
             AppRepoAppReference,
         },
         installed_apps::{self, fs::load_app_config, AppReference},
@@ -156,6 +157,13 @@ struct LocalAppUpgradeParams {
     target_version: String,
 }
 
+#[derive(Serialize, ToSchema, Debug)]
+enum UpgradeLocalAppError {
+    AppNotFound,
+    InUse,
+    ServerError,
+}
+
 #[utoipa::path(
     post,
     path = "/app/{app_name}/upgrade",
@@ -165,7 +173,7 @@ struct LocalAppUpgradeParams {
     request_body(content = LocalAppUpgradeParams, content_type = "application/json"),
     responses(
         (status = OK, body = ()),
-        (status = INTERNAL_SERVER_ERROR, body = String),
+        (status = INTERNAL_SERVER_ERROR, body = UpgradeLocalAppError),
     ),
 )]
 async fn upgrade_local_app(
@@ -179,7 +187,13 @@ async fn upgrade_local_app(
 
     let app_ref = match app_repo_from_app_name(&app_name) {
         Some(app_ref) => app_ref,
-        None => return (StatusCode::INTERNAL_SERVER_ERROR, ()),
+        None => {
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(UpgradeLocalAppError::AppNotFound),
+            )
+                .into_response()
+        }
     };
 
     let version_def = AppVersionDefinition {
@@ -192,11 +206,26 @@ async fn upgrade_local_app(
     match result {
         Ok(_) => {
             println!("Successfully upgraded local app: {}", app_name);
-            (StatusCode::OK, ())
+            (StatusCode::OK, ()).into_response()
         }
-        Err(e) => {
-            eprintln!("Failed to upgrade local app '{}': {}", app_name, e);
-            (StatusCode::INTERNAL_SERVER_ERROR, ())
+        Err(CheckoutAppVersionError::InUse) => {
+            eprintln!(
+                "Local app '{}' is currently in use and cannot be upgraded.",
+                app_name
+            );
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(UpgradeLocalAppError::InUse),
+            )
+                .into_response()
+        }
+        Err(CheckoutAppVersionError::Other(e)) => {
+            eprintln!("Failed to upgrade local app '{}': {:?}", app_name, e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(UpgradeLocalAppError::ServerError),
+            )
+                .into_response()
         }
     }
 }

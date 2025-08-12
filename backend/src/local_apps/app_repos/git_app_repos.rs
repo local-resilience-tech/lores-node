@@ -75,14 +75,44 @@ pub fn git_version_tags(repo: &AppRepoReference) -> Result<Vec<AppVersionDefinit
     Ok(definitions)
 }
 
+#[derive(Debug)]
+pub enum CheckoutAppVersionError {
+    InUse,
+    Other(Error),
+}
+
+impl CheckoutAppVersionError {
+    #[allow(dead_code)]
+    pub fn as_inner(&self) -> Option<&Error> {
+        match self {
+            CheckoutAppVersionError::Other(err) => Some(err),
+            _ => None,
+        }
+    }
+}
+
 pub fn with_checked_out_app_version(
     repo_ref: &AppRepoReference,
     app_version: &AppVersionDefinition,
-) -> Result<(), Error> {
-    checkout_app_version(repo_ref, app_version)?;
-    checkout_latest_main(repo_ref)?;
+) -> Result<(), CheckoutAppVersionError> {
+    let in_use = is_detached(repo_ref).map_err(|e| CheckoutAppVersionError::Other(e))?;
+
+    if in_use {
+        println!(
+            "Cannot checkout app version {} for repo {} because it is already detached, that probably means another process is using it.",
+            app_version.version, repo_ref.repo_name,
+        );
+        return Err(CheckoutAppVersionError::InUse);
+    }
+    checkout_app_version(repo_ref, app_version).map_err(|e| CheckoutAppVersionError::Other(e))?;
+    checkout_latest_main(repo_ref).map_err(|e| CheckoutAppVersionError::Other(e))?;
 
     Ok(())
+}
+
+fn is_detached(repo_ref: &AppRepoReference) -> Result<bool, Error> {
+    let repo = open_repository(repo_ref)?;
+    repo.head_detached().map_err(Error::from)
 }
 
 pub fn checkout_app_version(
@@ -119,7 +149,7 @@ fn checkout_latest_main(repo_ref: &AppRepoReference) -> Result<(), Error> {
 
 fn fetch_origin_main(repo_ref: &AppRepoReference) -> Result<(), Error> {
     let git_repo = open_repository(repo_ref)?;
-    git_commands::fetch_origin_main(&git_repo)
+    git_commands::fetch_origin_main(&git_repo).map_err(Error::from)
 }
 
 pub fn tag_to_app_definition(tag: &str) -> Option<AppVersionDefinition> {
