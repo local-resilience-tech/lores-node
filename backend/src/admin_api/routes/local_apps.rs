@@ -7,7 +7,9 @@ use utoipa_axum::{router::OpenApiRouter, routes};
 use crate::{
     admin_api::{client_events::ClientEvent, realtime::RealtimeState},
     local_apps::{
-        app_repos::{fs::app_repo_from_app_name, git::checkout_app_version, AppRepoAppReference},
+        app_repos::{
+            fs::app_repo_from_app_name, git::with_checked_out_app_version, AppRepoAppReference,
+        },
         installed_apps::{self, fs::load_app_config, AppReference},
         shared::app_definitions::AppVersionDefinition,
         stack_apps::{self, find_deployed_local_apps},
@@ -184,7 +186,7 @@ async fn upgrade_local_app(
         version: payload.target_version.clone(),
     };
 
-    let result = checkout_app_version(&app_ref, &version_def);
+    let result = with_checked_out_app_version(&app_ref, &version_def);
 
     match result {
         Ok(_) => {

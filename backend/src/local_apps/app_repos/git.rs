@@ -77,6 +77,16 @@ pub fn git_version_tags(repo: &AppRepoReference) -> Result<Vec<AppVersionDefinit
     Ok(definitions)
 }
 
+pub fn with_checked_out_app_version(
+    repo_ref: &AppRepoReference,
+    app_version: &AppVersionDefinition,
+) -> Result<(), Error> {
+    checkout_app_version(repo_ref, app_version)?;
+    checkout_latest_main(repo_ref)?;
+
+    Ok(())
+}
+
 pub fn checkout_app_version(
     repo_ref: &AppRepoReference,
     app_version: &AppVersionDefinition,
@@ -96,7 +106,43 @@ pub fn checkout_app_version(
         Some(gref) => repo.set_head(gref.name().unwrap()),
         None => repo.set_head_detached(object.id()),
     }
-    .map_err(|e| Error::new(e))
+    .map_err(|e| Error::new(e))?;
+
+    println!(
+        "Checked out tag: {} on repo {}",
+        tag_name, repo_ref.repo_name
+    );
+
+    Ok(())
+}
+
+fn checkout_latest_main(repo_ref: &AppRepoReference) -> Result<(), Error> {
+    let path = app_repo_path(repo_ref);
+    let git_repo = Repository::open(&path)?;
+
+    // First fetch the latest changes from origin
+    fetch_origin_main(repo_ref)?;
+
+    // Find the remote tracking branch (origin/main)
+    let remote_main_branch = git_repo.find_branch("origin/main", git2::BranchType::Remote)?;
+    let remote_main_commit = remote_main_branch.get().peel_to_commit()?;
+
+    // Update local main branch to point to origin/main
+    let mut local_main_branch = git_repo.find_branch("main", git2::BranchType::Local)?;
+    local_main_branch
+        .get_mut()
+        .set_target(remote_main_commit.id(), "Fast-forward main to origin/main")?;
+
+    // Checkout the updated main branch
+    git_repo.checkout_tree(remote_main_commit.as_object(), None)?;
+    git_repo.set_head("refs/heads/main")?;
+
+    println!(
+        "Checked out latest main branch from origin for: {}",
+        repo_ref.repo_name
+    );
+
+    Ok(())
 }
 
 fn fetch_origin_main(repo_ref: &AppRepoReference) -> Result<(), Error> {
