@@ -44,8 +44,7 @@ pub async fn clone_git_app_repo(repo: &AppRepoSource) -> Result<AppRepo, CreateR
 }
 
 pub fn git_origin_url(repo: &AppRepoReference) -> Result<String, Error> {
-    let path = app_repo_path(repo);
-    let git_repo = Repository::open(&path)?;
+    let git_repo = open_repository(repo)?;
 
     let remote = git_repo.find_remote("origin")?;
     let url = remote.url().map(String::from);
@@ -59,8 +58,7 @@ pub fn git_origin_url(repo: &AppRepoReference) -> Result<String, Error> {
 pub fn git_version_tags(repo: &AppRepoReference) -> Result<Vec<AppVersionDefinition>, Error> {
     fetch_origin_main(repo)?;
 
-    let path = app_repo_path(repo);
-    let git_repo = Repository::open(&path)?;
+    let git_repo = open_repository(repo)?;
 
     let tags = git_repo.tag_names(None)?;
 
@@ -93,8 +91,7 @@ pub fn checkout_app_version(
 ) -> Result<(), Error> {
     fetch_origin_main(repo_ref)?;
 
-    let path = app_repo_path(repo_ref);
-    let repo = Repository::open(&path)?;
+    let repo = open_repository(repo_ref)?;
 
     let tag_name = app_definition_to_tag(app_version);
     let reference = format!("refs/tags/{}", tag_name);
@@ -117,8 +114,7 @@ pub fn checkout_app_version(
 }
 
 fn checkout_latest_main(repo_ref: &AppRepoReference) -> Result<(), Error> {
-    let path = app_repo_path(repo_ref);
-    let git_repo = Repository::open(&path)?;
+    let git_repo = open_repository(repo_ref)?;
 
     // First fetch the latest changes from origin
     fetch_origin_main(repo_ref)?;
@@ -146,8 +142,7 @@ fn checkout_latest_main(repo_ref: &AppRepoReference) -> Result<(), Error> {
 }
 
 fn fetch_origin_main(repo_ref: &AppRepoReference) -> Result<(), Error> {
-    let path = app_repo_path(repo_ref);
-    let git_repo = Repository::open(&path)?;
+    let git_repo = open_repository(repo_ref)?;
 
     let mut fetch_options = git2::FetchOptions::new();
     fetch_options.download_tags(git2::AutotagOption::All);
@@ -182,6 +177,11 @@ pub fn tag_to_app_definition(tag: &str) -> Option<AppVersionDefinition> {
 
 fn app_definition_to_tag(def: &AppVersionDefinition) -> String {
     format!("{}-v{}", def.name, def.version)
+}
+
+fn open_repository(repo_ref: &AppRepoReference) -> Result<Repository, Error> {
+    let path = app_repo_path(repo_ref);
+    Repository::open(&path).map_err(Error::from)
 }
 
 #[cfg(test)]
