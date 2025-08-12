@@ -2,7 +2,8 @@ use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
 pub mod fs;
-pub mod git;
+pub mod git_app_repos;
+mod git_commands;
 
 #[derive(Deserialize, Serialize, ToSchema)]
 pub struct AppRepoSource {

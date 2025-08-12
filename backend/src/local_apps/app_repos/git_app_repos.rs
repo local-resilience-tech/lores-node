@@ -8,7 +8,7 @@ use crate::local_apps::{
 
 use super::{
     fs::{app_repo_at_source, app_repo_path},
-    AppRepo, AppRepoSource,
+    git_commands, AppRepo, AppRepoSource,
 };
 
 #[derive(Debug)]
@@ -92,18 +92,9 @@ pub fn checkout_app_version(
     fetch_origin_main(repo_ref)?;
 
     let repo = open_repository(repo_ref)?;
-
     let tag_name = app_definition_to_tag(app_version);
-    let reference = format!("refs/tags/{}", tag_name);
-    let (object, reference) = repo.revparse_ext(&reference)?;
 
-    repo.checkout_tree(&object, None)?;
-
-    match reference {
-        Some(gref) => repo.set_head(gref.name().unwrap()),
-        None => repo.set_head_detached(object.id()),
-    }
-    .map_err(|e| Error::new(e))?;
+    git_commands::checkout_tag_detatched(&repo, &tag_name)?;
 
     println!(
         "Checked out tag: {} on repo {}",
@@ -116,22 +107,7 @@ pub fn checkout_app_version(
 fn checkout_latest_main(repo_ref: &AppRepoReference) -> Result<(), Error> {
     let git_repo = open_repository(repo_ref)?;
 
-    // First fetch the latest changes from origin
-    fetch_origin_main(repo_ref)?;
-
-    // Find the remote tracking branch (origin/main)
-    let remote_main_branch = git_repo.find_branch("origin/main", git2::BranchType::Remote)?;
-    let remote_main_commit = remote_main_branch.get().peel_to_commit()?;
-
-    // Update local main branch to point to origin/main
-    let mut local_main_branch = git_repo.find_branch("main", git2::BranchType::Local)?;
-    local_main_branch
-        .get_mut()
-        .set_target(remote_main_commit.id(), "Fast-forward main to origin/main")?;
-
-    // Checkout the updated main branch
-    git_repo.checkout_tree(remote_main_commit.as_object(), None)?;
-    git_repo.set_head("refs/heads/main")?;
+    git_commands::checkout_latest_main(&git_repo)?;
 
     println!(
         "Checked out latest main branch from origin for: {}",
@@ -143,14 +119,7 @@ fn checkout_latest_main(repo_ref: &AppRepoReference) -> Result<(), Error> {
 
 fn fetch_origin_main(repo_ref: &AppRepoReference) -> Result<(), Error> {
     let git_repo = open_repository(repo_ref)?;
-
-    let mut fetch_options = git2::FetchOptions::new();
-    fetch_options.download_tags(git2::AutotagOption::All);
-    git_repo
-        .find_remote("origin")?
-        .fetch(&[] as &[&str], Some(&mut fetch_options), None)?;
-
-    Ok(())
+    git_commands::fetch_origin_main(&git_repo)
 }
 
 pub fn tag_to_app_definition(tag: &str) -> Option<AppVersionDefinition> {

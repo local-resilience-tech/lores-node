@@ -3,7 +3,7 @@ use std::{env, path::PathBuf};
 
 use super::{
     super::shared::app_definitions::AppVersionDefinition,
-    git::{git_origin_url, git_version_tags},
+    git_app_repos::{git_origin_url, git_version_tags},
     AppDefinition, AppRepo, AppRepoAppReference, AppRepoReference, AppRepoSource,
 };
 

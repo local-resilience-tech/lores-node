@@ -3,7 +3,7 @@ use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::{
     admin_api::{client_events::ClientEvent, realtime::RealtimeState},
-    local_apps::app_repos::{self, git::clone_git_app_repo, AppRepo, AppRepoSource},
+    local_apps::app_repos::{self, git_app_repos::clone_git_app_repo, AppRepo, AppRepoSource},
 };
 
 pub fn router() -> OpenApiRouter {

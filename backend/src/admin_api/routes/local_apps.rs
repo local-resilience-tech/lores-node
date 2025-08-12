@@ -8,7 +8,8 @@ use crate::{
     admin_api::{client_events::ClientEvent, realtime::RealtimeState},
     local_apps::{
         app_repos::{
-            fs::app_repo_from_app_name, git::with_checked_out_app_version, AppRepoAppReference,
+            fs::app_repo_from_app_name, git_app_repos::with_checked_out_app_version,
+            AppRepoAppReference,
         },
         installed_apps::{self, fs::load_app_config, AppReference},
         shared::app_definitions::AppVersionDefinition,
