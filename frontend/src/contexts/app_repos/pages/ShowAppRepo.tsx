@@ -1,10 +1,19 @@
-import { Container, Stack, Breadcrumbs, Title, Card, Text } from "@mantine/core"
+import {
+  Container,
+  Stack,
+  Breadcrumbs,
+  Title,
+  Card,
+  Text,
+  Group,
+} from "@mantine/core"
 import { useParams } from "react-router-dom"
 import { useAppSelector } from "../../../store"
-import { Anchor } from "../../../components"
+import { Anchor, LoadingActionIcon } from "../../../components"
 import AppRepoDetails from "../components/AppRepoDetails"
 import { AppRepo } from "../../../api/Api"
 import AppsForRepoList from "../components/AppsForRepoList"
+import { IconRefresh } from "@tabler/icons-react"
 
 export default function ShowAppRepo() {
   const { repoName } = useParams<{ repoName: string }>()
@@ -20,6 +29,11 @@ export default function ShowAppRepo() {
     return <Container>Error: Repository not found</Container>
   }
 
+  const refreshRepo = async () => {
+    // wait two seconds
+    await new Promise((resolve) => setTimeout(resolve, 2000))
+  }
+
   return (
     <Container>
       <Stack gap="lg">
@@ -28,12 +42,17 @@ export default function ShowAppRepo() {
             <Anchor href="/this_node/app_repos">App Repositories</Anchor>
             <Text c="dimmed">{appRepo.name}</Text>
           </Breadcrumbs>
-          <Title order={1}>
-            <Text span inherit c="dimmed">
-              Repository:{" "}
-            </Text>
-            {appRepo.name}
-          </Title>
+          <Group justify="space-between">
+            <Title order={1}>
+              <Text span inherit c="dimmed">
+                Repository:{" "}
+              </Text>
+              {appRepo.name}
+            </Title>
+            <LoadingActionIcon onClick={refreshRepo}>
+              <IconRefresh />
+            </LoadingActionIcon>
+          </Group>
         </Stack>
 
         <Stack gap="xs">
