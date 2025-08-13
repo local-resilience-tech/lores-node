@@ -22,7 +22,7 @@ type LoadingActionIconProps = PolymorphicComponentProps<
   ActionIconProps
 > & {
   children?: React.ReactNode
-  onClick?: () => Promise<void>
+  onClick?: () => Promise<LoadingActionItemReturn>
   successColor?: string
   errorColor?: string
   errorIcon?: React.ReactNode

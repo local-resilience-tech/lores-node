@@ -134,7 +134,7 @@ pub fn checkout_app_version(
     Ok(())
 }
 
-fn checkout_latest_main(repo_ref: &AppRepoReference) -> Result<(), Error> {
+pub fn checkout_latest_main(repo_ref: &AppRepoReference) -> Result<(), Error> {
     let git_repo = open_repository(repo_ref)?;
 
     git_commands::checkout_latest_main(&git_repo)?;

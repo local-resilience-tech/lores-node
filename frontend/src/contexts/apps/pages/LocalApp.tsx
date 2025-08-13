@@ -37,7 +37,7 @@ export default function LocalApp() {
       })
       .catch((error) => {
         console.error("Upgrade failed:", error)
-        setUpgradeError(error.message)
+        setUpgradeError(error.response?.data || "ServerError")
       })
   }
 

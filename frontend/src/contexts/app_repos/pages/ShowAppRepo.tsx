@@ -14,6 +14,8 @@ import AppRepoDetails from "../components/AppRepoDetails"
 import { AppRepo } from "../../../api/Api"
 import AppsForRepoList from "../components/AppsForRepoList"
 import { IconRefresh } from "@tabler/icons-react"
+import { LoadingActionItemReturn } from "../../../components/LoadingActionIcon"
+import { getApi } from "../../../api"
 
 export default function ShowAppRepo() {
   const { repoName } = useParams<{ repoName: string }>()
@@ -29,9 +31,17 @@ export default function ShowAppRepo() {
     return <Container>Error: Repository not found</Container>
   }
 
-  const refreshRepo = async () => {
-    await new Promise((resolve) => setTimeout(resolve, 500))
-    // return Promise.reject("failure reason")
+  const refreshRepo = async (): Promise<LoadingActionItemReturn> => {
+    getApi()
+      .api.reloadAppRepo(repoName)
+      .then(() => {
+        console.log("App repository reloaded successfully")
+        return { success: true }
+      })
+      .catch((error) => {
+        console.error("Failed to reload app repository:", error)
+        return { success: false, error: error.response?.data || "ServerError" }
+      })
   }
 
   return (

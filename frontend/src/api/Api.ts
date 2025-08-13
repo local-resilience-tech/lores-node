@@ -10,6 +10,12 @@
  * ---------------------------------------------------------------
  */
 
+export enum UpgradeLocalAppError {
+  AppNotFound = "AppNotFound",
+  InUse = "InUse",
+  ServerError = "ServerError",
+}
+
 export enum LocalAppInstallStatus {
   Installed = "Installed",
   StackDeployed = "StackDeployed",
@@ -372,6 +378,20 @@ export class Api<
     /**
      * No description
      *
+     * @name ReloadAppRepo
+     * @request GET:/api/app_repos/reload/{repo_name}
+     */
+    reloadAppRepo: (repoName: string, params: RequestParams = {}) =>
+      this.request<AppRepo, any>({
+        path: `/api/app_repos/reload/${repoName}`,
+        method: "GET",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
      * @name DummyEvent
      * @request GET:/api/dummy_event
      */
@@ -436,7 +456,7 @@ export class Api<
       data: LocalAppUpgradeParams,
       params: RequestParams = {},
     ) =>
-      this.request<any, string>({
+      this.request<any, UpgradeLocalAppError>({
         path: `/api/local_apps/app/${appName}/upgrade`,
         method: "POST",
         body: data,

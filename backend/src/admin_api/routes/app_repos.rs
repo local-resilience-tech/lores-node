@@ -1,15 +1,21 @@
-use axum::{http::StatusCode, response::IntoResponse, Extension, Json};
+use axum::{extract::Path, http::StatusCode, response::IntoResponse, Extension, Json};
 use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::{
     admin_api::{client_events::ClientEvent, realtime::RealtimeState},
-    local_apps::app_repos::{self, git_app_repos::clone_git_app_repo, AppRepo, AppRepoSource},
+    local_apps::app_repos::{
+        self,
+        fs::app_repo_from_ref,
+        git_app_repos::{checkout_latest_main, clone_git_app_repo},
+        AppRepo, AppRepoReference, AppRepoSource,
+    },
 };
 
 pub fn router() -> OpenApiRouter {
     OpenApiRouter::new()
         .routes(routes!(create_app_repo))
         .routes(routes!(list_app_repos))
+        .routes(routes!(reload_app_repo))
 }
 
 #[utoipa::path(
@@ -34,11 +40,11 @@ async fn create_app_repo(
             let event = ClientEvent::AppRepoUpdated(app_repo);
             realtime_state.broadcast_app_event(event).await;
 
-            (StatusCode::CREATED, Json(()))
+            (StatusCode::CREATED, ())
         }
         Err(e) => {
             eprintln!("Error cloning app repository: {:?}", e);
-            (StatusCode::INTERNAL_SERVER_ERROR, Json(()))
+            (StatusCode::INTERNAL_SERVER_ERROR, ())
         }
     }
 }
@@ -55,4 +61,32 @@ async fn list_app_repos() -> impl IntoResponse {
     let repos = app_repos::fs::list_installed_app_repos();
 
     (StatusCode::OK, Json(repos))
+}
+
+#[utoipa::path(
+    get,
+    path = "/reload/{repo_name}",
+    params(
+        ("repo_name" = String, Path),
+    ),
+    responses(
+        (status = 200, body = AppRepo),
+        (status = INTERNAL_SERVER_ERROR, body = ()),
+    ),
+)]
+async fn reload_app_repo(Path(repo_name): Path<String>) -> impl IntoResponse {
+    let repo_ref = AppRepoReference { repo_name };
+
+    if let Err(e) = checkout_latest_main(&repo_ref) {
+        eprintln!("Error checking out latest for app repository: {:?}", e);
+        return (StatusCode::INTERNAL_SERVER_ERROR, ()).into_response();
+    }
+
+    match app_repo_from_ref(&repo_ref) {
+        Ok(app_repo) => (StatusCode::OK, Json(app_repo)).into_response(),
+        Err(e) => {
+            eprintln!("Error retrieving app repository: {:?}", e);
+            (StatusCode::INTERNAL_SERVER_ERROR, ()).into_response()
+        }
+    }
 }
