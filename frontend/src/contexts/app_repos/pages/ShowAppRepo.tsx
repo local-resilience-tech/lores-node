@@ -8,7 +8,7 @@ import {
   Group,
 } from "@mantine/core"
 import { useParams } from "react-router-dom"
-import { useAppSelector } from "../../../store"
+import { useAppDispatch, useAppSelector } from "../../../store"
 import { Anchor, LoadingActionIcon } from "../../../components"
 import AppRepoDetails from "../components/AppRepoDetails"
 import { AppRepo } from "../../../api/Api"
@@ -16,12 +16,14 @@ import AppsForRepoList from "../components/AppsForRepoList"
 import { IconRefresh } from "@tabler/icons-react"
 import { LoadingActionItemReturn } from "../../../components/LoadingActionIcon"
 import { getApi } from "../../../api"
+import { appRepoUpdated } from "../../../store/app_repos"
 
 export default function ShowAppRepo() {
   const { repoName } = useParams<{ repoName: string }>()
   const appRepo: AppRepo | undefined = useAppSelector((state) =>
     (state.appRepos || []).find((a) => a.name === repoName)
   )
+  const dispatch = useAppDispatch()
 
   if (!repoName) {
     return <Container>Error: Repository name is required</Container>
@@ -34,8 +36,9 @@ export default function ShowAppRepo() {
   const refreshRepo = async (): Promise<LoadingActionItemReturn> => {
     getApi()
       .api.reloadAppRepo(repoName)
-      .then(() => {
-        console.log("App repository reloaded successfully")
+      .then((result) => {
+        console.log("App repository reloaded successfully", result)
+        dispatch(appRepoUpdated(result.data))
         return { success: true }
       })
       .catch((error) => {
