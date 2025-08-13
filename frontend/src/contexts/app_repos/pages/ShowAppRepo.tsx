@@ -30,8 +30,8 @@ export default function ShowAppRepo() {
   }
 
   const refreshRepo = async () => {
-    // wait two seconds
-    await new Promise((resolve) => setTimeout(resolve, 2000))
+    await new Promise((resolve) => setTimeout(resolve, 500))
+    // return Promise.reject("failure reason")
   }
 
   return (
