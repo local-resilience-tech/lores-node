@@ -1,6 +1,8 @@
 use anyhow::Error;
 use git2::Repository;
 use semver::VersionReq;
+use serde::Serialize;
+use utoipa::ToSchema;
 
 use crate::local_apps::{
     app_repos::{AppRepoAppReference, AppRepoReference},

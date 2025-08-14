@@ -12,7 +12,11 @@ use crate::{
             git_app_repos::{with_checked_out_app_version, CheckoutAppVersionError},
             AppRepoAppReference,
         },
-        installed_apps::{self, fs::load_app_config, AppReference},
+        installed_apps::{
+            self,
+            fs::{load_app_config, InstallAppVersionError},
+            AppReference,
+        },
         stack_apps::{self, find_deployed_local_apps},
     },
     panda_comms::{
@@ -41,12 +45,18 @@ async fn list_local_apps() -> impl IntoResponse {
     (StatusCode::OK, Json(apps)).into_response()
 }
 
+#[derive(Serialize, ToSchema, Debug)]
+enum InstallLocalAppError {
+    InUse,
+    ServerError,
+}
+
 #[utoipa::path(
     post,
     path = "/definitions",
     responses(
         (status = CREATED, body = ()),
-        (status = INTERNAL_SERVER_ERROR, body = ()),
+        (status = INTERNAL_SERVER_ERROR, body = InstallLocalAppError),
     ),
     request_body(content = AppRepoAppReference, content_type = "application/json")
 )]
@@ -71,12 +81,18 @@ async fn install_app_definition(
             local_app_updated(&app, &realtime_state).await;
             println!("App definition installed: {}", app.name);
 
-            (StatusCode::CREATED, Json(()))
+            (StatusCode::CREATED, Json(())).into_response()
         }
         Err(e) => {
             println!("Error installing app definition: {:?}", e);
 
-            (StatusCode::INTERNAL_SERVER_ERROR, Json(()))
+            let error_result = match e {
+                InstallAppVersionError::InUse => InstallLocalAppError::InUse,
+                InstallAppVersionError::FileSystemError => InstallLocalAppError::ServerError,
+                InstallAppVersionError::LoadingAppError => InstallLocalAppError::ServerError,
+                InstallAppVersionError::CheckoutError(_) => InstallLocalAppError::ServerError,
+            };
+            (StatusCode::INTERNAL_SERVER_ERROR, Json(error_result)).into_response()
         }
     }
 }
