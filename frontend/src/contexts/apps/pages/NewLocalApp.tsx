@@ -1,6 +1,11 @@
 import { Container, Stack, Title, Text } from "@mantine/core"
 import InstallAppRepositoryForm from "../components/InstallAppRepositoryForm"
-import { Anchor } from "../../../components"
+import {
+  actionFailure,
+  ActionPromiseResult,
+  actionSuccess,
+  Anchor,
+} from "../../../components"
 import { useAppSelector } from "../../../store"
 import { AppRepoAppReference } from "../../../api/Api"
 import { getApi } from "../../../api"
@@ -10,14 +15,17 @@ export default function NewLocalApp() {
   const appRepos = useAppSelector((state) => state.appRepos)
   const navigate = useNavigate()
 
-  const handleSubmit = async (values: AppRepoAppReference) => {
-    getApi()
+  const handleSubmit = (
+    values: AppRepoAppReference
+  ): Promise<ActionPromiseResult | void> => {
+    return getApi()
       .api.installAppDefinition(values)
       .then(() => {
         navigate("../")
+        return actionSuccess()
       })
       .catch((error) => {
-        console.error("Error installing app definition:", error)
+        return actionFailure(error)
       })
   }
 

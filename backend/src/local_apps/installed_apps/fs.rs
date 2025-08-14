@@ -1,4 +1,4 @@
-use anyhow::Result;
+use anyhow::{Error, Result};
 use std::{
     env,
     fs::{self},
@@ -7,15 +7,16 @@ use std::{
 
 use super::{
     super::{
-        app_repos::{self, fs::app_repo_from_app_name, AppRepoAppReference},
-        shared::app_definitions::{self, AppVersionDefinition},
+        app_repos::{
+            fs::app_repo_from_app_name,
+            git_app_repos::{with_checked_out_app_version, CheckoutAppVersionError},
+            AppRepoAppReference,
+        },
+        shared::app_definitions::{self, config::app_config_from_string, AppVersionDefinition},
     },
     AppReference,
 };
-use crate::{
-    local_apps::shared::app_definitions::config::app_config_from_string,
-    projections::entities::{LocalApp, LocalAppInstallStatus},
-};
+use crate::projections::entities::{LocalApp, LocalAppInstallStatus};
 
 lazy_static! {
     pub static ref APPS_PATH: String =
@@ -54,14 +55,44 @@ pub fn load_app_config(app_ref: &AppReference) -> Option<LocalApp> {
     }
 }
 
+#[derive(Debug)]
+#[allow(dead_code)]
+pub enum InstallAppVersionError {
+    InUse,
+    FileSystemError,
+    LoadingAppError,
+    CheckoutError,
+    OtherError,
+}
+
 pub fn install_app_definition(
     source: &AppRepoAppReference,
     target: &AppReference,
-) -> Result<LocalApp, ()> {
-    let source_path = app_repos::fs::app_repo_app_path(source);
-    let target_path = app_path(target);
-    copy_app_files(&source_path, &target_path)?;
-    load_app_config(target).ok_or(())
+) -> Result<LocalApp, InstallAppVersionError> {
+    with_checked_out_app_version(source, |source_path| {
+        println!(
+            "In install callback `{}` to `{}`",
+            source_path.display(),
+            app_path(target).display()
+        );
+
+        let target_path = app_path(target);
+
+        copy_app_files(&source_path, &target_path)
+            .map_err(|_| CheckoutAppVersionError::CallbackError(Error::msg("FileSystemError")))?;
+
+        Ok(())
+    })
+    .map_err(|e| match e {
+        CheckoutAppVersionError::InUse => InstallAppVersionError::InUse,
+        CheckoutAppVersionError::CallbackError(inner) => match inner.to_string().as_str() {
+            "FileSystemError" => InstallAppVersionError::FileSystemError,
+            _ => InstallAppVersionError::OtherError,
+        },
+        _ => InstallAppVersionError::CheckoutError,
+    })?;
+
+    load_app_config(target).ok_or(InstallAppVersionError::LoadingAppError)
 }
 
 pub fn compose_file_path(app_ref: &AppReference) -> PathBuf {

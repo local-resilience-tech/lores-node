@@ -9,11 +9,18 @@ import {
 } from "@mantine/core"
 import { useForm } from "@mantine/form"
 import { AppRepoAppReference, AppRepo } from "../../../api/Api"
-import { Anchor } from "../../../components"
+import {
+  ActionPromiseResult,
+  ActionResult,
+  Anchor,
+  DisplayActionResult,
+  useOnSubmitWithResult,
+} from "../../../components"
+import { useState } from "react"
 
 interface InstallAppRepositoryFormProps {
   appRepos: AppRepo[] | null
-  onSubmit: (values: AppRepoAppReference) => Promise<void>
+  onSubmit: (values: AppRepoAppReference) => Promise<ActionPromiseResult | void>
 }
 
 function PleaseInstallAppRepository() {
@@ -41,26 +48,35 @@ export default function InstallAppRepositoryForm({
     return <PleaseInstallAppRepository />
   }
 
+  const [actionResult, onSubmitWithResult] =
+    useOnSubmitWithResult<AppRepoAppReference>(onSubmit)
+
   const form = useForm<AppRepoAppReference>({
     mode: "controlled",
     initialValues: {
       repo_name: "",
       app_name: "",
+      version: "",
     },
     validate: {
       repo_name: (value) => (value ? null : "Repository name is required"),
       app_name: (value) => (value ? null : "App name is required"),
+      version: (value) => (value ? null : "Version is required."),
     },
   })
 
   const repoNames = appRepos.map((repo) => repo.name)
-  const currentRepo = appRepos.find(
-    (repo) => repo.name === form.values.repo_name
-  )
+  const currentRepo = form.values.repo_name
+    ? appRepos.find((repo) => repo.name === form.values.repo_name)
+    : undefined
   const apps = currentRepo?.apps || []
+  const currentApp = form.values.app_name
+    ? apps.find((app) => app.name === form.values.app_name)
+    : undefined
+  const versions = currentApp?.versions || []
 
   return (
-    <form onSubmit={form.onSubmit(onSubmit)}>
+    <form onSubmit={form.onSubmit(onSubmitWithResult)}>
       <Stack gap="lg">
         <Stack gap="md">
           <NativeSelect
@@ -73,17 +89,51 @@ export default function InstallAppRepositoryForm({
           <NativeSelect
             label="App"
             description="Select the app to install"
-            data={[
-              "",
-              ...apps.map((app) => ({
-                label: `${app.name} v${app.latest_version}`,
-                value: app.name,
-              })),
-            ]}
+            disabled={!currentRepo}
+            data={["", ...apps.map((app) => app.name)]}
             key="app_name"
             {...form.getInputProps("app_name")}
           />
+
+          <NativeSelect
+            label="Version"
+            description="Select the version to install"
+            disabled={!currentApp}
+            data={[
+              "",
+              ...versions.map((version) => ({
+                value: version,
+                label:
+                  version == currentApp?.latest_version
+                    ? `${version} (latest)`
+                    : version,
+              })),
+            ]}
+            key="version"
+            {...form.getInputProps("version")}
+          />
         </Stack>
+
+        <DisplayActionResult
+          result={actionResult}
+          handlers={{
+            InUse: (
+              <Text c="red">
+                <strong>Install failed - Repository in use.</strong>
+                <br />
+                The repository is checked out to another version, which
+                generally means that it's in-use for another upgrade or install.
+                It's possible that it got stuck in this state due to a crash
+                during an upgrade. If you are confident that nothing else is
+                using this repository, you can refresh it on the{" "}
+                <Anchor href={`/this_node/app_repos/repo/${currentRepo?.name}`}>
+                  {currentRepo?.name}
+                </Anchor>{" "}
+                repository page. Then come back here and try the upgrade again.
+              </Text>
+            ),
+          }}
+        />
         <Button type="submit" loading={form.submitting}>
           Install App
         </Button>

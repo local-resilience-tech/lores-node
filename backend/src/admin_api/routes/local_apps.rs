@@ -12,8 +12,11 @@ use crate::{
             git_app_repos::{with_checked_out_app_version, CheckoutAppVersionError},
             AppRepoAppReference,
         },
-        installed_apps::{self, fs::load_app_config, AppReference},
-        shared::app_definitions::AppVersionDefinition,
+        installed_apps::{
+            self,
+            fs::{load_app_config, InstallAppVersionError},
+            AppReference,
+        },
         stack_apps::{self, find_deployed_local_apps},
     },
     panda_comms::{
@@ -42,12 +45,18 @@ async fn list_local_apps() -> impl IntoResponse {
     (StatusCode::OK, Json(apps)).into_response()
 }
 
+#[derive(Serialize, ToSchema, Debug)]
+enum InstallLocalAppError {
+    InUse,
+    ServerError,
+}
+
 #[utoipa::path(
     post,
     path = "/definitions",
     responses(
         (status = CREATED, body = ()),
-        (status = INTERNAL_SERVER_ERROR, body = ()),
+        (status = INTERNAL_SERVER_ERROR, body = InstallLocalAppError),
     ),
     request_body(content = AppRepoAppReference, content_type = "application/json")
 )]
@@ -60,6 +69,11 @@ async fn install_app_definition(
         app_name: payload.app_name.clone(),
     };
 
+    println!(
+        "Installing app definition from repo '{}' for app '{} {:?}'",
+        source.repo_name, source.app_name, source.version
+    );
+
     let result = installed_apps::fs::install_app_definition(&source, &target);
 
     match result {
@@ -67,12 +81,16 @@ async fn install_app_definition(
             local_app_updated(&app, &realtime_state).await;
             println!("App definition installed: {}", app.name);
 
-            (StatusCode::CREATED, Json(()))
+            (StatusCode::CREATED, Json(())).into_response()
         }
         Err(e) => {
             println!("Error installing app definition: {:?}", e);
 
-            (StatusCode::INTERNAL_SERVER_ERROR, Json(()))
+            let error_result = match e {
+                InstallAppVersionError::InUse => InstallLocalAppError::InUse,
+                _ => InstallLocalAppError::ServerError,
+            };
+            (StatusCode::INTERNAL_SERVER_ERROR, Json(error_result)).into_response()
         }
     }
 }
@@ -196,12 +214,20 @@ async fn upgrade_local_app(
         }
     };
 
-    let version_def = AppVersionDefinition {
-        name: app_name.clone(),
+    let repo_app_ref = AppRepoAppReference {
+        repo_name: app_ref.repo_name.clone(),
+        app_name: app_name.clone(),
         version: payload.target_version.clone(),
     };
 
-    let result = with_checked_out_app_version(&app_ref, &version_def);
+    let result = with_checked_out_app_version(&repo_app_ref, |source_path| {
+        println!(
+            "Upgrading app from `{}` to `{}`",
+            source_path.display(),
+            app_ref.repo_name
+        );
+        Ok(())
+    });
 
     match result {
         Ok(_) => {
@@ -221,6 +247,17 @@ async fn upgrade_local_app(
         }
         Err(CheckoutAppVersionError::Other(e)) => {
             eprintln!("Failed to upgrade local app '{}': {:?}", app_name, e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(UpgradeLocalAppError::ServerError),
+            )
+                .into_response()
+        }
+        Err(CheckoutAppVersionError::CallbackError(e)) => {
+            eprintln!(
+                "Callback error during upgrade of local app '{}': {:?}",
+                app_name, e
+            );
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(UpgradeLocalAppError::ServerError),

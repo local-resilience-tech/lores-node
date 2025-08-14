@@ -9,12 +9,17 @@ import {
 } from "@mantine/core"
 import { useParams } from "react-router-dom"
 import { useAppDispatch, useAppSelector } from "../../../store"
-import { Anchor, LoadingActionIcon } from "../../../components"
+import {
+  actionFailure,
+  actionSuccess,
+  Anchor,
+  LoadingActionIcon,
+} from "../../../components"
 import AppRepoDetails from "../components/AppRepoDetails"
 import { AppRepo } from "../../../api/Api"
 import AppsForRepoList from "../components/AppsForRepoList"
 import { IconRefresh } from "@tabler/icons-react"
-import { LoadingActionItemReturn } from "../../../components/LoadingActionIcon"
+import { ActionPromiseResult } from "../../../components"
 import { getApi } from "../../../api"
 import { appRepoUpdated } from "../../../store/app_repos"
 
@@ -33,17 +38,15 @@ export default function ShowAppRepo() {
     return <Container>Error: Repository not found</Container>
   }
 
-  const refreshRepo = async (): Promise<LoadingActionItemReturn> => {
+  const refreshRepo = async (): Promise<ActionPromiseResult> => {
     getApi()
       .api.reloadAppRepo(repoName)
       .then((result) => {
-        console.log("App repository reloaded successfully", result)
         dispatch(appRepoUpdated(result.data))
-        return { success: true }
+        return actionSuccess()
       })
       .catch((error) => {
-        console.error("Failed to reload app repository:", error)
-        return { success: false, error: error.response?.data || "ServerError" }
+        return actionFailure(error)
       })
   }
 
