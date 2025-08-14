@@ -8,20 +8,22 @@ use super::{
             git_app_repos::{with_checked_out_app_version, CheckoutAppVersionError},
             AppRepoAppReference,
         },
-        shared::app_definitions::{self, config::app_config_from_string, AppVersionDefinition},
+        shared::app_definitions::{config::app_config_from_string, AppVersionDefinition},
     },
-    app_folder::{apps_path, AppFolder},
+    app_folder::AppFolder,
+    apps_folder::AppsFolder,
     AppReference,
 };
 use crate::projections::entities::{LocalApp, LocalAppInstallStatus};
 
 pub fn find_installed_apps() -> Vec<AppVersionDefinition> {
-    app_definitions::fs::app_definitions_in_path(apps_path())
+    let apps_folder = AppsFolder::new();
+    apps_folder.app_definitions()
 }
 
 pub fn load_app_config(app_ref: &AppReference) -> Option<LocalApp> {
     let app_folder = AppFolder::new(app_ref.clone());
-    let config_file_path = app_folder.root_path.join("config/app.toml");
+    let config_file_path = app_folder.config_file_path();
 
     match fs::read_to_string(config_file_path.clone()) {
         Ok(file_contents) => match app_config_from_string(file_contents) {
@@ -66,11 +68,19 @@ pub fn install_app_definition(
 
         println!(
             "In install callback `{:?}` to `{:?}`",
-            source_path, app_folder.root_path
+            source_path, app_folder.app_ref.app_name
         );
 
         app_folder
-            .copy_in_version(&source_path)
+            .ensure_exists()
+            .map_err(|_| CheckoutAppVersionError::CallbackError(Error::msg("FileSystemError")))?;
+
+        app_folder
+            .copy_in_version(&source_path, &source.version)
+            .map_err(|_| CheckoutAppVersionError::CallbackError(Error::msg("FileSystemError")))?;
+
+        app_folder
+            .make_current_version(&source.version)
             .map_err(|_| CheckoutAppVersionError::CallbackError(Error::msg("FileSystemError")))?;
 
         Ok(())

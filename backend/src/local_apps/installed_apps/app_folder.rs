@@ -1,41 +1,106 @@
-use std::{env, path::PathBuf};
+use semver::Version;
+use std::{os::unix::fs::symlink, path::PathBuf};
 
-use super::AppReference;
-
-lazy_static! {
-    pub static ref APPS_PATH: String =
-        env::var("APPS_PATH").unwrap_or_else(|_| "../apps".to_string());
-}
-
-pub fn apps_path() -> PathBuf {
-    PathBuf::from(APPS_PATH.clone())
-}
+use super::{
+    super::shared::app_definitions::{config::app_config_from_string, AppVersionDefinition},
+    apps_folder::AppsFolder,
+    AppReference,
+};
 
 pub struct AppFolder {
-    #[allow(dead_code)]
     pub app_ref: AppReference,
-    pub root_path: PathBuf,
+    pub apps_folder: AppsFolder,
 }
 
 impl AppFolder {
     pub fn new(app_ref: AppReference) -> Self {
         AppFolder {
             app_ref: app_ref.clone(),
-            root_path: app_path(&app_ref),
+            apps_folder: AppsFolder::new(),
         }
     }
 
     pub fn compose_file_path(&self) -> PathBuf {
-        self.root_path.join("compose.yml")
+        self.current_version_path().join("compose.yml")
     }
 
-    pub fn copy_in_version(&self, source: &PathBuf) -> Result<(), ()> {
-        copy_app_files(source, &self.root_path).map_err(|_| ())
+    pub fn config_file_path(&self) -> PathBuf {
+        self.current_version_path().join("config/app.toml")
     }
-}
 
-fn app_path(app_ref: &AppReference) -> PathBuf {
-    apps_path().join(&app_ref.app_name)
+    pub fn ensure_exists(&self) -> Result<(), ()> {
+        ensure_path(&self.root_path())?;
+        ensure_path(&self.versions_path())?;
+
+        Ok(())
+    }
+
+    pub fn app_version_definition(&self) -> Option<AppVersionDefinition> {
+        let config_file_path = self.config_file_path();
+        match std::fs::read_to_string(config_file_path.clone()) {
+            Ok(file_contents) => app_config_from_string(file_contents).ok(),
+            Err(_) => {
+                eprintln!("Could not read file `{}`", config_file_path.display());
+                None
+            }
+        }
+    }
+
+    pub fn copy_in_version(&self, source: &PathBuf, version: &str) -> Result<(), ()> {
+        if !version_valid(version) {
+            eprintln!("Invalid version format: {}", version);
+            return Err(());
+        }
+
+        let target = self.version_path(version);
+        copy_app_files(source, &target).map_err(|_| ())
+    }
+
+    pub fn make_current_version(&self, version: &str) -> Result<(), ()> {
+        let version_path = &self.version_path(version);
+        let symlink_path = self.current_version_path();
+
+        assert_path_exists(&version_path)
+            .map_err(|_| eprintln!("Version path does not exist: {}", version_path.display()))?;
+
+        remove_symlink_if_exists(&symlink_path).map_err(|_| {
+            eprintln!(
+                "Failed to remove existing symlink at `{}`",
+                symlink_path.display()
+            );
+        })?;
+
+        symlink(self.version_relative_path(version), &symlink_path).map_err(|_| {
+            eprintln!(
+                "Failed to create symlink from `{}` to `{}`",
+                version_path.display(),
+                symlink_path.display()
+            );
+            ()
+        })?;
+
+        Ok(())
+    }
+
+    fn current_version_path(&self) -> PathBuf {
+        self.root_path().join("current")
+    }
+
+    fn version_path(&self, version: &str) -> PathBuf {
+        self.versions_path().join(version)
+    }
+
+    fn version_relative_path(&self, version: &str) -> String {
+        format!("versions/{}", version)
+    }
+
+    fn versions_path(&self) -> PathBuf {
+        self.root_path().join("versions")
+    }
+
+    fn root_path(&self) -> PathBuf {
+        self.apps_folder.path().join(&self.app_ref.app_name)
+    }
 }
 
 fn copy_app_files(source: &PathBuf, target: &PathBuf) -> Result<(), ()> {
@@ -51,4 +116,30 @@ fn copy_app_files(source: &PathBuf, target: &PathBuf) -> Result<(), ()> {
             Err(())
         }
     }
+}
+
+fn version_valid(version: &str) -> bool {
+    // Simple version validation logic, can be expanded as needed
+    !version.is_empty() && Version::parse(&version).is_ok()
+}
+
+fn ensure_path(path: &PathBuf) -> Result<(), ()> {
+    if !path.exists() {
+        std::fs::create_dir_all(path).map_err(|_| ())?;
+    }
+    Ok(())
+}
+
+fn assert_path_exists(path: &PathBuf) -> Result<(), ()> {
+    match path.exists() {
+        true => Ok(()),
+        false => Err(()),
+    }
+}
+
+fn remove_symlink_if_exists(path: &PathBuf) -> Result<(), ()> {
+    if path.exists() {
+        std::fs::remove_file(path).map_err(|_| ())?;
+    }
+    Ok(())
 }
