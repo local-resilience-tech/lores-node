@@ -1,9 +1,5 @@
 use anyhow::{Error, Result};
-use std::{
-    env,
-    fs::{self},
-    path::PathBuf,
-};
+use std::fs::{self};
 
 use super::{
     super::{
@@ -14,22 +10,18 @@ use super::{
         },
         shared::app_definitions::{self, config::app_config_from_string, AppVersionDefinition},
     },
+    app_folder::{apps_path, AppFolder},
     AppReference,
 };
 use crate::projections::entities::{LocalApp, LocalAppInstallStatus};
 
-lazy_static! {
-    pub static ref APPS_PATH: String =
-        env::var("APPS_PATH").unwrap_or_else(|_| "../apps".to_string());
-}
-
 pub fn find_installed_apps() -> Vec<AppVersionDefinition> {
-    app_definitions::fs::app_definitions_in_path(PathBuf::from(APPS_PATH.clone()))
+    app_definitions::fs::app_definitions_in_path(apps_path())
 }
 
 pub fn load_app_config(app_ref: &AppReference) -> Option<LocalApp> {
-    let path = app_path(app_ref);
-    let config_file_path = path.join("config/app.toml");
+    let app_folder = AppFolder::new(app_ref.clone());
+    let config_file_path = app_folder.root_path.join("config/app.toml");
 
     match fs::read_to_string(config_file_path.clone()) {
         Ok(file_contents) => match app_config_from_string(file_contents) {
@@ -70,15 +62,15 @@ pub fn install_app_definition(
     target: &AppReference,
 ) -> Result<LocalApp, InstallAppVersionError> {
     with_checked_out_app_version(source, |source_path| {
+        let app_folder = AppFolder::new(target.clone());
+
         println!(
-            "In install callback `{}` to `{}`",
-            source_path.display(),
-            app_path(target).display()
+            "In install callback `{:?}` to `{:?}`",
+            source_path, app_folder.root_path
         );
 
-        let target_path = app_path(target);
-
-        copy_app_files(&source_path, &target_path)
+        app_folder
+            .copy_in_version(&source_path)
             .map_err(|_| CheckoutAppVersionError::CallbackError(Error::msg("FileSystemError")))?;
 
         Ok(())
@@ -93,31 +85,4 @@ pub fn install_app_definition(
     })?;
 
     load_app_config(target).ok_or(InstallAppVersionError::LoadingAppError)
-}
-
-pub fn compose_file_path(app_ref: &AppReference) -> PathBuf {
-    app_path(app_ref).join("compose.yml")
-}
-
-fn app_path(app_ref: &AppReference) -> PathBuf {
-    apps_path().join(&app_ref.app_name)
-}
-
-fn apps_path() -> PathBuf {
-    PathBuf::from(APPS_PATH.clone())
-}
-
-fn copy_app_files(source: &PathBuf, target: &PathBuf) -> Result<(), ()> {
-    match copy_dir::copy_dir(source, target) {
-        Ok(_) => Ok(()),
-        Err(e) => {
-            eprintln!(
-                "Failed to copy files from `{}` to `{}`: {}",
-                source.display(),
-                target.display(),
-                e
-            );
-            Err(())
-        }
-    }
 }

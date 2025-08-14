@@ -8,7 +8,7 @@ use crate::{
 
 use super::{
     app_repos::fs::app_repo_from_app_name,
-    installed_apps::{self, fs::compose_file_path, AppReference},
+    installed_apps::{self, app_folder::AppFolder, AppReference},
 };
 
 pub fn find_deployed_local_apps() -> Vec<LocalApp> {
@@ -31,7 +31,8 @@ pub fn find_deployed_local_apps() -> Vec<LocalApp> {
 }
 
 pub fn deploy_local_app(app_ref: &AppReference) -> Result<LocalApp, anyhow::Error> {
-    let compose_file_path = compose_file_path(app_ref);
+    let app_folder = AppFolder::new(app_ref.clone());
+    let compose_file_path = app_folder.compose_file_path();
 
     docker_stack_deploy(&app_ref.app_name, &compose_file_path)?;
 
