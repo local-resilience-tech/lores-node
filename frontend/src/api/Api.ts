@@ -46,7 +46,7 @@ export interface AppRepo {
 export interface AppRepoAppReference {
   app_name: string;
   repo_name: string;
-  version?: string | null;
+  version: string;
 }
 
 export interface AppRepoSource {

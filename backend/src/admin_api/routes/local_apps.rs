@@ -13,7 +13,6 @@ use crate::{
             AppRepoAppReference,
         },
         installed_apps::{self, fs::load_app_config, AppReference},
-        shared::app_definitions::AppVersionDefinition,
         stack_apps::{self, find_deployed_local_apps},
     },
     panda_comms::{
@@ -201,12 +200,13 @@ async fn upgrade_local_app(
         }
     };
 
-    let version_def = AppVersionDefinition {
-        name: app_name.clone(),
+    let repo_app_ref = AppRepoAppReference {
+        repo_name: app_ref.repo_name.clone(),
+        app_name: app_name.clone(),
         version: payload.target_version.clone(),
     };
 
-    let result = with_checked_out_app_version(&app_ref, &version_def);
+    let result = with_checked_out_app_version(&repo_app_ref);
 
     match result {
         Ok(_) => {

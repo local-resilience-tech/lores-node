@@ -51,6 +51,7 @@ export default function InstallAppRepositoryForm({
     validate: {
       repo_name: (value) => (value ? null : "Repository name is required"),
       app_name: (value) => (value ? null : "App name is required"),
+      version: (value) => (value ? null : "Version is required."),
     },
   })
 
