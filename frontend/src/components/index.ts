@@ -1,3 +1,6 @@
 export { default as NavLink } from "./NavLink"
 export { default as Anchor } from "./Anchor"
 export { default as LoadingActionIcon } from "./LoadingActionIcon"
+export type { ActionPromiseResult, ActionResult } from "./ActionResult"
+export { actionFailure, actionSuccess } from "./ActionResult"
+export { DisplayActionResult, useOnSubmitWithResult } from "./ActionResult"

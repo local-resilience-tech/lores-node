@@ -9,11 +9,18 @@ import {
 } from "@mantine/core"
 import { useForm } from "@mantine/form"
 import { AppRepoAppReference, AppRepo } from "../../../api/Api"
-import { Anchor } from "../../../components"
+import {
+  ActionPromiseResult,
+  ActionResult,
+  Anchor,
+  DisplayActionResult,
+  useOnSubmitWithResult,
+} from "../../../components"
+import { useState } from "react"
 
 interface InstallAppRepositoryFormProps {
   appRepos: AppRepo[] | null
-  onSubmit: (values: AppRepoAppReference) => Promise<void>
+  onSubmit: (values: AppRepoAppReference) => Promise<ActionPromiseResult | void>
 }
 
 function PleaseInstallAppRepository() {
@@ -41,6 +48,9 @@ export default function InstallAppRepositoryForm({
     return <PleaseInstallAppRepository />
   }
 
+  const [actionResult, onSubmitWithResult] =
+    useOnSubmitWithResult<AppRepoAppReference>(onSubmit)
+
   const form = useForm<AppRepoAppReference>({
     mode: "controlled",
     initialValues: {
@@ -66,7 +76,7 @@ export default function InstallAppRepositoryForm({
   const versions = currentApp?.versions || []
 
   return (
-    <form onSubmit={form.onSubmit(onSubmit)}>
+    <form onSubmit={form.onSubmit(onSubmitWithResult)}>
       <Stack gap="lg">
         <Stack gap="md">
           <NativeSelect
@@ -103,6 +113,27 @@ export default function InstallAppRepositoryForm({
             {...form.getInputProps("version")}
           />
         </Stack>
+
+        <DisplayActionResult
+          result={actionResult}
+          handlers={{
+            InUse: (
+              <Text c="red">
+                <strong>Install failed - Repository in use.</strong>
+                <br />
+                The repository is checked out to another version, which
+                generally means that it's in-use for another upgrade or install.
+                It's possible that it got stuck in this state due to a crash
+                during an upgrade. If you are confident that nothing else is
+                using this repository, you can refresh it on the{" "}
+                <Anchor href={`/this_node/app_repos/repo/${currentRepo?.name}`}>
+                  {currentRepo?.name}
+                </Anchor>{" "}
+                repository page. Then come back here and try the upgrade again.
+              </Text>
+            ),
+          }}
+        />
         <Button type="submit" loading={form.submitting}>
           Install App
         </Button>

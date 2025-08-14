@@ -9,20 +9,14 @@ import {
 } from "@mantine/core"
 import { IconAlertCircle, IconX } from "@tabler/icons-react"
 import { useState } from "react"
-
-interface LoadingActionItemResult {
-  success: boolean
-  error?: string
-}
-
-export type LoadingActionItemReturn = void | LoadingActionItemResult
+import { ActionPromiseResult, ActionResult } from "./ActionResult"
 
 type LoadingActionIconProps = PolymorphicComponentProps<
   "button",
   ActionIconProps
 > & {
   children?: React.ReactNode
-  onClick?: () => Promise<LoadingActionItemReturn>
+  onClick?: () => Promise<ActionPromiseResult>
   successColor?: string
   errorColor?: string
   errorIcon?: React.ReactNode
@@ -38,7 +32,7 @@ export default function LoadingActionIcon({
 }: LoadingActionIconProps) {
   const [loading, setLoading] = useState(false)
   const [showResult, setShowResult] = useState(false)
-  const [result, setResult] = useState<LoadingActionItemResult | null>(null)
+  const [result, setResult] = useState<ActionResult | null>(null)
 
   const setSuccess = () => {
     setResult({ success: true })
