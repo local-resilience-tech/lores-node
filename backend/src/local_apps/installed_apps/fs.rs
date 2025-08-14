@@ -8,7 +8,6 @@ use std::{
 use super::{
     super::{
         app_repos::{
-            self,
             fs::app_repo_from_app_name,
             git_app_repos::{with_checked_out_app_version, CheckoutAppVersionError},
             AppRepoAppReference,
@@ -62,23 +61,36 @@ pub enum InstallAppVersionError {
     InUse,
     FileSystemError,
     LoadingAppError,
-    CheckoutError(CheckoutAppVersionError),
+    CheckoutError,
+    OtherError,
 }
 
 pub fn install_app_definition(
     source: &AppRepoAppReference,
     target: &AppReference,
 ) -> Result<LocalApp, InstallAppVersionError> {
-    with_checked_out_app_version(source).map_err(|e| match e {
+    with_checked_out_app_version(source, |source_path| {
+        println!(
+            "In install callback `{}` to `{}`",
+            source_path.display(),
+            app_path(target).display()
+        );
+
+        let target_path = app_path(target);
+
+        copy_app_files(&source_path, &target_path)
+            .map_err(|_| CheckoutAppVersionError::CallbackError(Error::msg("FileSystemError")))?;
+
+        Ok(())
+    })
+    .map_err(|e| match e {
         CheckoutAppVersionError::InUse => InstallAppVersionError::InUse,
-        other_checkout_error => InstallAppVersionError::CheckoutError(other_checkout_error),
+        CheckoutAppVersionError::CallbackError(inner) => match inner.to_string().as_str() {
+            "FileSystemError" => InstallAppVersionError::FileSystemError,
+            _ => InstallAppVersionError::OtherError,
+        },
+        _ => InstallAppVersionError::CheckoutError,
     })?;
-
-    // let source_path = app_repos::fs::app_repo_app_path(source);
-    // let target_path = app_path(target);
-
-    // copy_app_files(&source_path, &target_path)
-    //     .map_err(|_| InstallAppVersionError::FileSystemError)?;
 
     load_app_config(target).ok_or(InstallAppVersionError::LoadingAppError)
 }

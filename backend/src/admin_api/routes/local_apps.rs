@@ -88,9 +88,7 @@ async fn install_app_definition(
 
             let error_result = match e {
                 InstallAppVersionError::InUse => InstallLocalAppError::InUse,
-                InstallAppVersionError::FileSystemError => InstallLocalAppError::ServerError,
-                InstallAppVersionError::LoadingAppError => InstallLocalAppError::ServerError,
-                InstallAppVersionError::CheckoutError(_) => InstallLocalAppError::ServerError,
+                _ => InstallLocalAppError::ServerError,
             };
             (StatusCode::INTERNAL_SERVER_ERROR, Json(error_result)).into_response()
         }
@@ -222,7 +220,14 @@ async fn upgrade_local_app(
         version: payload.target_version.clone(),
     };
 
-    let result = with_checked_out_app_version(&repo_app_ref);
+    let result = with_checked_out_app_version(&repo_app_ref, |source_path| {
+        println!(
+            "Upgrading app from `{}` to `{}`",
+            source_path.display(),
+            app_ref.repo_name
+        );
+        Ok(())
+    });
 
     match result {
         Ok(_) => {
@@ -242,6 +247,17 @@ async fn upgrade_local_app(
         }
         Err(CheckoutAppVersionError::Other(e)) => {
             eprintln!("Failed to upgrade local app '{}': {:?}", app_name, e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(UpgradeLocalAppError::ServerError),
+            )
+                .into_response()
+        }
+        Err(CheckoutAppVersionError::CallbackError(e)) => {
+            eprintln!(
+                "Callback error during upgrade of local app '{}': {:?}",
+                app_name, e
+            );
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(UpgradeLocalAppError::ServerError),

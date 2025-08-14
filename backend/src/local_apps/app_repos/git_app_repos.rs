@@ -1,8 +1,8 @@
+use std::path::PathBuf;
+
 use anyhow::Error;
 use git2::Repository;
 use semver::VersionReq;
-use serde::Serialize;
-use utoipa::ToSchema;
 
 use crate::local_apps::{
     app_repos::{AppRepoAppReference, AppRepoReference},
@@ -10,7 +10,7 @@ use crate::local_apps::{
 };
 
 use super::{
-    fs::{app_repo_at_source, app_repo_path},
+    fs::{app_repo_app_path, app_repo_at_source, app_repo_path},
     git_commands, AppRepo, AppRepoSource,
 };
 
@@ -82,6 +82,7 @@ pub fn git_version_tags(repo: &AppRepoReference) -> Result<Vec<AppVersionDefinit
 pub enum CheckoutAppVersionError {
     InUse,
     Other(Error),
+    CallbackError(Error),
 }
 
 impl CheckoutAppVersionError {
@@ -96,6 +97,7 @@ impl CheckoutAppVersionError {
 
 pub fn with_checked_out_app_version(
     app_ref: &AppRepoAppReference,
+    callback: impl FnOnce(&PathBuf) -> Result<(), CheckoutAppVersionError>,
 ) -> Result<(), CheckoutAppVersionError> {
     let repo_ref = app_ref.repo_ref();
 
@@ -109,7 +111,13 @@ pub fn with_checked_out_app_version(
         return Err(CheckoutAppVersionError::InUse);
     }
     checkout_app_version(&app_ref).map_err(|e| CheckoutAppVersionError::Other(e))?;
+
+    let path = app_repo_app_path(&app_ref);
+    let callback_result = callback(&path);
+
     checkout_latest_main(&repo_ref).map_err(|e| CheckoutAppVersionError::Other(e))?;
+
+    callback_result?;
 
     Ok(())
 }
