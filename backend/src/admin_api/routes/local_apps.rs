@@ -60,6 +60,11 @@ async fn install_app_definition(
         app_name: payload.app_name.clone(),
     };
 
+    println!(
+        "Installing app definition from repo '{}' for app '{} {:?}'",
+        source.repo_name, source.app_name, source.version
+    );
+
     let result = installed_apps::fs::install_app_definition(&source, &target);
 
     match result {

@@ -46,6 +46,7 @@ export default function InstallAppRepositoryForm({
     initialValues: {
       repo_name: "",
       app_name: "",
+      version: "",
     },
     validate: {
       repo_name: (value) => (value ? null : "Repository name is required"),
@@ -54,10 +55,14 @@ export default function InstallAppRepositoryForm({
   })
 
   const repoNames = appRepos.map((repo) => repo.name)
-  const currentRepo = appRepos.find(
-    (repo) => repo.name === form.values.repo_name
-  )
+  const currentRepo = form.values.repo_name
+    ? appRepos.find((repo) => repo.name === form.values.repo_name)
+    : undefined
   const apps = currentRepo?.apps || []
+  const currentApp = form.values.app_name
+    ? apps.find((app) => app.name === form.values.app_name)
+    : undefined
+  const versions = currentApp?.versions || []
 
   return (
     <form onSubmit={form.onSubmit(onSubmit)}>
@@ -73,15 +78,28 @@ export default function InstallAppRepositoryForm({
           <NativeSelect
             label="App"
             description="Select the app to install"
-            data={[
-              "",
-              ...apps.map((app) => ({
-                label: `${app.name} v${app.latest_version}`,
-                value: app.name,
-              })),
-            ]}
+            disabled={!currentRepo}
+            data={["", ...apps.map((app) => app.name)]}
             key="app_name"
             {...form.getInputProps("app_name")}
+          />
+
+          <NativeSelect
+            label="Version"
+            description="Select the version to install"
+            disabled={!currentApp}
+            data={[
+              "",
+              ...versions.map((version) => ({
+                value: version,
+                label:
+                  version == currentApp?.latest_version
+                    ? `${version} (latest)`
+                    : version,
+              })),
+            ]}
+            key="version"
+            {...form.getInputProps("version")}
           />
         </Stack>
         <Button type="submit" loading={form.submitting}>

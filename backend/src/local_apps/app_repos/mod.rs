@@ -34,6 +34,7 @@ pub struct AppRepoReference {
 pub struct AppRepoAppReference {
     pub repo_name: String,
     pub app_name: String,
+    pub version: Option<String>,
 }
 
 impl AppRepoAppReference {
