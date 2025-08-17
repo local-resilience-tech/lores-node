@@ -7,11 +7,7 @@ use utoipa_axum::{router::OpenApiRouter, routes};
 use crate::{
     admin_api::{client_events::ClientEvent, realtime::RealtimeState},
     local_apps::{
-        app_repos::{
-            fs::app_repo_from_app_name,
-            git_app_repos::{with_checked_out_app_version, CheckoutAppVersionError},
-            AppRepoAppReference,
-        },
+        app_repos::{ fs::app_repo_from_app_name, AppRepoAppReference},
         installed_apps::{
             self,
             fs::{load_app_config, InstallAppVersionError},
@@ -195,6 +191,7 @@ enum UpgradeLocalAppError {
     ),
 )]
 async fn upgrade_local_app(
+    Extension(realtime_state): Extension<RealtimeState>,
     Path(app_name): Path<String>,
     Json(payload): Json<LocalAppUpgradeParams>,
 ) -> impl IntoResponse {
@@ -203,7 +200,7 @@ async fn upgrade_local_app(
         app_name, payload.target_version
     );
 
-    let app_ref = match app_repo_from_app_name(&app_name) {
+    let repo_ref = match app_repo_from_app_name(&app_name) {
         Some(app_ref) => app_ref,
         None => {
             return (
@@ -215,54 +212,32 @@ async fn upgrade_local_app(
     };
 
     let repo_app_ref = AppRepoAppReference {
-        repo_name: app_ref.repo_name.clone(),
+        repo_name: repo_ref.repo_name.clone(),
         app_name: app_name.clone(),
         version: payload.target_version.clone(),
     };
 
-    let result = with_checked_out_app_version(&repo_app_ref, |source_path| {
-        println!(
-            "Upgrading app from `{}` to `{}`",
-            source_path.display(),
-            app_ref.repo_name
-        );
-        Ok(())
-    });
+    let app_ref = AppReference {
+        app_name: app_name.clone(),
+    };
+
+    let result = installed_apps::fs::install_app_definition(&repo_app_ref, &app_ref);
 
     match result {
-        Ok(_) => {
-            println!("Successfully upgraded local app: {}", app_name);
-            (StatusCode::OK, ()).into_response()
+        Ok(app) => {
+            local_app_updated(&app, &realtime_state).await;
+            println!("App definition installed: {}", app.name);
+
+            (StatusCode::CREATED, Json(())).into_response()
         }
-        Err(CheckoutAppVersionError::InUse) => {
-            eprintln!(
-                "Local app '{}' is currently in use and cannot be upgraded.",
-                app_name
-            );
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(UpgradeLocalAppError::InUse),
-            )
-                .into_response()
-        }
-        Err(CheckoutAppVersionError::Other(e)) => {
-            eprintln!("Failed to upgrade local app '{}': {:?}", app_name, e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(UpgradeLocalAppError::ServerError),
-            )
-                .into_response()
-        }
-        Err(CheckoutAppVersionError::CallbackError(e)) => {
-            eprintln!(
-                "Callback error during upgrade of local app '{}': {:?}",
-                app_name, e
-            );
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(UpgradeLocalAppError::ServerError),
-            )
-                .into_response()
+        Err(e) => {
+            println!("Error installing app definition: {:?}", e);
+
+            let error_result = match e {
+                InstallAppVersionError::InUse => UpgradeLocalAppError::InUse,
+                _ => UpgradeLocalAppError::ServerError,
+            };
+            (StatusCode::INTERNAL_SERVER_ERROR, Json(error_result)).into_response()
         }
     }
 }

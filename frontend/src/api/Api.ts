@@ -21,6 +21,11 @@ export enum LocalAppInstallStatus {
   StackDeployed = "StackDeployed",
 }
 
+export enum InstallLocalAppError {
+  InUse = "InUse",
+  ServerError = "ServerError",
+}
+
 export interface AppDefinition {
   latest_version?: string | null;
   name: string;
@@ -339,7 +344,7 @@ export class HttpClient<SecurityDataType = unknown> {
 
 /**
  * @title lores-node
- * @version 0.9.15
+ * @version 0.10.0
  * @license
  */
 export class Api<
@@ -476,7 +481,7 @@ export class Api<
       data: AppRepoAppReference,
       params: RequestParams = {},
     ) =>
-      this.request<any, any>({
+      this.request<any, InstallLocalAppError>({
         path: `/api/local_apps/definitions`,
         method: "POST",
         body: data,
