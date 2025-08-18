@@ -1,11 +1,6 @@
-# This docker compose file is used for backend development and local testing. The production
-# docker build is in the root directory of this repository.
-name: lores-node-dev
 services:
   lores-node:
-    build:
-      context: .
-      dockerfile: Dockerfile-development
+    image: lores-node-dev
     networks:
       - proxy
     ports:
@@ -20,8 +15,8 @@ services:
       - APPS_PATH=/app/apps
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - ./data/app_repos:/app/app_repos
-      - ./data/apps:/app/apps
+      - ./backend/data/app_repos:/app/app_repos
+      - ./backend/data/apps:/app/apps
   traefik:
     logging:
       options:
@@ -30,7 +25,6 @@ services:
     networks:
       - proxy
     volumes:
-      - acme:/etc/traefik/acme
       - /var/run/docker.sock:/var/run/docker.sock
     ports:
       - "80:80"
@@ -53,5 +47,3 @@ networks:
   proxy:
     driver: overlay
     attachable: true
-volumes:
-  acme:
