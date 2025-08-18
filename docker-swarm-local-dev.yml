@@ -1,4 +1,12 @@
 services:
+  lores-frontend:
+    image: lores-frontend-dev
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_API_HOST=http://lores.localhost:8200
+    volumes:
+      - ./frontend/src:/app/src
   lores-node:
     image: lores-node-dev
     networks:

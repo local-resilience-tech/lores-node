@@ -8,6 +8,9 @@
   },
   "scripts": {
     "release": "release-it",
-    "swarm": "sudo docker build -f ./backend/Dockerfile-development -t lores-node-dev ./backend; sudo docker stack deploy --detach=false --prune -c ./docker-swarm-local-dev.yml lores-node-dev"
+    "build_docker_frontend": "sudo docker build -f ./frontend/Dockerfile-development -t lores-frontend-dev ./frontend",
+    "build_docker_backend": "sudo docker build -f ./backend/Dockerfile-development -t lores-node-dev ./backend",
+    "swarm": "npm run build_docker_backend; npm run build_docker_frontend; sudo docker stack deploy --detach=false --prune -c ./docker-swarm-local-dev.yml lores-node-dev",
+    "swarm-down": "sudo docker stack rm lores-node-dev"
   }
 }
