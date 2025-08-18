@@ -1,5 +1,10 @@
 import { Breadcrumbs, Container, Stack, Title, Text, Card } from "@mantine/core"
-import { Anchor } from "../../../components"
+import {
+  actionFailure,
+  ActionResult,
+  actionSuccess,
+  Anchor,
+} from "../../../components"
 import { useParams } from "react-router-dom"
 import { useAppSelector } from "../../../store"
 import LocalAppDetails from "../components/LocalAppDetails"
@@ -8,9 +13,11 @@ import LocalAppUpgrades, {
   UpgradeLocalAppError,
 } from "../components/LocalAppUpgrades"
 import { getApi } from "../../../api"
+import { LocalApp, LocalAppInstallStatus } from "../../../api/Api"
 import { useState } from "react"
+import LocalAppActions, { LocalAppAction } from "../components/LocalAppActions"
 
-export default function LocalApp() {
+export default function ShowLocalApp() {
   const { appName } = useParams<{ appName: string }>()
   const app = useAppSelector((state) =>
     (state.localApps || []).find((a) => a.name === appName)
@@ -40,6 +47,54 @@ export default function LocalApp() {
         setUpgradeError(error.response?.data || "ServerError")
       })
   }
+
+  const onAppDeploy = async (app: LocalApp) => {
+    console.log("Deploying app:", app)
+    getApi()
+      .api.deployLocalApp(app.name)
+      .then((_) => actionSuccess())
+      .catch((error) => actionFailure(error))
+  }
+
+  const onAppRemoveDeploy = async (app: LocalApp) => {
+    console.log("Removing deployment of app:", app)
+    getApi()
+      .api.removeDeploymentOfLocalApp(app.name)
+      .then((_) => actionSuccess())
+      .catch((error) => actionFailure(error))
+  }
+
+  const onAppRegister = async (app: LocalApp) => {
+    console.log("Registering app:", app)
+    getApi()
+      .api.registerApp({ app_name: app.name })
+      .then((_) => actionSuccess())
+      .catch((error) => actionFailure(error))
+  }
+
+  const actions: LocalAppAction[] = []
+  if (app.status === LocalAppInstallStatus.Installed) {
+    actions.push({
+      type: "deploy",
+      buttonColor: "blue",
+      primary: true,
+      handler: onAppDeploy,
+    })
+  }
+
+  if (app.status === LocalAppInstallStatus.StackDeployed) {
+    actions.push({
+      type: "remove",
+      buttonColor: "red",
+      handler: onAppRemoveDeploy,
+    })
+  }
+
+  actions.push({
+    type: "register",
+    buttonColor: "blue",
+    handler: onAppRegister,
+  })
 
   return (
     <Container>
@@ -74,6 +129,11 @@ export default function LocalApp() {
             onUpgrade={handleUpgrade}
             upgradeError={upgradeError}
           />
+        </Stack>
+
+        <Stack>
+          <Title order={2}>Actions</Title>
+          <LocalAppActions actions={actions} app={app} />
         </Stack>
       </Stack>
     </Container>

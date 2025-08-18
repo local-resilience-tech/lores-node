@@ -14,7 +14,7 @@ import {
 } from "../../../api/Api"
 import { IconAlertCircle } from "@tabler/icons-react"
 import { useLoading } from "../../shared"
-import { Anchor } from "../../../components"
+import { ActionResult, Anchor } from "../../../components"
 import LocalAppStatusBadge from "./LocalAppStatusBadge"
 
 export interface LocalAppWithRepo {
