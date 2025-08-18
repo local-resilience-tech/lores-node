@@ -15,5 +15,11 @@ export function getApi() {
 
 export function getSocketUrl(): string {
   const apiUrl = getApiUrl()
-  return apiUrl.replace(/^https?/, "ws") + "ws"
+
+  const withWsProtocol = apiUrl.replace(/^https?/, "ws")
+  const ensureTrailingSlash = withWsProtocol.endsWith("/")
+    ? withWsProtocol
+    : `${withWsProtocol}/`
+
+  return ensureTrailingSlash + "ws"
 }
