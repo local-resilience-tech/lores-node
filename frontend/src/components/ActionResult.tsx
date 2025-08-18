@@ -1,4 +1,5 @@
-import { Text } from "@mantine/core"
+import { ActionIcon, HoverCard, Text } from "@mantine/core"
+import { IconAlertCircle } from "@tabler/icons-react"
 import { useState } from "react"
 
 export interface ActionResult {
@@ -60,4 +61,26 @@ export function DisplayActionResult({
       return <Text c="red">Action failed: {result.error}</Text>
     }
   }
+}
+
+interface ActionResultErrorIconProps {
+  result: ActionResult | undefined
+}
+
+export function ActionResultErrorIcon({ result }: ActionResultErrorIconProps) {
+  if (!result) return null
+  if (result.success || !result.error) return null
+
+  return (
+    <HoverCard width={280} shadow="md">
+      <HoverCard.Target>
+        <ActionIcon variant="transparent" color="red" size="lg">
+          <IconAlertCircle />
+        </ActionIcon>
+      </HoverCard.Target>
+      <HoverCard.Dropdown>
+        <Text size="sm">{result.error}</Text>
+      </HoverCard.Dropdown>
+    </HoverCard>
+  )
 }

@@ -1,7 +1,8 @@
-import { Button, Group, MantineColor } from "@mantine/core"
+import { Button, Group, HoverCard, MantineColor, Stack } from "@mantine/core"
 import { LocalApp } from "../../../api/Api"
 import { useState } from "react"
 import { ActionPromiseResult, ActionResult } from "../../../components"
+import { ActionResultErrorIcon } from "../../../components/ActionResult"
 
 export interface LocalAppAction {
   type: "deploy" | "remove" | "register"
@@ -17,7 +18,7 @@ function LocalAppAction({
   action: LocalAppAction
   app: LocalApp
 }) {
-  const [result, setResult] = useState<ActionPromiseResult>(undefined)
+  const [result, setResult] = useState<ActionResult | undefined>(undefined)
   const [loading, setLoading] = useState(false)
 
   const handleButtonPress = async (
@@ -27,7 +28,8 @@ function LocalAppAction({
     try {
       setLoading(true)
       const result = await handler(app)
-      setResult(result)
+      console.log("THE result:", result)
+      setResult(result || undefined)
     } catch (error) {
       console.error("Error occurred while handling button press:", error)
     } finally {
@@ -36,15 +38,18 @@ function LocalAppAction({
   }
 
   return (
-    <Button
-      onClick={() => handleButtonPress(app, action.handler)}
-      size="sm"
-      variant={action.primary ? "filled" : "outline"}
-      color={action.buttonColor}
-      loading={loading}
-    >
-      {action.type.charAt(0).toUpperCase() + action.type.slice(1)}
-    </Button>
+    <Group gap="xs">
+      <Button
+        onClick={() => handleButtonPress(app, action.handler)}
+        size="sm"
+        variant={action.primary ? "filled" : "outline"}
+        color={action.buttonColor}
+        loading={loading}
+      >
+        {action.type.charAt(0).toUpperCase() + action.type.slice(1)}
+      </Button>
+      <ActionResultErrorIcon result={result} />
+    </Group>
   )
 }
 
@@ -56,10 +61,10 @@ export default function LocalAppActions({
   app: LocalApp
 }) {
   return (
-    <Group>
+    <Stack>
       {actions.map((action) => (
         <LocalAppAction key={action.type} action={action} app={app} />
       ))}
-    </Group>
+    </Stack>
   )
 }

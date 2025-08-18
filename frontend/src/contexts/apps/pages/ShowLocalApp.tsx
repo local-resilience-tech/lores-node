@@ -50,7 +50,7 @@ export default function ShowLocalApp() {
 
   const onAppDeploy = async (app: LocalApp) => {
     console.log("Deploying app:", app)
-    getApi()
+    return getApi()
       .api.deployLocalApp(app.name)
       .then((_) => actionSuccess())
       .catch((error) => actionFailure(error))
@@ -58,7 +58,7 @@ export default function ShowLocalApp() {
 
   const onAppRemoveDeploy = async (app: LocalApp) => {
     console.log("Removing deployment of app:", app)
-    getApi()
+    return getApi()
       .api.removeDeploymentOfLocalApp(app.name)
       .then((_) => actionSuccess())
       .catch((error) => actionFailure(error))
@@ -66,7 +66,7 @@ export default function ShowLocalApp() {
 
   const onAppRegister = async (app: LocalApp) => {
     console.log("Registering app:", app)
-    getApi()
+    return getApi()
       .api.registerApp({ app_name: app.name })
       .then((_) => actionSuccess())
       .catch((error) => actionFailure(error))
