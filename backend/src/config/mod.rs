@@ -8,12 +8,13 @@ lazy_static! {
         env::var("CONFIG_PATH").unwrap_or_else(|_| "./config.yaml".to_string());
 }
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct LoresNodeConfig {
     pub public_key_hex: Option<String>,
     pub private_key_hex: Option<String>,
     pub network_name: Option<String>,
     pub bootstrap_node_id: Option<String>,
+    pub hashed_admin_password: Option<String>,
 }
 
 impl ::std::default::Default for LoresNodeConfig {
@@ -23,6 +24,7 @@ impl ::std::default::Default for LoresNodeConfig {
             private_key_hex: None,
             network_name: None,
             bootstrap_node_id: None,
+            hashed_admin_password: None,
         }
     }
 }
