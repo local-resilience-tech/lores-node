@@ -1,7 +1,7 @@
-use std::collections::HashSet;
-
 use axum::{http::StatusCode, response::IntoResponse, Extension};
 use npwg::{generate_password_with_config, PasswordGeneratorConfig};
+use password_auth::generate_hash;
+use std::collections::HashSet;
 use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::config::LoresNodeConfig;
@@ -35,6 +35,17 @@ async fn generate_admin_password(
         }
         Ok(pw) => pw,
     };
+
+    // Hash the password and store in config
+    // let hashed_password = generate_hash(&password);
+    // config.hashed_admin_password = Some(hashed_password);
+    // match config.try_save() {
+    //     Ok(_) => (StatusCode::CREATED, password).into_response(),
+    //     Err(err) => {
+    //         eprintln!("Failed to save config: {}", err);
+    //         (StatusCode::INTERNAL_SERVER_ERROR, "Internal Server Error").into_response()
+    //     }
+    // }
 
     (StatusCode::CREATED, password).into_response()
 }

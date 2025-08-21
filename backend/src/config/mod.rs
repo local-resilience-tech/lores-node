@@ -38,8 +38,13 @@ impl LoresNodeConfig {
     }
 
     pub fn save(&self) {
-        confy::store_path(Path::new(&*CONFIG_PATH), self).unwrap_or_else(|e| {
+        self.try_save();
+    }
+
+    pub fn try_save(&self) -> Result<(), anyhow::Error> {
+        confy::store_path(Path::new(&*CONFIG_PATH), self).map_err(|e| {
             eprintln!("Failed to save config: {}", e);
-        });
+            anyhow::anyhow!("Failed to save config: {}", e)
+        })
     }
 }
