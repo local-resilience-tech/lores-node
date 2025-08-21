@@ -5,7 +5,7 @@ use utoipa::ToSchema;
 use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::{
-    config::LoresNodeConfig,
+    config::config_state::LoresNodeConfigState,
     panda_comms::{
         container::P2PandaContainer,
         lores_events::{
@@ -29,9 +29,10 @@ pub fn router() -> OpenApiRouter {
 ))]
 async fn show_this_node(
     Extension(pool): Extension<SqlitePool>,
-    Extension(config): Extension<LoresNodeConfig>,
+    Extension(config_state): Extension<LoresNodeConfigState>,
 ) -> impl IntoResponse {
     let repo = NodesReadRepo::init();
+    let config = config_state.get().await;
 
     match config.public_key_hex {
         Some(public_key_hex) => {

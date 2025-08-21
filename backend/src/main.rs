@@ -16,7 +16,7 @@ use crate::{
         api_router,
         realtime::{self, RealtimeState},
     },
-    config::LoresNodeConfig,
+    config::{config::LoresNodeConfig, config_state::LoresNodeConfigState},
     event_handlers::handle_event,
     infra::db,
     panda_comms::{
@@ -71,7 +71,8 @@ async fn main() {
         .expose_headers(cors::Any);
 
     // CONFIG
-    let mut config = config::LoresNodeConfig::load();
+    let config = LoresNodeConfig::load();
+    let config_state = LoresNodeConfigState::new(&config);
 
     // DATABASE
     let pool = db::prepare_main_database()
@@ -88,7 +89,7 @@ async fn main() {
     let (channel_tx, channel_rx): (mpsc::Sender<LoResEvent>, mpsc::Receiver<LoResEvent>) =
         mpsc::channel(32);
     let container = P2PandaContainer::new(channel_tx);
-    start_panda(&mut config, &container, &operation_pool).await;
+    start_panda(&config_state, &container, &operation_pool).await;
     start_panda_event_handler(channel_rx, pool.clone(), realtime_state.clone());
 
     // ROUTES
@@ -107,7 +108,7 @@ async fn main() {
         .layer(Extension(OperationPoolState {
             pool: operation_pool,
         }))
-        .layer(Extension(config))
+        .layer(Extension(config_state))
         .layer(Extension(container))
         .layer(Extension(realtime_state));
 
@@ -124,11 +125,12 @@ async fn main() {
 }
 
 async fn start_panda(
-    config: &mut LoresNodeConfig,
+    config_state: &LoresNodeConfigState,
     container: &P2PandaContainer,
     operation_pool: &SqlitePool,
 ) {
     let repo = ThisP2PandaNodeRepo::init();
+    let config = config_state.get().await;
 
     match config.network_name.clone() {
         Some(network_name) => {
@@ -140,11 +142,18 @@ async fn start_panda(
         }
     }
 
-    container
-        .set_private_key(repo.get_or_create_private_key(config))
-        .await;
+    let private_key = match repo.get_or_create_private_key(config_state).await {
+        Ok(key) => key,
+        Err(e) => {
+            println!("Failed to get or create private key: {:?}", e);
+            return;
+        }
+    };
 
-    let bootstrap_details = repo.get_bootstrap_details(config);
+    container.set_private_key(private_key).await;
+
+    let bootstrap_details = repo.get_bootstrap_details(config_state).await;
+
     let bootstrap_node_id: Option<PublicKey> = match &bootstrap_details {
         Some(details) => build_public_key_from_hex(details.node_id.clone()),
         None => None,

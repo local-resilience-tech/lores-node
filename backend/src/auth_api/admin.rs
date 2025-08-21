@@ -4,7 +4,7 @@ use password_auth::generate_hash;
 use std::collections::HashSet;
 use utoipa_axum::{router::OpenApiRouter, routes};
 
-use crate::config::LoresNodeConfig;
+use crate::config::config_state::LoresNodeConfigState;
 
 pub fn router() -> OpenApiRouter {
     OpenApiRouter::new().routes(routes!(generate_admin_password))
@@ -16,8 +16,9 @@ pub fn router() -> OpenApiRouter {
     (status = INTERNAL_SERVER_ERROR, body = ()),
 ),)]
 async fn generate_admin_password(
-    Extension(mut config): Extension<LoresNodeConfig>,
+    Extension(config_state): Extension<LoresNodeConfigState>,
 ) -> impl IntoResponse {
+    let config = config_state.get().await;
     if config.hashed_admin_password.is_some() {
         return (StatusCode::BAD_REQUEST, "Admin password already set").into_response();
     }
@@ -38,8 +39,15 @@ async fn generate_admin_password(
 
     // Hash the password and store in config
     let hashed_password = generate_hash(&password);
-    config.hashed_admin_password = Some(hashed_password);
-    match config.try_save() {
+    let update_result = config_state
+        .update(|config| {
+            let mut result = config.clone();
+            result.hashed_admin_password = Some(hashed_password);
+            result
+        })
+        .await;
+
+    match update_result {
         Ok(_) => (StatusCode::CREATED, password).into_response(),
         Err(_) => (StatusCode::INTERNAL_SERVER_ERROR, "Internal Server Error").into_response(),
     }

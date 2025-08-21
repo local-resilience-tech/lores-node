@@ -259,7 +259,7 @@ impl P2PandaContainer {
                         println!("Gossip neighbor down: {:?}", peer.to_hex());
                     }
                     SystemEvent::PeerDiscovered { peer } => {
-                        println!("Peer discovered: {:?}", peer.to_hex());
+                        // println!("Peer discovered: {:?}", peer.to_hex());
                         let mut node_api = node_api.lock().await;
                         let node_api = node_api.as_mut().unwrap();
 

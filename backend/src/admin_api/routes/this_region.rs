@@ -4,7 +4,7 @@ use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::{
     admin_api::routes::this_p2panda_node::BootstrapNodeData,
-    config::LoresNodeConfig,
+    config::config_state::LoresNodeConfigState,
     panda_comms::{
         config::{SimplifiedNodeAddress, ThisP2PandaNodeRepo},
         container::{build_public_key_from_hex, P2PandaContainer},
@@ -22,7 +22,11 @@ pub fn router() -> OpenApiRouter {
     (status = 200, body = Option<Region>, description = "Returns the current region's network ID if available"),
     (status = INTERNAL_SERVER_ERROR, body = ()),
 ),)]
-async fn show_region(Extension(config): Extension<LoresNodeConfig>) -> impl IntoResponse {
+async fn show_region(
+    Extension(config_state): Extension<LoresNodeConfigState>,
+) -> impl IntoResponse {
+    let config = config_state.get().await;
+
     match config.network_name {
         Some(network_id) => {
             println!("got network id {}", network_id);
@@ -46,7 +50,7 @@ async fn show_region(Extension(config): Extension<LoresNodeConfig>) -> impl Into
     )
 )]
 async fn bootstrap(
-    Extension(mut config): Extension<LoresNodeConfig>,
+    Extension(config_state): Extension<LoresNodeConfigState>,
     Extension(panda_container): Extension<P2PandaContainer>,
     Extension(operation_pool): Extension<sqlx::SqlitePool>,
     axum::extract::Json(data): axum::extract::Json<BootstrapNodeData>,
@@ -58,7 +62,21 @@ async fn bootstrap(
             node_id: node_id.clone(),
         });
 
-    repo.set_network_config(&mut config, data.network_name.clone(), peer_address.clone());
+    let set_config_result = repo
+        .set_network_config(
+            &config_state,
+            data.network_name.clone(),
+            peer_address.clone(),
+        )
+        .await;
+    if let Err(e) = set_config_result {
+        eprintln!("Failed to set network config: {:?}", e);
+        return (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json("Failed to set network config".to_string()),
+        )
+            .into_response();
+    }
 
     panda_container
         .set_network_name(data.network_name.clone())
