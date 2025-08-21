@@ -8,10 +8,19 @@ import {
   Anchor,
 } from "../../../components"
 import { getApi } from "../../../api"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 
 export default function SetupAdmin() {
   const [password, setPassword] = useState<string | null>(null)
+  const [hasPassword, setHasPassword] = useState<boolean | null>(null)
+
+  const checkHasPassword = async (): Promise<ActionPromiseResult> => {
+    return getApi()
+      .auth.hasAdminPassword()
+      .then((result) => {
+        setHasPassword(result.data || null)
+      })
+  }
 
   const generatePassword = async (): Promise<ActionPromiseResult> => {
     return getApi()
@@ -25,6 +34,19 @@ export default function SetupAdmin() {
       })
   }
 
+  useEffect(() => {
+    checkHasPassword()
+  }, [])
+
+  let state: "has_password" | "needs_password" | "password_generated" =
+    "needs_password"
+
+  if (hasPassword === true) {
+    state = "has_password"
+  } else if (password) {
+    state = "password_generated"
+  }
+
   return (
     <Stack gap="lg">
       <Stack gap={0}>
@@ -33,7 +55,17 @@ export default function SetupAdmin() {
         </Text>
         <Title order={1}>Setup your admin password</Title>
       </Stack>
-      {!password && (
+
+      {state == "has_password" && (
+        <Stack gap="md">
+          <Text>Your account already has an admin password set.</Text>
+          <Text>
+            <Anchor href="../login">Login as admin</Anchor>
+          </Text>
+        </Stack>
+      )}
+
+      {state == "needs_password" && (
         <Stack gap="xl">
           <Stack gap="md">
             <Text>
@@ -53,7 +85,7 @@ export default function SetupAdmin() {
         </Stack>
       )}
 
-      {password && (
+      {state == "password_generated" && (
         <Stack gap="md">
           <Text>Your new admin password is:</Text>
           <Group>

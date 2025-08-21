@@ -1,4 +1,4 @@
-use axum::{http::StatusCode, response::IntoResponse, Extension};
+use axum::{http::StatusCode, response::IntoResponse, Extension, Json};
 use npwg::{generate_password_with_config, PasswordGeneratorConfig};
 use password_auth::generate_hash;
 use std::collections::HashSet;
@@ -7,7 +7,19 @@ use utoipa_axum::{router::OpenApiRouter, routes};
 use crate::config::config_state::LoresNodeConfigState;
 
 pub fn router() -> OpenApiRouter {
-    OpenApiRouter::new().routes(routes!(generate_admin_password))
+    OpenApiRouter::new()
+        .routes(routes!(has_admin_password))
+        .routes(routes!(generate_admin_password))
+}
+
+#[utoipa::path(get, path = "/", responses(
+    (status = OK, body = bool),
+),)]
+async fn has_admin_password(
+    Extension(config_state): Extension<LoresNodeConfigState>,
+) -> impl IntoResponse {
+    let config = config_state.get().await;
+    (StatusCode::OK, Json(config.hashed_admin_password.is_some()))
 }
 
 #[utoipa::path(post, path = "/", responses(

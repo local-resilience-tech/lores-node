@@ -672,14 +672,26 @@ export class Api<
     /**
      * No description
      *
+     * @name HasAdminPassword
+     * @request GET:/auth/admin
+     */
+    hasAdminPassword: (params: RequestParams = {}) =>
+      this.request<boolean, any>({
+        path: `/auth/admin`,
+        method: "GET",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
      * @name GenerateAdminPassword
      * @request POST:/auth/admin
      */
     generateAdminPassword: (params: RequestParams = {}) =>
-      this.request<any, any>({
+      this.request<string, string>({
         path: `/auth/admin`,
         method: "POST",
-        format: "json",
         ...params,
       }),
   };
