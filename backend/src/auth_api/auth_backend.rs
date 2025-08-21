@@ -92,7 +92,14 @@ impl AuthnBackend for AppAuthBackend {
         &self,
         creds: Self::Credentials,
     ) -> Result<Option<Self::User>, Self::Error> {
-        Ok(None)
+        match creds {
+            Self::Credentials::Admin(admin_creds) => {
+                self.authenticate_admin_user(&admin_creds).await
+            }
+            Self::Credentials::NodeSteward(node_steward_creds) => {
+                self.authenticate_steward_user(&node_steward_creds).await
+            }
+        }
     }
 
     async fn get_user(&self, user_id: &UserId<Self>) -> Result<Option<Self::User>, Self::Error> {
@@ -108,6 +115,26 @@ impl AuthnBackend for AppAuthBackend {
                 })
             })
             .map_err(|e| Error::AuthRepo(e))
+    }
+}
+
+impl AppAuthBackend {
+    async fn authenticate_admin_user(
+        &self,
+        creds: &AdminCredentials,
+    ) -> Result<Option<User>, Error> {
+        println!("Authenticating admin user: {:?}", creds);
+
+        Ok(None)
+    }
+
+    async fn authenticate_steward_user(
+        &self,
+        creds: &NodeStewardCredentials,
+    ) -> Result<Option<User>, Error> {
+        println!("Authenticating node steward user: {:?}", creds);
+
+        Ok(None)
     }
 }
 
