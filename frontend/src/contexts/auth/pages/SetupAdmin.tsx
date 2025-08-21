@@ -85,7 +85,7 @@ export default function SetupAdmin() {
         </Stack>
       )}
 
-      {state == "password_generated" && (
+      {state == "password_generated" && password && (
         <Stack gap="md">
           <Text>Your new admin password is:</Text>
           <Group>
