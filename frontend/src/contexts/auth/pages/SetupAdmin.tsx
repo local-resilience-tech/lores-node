@@ -5,6 +5,7 @@ import {
   actionFailure,
   ActionButton,
   CopyIconButton,
+  Anchor,
 } from "../../../components"
 import { getApi } from "../../../api"
 import { useState } from "react"
@@ -33,16 +34,22 @@ export default function SetupAdmin() {
         <Title order={1}>Setup your admin password</Title>
       </Stack>
       {!password && (
-        <Stack gap="md">
-          <Text>
-            The admin password is only used to create the users you use to
-            steward this node. It can be reset at any time.
-          </Text>
-          <Text>
-            The password is auto-generated and only displayed to you this once.
-            If you're ready to store it in a safe place (an encrypted password
-            manager, for example), click the button below to continue.
-          </Text>
+        <Stack gap="xl">
+          <Stack gap="md">
+            <Text>
+              The admin password is only used to create the users you use to
+              steward this node. It can be reset at any time.
+            </Text>
+            <Text>
+              The password is auto-generated and only displayed to you this
+              once. If you're ready to store it in a safe place (an encrypted
+              password manager, for example), click the button below to
+              continue.
+            </Text>
+          </Stack>
+          <ActionButton onClick={generatePassword} expand>
+            Generate admin password
+          </ActionButton>
         </Stack>
       )}
 
@@ -50,15 +57,27 @@ export default function SetupAdmin() {
         <Stack gap="md">
           <Text>Your new admin password is:</Text>
           <Group>
-            <Text component="pre">{password}</Text>
+            <Text
+              component="pre"
+              style={{
+                border: "1px solid var(--mantine-color-gray-6)",
+                padding: "4px 10px",
+                borderRadius: "4px",
+              }}
+            >
+              {password}
+            </Text>
             <CopyIconButton value={password} />
           </Group>
+          <Text>
+            Make sure to store this password in a safe place. When you've done
+            that, you can go ahead and:
+          </Text>
+          <Text>
+            <Anchor href="../login">Login as admin</Anchor>
+          </Text>
         </Stack>
       )}
-
-      <ActionButton onClick={generatePassword} expand>
-        Generate admin password
-      </ActionButton>
     </Stack>
   )
 }
