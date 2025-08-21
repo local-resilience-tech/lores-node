@@ -344,7 +344,7 @@ export class HttpClient<SecurityDataType = unknown> {
 
 /**
  * @title lores-node
- * @version 0.10.0
+ * @version 0.10.1
  * @license
  */
 export class Api<
@@ -664,6 +664,21 @@ export class Api<
         method: "POST",
         body: data,
         type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+  };
+  auth = {
+    /**
+     * No description
+     *
+     * @name GenerateAdminPassword
+     * @request POST:/auth/admin
+     */
+    generateAdminPassword: (params: RequestParams = {}) =>
+      this.request<any, any>({
+        path: `/auth/admin`,
+        method: "POST",
         format: "json",
         ...params,
       }),

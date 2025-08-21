@@ -28,6 +28,7 @@ use crate::{
 };
 
 mod admin_api;
+mod auth_api;
 mod config;
 mod docker;
 mod event_handlers;
@@ -93,6 +94,7 @@ async fn main() {
     // ROUTES
     let (router, api) = OpenApiRouter::with_openapi(ApiDoc::openapi())
         .nest("/api", OpenApiRouter::new().merge(api_router()))
+        .nest("/auth", auth_api::auth_router())
         .split_for_parts();
 
     let router = router

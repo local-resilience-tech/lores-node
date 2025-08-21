@@ -1,6 +1,6 @@
 import {
   ActionIcon,
-  ActionIconProps,
+  ButtonProps,
   Button,
   Group,
   HoverCard,
@@ -11,25 +11,24 @@ import { IconAlertCircle, IconX } from "@tabler/icons-react"
 import { useState } from "react"
 import { ActionPromiseResult, ActionResult } from "./ActionResult"
 
-type LoadingActionIconProps = PolymorphicComponentProps<
-  "button",
-  ActionIconProps
-> & {
+type ActionButtonProps = PolymorphicComponentProps<"button", ButtonProps> & {
   children?: React.ReactNode
   onClick?: () => Promise<ActionPromiseResult>
+  expand?: boolean
   successColor?: string
   errorColor?: string
   errorIcon?: React.ReactNode
 }
 
-export default function LoadingActionIcon({
+export default function ActionButton({
   children,
   onClick,
   successColor = "green",
   errorColor = "red",
+  expand = false,
   errorIcon = <IconAlertCircle />,
   ...props
-}: LoadingActionIconProps) {
+}: ActionButtonProps) {
   const [loading, setLoading] = useState(false)
   const [showResult, setShowResult] = useState(false)
   const [result, setResult] = useState<ActionResult | null>(null)
@@ -86,14 +85,22 @@ export default function LoadingActionIcon({
     }
   }
 
-  return (
-    <ActionIcon
+  const button = (
+    <Button
       {...props}
       onClick={handleClick}
       loading={loading}
       {...resultProps}
+      style={{ flexGrow: expand ? 1 : 0 }}
     >
-      {result?.error && showResult && errorIcon ? (
+      {children}
+    </Button>
+  )
+
+  if (result?.error && showResult && errorIcon) {
+    return (
+      <Group justify="stretch">
+        {button}
         <HoverCard width={280} shadow="md">
           <HoverCard.Target>{errorIcon}</HoverCard.Target>
           <HoverCard.Dropdown>
@@ -116,9 +123,45 @@ export default function LoadingActionIcon({
             </Group>
           </HoverCard.Dropdown>
         </HoverCard>
-      ) : (
-        children
-      )}
-    </ActionIcon>
-  )
+      </Group>
+    )
+  } else {
+    return button
+  }
+
+  // return (
+  //   <ActionIcon
+  //     {...props}
+  //     onClick={handleClick}
+  //     loading={loading}
+  //     {...resultProps}
+  //   >
+  //     {result?.error && showResult && errorIcon ? (
+  //       <HoverCard width={280} shadow="md">
+  //         <HoverCard.Target>{errorIcon}</HoverCard.Target>
+  //         <HoverCard.Dropdown>
+  //           <Group justify="space-between" align="flex-start">
+  //             <Text size="sm">
+  //               {result.error ||
+  //                 "An error occurred while performing the action."}
+  //             </Text>
+  //             <ActionIcon
+  //               key="close-error"
+  //               radius="xl"
+  //               color="gray"
+  //               onClick={(event) => {
+  //                 event.stopPropagation()
+  //                 clearError()
+  //               }}
+  //             >
+  //               <IconX />
+  //             </ActionIcon>
+  //           </Group>
+  //         </HoverCard.Dropdown>
+  //       </HoverCard>
+  //     ) : (
+  //       children
+  //     )}
+  //   </ActionIcon>
+  // )
 }

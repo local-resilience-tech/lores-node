@@ -16,6 +16,7 @@ import store, { AppStore, loadInitialData } from "./store"
 import NewLocalApp from "./contexts/apps/pages/NewLocalApp"
 import { Stacks } from "./contexts/stacks"
 import { ShowAppRepo, NewAppRepo, AppRepos } from "./contexts/app_repos"
+import { AuthLayout, SetupAdmin } from "./contexts/auth"
 
 // Import styles of packages that you've installed.
 // All packages except `@mantine/hooks` require styles imports
@@ -32,6 +33,20 @@ function withStore(
 }
 
 const router = createBrowserRouter([
+  {
+    path: "/auth",
+    element: <AuthLayout />,
+    children: [
+      {
+        path: "admin",
+        children: [{ path: "setup", element: <SetupAdmin /> }],
+      },
+    ],
+  },
+  {
+    path: "/setup",
+    element: <Navigate to="/auth/admin/setup" replace />,
+  },
   {
     path: "/",
     element: <Layout />,

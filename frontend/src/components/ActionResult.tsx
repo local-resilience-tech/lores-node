@@ -15,6 +15,7 @@ export function actionFailure(error: any): ActionPromiseResult {
     success: false,
     error: error.response?.data || "ServerError",
   }
+  console.log("Action result:", errorResult)
   return errorResult
 }
 
