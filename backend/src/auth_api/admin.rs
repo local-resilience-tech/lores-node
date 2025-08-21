@@ -16,7 +16,7 @@ pub fn router() -> OpenApiRouter {
     (status = INTERNAL_SERVER_ERROR, body = ()),
 ),)]
 async fn generate_admin_password(
-    Extension(config): Extension<LoresNodeConfig>,
+    Extension(mut config): Extension<LoresNodeConfig>,
 ) -> impl IntoResponse {
     if config.hashed_admin_password.is_some() {
         return (StatusCode::BAD_REQUEST, "Admin password already set").into_response();
@@ -37,15 +37,10 @@ async fn generate_admin_password(
     };
 
     // Hash the password and store in config
-    // let hashed_password = generate_hash(&password);
-    // config.hashed_admin_password = Some(hashed_password);
-    // match config.try_save() {
-    //     Ok(_) => (StatusCode::CREATED, password).into_response(),
-    //     Err(err) => {
-    //         eprintln!("Failed to save config: {}", err);
-    //         (StatusCode::INTERNAL_SERVER_ERROR, "Internal Server Error").into_response()
-    //     }
-    // }
-
-    (StatusCode::CREATED, password).into_response()
+    let hashed_password = generate_hash(&password);
+    config.hashed_admin_password = Some(hashed_password);
+    match config.try_save() {
+        Ok(_) => (StatusCode::CREATED, password).into_response(),
+        Err(_) => (StatusCode::INTERNAL_SERVER_ERROR, "Internal Server Error").into_response(),
+    }
 }
