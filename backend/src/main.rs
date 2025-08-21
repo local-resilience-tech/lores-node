@@ -1,11 +1,14 @@
 use axum::{routing::get, Extension};
+use axum_login::AuthManagerLayerBuilder;
 use p2panda_core::PublicKey;
 use sqlx::SqlitePool;
+use time::Duration;
 use tokio::sync::mpsc;
 use tower_http::{
     cors::{self, CorsLayer},
     trace::TraceLayer,
 };
+use tower_sessions::{Expiry, MemoryStore, SessionManagerLayer};
 use tracing_subscriber::EnvFilter;
 use utoipa::OpenApi;
 use utoipa_axum::router::OpenApiRouter;
@@ -16,6 +19,7 @@ use crate::{
         api_router,
         realtime::{self, RealtimeState},
     },
+    auth_api::auth_backend::AppAuthBackend,
     config::{config::LoresNodeConfig, config_state::LoresNodeConfigState},
     event_handlers::handle_event,
     infra::db,
@@ -82,6 +86,14 @@ async fn main() {
         .await
         .expect("Failed to prepare operation database");
 
+    // SESSION MANAGEMENT
+    let session_store = MemoryStore::default();
+    let session_layer = SessionManagerLayer::new(session_store)
+        .with_secure(false)
+        .with_expiry(Expiry::OnInactivity(Duration::days(30)));
+    let backend = AppAuthBackend::new(pool.clone());
+    let auth_layer = AuthManagerLayerBuilder::new(backend, session_layer).build();
+
     // REALTIME COMMS
     let realtime_state = RealtimeState::new();
 
@@ -110,6 +122,7 @@ async fn main() {
         }))
         .layer(Extension(config_state))
         .layer(Extension(container))
+        .layer(auth_layer)
         .layer(Extension(realtime_state));
 
     // SERVICE

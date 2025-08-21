@@ -1,9 +1,30 @@
 import { Stack, Title, Text } from "@mantine/core"
 import AdminLoginForm from "../components/AdminLoginForm"
+import { getApi } from "../../../api"
+import { useState } from "react"
+
+type AuthResult = "success" | "unauthorized" | "server_error"
 
 export default function AdminLogin() {
+  const [result, setResult] = useState<AuthResult | null>(null)
+
   const onSubmit = async (values: { password: string }) => {
-    // Handle login logic here
+    getApi()
+      .auth.adminLogin(values)
+      .then((response) => {
+        console.log("response", response)
+        setResult("success")
+      })
+      .catch((error) => {
+        console.error("error", error)
+        switch (error.status) {
+          case 401:
+            setResult("unauthorized")
+            break
+          default:
+            setResult("server_error")
+        }
+      })
   }
 
   return (
@@ -24,6 +45,14 @@ export default function AdminLogin() {
           node that you use for all other operations.
         </Text>
       </Stack>
+      {result === "unauthorized" && (
+        <Text c="red">Invalid credentials, please try again.</Text>
+      )}
+      {result === "server_error" && (
+        <Text c="red">
+          An unexpected error occurred, please try again later.
+        </Text>
+      )}
       <AdminLoginForm onSubmit={onSubmit} />
     </Stack>
   )

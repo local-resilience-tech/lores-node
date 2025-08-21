@@ -26,6 +26,10 @@ export enum InstallLocalAppError {
   ServerError = "ServerError",
 }
 
+export interface AdminCredentials {
+  password: string;
+}
+
 export interface AppDefinition {
   latest_version?: string | null;
   name: string;
@@ -692,6 +696,22 @@ export class Api<
       this.request<string, string>({
         path: `/auth/admin`,
         method: "POST",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @name AdminLogin
+     * @request POST:/auth/admin/login
+     */
+    adminLogin: (data: AdminCredentials, params: RequestParams = {}) =>
+      this.request<any, string>({
+        path: `/auth/admin/login`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
         ...params,
       }),
   };
