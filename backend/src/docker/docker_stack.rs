@@ -136,6 +136,7 @@ pub fn docker_stack_deploy(stack_name: &str, compose_file: &PathBuf) -> Result<(
         .arg("--compose-file")
         .arg(compose_file)
         .arg(stack_name)
+        .env("NODE_LOCAL_DOMAIN", "lores.localhost") // This is just to prove that it works
         .output()
         .map_err(|e| anyhow::anyhow!("Failed to execute command: {}", e))?;
 
