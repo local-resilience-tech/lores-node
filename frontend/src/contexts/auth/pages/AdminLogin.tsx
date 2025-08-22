@@ -2,18 +2,20 @@ import { Stack, Title, Text } from "@mantine/core"
 import AdminLoginForm from "../components/AdminLoginForm"
 import { getApi } from "../../../api"
 import { useState } from "react"
+import { useNavigate } from "react-router-dom"
 
-type AuthResult = "success" | "unauthorized" | "server_error"
+type AuthResult = "unauthorized" | "server_error"
 
 export default function AdminLogin() {
   const [result, setResult] = useState<AuthResult | null>(null)
+  const navigate = useNavigate()
 
   const onSubmit = async (values: { password: string }) => {
     getApi()
       .auth.adminLogin(values)
       .then((response) => {
         console.log("response", response)
-        setResult("success")
+        navigate("/admin/node_stewards")
       })
       .catch((error) => {
         console.error("error", error)
