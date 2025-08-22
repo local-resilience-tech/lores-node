@@ -91,7 +91,7 @@ async fn main() {
     let session_layer = SessionManagerLayer::new(session_store)
         .with_secure(false)
         .with_expiry(Expiry::OnInactivity(Duration::days(30)));
-    let backend = AppAuthBackend::new(&pool, &config_state);
+    let backend = AppAuthBackend::new(&config_state);
     let auth_layer = AuthManagerLayerBuilder::new(backend, session_layer).build();
 
     // REALTIME COMMS

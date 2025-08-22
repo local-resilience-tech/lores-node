@@ -2,48 +2,34 @@ use async_trait::async_trait;
 use axum_login::{AuthUser, AuthnBackend, UserId};
 use password_auth::verify_password;
 use serde::{Deserialize, Serialize};
-use sqlx::{FromRow, SqlitePool};
+
 use tokio::task;
 use utoipa::ToSchema;
 
 use crate::config::config_state::LoresNodeConfigState;
 
-use super::{
-    admin_user_repo::AdminUserRepo,
-    auth_repo::{AuthRepo, AuthRepoError},
-};
+use super::admin_user_repo::AdminUserRepo;
 
-#[derive(Clone, Serialize, Deserialize, FromRow)]
+const ADMIN_USER_ID: &str = "admin";
+
+#[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct User {
-    pub id: i64,
-    pub email: String,
-    password: String,
-}
-
-// Here we've implemented `Debug` manually to avoid accidentally logging the
-// password hash.
-impl std::fmt::Debug for User {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("User")
-            .field("id", &self.id)
-            .field("email", &self.email)
-            .field("password", &"[redacted]")
-            .finish()
-    }
+    pub id: String,
+    password_hash: String,
 }
 
 impl AuthUser for User {
-    type Id = i64;
+    type Id = String;
 
     fn id(&self) -> Self::Id {
-        self.id
+        self.id.clone()
     }
 
     fn session_auth_hash(&self) -> &[u8] {
-        self.password.as_bytes() // We use the password hash as the auth
-                                 // hash--what this means
-                                 // is when the user changes their password the
-                                 // auth session becomes invalid.
+        self.password_hash.as_bytes() // We use the password hash as the auth
+                                      // hash--what this means
+                                      // is when the user changes their password the
+                                      // auth session becomes invalid.
     }
 }
 
@@ -54,8 +40,8 @@ pub struct AdminCredentials {
 
 #[derive(Debug, Clone, Deserialize, ToSchema)]
 pub struct NodeStewardCredentials {
-    pub email: String,
-    pub password: String,
+    // pub email: String,
+    // pub password: String,
 }
 
 #[derive(Debug, Clone, Deserialize, ToSchema)]
@@ -66,14 +52,12 @@ pub enum Credentials {
 
 #[derive(Debug, Clone)]
 pub struct AppAuthBackend {
-    db: SqlitePool,
     config_state: LoresNodeConfigState,
 }
 
 impl AppAuthBackend {
-    pub fn new(db: &SqlitePool, config_state: &LoresNodeConfigState) -> Self {
+    pub fn new(config_state: &LoresNodeConfigState) -> Self {
         Self {
-            db: db.clone(),
             config_state: config_state.clone(),
         }
     }
@@ -109,22 +93,8 @@ impl AuthnBackend for AppAuthBackend {
         }
     }
 
-    async fn get_user(&self, user_id: &UserId<Self>) -> Result<Option<Self::User>, Self::Error> {
-        let repo = AuthRepo::new(&self.db);
-
-        repo.user_for_id(*user_id)
-            .await
-            .map(|user| {
-                user.map(|u| User {
-                    id: u.id,
-                    email: u.email.unwrap_or_default(),
-                    password: u.hashed_password.unwrap_or_default(),
-                })
-            })
-            .map_err(|e| {
-                eprintln!("Error fetching user: {:?}", e);
-                AuthError::UserNotFound
-            })
+    async fn get_user(&self, _user_id: &UserId<Self>) -> Result<Option<Self::User>, Self::Error> {
+        Ok(None)
     }
 }
 
@@ -140,9 +110,10 @@ impl AppAuthBackend {
         self.verify_password(creds.password.clone(), hashed_password.clone())
             .await?;
 
-        println!("Admin user authenticated successfully, still more TODO here");
-
-        Ok(None)
+        Ok(Some(User {
+            id: ADMIN_USER_ID.into(),
+            password_hash: hashed_password,
+        }))
     }
 
     async fn authenticate_steward_user(

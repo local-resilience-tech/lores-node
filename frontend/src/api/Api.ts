@@ -171,6 +171,10 @@ export interface UpdateNodeDetails {
   public_ipv4: string;
 }
 
+export interface UserRef {
+  user_id: string;
+}
+
 import type {
   AxiosInstance,
   AxiosRequestConfig,
@@ -706,7 +710,7 @@ export class Api<
      * @request POST:/auth/admin/login
      */
     adminLogin: (data: AdminCredentials, params: RequestParams = {}) =>
-      this.request<any, string>({
+      this.request<UserRef, string>({
         path: `/auth/admin/login`,
         method: "POST",
         body: data,

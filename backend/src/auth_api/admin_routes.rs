@@ -5,7 +5,8 @@ use crate::config::config_state::LoresNodeConfigState;
 
 use super::{
     admin_user_repo::{AdminUserRepo, GeneratePasswordError},
-    auth_backend::{AdminCredentials, AuthSession, Credentials},
+    auth_backend::{AdminCredentials, AuthError, AuthSession, Credentials},
+    UserRef,
 };
 
 pub fn router() -> OpenApiRouter {
@@ -51,7 +52,7 @@ async fn generate_admin_password(
 #[utoipa::path(
     post, path = "/login",
     responses(
-        (status = OK, body = ()),
+        (status = OK, body = UserRef),
         (status = INTERNAL_SERVER_ERROR, body = String),
         (status = UNAUTHORIZED, body = String)
     ),
@@ -68,12 +69,23 @@ async fn admin_login(
         Ok(None) => {
             return Err((StatusCode::UNAUTHORIZED, "Invalid credentials").into_response());
         }
-        Err(_) => return Err(StatusCode::INTERNAL_SERVER_ERROR.into_response()),
+
+        Err(e) => {
+            eprintln!("Authentication failed: {:?}", e);
+            let status = match e {
+                axum_login::Error::Backend(AuthError::InvalidCredentials) => {
+                    (StatusCode::UNAUTHORIZED, "Invalid credentials")
+                }
+                _ => (StatusCode::INTERNAL_SERVER_ERROR, "Internal server error"),
+            };
+            return Err(status.into_response());
+        }
     };
 
     if auth_session.login(&user).await.is_err() {
+        eprint!("Failed to log in admin user");
         return Err(StatusCode::INTERNAL_SERVER_ERROR.into_response());
     }
 
-    return Ok((StatusCode::OK, ()).into_response());
+    return Ok((StatusCode::OK, Json(UserRef::from_backend_user(&user))).into_response());
 }
