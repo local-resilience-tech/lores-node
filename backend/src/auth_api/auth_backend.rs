@@ -6,7 +6,12 @@ use sqlx::{FromRow, SqlitePool};
 use tokio::task;
 use utoipa::ToSchema;
 
-use super::auth_repo::{AuthRepo, AuthRepoError};
+use crate::config::config_state::LoresNodeConfigState;
+
+use super::{
+    admin_user_repo::AdminUserRepo,
+    auth_repo::{AuthRepo, AuthRepoError},
+};
 
 #[derive(Clone, Serialize, Deserialize, FromRow)]
 pub struct User {
@@ -62,36 +67,38 @@ pub enum Credentials {
 #[derive(Debug, Clone)]
 pub struct AppAuthBackend {
     db: SqlitePool,
+    config_state: LoresNodeConfigState,
 }
 
 impl AppAuthBackend {
-    pub fn new(db: SqlitePool) -> Self {
-        Self { db }
+    pub fn new(db: &SqlitePool, config_state: &LoresNodeConfigState) -> Self {
+        Self {
+            db: db.clone(),
+            config_state: config_state.clone(),
+        }
     }
 }
 
 #[derive(Debug, thiserror::Error)]
-pub enum Error {
-    #[error(transparent)]
-    Sqlx(#[from] sqlx::Error),
-
-    #[error(transparent)]
-    TaskJoin(#[from] task::JoinError),
-
-    #[error(transparent)]
-    AuthRepo(#[from] AuthRepoError),
+pub enum AuthError {
+    #[error("User not found")]
+    UserNotFound,
+    #[error("Invalid credentials provided")]
+    InvalidCredentials,
+    #[error("Internal server error occurred")]
+    ServerError,
 }
 
 #[async_trait]
 impl AuthnBackend for AppAuthBackend {
     type User = User;
     type Credentials = Credentials;
-    type Error = Error;
+    type Error = AuthError;
 
     async fn authenticate(
         &self,
         creds: Self::Credentials,
-    ) -> Result<Option<Self::User>, Self::Error> {
+    ) -> Result<Option<Self::User>, AuthError> {
         match creds {
             Self::Credentials::Admin(admin_creds) => {
                 self.authenticate_admin_user(&admin_creds).await
@@ -114,7 +121,10 @@ impl AuthnBackend for AppAuthBackend {
                     password: u.hashed_password.unwrap_or_default(),
                 })
             })
-            .map_err(|e| Error::AuthRepo(e))
+            .map_err(|e| {
+                eprintln!("Error fetching user: {:?}", e);
+                AuthError::UserNotFound
+            })
     }
 }
 
@@ -122,8 +132,15 @@ impl AppAuthBackend {
     async fn authenticate_admin_user(
         &self,
         creds: &AdminCredentials,
-    ) -> Result<Option<User>, Error> {
-        println!("Authenticating admin user: {:?}", creds);
+    ) -> Result<Option<User>, AuthError> {
+        println!("Authenticating admin user");
+
+        let hashed_password = self.expect_hashed_password().await?;
+
+        self.verify_password(creds.password.clone(), hashed_password.clone())
+            .await?;
+
+        println!("Admin user authenticated successfully, still more TODO here");
 
         Ok(None)
     }
@@ -131,10 +148,35 @@ impl AppAuthBackend {
     async fn authenticate_steward_user(
         &self,
         creds: &NodeStewardCredentials,
-    ) -> Result<Option<User>, Error> {
+    ) -> Result<Option<User>, AuthError> {
         println!("Authenticating node steward user: {:?}", creds);
 
         Ok(None)
+    }
+
+    async fn expect_hashed_password(&self) -> Result<String, AuthError> {
+        let repo = AdminUserRepo::new(&self.config_state);
+        let hashed_password = repo.get_hashed_password().await;
+
+        match hashed_password {
+            Some(hash) => Ok(hash),
+            None => Err(AuthError::UserNotFound),
+        }
+    }
+
+    async fn verify_password(&self, password: String, hashed: String) -> Result<(), AuthError> {
+        // Verifying the password is blocking and potentially slow, so we'll do so via
+        // `spawn_blocking`.
+        let verification_result = task::spawn_blocking(move || verify_password(&password, &hashed))
+            .await
+            .map_err(|_| {
+                eprintln!("Spawn blocking error when trying to verify password");
+                AuthError::ServerError
+            })?;
+
+        verification_result.map_err(|_| AuthError::InvalidCredentials)?;
+
+        Ok(())
     }
 }
 

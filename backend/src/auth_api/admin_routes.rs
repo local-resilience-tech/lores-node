@@ -33,8 +33,9 @@ async fn has_admin_password(
 async fn generate_admin_password(
     Extension(config_state): Extension<LoresNodeConfigState>,
 ) -> impl IntoResponse {
-    let repo = AdminUserRepo::new();
-    match repo.generate_and_save_admin_password(&config_state).await {
+    let repo = AdminUserRepo::new(&config_state);
+
+    match repo.generate_and_save_admin_password().await {
         Ok(password) => (StatusCode::CREATED, password).into_response(),
         Err(GeneratePasswordError::PasswordAlreadySet) => {
             eprintln!("Error generating admin password: Password already set");
