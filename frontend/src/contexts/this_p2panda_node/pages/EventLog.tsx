@@ -20,7 +20,7 @@ export default function EventLog() {
 
   const loadEventLog = async () => {
     getApi()
-      .api.p2PandaLogCounts()
+      .publicApi.p2PandaLogCounts()
       .then((response) => {
         console.log("Event log loaded:", response.data)
         setLogCounts(response.data)

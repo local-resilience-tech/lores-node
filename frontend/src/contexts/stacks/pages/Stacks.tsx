@@ -10,7 +10,7 @@ export default function Stacks() {
 
   const loadStacks = async () => {
     getApi()
-      .api.listStacks()
+      .publicApi.listStacks()
       .then((response) => {
         console.log("Stacks loaded:", response.data)
         setStacks(response.data)

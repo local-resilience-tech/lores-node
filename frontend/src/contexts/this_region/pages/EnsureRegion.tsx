@@ -16,7 +16,7 @@ export default function EnsureRegion({
 
   const onSubmit = async (data: BootstrapNodeData) => {
     getApi()
-      .api.bootstrap(data)
+      .publicApi.bootstrap(data)
       .then((result) => {
         if (result.status === 200) {
           console.log("Successfully bootstrapped", result)

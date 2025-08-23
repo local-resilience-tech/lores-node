@@ -19,7 +19,7 @@ export default function NewLocalApp() {
     values: AppRepoAppReference
   ): Promise<ActionPromiseResult | void> => {
     return getApi()
-      .api.installAppDefinition(values)
+      .publicApi.installAppDefinition(values)
       .then(() => {
         navigate("../")
         return actionSuccess()

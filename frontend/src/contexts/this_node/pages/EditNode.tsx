@@ -12,7 +12,7 @@ export default function EditNode() {
 
   const updateNode = async (data: UpdateNodeDetails) => {
     getApi()
-      .api.updateThisNode(data)
+      .publicApi.updateThisNode(data)
       .then((result) => {
         if (result.status === 200) {
           console.log("Node updated successfully", result.data)

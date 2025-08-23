@@ -38,7 +38,7 @@ export default function ShowLocalApp() {
   const handleUpgrade = async (version: string) => {
     console.log("Upgrading app:", app.name, "to version:", version)
     return getApi()
-      .api.upgradeLocalApp(app.name, { target_version: version })
+      .publicApi.upgradeLocalApp(app.name, { target_version: version })
       .then((response) => {
         console.log("Upgrade successful:", response)
       })
@@ -51,7 +51,7 @@ export default function ShowLocalApp() {
   const onAppDeploy = async (app: LocalApp) => {
     console.log("Deploying app:", app)
     return getApi()
-      .api.deployLocalApp(app.name)
+      .publicApi.deployLocalApp(app.name)
       .then((_) => actionSuccess())
       .catch((error) => actionFailure(error))
   }
@@ -59,7 +59,7 @@ export default function ShowLocalApp() {
   const onAppRemoveDeploy = async (app: LocalApp) => {
     console.log("Removing deployment of app:", app)
     return getApi()
-      .api.removeDeploymentOfLocalApp(app.name)
+      .publicApi.removeDeploymentOfLocalApp(app.name)
       .then((_) => actionSuccess())
       .catch((error) => actionFailure(error))
   }
@@ -67,7 +67,7 @@ export default function ShowLocalApp() {
   const onAppRegister = async (app: LocalApp) => {
     console.log("Registering app:", app)
     return getApi()
-      .api.registerApp({ app_name: app.name })
+      .publicApi.registerApp({ app_name: app.name })
       .then((_) => actionSuccess())
       .catch((error) => actionFailure(error))
   }

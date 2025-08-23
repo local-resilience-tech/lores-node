@@ -4,7 +4,7 @@ import { getApi } from "../../../api"
 import type { P2PandaNodeDetails } from "../../../api/Api"
 
 const getNode = async (): Promise<P2PandaNodeDetails | null> => {
-  const result = await getApi().api.showThisPandaNode()
+  const result = await getApi().publicApi.showThisPandaNode()
 
   if (result.status !== 200) {
     console.warn("Network not started", result)

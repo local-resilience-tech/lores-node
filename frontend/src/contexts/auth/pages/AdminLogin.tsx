@@ -12,7 +12,7 @@ export default function AdminLogin() {
 
   const onSubmit = async (values: { password: string }) => {
     getApi()
-      .auth.adminLogin(values)
+      .authApi.adminLogin(values)
       .then((response) => {
         console.log("response", response)
         navigate("/admin/node_stewards")

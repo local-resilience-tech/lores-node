@@ -16,7 +16,7 @@ export default function SetupAdmin() {
 
   const checkHasPassword = async (): Promise<ActionPromiseResult> => {
     return getApi()
-      .auth.hasAdminPassword()
+      .authApi.hasAdminPassword()
       .then((result) => {
         setHasPassword(result.data || null)
       })
@@ -24,7 +24,7 @@ export default function SetupAdmin() {
 
   const generatePassword = async (): Promise<ActionPromiseResult> => {
     return getApi()
-      .auth.generateAdminPassword()
+      .authApi.generateAdminPassword()
       .then((result) => {
         setPassword(result.data || null)
         return actionSuccess()

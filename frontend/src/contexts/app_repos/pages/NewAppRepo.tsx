@@ -9,7 +9,7 @@ export default function NewLocalApp() {
   const navigate = useNavigate()
   const handleSubmit = async (values: AppRepoSource): Promise<void> => {
     getApi()
-      .api.createAppRepo(values)
+      .publicApi.createAppRepo(values)
       .then(() => {
         console.log("App repository created successfully")
         navigate("..")

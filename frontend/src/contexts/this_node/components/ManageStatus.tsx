@@ -6,7 +6,7 @@ import type { NodeStatusData } from "../../../api/Api"
 export default function ManageStatus() {
   const postStatus = async (data: NodeStatusData) => {
     getApi()
-      .api.postNodeStatus(data)
+      .publicApi.postNodeStatus(data)
       .then((result) => {
         if (result.status === 200) {
           console.log("Node updated successfully", result.data)

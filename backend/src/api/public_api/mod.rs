@@ -13,7 +13,7 @@ pub mod client_events;
 pub mod realtime;
 mod routes;
 
-pub fn api_router() -> OpenApiRouter {
+pub fn public_api_router() -> OpenApiRouter {
     OpenApiRouter::new()
         .nest("/this_region", this_region::router())
         .nest("/this_p2panda_node", this_p2panda_node::router())

@@ -358,16 +358,59 @@ export class HttpClient<SecurityDataType = unknown> {
 export class Api<
   SecurityDataType extends unknown,
 > extends HttpClient<SecurityDataType> {
-  api = {
+  authApi = {
+    /**
+     * No description
+     *
+     * @name HasAdminPassword
+     * @request GET:/auth_api/admin
+     */
+    hasAdminPassword: (params: RequestParams = {}) =>
+      this.request<boolean, any>({
+        path: `/auth_api/admin`,
+        method: "GET",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @name GenerateAdminPassword
+     * @request POST:/auth_api/admin
+     */
+    generateAdminPassword: (params: RequestParams = {}) =>
+      this.request<string, string>({
+        path: `/auth_api/admin`,
+        method: "POST",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @name AdminLogin
+     * @request POST:/auth_api/admin/login
+     */
+    adminLogin: (data: AdminCredentials, params: RequestParams = {}) =>
+      this.request<UserRef, string>({
+        path: `/auth_api/admin/login`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+  };
+  publicApi = {
     /**
      * No description
      *
      * @name ListAppRepos
-     * @request GET:/api/app_repos
+     * @request GET:/public_api/app_repos
      */
     listAppRepos: (params: RequestParams = {}) =>
       this.request<AppRepo[], any>({
-        path: `/api/app_repos`,
+        path: `/public_api/app_repos`,
         method: "GET",
         format: "json",
         ...params,
@@ -377,11 +420,11 @@ export class Api<
      * No description
      *
      * @name CreateAppRepo
-     * @request POST:/api/app_repos
+     * @request POST:/public_api/app_repos
      */
     createAppRepo: (data: AppRepoSource, params: RequestParams = {}) =>
       this.request<any, any>({
-        path: `/api/app_repos`,
+        path: `/public_api/app_repos`,
         method: "POST",
         body: data,
         type: ContentType.Json,
@@ -393,11 +436,11 @@ export class Api<
      * No description
      *
      * @name ReloadAppRepo
-     * @request GET:/api/app_repos/reload/{repo_name}
+     * @request GET:/public_api/app_repos/reload/{repo_name}
      */
     reloadAppRepo: (repoName: string, params: RequestParams = {}) =>
       this.request<AppRepo, any>({
-        path: `/api/app_repos/reload/${repoName}`,
+        path: `/public_api/app_repos/reload/${repoName}`,
         method: "GET",
         format: "json",
         ...params,
@@ -407,11 +450,11 @@ export class Api<
      * No description
      *
      * @name DummyEvent
-     * @request GET:/api/dummy_event
+     * @request GET:/public_api/dummy_event
      */
     dummyEvent: (params: RequestParams = {}) =>
       this.request<null | ClientEvent, any>({
-        path: `/api/dummy_event`,
+        path: `/public_api/dummy_event`,
         method: "GET",
         format: "json",
         ...params,
@@ -421,11 +464,11 @@ export class Api<
      * No description
      *
      * @name ListLocalApps
-     * @request GET:/api/local_apps
+     * @request GET:/public_api/local_apps
      */
     listLocalApps: (params: RequestParams = {}) =>
       this.request<LocalApp[], any>({
-        path: `/api/local_apps`,
+        path: `/public_api/local_apps`,
         method: "GET",
         format: "json",
         ...params,
@@ -435,11 +478,11 @@ export class Api<
      * No description
      *
      * @name DeployLocalApp
-     * @request POST:/api/local_apps/app/{app_name}/deploy
+     * @request POST:/public_api/local_apps/app/{app_name}/deploy
      */
     deployLocalApp: (appName: string, params: RequestParams = {}) =>
       this.request<any, string>({
-        path: `/api/local_apps/app/${appName}/deploy`,
+        path: `/public_api/local_apps/app/${appName}/deploy`,
         method: "POST",
         format: "json",
         ...params,
@@ -449,11 +492,11 @@ export class Api<
      * No description
      *
      * @name RemoveDeploymentOfLocalApp
-     * @request DELETE:/api/local_apps/app/{app_name}/deploy
+     * @request DELETE:/public_api/local_apps/app/{app_name}/deploy
      */
     removeDeploymentOfLocalApp: (appName: string, params: RequestParams = {}) =>
       this.request<any, string>({
-        path: `/api/local_apps/app/${appName}/deploy`,
+        path: `/public_api/local_apps/app/${appName}/deploy`,
         method: "DELETE",
         format: "json",
         ...params,
@@ -463,7 +506,7 @@ export class Api<
      * No description
      *
      * @name UpgradeLocalApp
-     * @request POST:/api/local_apps/app/{app_name}/upgrade
+     * @request POST:/public_api/local_apps/app/{app_name}/upgrade
      */
     upgradeLocalApp: (
       appName: string,
@@ -471,7 +514,7 @@ export class Api<
       params: RequestParams = {},
     ) =>
       this.request<any, UpgradeLocalAppError>({
-        path: `/api/local_apps/app/${appName}/upgrade`,
+        path: `/public_api/local_apps/app/${appName}/upgrade`,
         method: "POST",
         body: data,
         type: ContentType.Json,
@@ -483,14 +526,14 @@ export class Api<
      * No description
      *
      * @name InstallAppDefinition
-     * @request POST:/api/local_apps/definitions
+     * @request POST:/public_api/local_apps/definitions
      */
     installAppDefinition: (
       data: AppRepoAppReference,
       params: RequestParams = {},
     ) =>
       this.request<any, InstallLocalAppError>({
-        path: `/api/local_apps/definitions`,
+        path: `/public_api/local_apps/definitions`,
         method: "POST",
         body: data,
         type: ContentType.Json,
@@ -502,11 +545,11 @@ export class Api<
      * No description
      *
      * @name RegisterApp
-     * @request POST:/api/local_apps/register
+     * @request POST:/public_api/local_apps/register
      */
     registerApp: (data: AppReference, params: RequestParams = {}) =>
       this.request<any, any>({
-        path: `/api/local_apps/register`,
+        path: `/public_api/local_apps/register`,
         method: "POST",
         body: data,
         type: ContentType.Json,
@@ -518,11 +561,11 @@ export class Api<
      * No description
      *
      * @name ListNodes
-     * @request GET:/api/nodes
+     * @request GET:/public_api/nodes
      */
     listNodes: (params: RequestParams = {}) =>
       this.request<NodeDetails[], any>({
-        path: `/api/nodes`,
+        path: `/public_api/nodes`,
         method: "GET",
         format: "json",
         ...params,
@@ -532,11 +575,11 @@ export class Api<
      * No description
      *
      * @name ListRegionApps
-     * @request GET:/api/region_apps
+     * @request GET:/public_api/region_apps
      */
     listRegionApps: (params: RequestParams = {}) =>
       this.request<RegionAppWithInstallations[], any>({
-        path: `/api/region_apps`,
+        path: `/public_api/region_apps`,
         method: "GET",
         format: "json",
         ...params,
@@ -546,11 +589,11 @@ export class Api<
      * No description
      *
      * @name ListStacks
-     * @request GET:/api/stacks
+     * @request GET:/public_api/stacks
      */
     listStacks: (params: RequestParams = {}) =>
       this.request<DockerStackWithServices[], any>({
-        path: `/api/stacks`,
+        path: `/public_api/stacks`,
         method: "GET",
         format: "json",
         ...params,
@@ -560,11 +603,11 @@ export class Api<
      * No description
      *
      * @name ShowThisNode
-     * @request GET:/api/this_node
+     * @request GET:/public_api/this_node
      */
     showThisNode: (params: RequestParams = {}) =>
       this.request<null | Node, string>({
-        path: `/api/this_node`,
+        path: `/public_api/this_node`,
         method: "GET",
         format: "json",
         ...params,
@@ -574,11 +617,11 @@ export class Api<
      * No description
      *
      * @name UpdateThisNode
-     * @request PUT:/api/this_node
+     * @request PUT:/public_api/this_node
      */
     updateThisNode: (data: UpdateNodeDetails, params: RequestParams = {}) =>
       this.request<Node, string>({
-        path: `/api/this_node`,
+        path: `/public_api/this_node`,
         method: "PUT",
         body: data,
         type: ContentType.Json,
@@ -590,11 +633,11 @@ export class Api<
      * No description
      *
      * @name CreateThisNode
-     * @request POST:/api/this_node
+     * @request POST:/public_api/this_node
      */
     createThisNode: (data: CreateNodeDetails, params: RequestParams = {}) =>
       this.request<Node, string>({
-        path: `/api/this_node`,
+        path: `/public_api/this_node`,
         method: "POST",
         body: data,
         type: ContentType.Json,
@@ -606,11 +649,11 @@ export class Api<
      * No description
      *
      * @name PostNodeStatus
-     * @request POST:/api/this_node/status
+     * @request POST:/public_api/this_node/status
      */
     postNodeStatus: (data: NodeStatusData, params: RequestParams = {}) =>
       this.request<any, string>({
-        path: `/api/this_node/status`,
+        path: `/public_api/this_node/status`,
         method: "POST",
         body: data,
         type: ContentType.Json,
@@ -622,11 +665,11 @@ export class Api<
      * No description
      *
      * @name ShowThisPandaNode
-     * @request GET:/api/this_p2panda_node
+     * @request GET:/public_api/this_p2panda_node
      */
     showThisPandaNode: (params: RequestParams = {}) =>
       this.request<P2PandaNodeDetails, string>({
-        path: `/api/this_p2panda_node`,
+        path: `/public_api/this_p2panda_node`,
         method: "GET",
         format: "json",
         ...params,
@@ -636,11 +679,11 @@ export class Api<
      * No description
      *
      * @name P2PandaLogCounts
-     * @request GET:/api/this_p2panda_node/event_log
+     * @request GET:/public_api/this_p2panda_node/event_log
      */
     p2PandaLogCounts: (params: RequestParams = {}) =>
       this.request<P2PandaLogCounts, any>({
-        path: `/api/this_p2panda_node/event_log`,
+        path: `/public_api/this_p2panda_node/event_log`,
         method: "GET",
         format: "json",
         ...params,
@@ -650,11 +693,11 @@ export class Api<
      * No description
      *
      * @name ShowRegion
-     * @request GET:/api/this_region
+     * @request GET:/public_api/this_region
      */
     showRegion: (params: RequestParams = {}) =>
       this.request<null | Region, any>({
-        path: `/api/this_region`,
+        path: `/public_api/this_region`,
         method: "GET",
         format: "json",
         ...params,
@@ -664,54 +707,11 @@ export class Api<
      * No description
      *
      * @name Bootstrap
-     * @request POST:/api/this_region/bootstrap
+     * @request POST:/public_api/this_region/bootstrap
      */
     bootstrap: (data: BootstrapNodeData, params: RequestParams = {}) =>
       this.request<any, string>({
-        path: `/api/this_region/bootstrap`,
-        method: "POST",
-        body: data,
-        type: ContentType.Json,
-        format: "json",
-        ...params,
-      }),
-  };
-  auth = {
-    /**
-     * No description
-     *
-     * @name HasAdminPassword
-     * @request GET:/auth/admin
-     */
-    hasAdminPassword: (params: RequestParams = {}) =>
-      this.request<boolean, any>({
-        path: `/auth/admin`,
-        method: "GET",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @name GenerateAdminPassword
-     * @request POST:/auth/admin
-     */
-    generateAdminPassword: (params: RequestParams = {}) =>
-      this.request<string, string>({
-        path: `/auth/admin`,
-        method: "POST",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @name AdminLogin
-     * @request POST:/auth/admin/login
-     */
-    adminLogin: (data: AdminCredentials, params: RequestParams = {}) =>
-      this.request<UserRef, string>({
-        path: `/auth/admin/login`,
+        path: `/public_api/this_region/bootstrap`,
         method: "POST",
         body: data,
         type: ContentType.Json,

@@ -9,7 +9,7 @@ import { thisNodeLoaded } from "../../../store/this_node"
 import { Outlet } from "react-router"
 
 const getNode = async (): Promise<Node | null> => {
-  const result = await getApi().api.showThisNode()
+  const result = await getApi().publicApi.showThisNode()
 
   if (result.status !== 200) {
     console.error("Failed to fetch node identity", result)
@@ -43,7 +43,7 @@ export default function EnsureNode() {
 
   const onSubmitNewNode = (data: NewNodeData) => {
     getApi()
-      .api.createThisNode({ name: data.name })
+      .publicApi.createThisNode({ name: data.name })
       .then((result) => {
         if (result.status === 201) {
           updateNode(result.data)

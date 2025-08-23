@@ -18,37 +18,37 @@ export async function loadInitialData(store: AppStore) {
 }
 
 async function loadRegion(store: AppStore) {
-  const result = await fetchApiData(() => getApi().api.showRegion())
+  const result = await fetchApiData(() => getApi().publicApi.showRegion())
   console.log("EFFECT: fetchRegion", result)
   if (result) store.dispatch(regionLoaded(result))
 }
 
 async function loadNodes(store: AppStore) {
-  const result = await fetchApiData(() => getApi().api.listNodes())
+  const result = await fetchApiData(() => getApi().publicApi.listNodes())
   console.log("EFFECT: fetchNodes", result)
   if (result) store.dispatch(nodesLoaded(result))
 }
 
 async function loadAppRepos(store: AppStore) {
-  const result = await fetchApiData(() => getApi().api.listAppRepos())
+  const result = await fetchApiData(() => getApi().publicApi.listAppRepos())
   console.log("EFFECT: fetchAppRepos", result)
   if (result) store.dispatch(appReposLoaded(result))
 }
 
 async function loadLocalApps(store: AppStore) {
-  const result = await fetchApiData(() => getApi().api.listLocalApps())
+  const result = await fetchApiData(() => getApi().publicApi.listLocalApps())
   console.log("EFFECT: fetchApps", result)
   if (result) store.dispatch(localAppsLoaded(result))
 }
 
 async function loadRegionApps(store: AppStore) {
-  const result = await fetchApiData(() => getApi().api.listRegionApps())
+  const result = await fetchApiData(() => getApi().publicApi.listRegionApps())
   console.log("EFFECT: fetchRegionApps", result)
   if (result) store.dispatch(regionAppsLoaded(result))
 }
 
 async function loadThisNode(store: AppStore) {
-  const result = await fetchApiData(() => getApi().api.showThisNode())
+  const result = await fetchApiData(() => getApi().publicApi.showThisNode())
   console.log("EFFECT: fetchThisNode", result)
   if (result) store.dispatch(thisNodeLoaded(result))
 }

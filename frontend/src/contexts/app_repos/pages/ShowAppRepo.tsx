@@ -40,7 +40,7 @@ export default function ShowAppRepo() {
 
   const refreshRepo = async (): Promise<ActionPromiseResult> => {
     getApi()
-      .api.reloadAppRepo(repoName)
+      .publicApi.reloadAppRepo(repoName)
       .then((result) => {
         dispatch(appRepoUpdated(result.data))
         return actionSuccess()
