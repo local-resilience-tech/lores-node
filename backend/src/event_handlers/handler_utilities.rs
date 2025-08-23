@@ -1,7 +1,7 @@
 use sqlx::SqlitePool;
 
 use crate::{
-    admin_api::client_events::ClientEvent, projections::projections_read::nodes::NodesReadRepo,
+    projections::projections_read::nodes::NodesReadRepo, public_api::client_events::ClientEvent,
 };
 
 #[derive(Default, Debug)]

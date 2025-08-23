@@ -3,7 +3,7 @@ import { Outlet } from "react-router"
 
 export default function AdminLayout() {
   return (
-    <Container>
+    <Container pt="xl">
       <Outlet />
     </Container>
   )

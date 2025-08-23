@@ -3,7 +3,6 @@ use p2panda_core::PublicKey;
 use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::{
-    admin_api::routes::this_p2panda_node::BootstrapNodeData,
     config::config_state::LoresNodeConfigState,
     panda_comms::{
         config::{SimplifiedNodeAddress, ThisP2PandaNodeRepo},
@@ -11,6 +10,8 @@ use crate::{
     },
     projections::entities::Region,
 };
+
+use super::this_p2panda_node::BootstrapNodeData;
 
 pub fn router() -> OpenApiRouter {
     OpenApiRouter::new()

@@ -2,12 +2,12 @@ use self::node_announced::NodeAnnouncedHandler;
 use sqlx::SqlitePool;
 
 use crate::{
-    admin_api::realtime::RealtimeState,
     event_handlers::{
         app_registered::AppRegisteredHandler, handler_utilities::HandlerResult,
         node_status_posted::NodeStatusPostedHandler, node_updated::NodeUpdatedHandler,
     },
     panda_comms::lores_events::{LoResEvent, LoResEventPayload},
+    public_api::realtime::RealtimeState,
 };
 
 mod app_registered;

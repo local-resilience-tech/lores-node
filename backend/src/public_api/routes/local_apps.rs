@@ -5,9 +5,8 @@ use utoipa::ToSchema;
 use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::{
-    admin_api::{client_events::ClientEvent, realtime::RealtimeState},
     local_apps::{
-        app_repos::{ fs::app_repo_from_app_name, AppRepoAppReference},
+        app_repos::{fs::app_repo_from_app_name, AppRepoAppReference},
         installed_apps::{
             self,
             fs::{load_app_config, InstallAppVersionError},
@@ -21,6 +20,8 @@ use crate::{
     },
     projections::entities::LocalApp,
 };
+
+use super::super::{client_events::ClientEvent, realtime::RealtimeState};
 
 pub fn router() -> OpenApiRouter {
     OpenApiRouter::new()

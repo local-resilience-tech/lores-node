@@ -1,15 +1,14 @@
 use axum::{extract::Path, http::StatusCode, response::IntoResponse, Extension, Json};
 use utoipa_axum::{router::OpenApiRouter, routes};
 
-use crate::{
-    admin_api::{client_events::ClientEvent, realtime::RealtimeState},
-    local_apps::app_repos::{
-        self,
-        fs::app_repo_from_ref,
-        git_app_repos::{checkout_latest_main, clone_git_app_repo},
-        AppRepo, AppRepoReference, AppRepoSource,
-    },
+use crate::local_apps::app_repos::{
+    self,
+    fs::app_repo_from_ref,
+    git_app_repos::{checkout_latest_main, clone_git_app_repo},
+    AppRepo, AppRepoReference, AppRepoSource,
 };
+
+use super::super::{client_events::ClientEvent, realtime::RealtimeState};
 
 pub fn router() -> OpenApiRouter {
     OpenApiRouter::new()
