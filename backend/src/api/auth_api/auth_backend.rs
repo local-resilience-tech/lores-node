@@ -1,5 +1,7 @@
+use std::collections::HashSet;
+
 use async_trait::async_trait;
-use axum_login::{AuthUser, AuthnBackend, UserId};
+use axum_login::{AuthUser, AuthnBackend, AuthzBackend, UserId};
 use password_auth::verify_password;
 use serde::{Deserialize, Serialize};
 
@@ -93,8 +95,18 @@ impl AuthnBackend for AppAuthBackend {
         }
     }
 
-    async fn get_user(&self, _user_id: &UserId<Self>) -> Result<Option<Self::User>, Self::Error> {
-        Ok(None)
+    async fn get_user(&self, user_id: &UserId<Self>) -> Result<Option<Self::User>, Self::Error> {
+        if user_id.to_string() == ADMIN_USER_ID.to_string() {
+            let user = Self::User {
+                id: ADMIN_USER_ID.to_string(),
+                password_hash: self.expect_hashed_password().await?,
+            };
+
+            return Ok(Some(user));
+        } else {
+            println!("User ID does not match admin user ID: {:?}", user_id);
+            return Ok(None);
+        }
     }
 }
 
@@ -148,6 +160,39 @@ impl AppAuthBackend {
         verification_result.map_err(|_| AuthError::InvalidCredentials)?;
 
         Ok(())
+    }
+}
+
+#[derive(Debug, Clone, Eq, PartialEq, Hash)]
+pub struct Permission {
+    pub name: String,
+}
+
+impl From<&str> for Permission {
+    fn from(name: &str) -> Self {
+        Permission {
+            name: name.to_string(),
+        }
+    }
+}
+
+#[async_trait]
+impl AuthzBackend for AppAuthBackend {
+    type Permission = Permission;
+
+    async fn get_group_permissions(
+        &self,
+        user: &Self::User,
+    ) -> Result<HashSet<Self::Permission>, Self::Error> {
+        let mut perms = HashSet::new();
+
+        if user.id == ADMIN_USER_ID.to_string() {
+            perms.insert(Permission::from("admin"));
+        } else {
+            perms.insert(Permission::from("steward"));
+        }
+
+        return Ok(perms);
     }
 }
 

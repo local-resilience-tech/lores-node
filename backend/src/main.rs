@@ -1,13 +1,14 @@
-use axum::{routing::get, Extension};
+use axum::{
+    http::{header, Method},
+    routing::get,
+    Extension,
+};
 use axum_login::AuthManagerLayerBuilder;
 use p2panda_core::PublicKey;
 use sqlx::SqlitePool;
 use time::Duration;
 use tokio::sync::mpsc;
-use tower_http::{
-    cors::{self, CorsLayer},
-    trace::TraceLayer,
-};
+use tower_http::{cors::CorsLayer, trace::TraceLayer};
 use tower_sessions::{Expiry, MemoryStore, SessionManagerLayer};
 use tracing_subscriber::EnvFilter;
 use utoipa::OpenApi;
@@ -55,6 +56,10 @@ async fn main() {
     #[openapi()]
     struct ApiDoc;
 
+    // CONFIG PARAMS
+    let base_url =
+        std::env::var("BASE_URL").unwrap_or_else(|_| "http://lores.localhost:5173".to_string());
+
     // LOGGING AND TRACING
     tracing_subscriber::fmt()
         // This allows you to use, e.g., `RUST_LOG=info` or `RUST_LOG=debug`
@@ -68,10 +73,16 @@ async fn main() {
 
     // CORS
     let cors = CorsLayer::new()
-        .allow_origin(cors::Any)
-        .allow_methods(cors::Any)
-        .allow_headers(cors::Any)
-        .expose_headers(cors::Any);
+        .allow_origin(base_url.parse::<header::HeaderValue>().unwrap())
+        .allow_methods([
+            Method::GET,
+            Method::POST,
+            Method::PUT,
+            Method::DELETE,
+            Method::OPTIONS,
+        ])
+        .allow_headers([header::AUTHORIZATION, header::ACCEPT, header::CONTENT_TYPE])
+        .allow_credentials(true);
 
     // CONFIG
     let config = LoresNodeConfig::load();
