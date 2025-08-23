@@ -358,6 +358,21 @@ export class HttpClient<SecurityDataType = unknown> {
 export class Api<
   SecurityDataType extends unknown,
 > extends HttpClient<SecurityDataType> {
+  adminApi = {
+    /**
+     * No description
+     *
+     * @name ListNodeStewards
+     * @request GET:/admin_api/admin
+     */
+    listNodeStewards: (params: RequestParams = {}) =>
+      this.request<any, any>({
+        path: `/admin_api/admin`,
+        method: "GET",
+        format: "json",
+        ...params,
+      }),
+  };
   authApi = {
     /**
      * No description
