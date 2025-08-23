@@ -15,7 +15,7 @@ use utoipa_axum::router::OpenApiRouter;
 use utoipa_swagger_ui::SwaggerUi;
 
 use crate::{
-    auth_api::auth_backend::AppAuthBackend,
+    api::auth_api::auth_backend::AppAuthBackend,
     config::{config::LoresNodeConfig, config_state::LoresNodeConfigState},
     event_handlers::handle_event,
     infra::db,
@@ -31,7 +31,7 @@ use crate::{
     static_server::frontend_handler,
 };
 
-mod auth_api;
+mod api;
 mod config;
 mod docker;
 mod event_handlers;
@@ -107,7 +107,7 @@ async fn main() {
     // ROUTES
     let (router, api) = OpenApiRouter::with_openapi(ApiDoc::openapi())
         .nest("/api", OpenApiRouter::new().merge(api_router()))
-        .nest("/auth", auth_api::auth_router())
+        .nest("/auth", api::auth_api::auth_router())
         .split_for_parts();
 
     let router = router
