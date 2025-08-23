@@ -15,7 +15,13 @@ use utoipa_axum::router::OpenApiRouter;
 use utoipa_swagger_ui::SwaggerUi;
 
 use crate::{
-    api::auth_api::auth_backend::AppAuthBackend,
+    api::{
+        auth_api::auth_backend::AppAuthBackend,
+        public_api::{
+            api_router,
+            realtime::{self, RealtimeState},
+        },
+    },
     config::{config::LoresNodeConfig, config_state::LoresNodeConfigState},
     event_handlers::handle_event,
     infra::db,
@@ -23,10 +29,6 @@ use crate::{
         config::ThisP2PandaNodeRepo,
         container::{build_public_key_from_hex, P2PandaContainer},
         lores_events::LoResEvent,
-    },
-    public_api::{
-        api_router,
-        realtime::{self, RealtimeState},
     },
     static_server::frontend_handler,
 };
@@ -39,7 +41,6 @@ mod infra;
 mod local_apps;
 mod panda_comms;
 mod projections;
-mod public_api;
 mod static_server;
 
 #[macro_use]

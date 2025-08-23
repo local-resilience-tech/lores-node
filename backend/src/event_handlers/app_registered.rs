@@ -1,6 +1,7 @@
 use sqlx::{Sqlite, SqlitePool};
 
 use crate::{
+    api::public_api::client_events::ClientEvent,
     event_handlers::handler_utilities::{handle_db_write_error, HandlerResult},
     panda_comms::lores_events::{AppRegisteredDataV1, LoResEventHeader},
     projections::{
@@ -8,7 +9,6 @@ use crate::{
         projections_read::apps::AppsReadRepo,
         projections_write::{app_installations::AppInstallationsWriteRepo, apps::AppsWriteRepo},
     },
-    public_api::client_events::ClientEvent,
 };
 
 pub struct AppRegisteredHandler {}
