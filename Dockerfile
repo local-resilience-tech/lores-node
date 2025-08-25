@@ -38,6 +38,8 @@ RUN cp /app/target/$(cat /app/.platform)/release/lores-node /app/lores-node
 FROM runtime_base AS runner
 COPY --from=rustbuilder /app/lores-node /app/backend/lores-node
 COPY --from=vitebuilder /app/dist /app/frontend
+COPY ./backend/migrations_nodedatadb /app/backend/migrations_nodedatadb
+COPY ./backend/migrations_projectiondb /app/backend/migrations_projectiondb
 ENV FRONTEND_PATH=/app/frontend
 ENV DATABASE_URL=sqlite:/app/lores-node.db
 ENV CONFIG_PATH=/app/config.toml
