@@ -27,7 +27,7 @@ pub fn router() -> OpenApiRouter {
     (status = 200, body = Option<Node>),
     (status = INTERNAL_SERVER_ERROR, body = String, description = "Internal Server Error"),
 ))]
-async fn show_this_node(
+pub async fn show_this_node(
     Extension(db): Extension<DatabaseState>,
     Extension(config_state): Extension<LoresNodeConfigState>,
 ) -> impl IntoResponse {

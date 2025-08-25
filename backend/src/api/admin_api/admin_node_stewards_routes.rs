@@ -18,7 +18,7 @@ pub struct NodeSteward {
 
 #[utoipa::path(get, path = "/",
     responses(
-        (status = OK, body = ()),
+        (status = OK, body = Vec<NodeSteward>),
         (status = INTERNAL_SERVER_ERROR, body = ()),
     ),
 )]

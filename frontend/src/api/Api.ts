@@ -141,6 +141,12 @@ export interface NodeStatusData {
   text?: string | null;
 }
 
+export interface NodeSteward {
+  active: boolean;
+  id: string;
+  name: string;
+}
+
 export interface P2PandaLogCounts {
   counts: LogCount[];
 }
@@ -352,7 +358,7 @@ export class HttpClient<SecurityDataType = unknown> {
 
 /**
  * @title lores-node
- * @version 0.10.1
+ * @version 0.11.3
  * @license
  */
 export class Api<
@@ -362,12 +368,26 @@ export class Api<
     /**
      * No description
      *
+     * @name ShowThisNode
+     * @request GET:/admin_api/node
+     */
+    showThisNode: (params: RequestParams = {}) =>
+      this.request<null | Node, string>({
+        path: `/admin_api/node`,
+        method: "GET",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
      * @name ListNodeStewards
-     * @request GET:/admin_api/admin
+     * @request GET:/admin_api/node_stewards
      */
     listNodeStewards: (params: RequestParams = {}) =>
-      this.request<any, any>({
-        path: `/admin_api/admin`,
+      this.request<NodeSteward[], any>({
+        path: `/admin_api/node_stewards`,
         method: "GET",
         format: "json",
         ...params,
