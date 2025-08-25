@@ -39,6 +39,7 @@
             environment:
               DATABASE_URL: "sqlite:/data/projections.sqlite"
               OPERATION_DATABASE_URL: "sqlite:/data/operations.sqlite"
+              NODE_DATA_DATABASE_URL: "sqlite:/data/node_data.sqlite"
               CONFIG_PATH: "/data/config.toml"
               APPS_PATH: "/apps"
               APP_REPOS_PATH: "/app_repos"
