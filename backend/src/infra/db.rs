@@ -37,6 +37,7 @@ pub async fn prepare_node_data_database() -> Result<Pool<Sqlite>> {
 }
 
 async fn prepare_database(db_url: &str, migrations: Option<&str>) -> Result<Pool<Sqlite>> {
+    println!("Preparing database at: {}", db_url);
     let filename = db_url
         .strip_prefix("sqlite:")
         .ok_or_else(|| anyhow::anyhow!("Database URL must start with 'sqlite:'"))?;
@@ -54,6 +55,7 @@ async fn prepare_database(db_url: &str, migrations: Option<&str>) -> Result<Pool
         let migrator = Migrator::new(std::path::Path::new(migrations_path)).await?;
         migrator.run(&pool).await?;
     }
+    println!("Database prepared successfully");
 
     Ok(pool)
 }
