@@ -1,9 +1,9 @@
 use crate::{
+    data::entities::{LocalApp, LocalAppInstallStatus},
     docker::{
         docker_stack::{docker_stack_deploy, docker_stack_ls, docker_stack_rm},
         DockerStack,
     },
-    projections::entities::{LocalApp, LocalAppInstallStatus},
 };
 
 use super::{

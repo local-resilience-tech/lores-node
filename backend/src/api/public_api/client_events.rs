@@ -2,8 +2,8 @@ use serde::Serialize;
 use utoipa::ToSchema;
 
 use crate::{
+    data::entities::{LocalApp, NodeDetails, RegionAppWithInstallations},
     local_apps::app_repos::AppRepo,
-    projections::entities::{LocalApp, NodeDetails, RegionAppWithInstallations},
 };
 
 #[derive(Debug, Clone, Serialize, ToSchema)]

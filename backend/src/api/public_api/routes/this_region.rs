@@ -4,11 +4,11 @@ use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::{
     config::config_state::LoresNodeConfigState,
+    data::entities::Region,
     panda_comms::{
         config::{SimplifiedNodeAddress, ThisP2PandaNodeRepo},
         container::{build_public_key_from_hex, P2PandaContainer},
     },
-    projections::entities::Region,
 };
 
 use super::this_p2panda_node::BootstrapNodeData;
