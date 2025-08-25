@@ -46,8 +46,9 @@ mod static_server;
 extern crate lazy_static;
 
 #[derive(Clone)]
-struct OperationPoolState {
-    pool: SqlitePool,
+struct DatabaseState {
+    operations_pool: SqlitePool,
+    projections_pool: SqlitePool,
 }
 
 #[tokio::main]
@@ -89,10 +90,10 @@ async fn main() {
     let config_state = LoresNodeConfigState::new(&config);
 
     // DATABASE
-    let pool = db::prepare_main_database()
+    let projections_pool = db::prepare_projections_database()
         .await
         .expect("Failed to prepare database");
-    let operation_pool = db::prepare_operation_database()
+    let operations_pool = db::prepare_operations_database()
         .await
         .expect("Failed to prepare operation database");
 
@@ -111,8 +112,8 @@ async fn main() {
     let (channel_tx, channel_rx): (mpsc::Sender<LoResEvent>, mpsc::Receiver<LoResEvent>) =
         mpsc::channel(32);
     let container = P2PandaContainer::new(channel_tx);
-    start_panda(&config_state, &container, &operation_pool).await;
-    start_panda_event_handler(channel_rx, pool.clone(), realtime_state.clone());
+    start_panda(&config_state, &container, &operations_pool).await;
+    start_panda_event_handler(channel_rx, projections_pool.clone(), realtime_state.clone());
 
     // ROUTES
     let (router, api) = OpenApiRouter::with_openapi(ApiDoc::openapi())
@@ -125,9 +126,9 @@ async fn main() {
         .fallback_service(get(frontend_handler))
         .layer(cors)
         .layer(TraceLayer::new_for_http())
-        .layer(Extension(pool))
-        .layer(Extension(OperationPoolState {
-            pool: operation_pool,
+        .layer(Extension(DatabaseState {
+            operations_pool,
+            projections_pool,
         }))
         .layer(Extension(config_state))
         .layer(Extension(container))
@@ -149,7 +150,7 @@ async fn main() {
 async fn start_panda(
     config_state: &LoresNodeConfigState,
     container: &P2PandaContainer,
-    operation_pool: &SqlitePool,
+    operations_pool: &SqlitePool,
 ) {
     let repo = ThisP2PandaNodeRepo::init();
     let config = config_state.get().await;
@@ -182,7 +183,7 @@ async fn start_panda(
     };
     container.set_bootstrap_node_id(bootstrap_node_id).await;
 
-    if let Err(e) = container.start(operation_pool).await {
+    if let Err(e) = container.start(operations_pool).await {
         println!("Failed to start P2PandaContainer on liftoff: {:?}", e);
     }
 }

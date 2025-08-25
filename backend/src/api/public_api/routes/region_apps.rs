@@ -1,9 +1,10 @@
 use axum::{http::StatusCode, response::IntoResponse, Extension, Json};
-use sqlx::SqlitePool;
+
 use utoipa_axum::{router::OpenApiRouter, routes};
 
-use crate::projections::{
-    entities::RegionAppWithInstallations, projections_read::apps::AppsReadRepo,
+use crate::{
+    projections::{entities::RegionAppWithInstallations, projections_read::apps::AppsReadRepo},
+    DatabaseState,
 };
 
 pub fn router() -> OpenApiRouter {
@@ -14,10 +15,10 @@ pub fn router() -> OpenApiRouter {
     (status = 200, body = Vec<RegionAppWithInstallations>),
     (status = INTERNAL_SERVER_ERROR, body = ()),
 ),)]
-async fn list_region_apps(Extension(pool): Extension<SqlitePool>) -> impl IntoResponse {
+async fn list_region_apps(Extension(db): Extension<DatabaseState>) -> impl IntoResponse {
     let repo = AppsReadRepo::init();
 
-    repo.all_with_installations(&pool)
+    repo.all_with_installations(&db.projections_pool)
         .await
         .map(|nodes| (StatusCode::OK, Json(nodes)))
         .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, Json(())))

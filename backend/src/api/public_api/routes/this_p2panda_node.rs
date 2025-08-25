@@ -8,7 +8,7 @@ use crate::{
         container::P2PandaContainer,
         log_access::{find_log_count, LogCount},
     },
-    OperationPoolState,
+    DatabaseState,
 };
 
 pub fn router() -> OpenApiRouter {
@@ -108,11 +108,11 @@ struct P2PandaLogCounts {
     (status = 200, body = P2PandaLogCounts)
 ),)]
 async fn p2panda_log_counts(
-    Extension(pool_state): Extension<OperationPoolState>,
+    Extension(database_state): Extension<DatabaseState>,
 ) -> impl IntoResponse {
-    let pool = pool_state.pool;
+    let operation_pool = database_state.operations_pool.clone();
 
-    let counts = find_log_count(&pool).await.unwrap_or_else(|e| {
+    let counts = find_log_count(&operation_pool).await.unwrap_or_else(|e| {
         eprint!("Error finding log count: {}", e);
         vec![]
     });

@@ -12,7 +12,7 @@ lazy_static! {
         .unwrap_or_else(|_| "sqlite:operations.sqlite".to_string());
 }
 
-pub async fn prepare_main_database() -> anyhow::Result<Pool<Sqlite>> {
+pub async fn prepare_projections_database() -> anyhow::Result<Pool<Sqlite>> {
     let filename = DATABASE_URL
         .strip_prefix("sqlite:")
         .ok_or_else(|| anyhow::anyhow!("DATABASE_URL must start with 'sqlite:'"))?;
@@ -36,7 +36,7 @@ pub async fn prepare_main_database() -> anyhow::Result<Pool<Sqlite>> {
     Ok(pool)
 }
 
-pub async fn prepare_operation_database() -> anyhow::Result<Pool<Sqlite>> {
+pub async fn prepare_operations_database() -> anyhow::Result<Pool<Sqlite>> {
     let filename = OPERATION_DATABASE_URL
         .strip_prefix("sqlite:")
         .ok_or_else(|| anyhow::anyhow!("OPERATION_DATABASE_URL must start with 'sqlite:'"))?;
