@@ -5,10 +5,10 @@
   "type": "module",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/merri-bek-tech/lores-node.git"
+    "url": "git+https://github.com/local-resilience-tech/lores-node.git"
   },
   "licence": "GPL-3.0",
-  "homepage": "https://github.com/merri-bek-tech/lores-node",
+  "homepage": "https://github.com/local-resilience-tech/lores-node",
   "scripts": {
     "dev": "vite --host",
     "build": "tsc && vite build",

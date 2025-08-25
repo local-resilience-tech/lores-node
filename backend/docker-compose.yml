@@ -14,7 +14,7 @@ services:
       - "2023:2023/udp"
     environment:
       - FRONTEND_PATH=/app/frontend
-      - DATABASE_URL=sqlite:/app/main.sqlite
+      - DATABASE_URL=sqlite:/app/projections.sqlite
       - CONFIG_PATH=/app/config.toml
       - APP_REPOS_PATH=/app/app_repos
       - APPS_PATH=/app/apps
