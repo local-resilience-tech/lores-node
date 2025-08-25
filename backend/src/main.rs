@@ -49,6 +49,8 @@ extern crate lazy_static;
 struct DatabaseState {
     operations_pool: SqlitePool,
     projections_pool: SqlitePool,
+
+    #[allow(dead_code)]
     node_data_pool: SqlitePool,
 }
 
