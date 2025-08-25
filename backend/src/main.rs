@@ -49,6 +49,7 @@ extern crate lazy_static;
 struct DatabaseState {
     operations_pool: SqlitePool,
     projections_pool: SqlitePool,
+    node_data_pool: SqlitePool,
 }
 
 #[tokio::main]
@@ -89,10 +90,13 @@ async fn main() {
     let config = LoresNodeConfig::load();
     let config_state = LoresNodeConfigState::new(&config);
 
-    // DATABASE
+    // DATABASES
     let projections_pool = db::prepare_projections_database()
         .await
         .expect("Failed to prepare database");
+    let node_data_pool = db::prepare_node_data_database()
+        .await
+        .expect("Failed to prepare node data database");
     let operations_pool = db::prepare_operations_database()
         .await
         .expect("Failed to prepare operation database");
@@ -129,6 +133,7 @@ async fn main() {
         .layer(Extension(DatabaseState {
             operations_pool,
             projections_pool,
+            node_data_pool,
         }))
         .layer(Extension(config_state))
         .layer(Extension(container))
