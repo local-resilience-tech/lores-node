@@ -1,5 +1,5 @@
 use p2panda_store::sqlite::store::run_pending_migrations;
-use sqlx::{sqlite::SqliteConnectOptions, Pool, Sqlite, SqlitePool};
+use sqlx::{migrate::Migrator, sqlite::SqliteConnectOptions, Pool, Sqlite, SqlitePool};
 use std::env;
 
 lazy_static! {
@@ -12,46 +12,38 @@ lazy_static! {
         .unwrap_or_else(|_| "sqlite:operations.sqlite".to_string());
 }
 
-pub async fn prepare_projections_database() -> anyhow::Result<Pool<Sqlite>> {
-    let filename = DATABASE_URL
+async fn prepare_database(db_url: &str, migrations: Option<&str>) -> anyhow::Result<Pool<Sqlite>> {
+    let filename = db_url
         .strip_prefix("sqlite:")
-        .ok_or_else(|| anyhow::anyhow!("DATABASE_URL must start with 'sqlite:'"))?;
+        .ok_or_else(|| anyhow::anyhow!("Database URL must start with 'sqlite:'"))?;
 
     println!("Using database file: {}", filename);
 
-    // create database if it does not exist
     let options = SqliteConnectOptions::new()
         .filename(filename)
         .create_if_missing(true);
 
-    // prepare connection pool
     let pool = SqlitePool::connect_with(options).await?;
 
-    // prepare schema in db if it does not yet exist
-    println!("Running migrations");
-    sqlx::migrate!("./migrations_projectiondb")
-        .run(&pool)
-        .await?;
+    if let Some(migrations_path) = migrations {
+        println!("Running migrations");
+        let migrator = Migrator::new(std::path::Path::new(migrations_path)).await?;
+        migrator.run(&pool).await?;
+    }
 
     Ok(pool)
 }
 
+pub async fn prepare_projections_database() -> anyhow::Result<Pool<Sqlite>> {
+    prepare_database(&DATABASE_URL, Some("./migrations_projectiondb")).await
+}
+
 pub async fn prepare_operations_database() -> anyhow::Result<Pool<Sqlite>> {
-    let filename = OPERATION_DATABASE_URL
-        .strip_prefix("sqlite:")
-        .ok_or_else(|| anyhow::anyhow!("OPERATION_DATABASE_URL must start with 'sqlite:'"))?;
+    let pool = prepare_database(&OPERATION_DATABASE_URL, None).await?;
 
-    println!("Using operation database file: {}", filename);
-
-    // create database if it does not exist
-    let options = SqliteConnectOptions::new()
-        .filename(filename)
-        .create_if_missing(true);
-
-    // prepare connection pool
-    let pool = SqlitePool::connect_with(options).await?;
-
-    run_pending_migrations(&pool).await?;
+    run_pending_migrations(&pool)
+        .await
+        .map_err(anyhow::Error::from)?;
 
     Ok(pool)
 }
