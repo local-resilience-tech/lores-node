@@ -38,16 +38,16 @@ COPY ./src src
 COPY ./Cargo.toml Cargo.toml
 COPY ./Cargo.lock Cargo.lock
 COPY ./config.toml config.toml
-COPY ./migrations migrations
-COPY ./main.sqlite main.sqlite
-ENV DATABASE_URL=sqlite:/app/main.sqlite
+COPY ./migrations_projectiondb migrations_projectiondb
+COPY ./projections.sqlite projections.sqlite
+ENV DATABASE_URL=sqlite:/app/projections.sqlite
 RUN cargo build --bin lores-node
 
 FROM runtime_base AS runtime
 COPY --from=builder /app/target/debug/lores-node lores-node
 COPY ./config.toml config.toml
-COPY ./migrations migrations
-COPY ./main.sqlite main.sqlite
+COPY ./migrations_projectiondb migrations_projectiondb
+COPY ./projections.sqlite projections.sqlite
 COPY ./operations.sqlite operations.sqlite
 
 EXPOSE 8200

@@ -103,7 +103,7 @@ Then install with `cargo install sqlx-cli`
 ### Useful commands
 
 Re-create the database:
-`DATABASE_URL=sqlite:./main.sqlite cargo sqlx database reset`
+`DATABASE_URL=sqlite:./projections.sqlite cargo sqlx database reset`
 
 Re-build the query indexes:
-`DATABASE_URL=sqlite:./main.sqlite cargo sqlx prepare`
+`DATABASE_URL=sqlite:./projections.sqlite cargo sqlx prepare`

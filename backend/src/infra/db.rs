@@ -4,7 +4,7 @@ use std::env;
 
 lazy_static! {
     pub static ref DATABASE_URL: String =
-        env::var("DATABASE_URL").unwrap_or_else(|_| "sqlite:main.sqlite".to_string());
+        env::var("DATABASE_URL").unwrap_or_else(|_| "sqlite:projections.sqlite".to_string());
 }
 
 lazy_static! {
@@ -29,7 +29,9 @@ pub async fn prepare_main_database() -> anyhow::Result<Pool<Sqlite>> {
 
     // prepare schema in db if it does not yet exist
     println!("Running migrations");
-    sqlx::migrate!().run(&pool).await?;
+    sqlx::migrate!("./migrations_projectiondb")
+        .run(&pool)
+        .await?;
 
     Ok(pool)
 }
