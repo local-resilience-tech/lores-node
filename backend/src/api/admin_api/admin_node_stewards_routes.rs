@@ -1,13 +1,15 @@
-use axum::{extract, http::StatusCode, response::IntoResponse, Extension, Json};
-use chrono::NaiveDateTime;
-use pwgen2::pwgen::{generate_password, PasswordConfig};
+use axum::{
+    extract::{self, Path},
+    http::StatusCode,
+    response::IntoResponse,
+    Extension, Json,
+};
 use serde::{Deserialize, Serialize};
-use short_uuid::ShortUuid;
 use utoipa::ToSchema;
 use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::{
-    data::node_data::node_stewards::{NodeStewardRow, NodeStewardsRepo},
+    data::node_data::node_stewards::{NodeStewardIdentifier, NodeStewardRow, NodeStewardsRepo},
     DatabaseState,
 };
 
@@ -15,6 +17,7 @@ pub fn router() -> OpenApiRouter {
     OpenApiRouter::new()
         .routes(routes!(list_node_stewards))
         .routes(routes!(create_node_steward))
+        .routes(routes!(reset_node_steward_token))
 }
 
 #[derive(Serialize, ToSchema)]
@@ -98,15 +101,8 @@ async fn create_node_steward(
     Extension(db): Extension<DatabaseState>,
     extract::Json(input): extract::Json<NodeStewardCreationData>,
 ) -> impl IntoResponse {
-    let new_row = NodeStewardRow {
-        id: new_node_steward_id(),
-        name: input.name,
-        hashed_password: None,
-        password_reset_token: Some(new_password_reset_token()),
-        password_reset_token_expires_at: Some(new_reset_token_expiry()),
-        enabled: true,
-        created_at: None,
-    };
+    let mut new_row = NodeStewardRow::new(input.name);
+    new_row.set_password_reset_token();
 
     let repo = NodeStewardsRepo::init();
     let result = repo.create(&db.node_data_pool, &new_row).await;
@@ -127,15 +123,50 @@ async fn create_node_steward(
     }
 }
 
-fn new_node_steward_id() -> String {
-    ShortUuid::generate().to_string()
-}
+#[utoipa::path(
+    post,
+    path = "/reset_token/{steward_id}",
+    params(
+        ("steward_id" = String, Path),
+    ),
+    responses(
+        (status = OK, body = NodeStewardCreationResult),
+        (status = NOT_FOUND, body = ()),
+        (status = INTERNAL_SERVER_ERROR, body = ()),
+    ),
+)]
+async fn reset_node_steward_token(
+    Extension(db): Extension<DatabaseState>,
+    Path(steward_id): Path<String>,
+) -> impl IntoResponse {
+    let repo = NodeStewardsRepo::init();
+    let identifier = NodeStewardIdentifier { id: steward_id };
 
-fn new_password_reset_token() -> String {
-    let pw_config = PasswordConfig::alphanumeric(8).unwrap();
-    generate_password(&pw_config)
-}
+    let mut row = match repo.find(&db.node_data_pool, &identifier).await {
+        Ok(Some(row)) => row,
+        Ok(None) => return (StatusCode::NOT_FOUND, ()).into_response(),
+        Err(e) => {
+            eprintln!("Error finding node steward: {:?}", e);
+            return (StatusCode::INTERNAL_SERVER_ERROR, ()).into_response();
+        }
+    };
+    row.set_password_reset_token();
 
-fn new_reset_token_expiry() -> NaiveDateTime {
-    chrono::Utc::now().naive_utc() + chrono::Duration::hours(24)
+    let result = repo
+        .update_password_reset_token(&db.node_data_pool, &row)
+        .await;
+
+    match result {
+        Ok(_) => {
+            let creation_result = NodeStewardCreationResult {
+                node_steward: NodeSteward::from_row(&row),
+                password_reset_token: row.password_reset_token.unwrap_or_default(),
+            };
+            (StatusCode::OK, Json(creation_result)).into_response()
+        }
+        Err(e) => {
+            eprintln!("Error saving reset token: {:?}", e);
+            (StatusCode::INTERNAL_SERVER_ERROR, ()).into_response()
+        }
+    }
 }

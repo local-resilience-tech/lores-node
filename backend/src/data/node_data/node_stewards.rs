@@ -1,5 +1,9 @@
 use chrono::NaiveDateTime;
+use pwgen2::pwgen::{generate_password, PasswordConfig};
+use serde::Serialize;
+use short_uuid::ShortUuid;
 use sqlx::{Sqlite, SqlitePool};
+use utoipa::ToSchema;
 
 #[derive(sqlx::FromRow)]
 #[allow(dead_code)]
@@ -13,7 +17,24 @@ pub struct NodeStewardRow {
     pub created_at: Option<NaiveDateTime>,
 }
 
+#[derive(Serialize, ToSchema)]
+pub struct NodeStewardIdentifier {
+    pub id: String,
+}
+
 impl NodeStewardRow {
+    pub fn new(name: String) -> Self {
+        NodeStewardRow {
+            id: new_node_steward_id(),
+            name,
+            hashed_password: None,
+            password_reset_token: None,
+            password_reset_token_expires_at: None,
+            enabled: true,
+            created_at: None,
+        }
+    }
+
     pub fn token_expired(&self) -> bool {
         if self.hashed_password.is_some() {
             return false;
@@ -30,6 +51,11 @@ impl NodeStewardRow {
             }
             None => true, // No expiry means no valid token
         }
+    }
+
+    pub fn set_password_reset_token(&mut self) {
+        self.password_reset_token = Some(new_password_reset_token());
+        self.password_reset_token_expires_at = Some(new_reset_token_expiry());
     }
 }
 
@@ -57,7 +83,7 @@ impl NodeStewardsRepo {
         sqlx::query::<Sqlite>(
             "
             INSERT INTO node_stewards (id, name, hashed_password, password_reset_token, password_reset_token_expires_at, enabled, created_at, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?, NOW(), NOW())
+            VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
             ",
         )
         .bind(&row.id)
@@ -71,4 +97,57 @@ impl NodeStewardsRepo {
 
         Ok(())
     }
+
+    pub async fn find(
+        &self,
+        pool: &SqlitePool,
+        identifier: &NodeStewardIdentifier,
+    ) -> Result<Option<NodeStewardRow>, sqlx::Error> {
+        let row = sqlx::query_as::<Sqlite, NodeStewardRow>(
+            "
+            SELECT id, name, hashed_password, password_reset_token, password_reset_token_expires_at, enabled, created_at
+            FROM node_stewards
+            WHERE id = ?
+            ",
+        )
+        .bind(identifier.id.clone())
+        .fetch_optional(pool)
+        .await?;
+
+        Ok(row)
+    }
+
+    pub async fn update_password_reset_token(
+        &self,
+        pool: &SqlitePool,
+        row: &NodeStewardRow,
+    ) -> Result<(), sqlx::Error> {
+        sqlx::query::<Sqlite>(
+            "
+            UPDATE node_stewards
+            SET password_reset_token = ?, password_reset_token_expires_at = ?, updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+            ",
+        )
+        .bind(&row.password_reset_token)
+        .bind(&row.password_reset_token_expires_at)
+        .bind(&row.id)
+        .execute(pool)
+        .await?;
+
+        Ok(())
+    }
+}
+
+fn new_node_steward_id() -> String {
+    ShortUuid::generate().to_string()
+}
+
+fn new_password_reset_token() -> String {
+    let pw_config = PasswordConfig::alphanumeric(8).unwrap();
+    generate_password(&pw_config)
+}
+
+fn new_reset_token_expiry() -> NaiveDateTime {
+    chrono::Utc::now().naive_utc() + chrono::Duration::hours(24)
 }

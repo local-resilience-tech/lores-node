@@ -6,7 +6,11 @@ import { IconPlus } from "@tabler/icons-react"
 import { NodeSteward, NodeStewardStatus } from "../../../api/Api"
 import NodeStewardsList from "../components/NodeStewardsList"
 import { NodeStewardAction } from "../components/NodeStewardAction"
-import { ActionPromiseResult } from "../../../components"
+import {
+  actionFailure,
+  ActionPromiseResult,
+  actionSuccess,
+} from "../../../components"
 
 export default function AllNodeStewards() {
   const navigate = useNavigate()
@@ -27,6 +31,12 @@ export default function AllNodeStewards() {
       })
   }
 
+  const updateLocalNodeSteward = (record: NodeSteward) => {
+    setNodeStewards((prev) =>
+      prev.map((steward) => (steward.id === record.id ? record : steward))
+    )
+  }
+
   useEffect(() => {
     listNodeStewards()
   }, [])
@@ -36,16 +46,26 @@ export default function AllNodeStewards() {
 
     if (record.status === NodeStewardStatus.TokenExpired) {
       result.push({
-        type: "extend",
+        type: "reset_token",
         buttonColor: "orange",
         primary: true,
         handler: (record: NodeSteward): Promise<ActionPromiseResult> => {
-          return new Promise((resolve) => {
-            setTimeout(() => {
-              console.log("Extending token for:", record)
-              resolve({ success: true })
-            }, 1000)
-          })
+          return getApi()
+            .adminApi.resetNodeStewardToken(record.id)
+            .then((result) => {
+              updateLocalNodeSteward(result.data.node_steward)
+              return actionSuccess()
+            })
+            .catch((error) => {
+              if (
+                error.response?.status === 401 ||
+                error.response?.status === 403
+              ) {
+                navigate("/auth/admin/login")
+              } else {
+                return actionFailure(error)
+              }
+            })
         },
       })
     }

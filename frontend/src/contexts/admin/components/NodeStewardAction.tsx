@@ -1,4 +1,4 @@
-import { Button, Group, MantineColor, Stack } from "@mantine/core"
+import { MantineColor, Stack } from "@mantine/core"
 import { NodeSteward } from "../../../api/Api"
 import { useState } from "react"
 import {
@@ -6,17 +6,16 @@ import {
   ActionPromiseResult,
   ActionResult,
 } from "../../../components"
-import { ActionResultErrorIcon } from "../../../components/ActionResult"
 
 export interface NodeStewardAction {
-  type: "extend"
+  type: "reset_token"
   buttonColor?: MantineColor
   primary?: boolean
   handler: (record: NodeSteward) => Promise<ActionPromiseResult>
 }
 
 const names: Record<NodeStewardAction["type"], string> = {
-  extend: "Extend token",
+  reset_token: "Reset token",
 }
 
 function NodeStewardActionButton({
@@ -55,21 +54,6 @@ function NodeStewardActionButton({
       {names[action.type] || action.type}
     </ActionButton>
   )
-
-  // return (
-  //   <Group gap="xs">
-  //     <Button
-  //       onClick={() => handleButtonPress(record, action.handler)}
-  //       size="compact-sm"
-  //       variant={action.primary ? "filled" : "outline"}
-  //       color={action.buttonColor}
-  //       loading={loading}
-  //     >
-  //       {names[action.type] || action.type}
-  //     </Button>
-  //     <ActionResultErrorIcon result={result} />
-  //   </Group>
-  // )
 }
 
 export default function NodeStewardActions({

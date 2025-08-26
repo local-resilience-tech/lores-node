@@ -428,6 +428,20 @@ export class Api<
         format: "json",
         ...params,
       }),
+
+    /**
+     * No description
+     *
+     * @name ResetNodeStewardToken
+     * @request POST:/admin_api/node_stewards/reset_token/{steward_id}
+     */
+    resetNodeStewardToken: (stewardId: string, params: RequestParams = {}) =>
+      this.request<NodeStewardCreationResult, any>({
+        path: `/admin_api/node_stewards/reset_token/${stewardId}`,
+        method: "POST",
+        format: "json",
+        ...params,
+      }),
   };
   authApi = {
     /**
