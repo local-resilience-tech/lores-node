@@ -1,14 +1,14 @@
 use sqlx::{Sqlite, SqlitePool};
 
 use crate::{
+    data::{
+        entities::Node,
+        projections_write::nodes::{NodeUpdateRow, NodesWriteRepo},
+    },
     event_handlers::handler_utilities::{
         handle_db_write_error, read_node_updated_event, HandlerResult,
     },
     panda_comms::lores_events::{LoResEventHeader, NodeUpdatedDataV1},
-    projections::{
-        entities::Node,
-        projections_write::nodes::{NodeUpdateRow, NodesWriteRepo},
-    },
 };
 
 pub struct NodeUpdatedHandler {}

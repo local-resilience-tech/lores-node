@@ -5,13 +5,13 @@ use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::{
     config::config_state::LoresNodeConfigState,
+    data::{entities::Node, projections_read::nodes::NodesReadRepo},
     panda_comms::{
         container::P2PandaContainer,
         lores_events::{
             LoResEventPayload, NodeAnnouncedDataV1, NodeStatusPostedDataV1, NodeUpdatedDataV1,
         },
     },
-    projections::{entities::Node, projections_read::nodes::NodesReadRepo},
     DatabaseState,
 };
 
@@ -27,7 +27,7 @@ pub fn router() -> OpenApiRouter {
     (status = 200, body = Option<Node>),
     (status = INTERNAL_SERVER_ERROR, body = String, description = "Internal Server Error"),
 ))]
-async fn show_this_node(
+pub async fn show_this_node(
     Extension(db): Extension<DatabaseState>,
     Extension(config_state): Extension<LoresNodeConfigState>,
 ) -> impl IntoResponse {

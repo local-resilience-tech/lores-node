@@ -5,6 +5,7 @@ use utoipa::ToSchema;
 use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::{
+    data::entities::LocalApp,
     local_apps::{
         app_repos::{fs::app_repo_from_app_name, AppRepoAppReference},
         installed_apps::{
@@ -18,7 +19,6 @@ use crate::{
         container::P2PandaContainer,
         lores_events::{AppRegisteredDataV1, LoResEventPayload},
     },
-    projections::entities::LocalApp,
 };
 
 use super::super::{client_events::ClientEvent, realtime::RealtimeState};

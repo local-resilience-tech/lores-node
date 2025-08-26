@@ -3,7 +3,7 @@ use axum::{http::StatusCode, response::IntoResponse, Extension, Json};
 use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::{
-    projections::{entities::RegionAppWithInstallations, projections_read::apps::AppsReadRepo},
+    data::{entities::RegionAppWithInstallations, projections_read::apps::AppsReadRepo},
     DatabaseState,
 };
 

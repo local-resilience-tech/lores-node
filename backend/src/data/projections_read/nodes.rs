@@ -1,8 +1,6 @@
 use sqlx::SqlitePool;
 
-use crate::projections::entities::Node;
-
-use super::super::entities::NodeDetails;
+use super::super::entities::{Node, NodeDetails};
 
 pub struct NodesReadRepo {}
 

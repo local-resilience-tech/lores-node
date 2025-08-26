@@ -14,7 +14,7 @@ use super::{
     apps_folder::AppsFolder,
     AppReference,
 };
-use crate::projections::entities::{LocalApp, LocalAppInstallStatus};
+use crate::data::entities::{LocalApp, LocalAppInstallStatus};
 
 pub fn find_installed_apps() -> Vec<AppVersionDefinition> {
     let apps_folder = AppsFolder::new();

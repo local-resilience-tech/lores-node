@@ -16,6 +16,13 @@ export enum UpgradeLocalAppError {
   ServerError = "ServerError",
 }
 
+export enum NodeStewardStatus {
+  Enabled = "Enabled",
+  Disabled = "Disabled",
+  Invited = "Invited",
+  TokenExpired = "TokenExpired",
+}
+
 export enum LocalAppInstallStatus {
   Installed = "Installed",
   StackDeployed = "StackDeployed",
@@ -139,6 +146,22 @@ export interface NodeDetails {
 export interface NodeStatusData {
   state?: string | null;
   text?: string | null;
+}
+
+export interface NodeSteward {
+  created_at: string;
+  id: string;
+  name: string;
+  status: NodeStewardStatus;
+}
+
+export interface NodeStewardCreationData {
+  name: string;
+}
+
+export interface NodeStewardCreationResult {
+  node_steward: NodeSteward;
+  password_reset_token: string;
 }
 
 export interface P2PandaLogCounts {
@@ -352,7 +375,7 @@ export class HttpClient<SecurityDataType = unknown> {
 
 /**
  * @title lores-node
- * @version 0.10.1
+ * @version 0.11.3
  * @license
  */
 export class Api<
@@ -362,13 +385,60 @@ export class Api<
     /**
      * No description
      *
+     * @name ShowThisNode
+     * @request GET:/admin_api/node
+     */
+    showThisNode: (params: RequestParams = {}) =>
+      this.request<null | Node, string>({
+        path: `/admin_api/node`,
+        method: "GET",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
      * @name ListNodeStewards
-     * @request GET:/admin_api/admin
+     * @request GET:/admin_api/node_stewards
      */
     listNodeStewards: (params: RequestParams = {}) =>
-      this.request<any, any>({
-        path: `/admin_api/admin`,
+      this.request<NodeSteward[], any>({
+        path: `/admin_api/node_stewards`,
         method: "GET",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @name CreateNodeSteward
+     * @request POST:/admin_api/node_stewards
+     */
+    createNodeSteward: (
+      data: NodeStewardCreationData,
+      params: RequestParams = {},
+    ) =>
+      this.request<NodeStewardCreationResult, string>({
+        path: `/admin_api/node_stewards`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @name ResetNodeStewardToken
+     * @request POST:/admin_api/node_stewards/reset_token/{steward_id}
+     */
+    resetNodeStewardToken: (stewardId: string, params: RequestParams = {}) =>
+      this.request<NodeStewardCreationResult, any>({
+        path: `/admin_api/node_stewards/reset_token/${stewardId}`,
+        method: "POST",
         format: "json",
         ...params,
       }),

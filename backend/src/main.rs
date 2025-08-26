@@ -23,7 +23,6 @@ use crate::{
     },
     config::{config::LoresNodeConfig, config_state::LoresNodeConfigState},
     event_handlers::handle_event,
-    infra::db,
     panda_comms::{
         config::ThisP2PandaNodeRepo,
         container::{build_public_key_from_hex, P2PandaContainer},
@@ -34,12 +33,11 @@ use crate::{
 
 mod api;
 mod config;
+mod data;
 mod docker;
 mod event_handlers;
-mod infra;
 mod local_apps;
 mod panda_comms;
-mod projections;
 mod static_server;
 
 #[macro_use]
@@ -93,13 +91,13 @@ async fn main() {
     let config_state = LoresNodeConfigState::new(&config);
 
     // DATABASES
-    let projections_pool = db::prepare_projections_database()
+    let projections_pool = data::setup::prepare_projections_database()
         .await
         .expect("Failed to prepare database");
-    let node_data_pool = db::prepare_node_data_database()
+    let node_data_pool = data::setup::prepare_node_data_database()
         .await
         .expect("Failed to prepare node data database");
-    let operations_pool = db::prepare_operations_database()
+    let operations_pool = data::setup::prepare_operations_database()
         .await
         .expect("Failed to prepare operation database");
 
