@@ -1,6 +1,6 @@
-import { MantineColor, Stack } from "@mantine/core"
+import { Button, MantineColor, Popover, Stack } from "@mantine/core"
 import { NodeSteward } from "../../../api/Api"
-import { useState } from "react"
+import React, { useState } from "react"
 import {
   ActionButton,
   ActionPromiseResult,
@@ -8,14 +8,16 @@ import {
 } from "../../../components"
 
 export interface NodeStewardAction {
-  type: "reset_token"
+  type: "reset_token" | "display_token"
   buttonColor?: MantineColor
   primary?: boolean
-  handler: (record: NodeSteward) => Promise<ActionPromiseResult>
+  handler?: (record: NodeSteward) => Promise<ActionPromiseResult>
+  overlay?: React.ReactNode
 }
 
 const names: Record<NodeStewardAction["type"], string> = {
   reset_token: "Reset token",
+  display_token: "Display token",
 }
 
 function NodeStewardActionButton({
@@ -44,16 +46,36 @@ function NodeStewardActionButton({
     }
   }
 
-  return (
-    <ActionButton
-      onClick={() => handleButtonPress(record, action.handler)}
-      size="compact-sm"
-      color={action.buttonColor}
-      variant={action.primary ? "filled" : "outline"}
-    >
-      {names[action.type] || action.type}
-    </ActionButton>
-  )
+  const buttonProps = {
+    size: "compact-sm",
+    color: action.buttonColor,
+    variant: action.primary ? "filled" : "outline",
+  }
+  const buttonText = names[action.type] || action.type
+
+  if (action.handler) {
+    return (
+      <ActionButton
+        onClick={() => handleButtonPress(record, action.handler!)}
+        {...buttonProps}
+      >
+        {buttonText}
+      </ActionButton>
+    )
+  }
+
+  if (action.overlay) {
+    return (
+      <Popover position="bottom" withArrow shadow="md">
+        <Popover.Target>
+          <Button {...buttonProps}>{buttonText}</Button>
+        </Popover.Target>
+        <Popover.Dropdown>{action.overlay}</Popover.Dropdown>
+      </Popover>
+    )
+  }
+
+  return null
 }
 
 export default function NodeStewardActions({

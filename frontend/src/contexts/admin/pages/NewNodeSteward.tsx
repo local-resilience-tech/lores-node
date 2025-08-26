@@ -22,6 +22,7 @@ import {
   CopyIconButton,
 } from "../../../components"
 import { useState } from "react"
+import DisplayOneTimeToken from "../components/DisplayOneTimeToken"
 
 export default function NewNodeSteward() {
   const navigate = useNavigate()
@@ -56,36 +57,11 @@ export default function NewNodeSteward() {
               Node steward <strong>{result.node_steward.name}</strong> created
               successfully
             </Text>
-            <Text>
-              Please give the following details to {result.node_steward.name} to
-              allow them to complete the setup of their account.
-            </Text>
 
-            <Table>
-              <Table.Tbody>
-                <Table.Tr>
-                  <Table.Th maw={100}>Node Steward ID</Table.Th>
-                  <Table.Td ff="monospace">{result.node_steward.id}</Table.Td>
-                </Table.Tr>
-                <Table.Tr>
-                  <Table.Th maw={100}>Temporary Access Code</Table.Th>
-                  <Table.Td ff="monospace">
-                    {result.password_reset_token}
-                  </Table.Td>
-                </Table.Tr>
-              </Table.Tbody>
-            </Table>
-
-            <CopyIconButton
-              value={`Node Steward ID: ${result.node_steward.id}\nTemporary Access Code: ${result.password_reset_token}`}
-              prompt="Copy details to clipboard"
-              successText="copied"
+            <DisplayOneTimeToken
+              steward={result.node_steward}
+              password_reset_token={result.password_reset_token}
             />
-
-            <Text>
-              We only display these details this once. The temporary access code
-              will be valid for one use within the next 24 hours.
-            </Text>
 
             <Anchor href="../">Back to list</Anchor>
           </Stack>

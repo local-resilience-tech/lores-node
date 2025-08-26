@@ -11,10 +11,12 @@ import {
   ActionPromiseResult,
   actionSuccess,
 } from "../../../components"
+import DisplayOneTimeToken from "../components/DisplayOneTimeToken"
 
 export default function AllNodeStewards() {
   const navigate = useNavigate()
   const [nodeStewards, setNodeStewards] = useState<NodeSteward[]>([])
+  const [stewardTokens, setStewardTokens] = useState<Record<string, string>>({})
 
   const listNodeStewards = async () => {
     getApi()
@@ -37,6 +39,13 @@ export default function AllNodeStewards() {
     )
   }
 
+  const updateStewardToken = (id: string, token: string) => {
+    setStewardTokens((prev) => ({
+      ...prev,
+      [id]: token,
+    }))
+  }
+
   useEffect(() => {
     listNodeStewards()
   }, [])
@@ -54,6 +63,7 @@ export default function AllNodeStewards() {
             .adminApi.resetNodeStewardToken(record.id)
             .then((result) => {
               updateLocalNodeSteward(result.data.node_steward)
+              updateStewardToken(record.id, result.data.password_reset_token)
               return actionSuccess()
             })
             .catch((error) => {
@@ -67,6 +77,21 @@ export default function AllNodeStewards() {
               }
             })
         },
+      })
+    }
+
+    if (stewardTokens[record.id]) {
+      result.push({
+        type: "display_token",
+        buttonColor: "blue",
+        primary: false,
+        overlay: (
+          <DisplayOneTimeToken
+            steward={record}
+            password_reset_token={stewardTokens[record.id]}
+            maw={400}
+          />
+        ),
       })
     }
 
