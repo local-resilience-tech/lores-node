@@ -1,0 +1,1 @@
+ALTER TABLE node_stewards ADD COLUMN password_reset_token_expires_at TEXT;

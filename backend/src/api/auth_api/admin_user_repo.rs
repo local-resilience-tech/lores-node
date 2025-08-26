@@ -1,7 +1,5 @@
-use std::collections::HashSet;
-
-use npwg::{generate_password_with_config, PasswordGeneratorConfig, PasswordGeneratorError};
 use password_auth::generate_hash;
+use pwgen2::pwgen::{generate_password, PasswordConfig};
 
 use crate::config::config_state::LoresNodeConfigState;
 
@@ -26,10 +24,7 @@ impl AdminUserRepo {
             return Err(GeneratePasswordError::PasswordAlreadySet);
         }
 
-        let password = self.generate_admin_password().await.map_err(|e| {
-            eprintln!("Error generating password: {}", e);
-            GeneratePasswordError::ServerError
-        })?;
+        let password = self.generate_admin_password();
 
         // Hash the password and store in config
         let hashed_password = generate_hash(&password);
@@ -54,12 +49,9 @@ impl AdminUserRepo {
         config.hashed_admin_password.clone()
     }
 
-    async fn generate_admin_password(&self) -> Result<String, PasswordGeneratorError> {
-        let mut pw_config = PasswordGeneratorConfig::new();
-        pw_config.length = 20;
-        pw_config.excluded_chars = HashSet::from([':', ';', '"']);
-
-        generate_password_with_config(&pw_config).await
+    fn generate_admin_password(&self) -> String {
+        let pw_config = PasswordConfig::new(20).unwrap();
+        generate_password(&pw_config)
     }
 
     async fn password_already_set(&self) -> bool {

@@ -1,8 +1,8 @@
 use axum::{extract, http::StatusCode, response::IntoResponse, Extension, Json};
-use npwg::{generate_password_with_config, PasswordGeneratorConfig, PasswordGeneratorError};
+use chrono::NaiveDateTime;
+use pwgen2::pwgen::{generate_password, PasswordConfig};
 use serde::{Deserialize, Serialize};
 use short_uuid::ShortUuid;
-use std::collections::HashSet;
 use utoipa::ToSchema;
 use utoipa_axum::{router::OpenApiRouter, routes};
 
@@ -63,7 +63,7 @@ pub struct NodeStewardCreationResult {
 #[utoipa::path(post, path = "/",
     request_body(content = NodeStewardCreationData, content_type = "application/json"),
     responses(
-        (status = CREATED, body = Vec<NodeSteward>),
+        (status = CREATED, body = NodeStewardCreationResult),
         (status = INTERNAL_SERVER_ERROR, body = String),
     ),
 )]
@@ -71,22 +71,12 @@ async fn create_node_steward(
     Extension(db): Extension<DatabaseState>,
     extract::Json(input): extract::Json<NodeStewardCreationData>,
 ) -> impl IntoResponse {
-    let token = match new_password_reset_token().await {
-        Ok(token) => token,
-        Err(_) => {
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "Error generating password reset token".to_string(),
-            )
-                .into_response()
-        }
-    };
-
     let new_row = NodeStewardRow {
         id: new_node_steward_id(),
         name: input.name,
         hashed_password: None,
-        password_reset_token: Some(token),
+        password_reset_token: Some(new_password_reset_token()),
+        password_reset_token_expires_at: Some(new_reset_token_expiry()),
         active: true,
     };
 
@@ -117,13 +107,11 @@ fn new_node_steward_id() -> String {
     ShortUuid::generate().to_string()
 }
 
-async fn new_password_reset_token() -> Result<String, PasswordGeneratorError> {
-    let mut pw_config = PasswordGeneratorConfig::new();
-    pw_config.length = 8;
-    pw_config.add_allowed_chars("digit");
-    pw_config.add_allowed_chars("lowerletter");
-    pw_config.add_allowed_chars("upperletter");
-    pw_config.excluded_chars = HashSet::from(['0', 'O']);
+fn new_password_reset_token() -> String {
+    let pw_config = PasswordConfig::alphanumeric(8).unwrap();
+    generate_password(&pw_config)
+}
 
-    generate_password_with_config(&pw_config).await
+fn new_reset_token_expiry() -> NaiveDateTime {
+    chrono::Utc::now().naive_utc() + chrono::Duration::hours(24)
 }

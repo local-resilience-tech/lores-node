@@ -151,6 +151,11 @@ export interface NodeStewardCreationData {
   name: string;
 }
 
+export interface NodeStewardCreationResult {
+  node_steward: NodeSteward;
+  password_reset_token: string;
+}
+
 export interface P2PandaLogCounts {
   counts: LogCount[];
 }
@@ -407,7 +412,7 @@ export class Api<
       data: NodeStewardCreationData,
       params: RequestParams = {},
     ) =>
-      this.request<NodeSteward[], string>({
+      this.request<NodeStewardCreationResult, string>({
         path: `/admin_api/node_stewards`,
         method: "POST",
         body: data,
