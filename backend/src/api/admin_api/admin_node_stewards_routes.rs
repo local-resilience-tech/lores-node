@@ -21,7 +21,7 @@ pub fn router() -> OpenApiRouter {
 pub struct NodeSteward {
     pub id: String,
     pub name: String,
-    pub active: bool,
+    pub enabled: bool,
 }
 
 #[utoipa::path(get, path = "/",
@@ -34,16 +34,16 @@ async fn list_node_stewards(Extension(db): Extension<DatabaseState>) -> impl Int
     let repo = NodeStewardsRepo::init();
 
     match repo.all(&db.node_data_pool).await {
-        Ok(nodes) => {
-            let result_nodes: Vec<NodeSteward> = nodes
+        Ok(stewards) => {
+            let results: Vec<NodeSteward> = stewards
                 .into_iter()
-                .map(|node| NodeSteward {
-                    id: node.id,
-                    name: node.name,
-                    active: node.active,
+                .map(|steward| NodeSteward {
+                    id: steward.id,
+                    name: steward.name,
+                    enabled: steward.enabled,
                 })
                 .collect();
-            (StatusCode::OK, Json(result_nodes)).into_response()
+            (StatusCode::OK, Json(results)).into_response()
         }
         Err(_) => (StatusCode::INTERNAL_SERVER_ERROR, ()).into_response(),
     }
@@ -77,7 +77,7 @@ async fn create_node_steward(
         hashed_password: None,
         password_reset_token: Some(new_password_reset_token()),
         password_reset_token_expires_at: Some(new_reset_token_expiry()),
-        active: true,
+        enabled: true,
     };
 
     let repo = NodeStewardsRepo::init();
@@ -89,7 +89,7 @@ async fn create_node_steward(
                 node_steward: NodeSteward {
                     id: new_row.id,
                     name: new_row.name,
-                    active: new_row.active,
+                    enabled: new_row.enabled,
                 },
                 password_reset_token: new_row.password_reset_token.unwrap_or_default(),
             };

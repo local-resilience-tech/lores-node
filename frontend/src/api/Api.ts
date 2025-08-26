@@ -142,7 +142,7 @@ export interface NodeStatusData {
 }
 
 export interface NodeSteward {
-  active: boolean;
+  enabled: boolean;
   id: string;
   name: string;
 }

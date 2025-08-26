@@ -3,16 +3,18 @@ import { useEffect, useState } from "react"
 import { getApi } from "../../../api"
 import { useNavigate } from "react-router-dom"
 import { IconPlus } from "@tabler/icons-react"
+import { NodeSteward } from "../../../api/Api"
+import NodeStewardsList from "../components/NodeStewardsList"
 
-export default function NodeStewardsList() {
+export default function AllNodeStewards() {
   const navigate = useNavigate()
-  const [nodeStewards, setNodeStewards] = useState([])
+  const [nodeStewards, setNodeStewards] = useState<NodeSteward[]>([])
 
   const listNodeStewards = async () => {
     getApi()
       .adminApi.listNodeStewards()
       .then((response) => {
-        console.log("Node Stewards:", response.data)
+        setNodeStewards(response.data)
       })
       .catch((error) => {
         if (error.response?.status === 401 || error.response?.status === 403) {
@@ -56,7 +58,9 @@ export default function NodeStewardsList() {
         </Card>
       )}
 
-      {nodeStewards.length > 0 && <Text>stewards list</Text>}
+      {nodeStewards.length > 0 && (
+        <NodeStewardsList nodeStewards={nodeStewards} />
+      )}
     </Stack>
   )
 }
