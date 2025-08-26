@@ -18,10 +18,41 @@ pub fn router() -> OpenApiRouter {
 }
 
 #[derive(Serialize, ToSchema)]
+pub enum NodeStewardStatus {
+    Enabled,
+    Disabled,
+    Invited,
+    TokenExpired,
+}
+
+#[derive(Serialize, ToSchema)]
 pub struct NodeSteward {
     pub id: String,
     pub name: String,
-    pub enabled: bool,
+    pub created_at: String,
+    pub status: NodeStewardStatus,
+}
+
+impl NodeSteward {
+    pub fn from_row(row: &NodeStewardRow) -> Self {
+        let mut status: NodeStewardStatus = match row.enabled {
+            true => NodeStewardStatus::Enabled,
+            false => NodeStewardStatus::Disabled,
+        };
+        if row.hashed_password.is_none() {
+            match row.token_expired() {
+                true => status = NodeStewardStatus::TokenExpired,
+                false => status = NodeStewardStatus::Invited,
+            }
+        }
+
+        NodeSteward {
+            id: row.id.clone(),
+            name: row.name.clone(),
+            created_at: row.created_at.unwrap_or_default().to_string(),
+            status,
+        }
+    }
 }
 
 #[utoipa::path(get, path = "/",
@@ -37,11 +68,7 @@ async fn list_node_stewards(Extension(db): Extension<DatabaseState>) -> impl Int
         Ok(stewards) => {
             let results: Vec<NodeSteward> = stewards
                 .into_iter()
-                .map(|steward| NodeSteward {
-                    id: steward.id,
-                    name: steward.name,
-                    enabled: steward.enabled,
-                })
+                .map(|steward| NodeSteward::from_row(&steward))
                 .collect();
             (StatusCode::OK, Json(results)).into_response()
         }
@@ -78,6 +105,7 @@ async fn create_node_steward(
         password_reset_token: Some(new_password_reset_token()),
         password_reset_token_expires_at: Some(new_reset_token_expiry()),
         enabled: true,
+        created_at: None,
     };
 
     let repo = NodeStewardsRepo::init();
@@ -86,11 +114,7 @@ async fn create_node_steward(
     match result {
         Ok(_) => {
             let creation_result = NodeStewardCreationResult {
-                node_steward: NodeSteward {
-                    id: new_row.id,
-                    name: new_row.name,
-                    enabled: new_row.enabled,
-                },
+                node_steward: NodeSteward::from_row(&new_row),
                 password_reset_token: new_row.password_reset_token.unwrap_or_default(),
             };
             (StatusCode::CREATED, Json(creation_result)).into_response()

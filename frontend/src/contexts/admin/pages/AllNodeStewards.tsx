@@ -3,8 +3,10 @@ import { useEffect, useState } from "react"
 import { getApi } from "../../../api"
 import { useNavigate } from "react-router-dom"
 import { IconPlus } from "@tabler/icons-react"
-import { NodeSteward } from "../../../api/Api"
+import { NodeSteward, NodeStewardStatus } from "../../../api/Api"
 import NodeStewardsList from "../components/NodeStewardsList"
+import { NodeStewardAction } from "../components/NodeStewardAction"
+import { ActionPromiseResult } from "../../../components"
 
 export default function AllNodeStewards() {
   const navigate = useNavigate()
@@ -28,6 +30,28 @@ export default function AllNodeStewards() {
   useEffect(() => {
     listNodeStewards()
   }, [])
+
+  const getActions = (record: NodeSteward): NodeStewardAction[] => {
+    let result: NodeStewardAction[] = []
+
+    if (record.status === NodeStewardStatus.TokenExpired) {
+      result.push({
+        type: "extend",
+        buttonColor: "orange",
+        primary: true,
+        handler: (record: NodeSteward): Promise<ActionPromiseResult> => {
+          return new Promise((resolve) => {
+            setTimeout(() => {
+              console.log("Extending token for:", record)
+              resolve({ success: true })
+            }, 1000)
+          })
+        },
+      })
+    }
+
+    return result
+  }
 
   return (
     <Stack>
@@ -59,7 +83,7 @@ export default function AllNodeStewards() {
       )}
 
       {nodeStewards.length > 0 && (
-        <NodeStewardsList nodeStewards={nodeStewards} />
+        <NodeStewardsList nodeStewards={nodeStewards} getActions={getActions} />
       )}
     </Stack>
   )

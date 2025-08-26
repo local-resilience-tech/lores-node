@@ -128,40 +128,4 @@ export default function ActionButton({
   } else {
     return button
   }
-
-  // return (
-  //   <ActionIcon
-  //     {...props}
-  //     onClick={handleClick}
-  //     loading={loading}
-  //     {...resultProps}
-  //   >
-  //     {result?.error && showResult && errorIcon ? (
-  //       <HoverCard width={280} shadow="md">
-  //         <HoverCard.Target>{errorIcon}</HoverCard.Target>
-  //         <HoverCard.Dropdown>
-  //           <Group justify="space-between" align="flex-start">
-  //             <Text size="sm">
-  //               {result.error ||
-  //                 "An error occurred while performing the action."}
-  //             </Text>
-  //             <ActionIcon
-  //               key="close-error"
-  //               radius="xl"
-  //               color="gray"
-  //               onClick={(event) => {
-  //                 event.stopPropagation()
-  //                 clearError()
-  //               }}
-  //             >
-  //               <IconX />
-  //             </ActionIcon>
-  //           </Group>
-  //         </HoverCard.Dropdown>
-  //       </HoverCard>
-  //     ) : (
-  //       children
-  //     )}
-  //   </ActionIcon>
-  // )
 }

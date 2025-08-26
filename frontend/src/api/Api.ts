@@ -16,6 +16,13 @@ export enum UpgradeLocalAppError {
   ServerError = "ServerError",
 }
 
+export enum NodeStewardStatus {
+  Enabled = "Enabled",
+  Disabled = "Disabled",
+  Invited = "Invited",
+  TokenExpired = "TokenExpired",
+}
+
 export enum LocalAppInstallStatus {
   Installed = "Installed",
   StackDeployed = "StackDeployed",
@@ -142,9 +149,10 @@ export interface NodeStatusData {
 }
 
 export interface NodeSteward {
-  enabled: boolean;
+  created_at: string;
   id: string;
   name: string;
+  status: NodeStewardStatus;
 }
 
 export interface NodeStewardCreationData {
