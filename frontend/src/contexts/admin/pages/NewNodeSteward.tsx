@@ -1,10 +1,30 @@
 import { Stack, Title, Text } from "@mantine/core"
 import NodeStewardForm from "../components/NodeStewardForm"
-import { NodeSteward } from "../../../api/Api"
+import { NodeStewardCreationData } from "../../../api/Api"
+import { getApi } from "../../../api"
+import { useNavigate } from "react-router-dom"
+import {
+  actionFailure,
+  ActionPromiseResult,
+  actionSuccess,
+} from "../../../components"
 
 export default function NewNodeSteward() {
-  const handleSubmit = async (values: NodeSteward) => {
-    // Handle form submission
+  const navigate = useNavigate()
+
+  const handleSubmit = async (
+    values: NodeStewardCreationData
+  ): Promise<ActionPromiseResult> => {
+    return getApi()
+      .adminApi.createNodeSteward(values)
+      .then(actionSuccess)
+      .catch((error) => {
+        if (error.response?.status === 401 || error.response?.status === 403) {
+          navigate("/auth/admin/login")
+        } else {
+          return actionFailure(error)
+        }
+      })
   }
 
   return (

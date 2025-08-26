@@ -45,3 +45,5 @@ tower-sessions = { version = "0.14.0", features = ["signed"] }
 axum-login = "0.17.0"
 thiserror = "2.0.16"
 time = "0.3.41"
+uuid = "1.18.0"
+short-uuid = "0.2.0"

@@ -1,17 +1,25 @@
 import { Button, Stack, TextInput } from "@mantine/core"
 import { useForm } from "@mantine/form"
-import { NodeSteward } from "../../../api/Api"
+import { NodeStewardCreationData } from "../../../api/Api"
+import {
+  ActionPromiseResult,
+  DisplayActionResult,
+  useOnSubmitWithResult,
+} from "../../../components"
 
 interface NodeStewardFormProps {
-  onSubmit: (values: NodeSteward) => Promise<void>
+  onSubmit: (
+    values: NodeStewardCreationData
+  ) => Promise<ActionPromiseResult | void>
 }
 
 export default function NodeStewardForm({ onSubmit }: NodeStewardFormProps) {
-  const form = useForm<NodeSteward>({
+  const [actionResult, onSubmitWithResult] =
+    useOnSubmitWithResult<NodeStewardCreationData>(onSubmit)
+
+  const form = useForm<NodeStewardCreationData>({
     initialValues: {
-      id: "",
       name: "",
-      active: true,
     },
     validate: {
       name: (value) => {
@@ -21,7 +29,7 @@ export default function NodeStewardForm({ onSubmit }: NodeStewardFormProps) {
   })
 
   return (
-    <form onSubmit={form.onSubmit(onSubmit)}>
+    <form onSubmit={form.onSubmit(onSubmitWithResult)}>
       <Stack gap="lg">
         <Stack gap="md">
           <TextInput
@@ -31,6 +39,7 @@ export default function NodeStewardForm({ onSubmit }: NodeStewardFormProps) {
             {...form.getInputProps("name")}
           />
         </Stack>
+        <DisplayActionResult result={actionResult} />
         <Button type="submit" loading={form.submitting}>
           Install
         </Button>

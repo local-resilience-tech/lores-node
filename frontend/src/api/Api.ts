@@ -147,6 +147,10 @@ export interface NodeSteward {
   name: string;
 }
 
+export interface NodeStewardCreationData {
+  name: string;
+}
+
 export interface P2PandaLogCounts {
   counts: LogCount[];
 }
@@ -389,6 +393,25 @@ export class Api<
       this.request<NodeSteward[], any>({
         path: `/admin_api/node_stewards`,
         method: "GET",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @name CreateNodeSteward
+     * @request POST:/admin_api/node_stewards
+     */
+    createNodeSteward: (
+      data: NodeStewardCreationData,
+      params: RequestParams = {},
+    ) =>
+      this.request<NodeSteward[], string>({
+        path: `/admin_api/node_stewards`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
         format: "json",
         ...params,
       }),

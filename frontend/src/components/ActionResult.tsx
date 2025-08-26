@@ -51,6 +51,8 @@ export function DisplayActionResult({
   handlers = {},
   displaySuccess = false,
 }: DisplayActionResultProps) {
+  console.log("Displaying action result:", result)
+
   if (!result) return null
 
   if (result.success) {

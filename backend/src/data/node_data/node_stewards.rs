@@ -29,4 +29,22 @@ impl NodeStewardsRepo {
 
         Ok(nodes)
     }
+
+    pub async fn create(&self, pool: &SqlitePool, row: &NodeStewardRow) -> Result<(), sqlx::Error> {
+        // sqlx::query::<Sqlite>(
+        //     "
+        //     INSERT INTO node_stewards (id, name, hashed_password, password_reset_token, active)
+        //     VALUES (?, ?, ?, ?, ?)
+        //     ",
+        // )
+        // .bind(&row.id)
+        // .bind(&row.name)
+        // .bind(&row.hashed_password)
+        // .bind(&row.password_reset_token)
+        // .bind(row.active)
+        // .execute(pool)
+        // .await?;
+
+        Ok(())
+    }
 }
