@@ -1,4 +1,6 @@
 use axum::{http::StatusCode, response::IntoResponse, Json};
+use serde::Serialize;
+use utoipa::ToSchema;
 use utoipa_axum::{router::OpenApiRouter, routes};
 
 use super::{
@@ -10,13 +12,21 @@ pub fn router() -> OpenApiRouter {
     OpenApiRouter::new().routes(routes!(node_steward_login))
 }
 
+#[derive(Debug, Clone, Serialize, ToSchema)]
+enum NodeStewardLoginError {
+    InvalidCredentials,
+    NoPasswordSet,
+    AccountDisabled,
+    InternalServerError,
+}
+
 #[utoipa::path(
     post, path = "/login",
     request_body(content = NodeStewardCredentials, content_type = "application/json"),
     responses(
         (status = OK, body = UserRef),
-        (status = INTERNAL_SERVER_ERROR, body = String),
-        (status = UNAUTHORIZED, body = String)
+        (status = INTERNAL_SERVER_ERROR, body = NodeStewardLoginError),
+        (status = UNAUTHORIZED, body = NodeStewardLoginError)
     )
 )]
 async fn node_steward_login(
@@ -30,7 +40,7 @@ async fn node_steward_login(
         Ok(None) => {
             return Err((
                 StatusCode::UNAUTHORIZED,
-                "Invalid credentials for node steward",
+                Json(NodeStewardLoginError::InvalidCredentials),
             )
                 .into_response());
         }
@@ -40,9 +50,20 @@ async fn node_steward_login(
             let status = match e {
                 axum_login::Error::Backend(AuthError::InvalidCredentials) => (
                     StatusCode::UNAUTHORIZED,
-                    "Invalid credentials for node steward",
+                    Json(NodeStewardLoginError::InvalidCredentials),
                 ),
-                _ => (StatusCode::INTERNAL_SERVER_ERROR, "Internal server error"),
+                axum_login::Error::Backend(AuthError::NoPasswordSet) => (
+                    StatusCode::UNAUTHORIZED,
+                    Json(NodeStewardLoginError::NoPasswordSet),
+                ),
+                axum_login::Error::Backend(AuthError::AccountDisabled) => (
+                    StatusCode::UNAUTHORIZED,
+                    Json(NodeStewardLoginError::AccountDisabled),
+                ),
+                _ => (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(NodeStewardLoginError::InternalServerError),
+                ),
             };
             return Err(status.into_response());
         }
@@ -50,7 +71,11 @@ async fn node_steward_login(
 
     if auth_session.login(&user).await.is_err() {
         eprint!("Failed to log in node steward user");
-        return Err(StatusCode::INTERNAL_SERVER_ERROR.into_response());
+        return Err((
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(NodeStewardLoginError::InternalServerError),
+        )
+            .into_response());
     }
 
     return Ok((StatusCode::OK, Json(UserRef::from_backend_user(&user))).into_response());

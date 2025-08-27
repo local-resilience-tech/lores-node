@@ -18,7 +18,10 @@ import { Stacks } from "./contexts/stacks"
 import { ShowAppRepo, NewAppRepo, AppRepos } from "./contexts/app_repos"
 import { AdminLogin, AuthLayout, SetupAdmin } from "./contexts/auth/admin_auth"
 import { AdminLayout, NewNodeSteward, AllNodeStewards } from "./contexts/admin"
-import { NodeStewardLogin } from "./contexts/auth/node_steward_auth"
+import {
+  NodeStewardLogin,
+  NodeStewardSetPassword,
+} from "./contexts/auth/node_steward_auth"
 
 // Import styles of packages that you've installed.
 // All packages except `@mantine/hooks` require styles imports
@@ -48,7 +51,10 @@ const router = createBrowserRouter([
       },
       {
         path: "node_steward",
-        children: [{ path: "login", element: <NodeStewardLogin /> }],
+        children: [
+          { path: "login", element: <NodeStewardLogin /> },
+          { path: "set_password", element: <NodeStewardSetPassword /> },
+        ],
       },
     ],
   },

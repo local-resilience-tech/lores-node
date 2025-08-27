@@ -23,6 +23,13 @@ export enum NodeStewardStatus {
   TokenExpired = "TokenExpired",
 }
 
+export enum NodeStewardLoginError {
+  InvalidCredentials = "InvalidCredentials",
+  NoPasswordSet = "NoPasswordSet",
+  AccountDisabled = "AccountDisabled",
+  InternalServerError = "InternalServerError",
+}
+
 export enum LocalAppInstallStatus {
   Installed = "Installed",
   StackDeployed = "StackDeployed",
@@ -501,7 +508,7 @@ export class Api<
       data: NodeStewardCredentials,
       params: RequestParams = {},
     ) =>
-      this.request<UserRef, string>({
+      this.request<UserRef, NodeStewardLoginError>({
         path: `/auth_api/node_steward/login`,
         method: "POST",
         body: data,

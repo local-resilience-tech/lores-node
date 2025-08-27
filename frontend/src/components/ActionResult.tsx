@@ -1,4 +1,4 @@
-import { ActionIcon, HoverCard, Text } from "@mantine/core"
+import { ActionIcon, HoverCard, Stack, Text } from "@mantine/core"
 import { IconAlertCircle } from "@tabler/icons-react"
 import { useState } from "react"
 
@@ -46,6 +46,27 @@ interface DisplayActionResultProps {
   handlers?: ActionResultHandlers
 }
 
+export function DisplayFormError({
+  heading,
+  description,
+}: {
+  heading: string
+  description?: string | React.ReactNode
+}) {
+  return (
+    <Stack gap="md">
+      <Text c="red" fw="bold" fs="lg">
+        {heading}
+      </Text>
+      {description && typeof description === "string" ? (
+        <Text c="red">{description}</Text>
+      ) : (
+        description
+      )}
+    </Stack>
+  )
+}
+
 export function DisplayActionResult({
   result,
   handlers = {},
@@ -61,7 +82,7 @@ export function DisplayActionResult({
     if (handlers && handlers[result.error]) {
       return handlers[result.error]
     } else {
-      return <Text c="red">Action failed: {result.error}</Text>
+      return <DisplayFormError heading={`Action failed: ${result.error}`} />
     }
   }
 }

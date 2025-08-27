@@ -71,6 +71,10 @@ pub enum AuthError {
     UserNotFound,
     #[error("Invalid credentials provided")]
     InvalidCredentials,
+    #[error("No password set for user")]
+    NoPasswordSet,
+    #[error("Account is disabled")]
+    AccountDisabled,
     #[error("Internal server error occurred")]
     ServerError,
 }
@@ -134,7 +138,9 @@ impl AppAuthBackend {
     ) -> Result<Option<User>, AuthError> {
         println!("Authenticating node steward user: {:?}", creds);
 
-        Ok(None)
+        return Err(AuthError::NoPasswordSet);
+
+        //Ok(None)
     }
 
     async fn expect_hashed_password(&self) -> Result<String, AuthError> {

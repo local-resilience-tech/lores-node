@@ -1,5 +1,4 @@
 import { Stack, Title, Text } from "@mantine/core"
-import NodeStewardLoginForm from "../components/NodeStewardLoginForm"
 import { getApi } from "../../../../api"
 import { useNavigate } from "react-router-dom"
 import {
@@ -7,13 +6,10 @@ import {
   NodeStewardLoginError,
 } from "../../../../api/Api"
 import { AxiosError } from "axios"
-import {
-  actionFailure,
-  ActionPromiseResult,
-  Anchor,
-} from "../../../../components"
+import { actionFailure, ActionPromiseResult } from "../../../../components"
+import NodeStewardSetPasswordForm from "../components/NodeStewardSetPasswordForm"
 
-export default function NodeStewardLogin() {
+export default function NodeStewardSetPassword() {
   const navigate = useNavigate()
 
   const onSubmit = async (
@@ -36,16 +32,15 @@ export default function NodeStewardLogin() {
         <Text c="dimmed" style={{ fontSize: "1.5rem" }} fw="bold" mb={-5}>
           Lores Node
         </Text>
-        <Title order={1}>Log in as node steward</Title>
+        <Title order={1}>Set your password</Title>
       </Stack>
       <Stack gap="md">
         <Text>
-          Node stewards are users who manage this node. If you are a new node
-          steward, you will have been given a one-use token{" "}
-          <Anchor href="../set_password">to set a password</Anchor>.
+          You should have been given your id and one-use token by the node
+          admin.
         </Text>
       </Stack>
-      <NodeStewardLoginForm onSubmit={onSubmit} />
+      <NodeStewardSetPasswordForm onSubmit={onSubmit} />
     </Stack>
   )
 }
