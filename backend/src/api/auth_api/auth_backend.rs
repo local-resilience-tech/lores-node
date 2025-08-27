@@ -42,8 +42,8 @@ pub struct AdminCredentials {
 
 #[derive(Debug, Clone, Deserialize, ToSchema)]
 pub struct NodeStewardCredentials {
-    // pub email: String,
-    // pub password: String,
+    pub id: String,
+    pub password: String,
 }
 
 #[derive(Debug, Clone, Deserialize, ToSchema)]

@@ -164,6 +164,11 @@ export interface NodeStewardCreationResult {
   password_reset_token: string;
 }
 
+export interface NodeStewardCredentials {
+  id: string;
+  password: string;
+}
+
 export interface P2PandaLogCounts {
   counts: LogCount[];
 }
@@ -375,7 +380,7 @@ export class HttpClient<SecurityDataType = unknown> {
 
 /**
  * @title lores-node
- * @version 0.11.3
+ * @version 0.11.4
  * @license
  */
 export class Api<
@@ -479,6 +484,25 @@ export class Api<
     adminLogin: (data: AdminCredentials, params: RequestParams = {}) =>
       this.request<UserRef, string>({
         path: `/auth_api/admin/login`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @name NodeStewardLogin
+     * @request POST:/auth_api/node_steward/login
+     */
+    nodeStewardLogin: (
+      data: NodeStewardCredentials,
+      params: RequestParams = {},
+    ) =>
+      this.request<UserRef, string>({
+        path: `/auth_api/node_steward/login`,
         method: "POST",
         body: data,
         type: ContentType.Json,
