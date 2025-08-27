@@ -5,10 +5,14 @@ use axum_login::{AuthUser, AuthnBackend, AuthzBackend, UserId};
 use password_auth::verify_password;
 use serde::{Deserialize, Serialize};
 
+use sqlx::SqlitePool;
 use tokio::task;
 use utoipa::ToSchema;
 
-use crate::config::config_state::LoresNodeConfigState;
+use crate::{
+    config::config_state::LoresNodeConfigState,
+    data::node_data::node_stewards::{NodeStewardIdentifier, NodeStewardsRepo},
+};
 
 use super::admin_user_repo::AdminUserRepo;
 
@@ -55,12 +59,14 @@ pub enum Credentials {
 #[derive(Debug, Clone)]
 pub struct AppAuthBackend {
     config_state: LoresNodeConfigState,
+    node_data_pool: SqlitePool,
 }
 
 impl AppAuthBackend {
-    pub fn new(config_state: &LoresNodeConfigState) -> Self {
+    pub fn new(config_state: &LoresNodeConfigState, node_data_pool: &SqlitePool) -> Self {
         Self {
             config_state: config_state.clone(),
+            node_data_pool: node_data_pool.clone(),
         }
     }
 }
@@ -108,8 +114,7 @@ impl AuthnBackend for AppAuthBackend {
 
             return Ok(Some(user));
         } else {
-            println!("User ID does not match admin user ID: {:?}", user_id);
-            return Ok(None);
+            self.get_steward_user(user_id).await
         }
     }
 }
@@ -136,11 +141,66 @@ impl AppAuthBackend {
         &self,
         creds: &NodeStewardCredentials,
     ) -> Result<Option<User>, AuthError> {
-        println!("Authenticating node steward user: {:?}", creds);
+        println!("Authenticating admin user");
 
-        return Err(AuthError::NoPasswordSet);
+        let repo = NodeStewardsRepo::init();
 
-        //Ok(None)
+        // Fetch node steward by ID
+        let id = NodeStewardIdentifier {
+            id: creds.id.clone(),
+        };
+        let steward = match repo.find(&self.node_data_pool, &id).await {
+            Ok(Some(steward)) => steward,
+            Ok(None) => {
+                return Err(AuthError::UserNotFound);
+            }
+            Err(e) => {
+                eprintln!("Failed to find node steward: {:?}", e);
+                return Err(AuthError::ServerError);
+            }
+        };
+
+        // Check if the steward has a password set
+        let hashed_password = match steward.hashed_password.clone() {
+            Some(hash) => hash,
+            None => return Err(AuthError::NoPasswordSet),
+        };
+
+        // Check if the password matches the credentials
+        self.verify_password(creds.password.clone(), hashed_password.clone())
+            .await?;
+
+        Ok(Some(User {
+            id: steward.id.clone(),
+            password_hash: hashed_password,
+        }))
+    }
+
+    async fn get_steward_user(&self, user_id: &UserId<Self>) -> Result<Option<User>, AuthError> {
+        let repo = NodeStewardsRepo::init();
+
+        // Fetch node steward by ID
+        let id = NodeStewardIdentifier {
+            id: user_id.clone(),
+        };
+        let steward = match repo.find(&self.node_data_pool, &id).await {
+            Ok(Some(steward)) => steward,
+            Ok(None) => {
+                return Err(AuthError::UserNotFound);
+            }
+            Err(e) => {
+                eprintln!("Failed to find node steward: {:?}", e);
+                return Err(AuthError::ServerError);
+            }
+        };
+
+        match steward.hashed_password.clone() {
+            Some(password_hash) => Ok(Some(User {
+                id: steward.id.clone(),
+                password_hash,
+            })),
+            None => return Err(AuthError::NoPasswordSet),
+        }
     }
 
     async fn expect_hashed_password(&self) -> Result<String, AuthError> {

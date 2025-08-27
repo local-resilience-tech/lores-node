@@ -64,6 +64,9 @@ export default function NodeStewardLoginForm({
                 }
               />
             ),
+            InvalidCredentials: (
+              <DisplayFormError heading="Login failed - Invalid credentials." />
+            ),
           }}
         />
 

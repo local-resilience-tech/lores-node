@@ -23,7 +23,7 @@ export default function NodeStewardLogin() {
       .authApi.nodeStewardLogin(values)
       .then((response) => {
         console.log("response", response)
-        navigate("/admin/node_stewards")
+        navigate("/")
       })
       .catch((error: AxiosError<NodeStewardLoginError>) => {
         return actionFailure(error)
