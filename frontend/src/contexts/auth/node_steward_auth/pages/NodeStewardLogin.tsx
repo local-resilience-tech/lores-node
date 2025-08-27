@@ -1,6 +1,6 @@
 import { Stack, Title, Text } from "@mantine/core"
-import AdminLoginForm from "../components/AdminLoginForm"
-import { getApi } from "../../../api"
+import NodeStewardLoginForm from "../components/NodeStewardLoginForm"
+import { getApi } from "../../../../api"
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 
@@ -35,17 +35,10 @@ export default function AdminLogin() {
         <Text c="dimmed" style={{ fontSize: "1.5rem" }} fw="bold" mb={-5}>
           Lores Node
         </Text>
-        <Title order={1}>Log in as node admin</Title>
+        <Title order={1}>Log in as node steward</Title>
       </Stack>
       <Stack gap="md">
-        <Text>
-          Logging in as the node admin is done with the password you received
-          during setup.
-        </Text>
-        <Text>
-          The only thing you can do as the admin is setup regular users for this
-          node that you use for all other operations.
-        </Text>
+        <Text>Node stewards are users who manage this node.</Text>
       </Stack>
       {result === "unauthorized" && (
         <Text c="red">Invalid credentials, please try again.</Text>
@@ -55,7 +48,7 @@ export default function AdminLogin() {
           An unexpected error occurred, please try again later.
         </Text>
       )}
-      <AdminLoginForm onSubmit={onSubmit} />
+      <NodeStewardLoginForm onSubmit={onSubmit} />
     </Stack>
   )
 }

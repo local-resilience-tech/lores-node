@@ -6,8 +6,8 @@ import {
   ActionButton,
   CopyIconButton,
   Anchor,
-} from "../../../components"
-import { getApi } from "../../../api"
+} from "../../../../components"
+import { getApi } from "../../../../api"
 import { useEffect, useState } from "react"
 
 export default function SetupAdmin() {

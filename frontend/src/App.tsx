@@ -16,8 +16,9 @@ import store, { AppStore, loadInitialData } from "./store"
 import NewLocalApp from "./contexts/apps/pages/NewLocalApp"
 import { Stacks } from "./contexts/stacks"
 import { ShowAppRepo, NewAppRepo, AppRepos } from "./contexts/app_repos"
-import { AdminLogin, AuthLayout, SetupAdmin } from "./contexts/admin_auth"
+import { AdminLogin, AuthLayout, SetupAdmin } from "./contexts/auth/admin_auth"
 import { AdminLayout, NewNodeSteward, AllNodeStewards } from "./contexts/admin"
+import { NodeStewardLogin } from "./contexts/auth/node_steward_auth"
 
 // Import styles of packages that you've installed.
 // All packages except `@mantine/hooks` require styles imports
@@ -44,6 +45,10 @@ const router = createBrowserRouter([
           { path: "setup", element: <SetupAdmin /> },
           { path: "login", element: <AdminLogin /> },
         ],
+      },
+      {
+        path: "node_steward",
+        children: [{ path: "login", element: <NodeStewardLogin /> }],
       },
     ],
   },
