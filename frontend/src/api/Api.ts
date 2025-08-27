@@ -405,7 +405,7 @@ export class HttpClient<SecurityDataType = unknown> {
 
 /**
  * @title lores-node
- * @version 0.11.4
+ * @version 0.11.5
  * @license
  */
 export class Api<
@@ -561,6 +561,55 @@ export class Api<
     ) =>
       this.request<any, NodeStewardSetPasswordError>({
         path: `/auth_api/node_steward/set_password`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+  };
+  nodeStewardApi = {
+    /**
+     * No description
+     *
+     * @name UpdateThisNode
+     * @request PUT:/node_steward_api/this_node
+     */
+    updateThisNode: (data: UpdateNodeDetails, params: RequestParams = {}) =>
+      this.request<Node, string>({
+        path: `/node_steward_api/this_node`,
+        method: "PUT",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @name CreateThisNode
+     * @request POST:/node_steward_api/this_node
+     */
+    createThisNode: (data: CreateNodeDetails, params: RequestParams = {}) =>
+      this.request<Node, string>({
+        path: `/node_steward_api/this_node`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @name PostNodeStatus
+     * @request POST:/node_steward_api/this_node/status
+     */
+    postNodeStatus: (data: NodeStatusData, params: RequestParams = {}) =>
+      this.request<any, string>({
+        path: `/node_steward_api/this_node/status`,
         method: "POST",
         body: data,
         type: ContentType.Json,
@@ -805,22 +854,6 @@ export class Api<
     createThisNode: (data: CreateNodeDetails, params: RequestParams = {}) =>
       this.request<Node, string>({
         path: `/public_api/this_node`,
-        method: "POST",
-        body: data,
-        type: ContentType.Json,
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @name PostNodeStatus
-     * @request POST:/public_api/this_node/status
-     */
-    postNodeStatus: (data: NodeStatusData, params: RequestParams = {}) =>
-      this.request<any, string>({
-        path: `/public_api/this_node/status`,
         method: "POST",
         body: data,
         type: ContentType.Json,

@@ -2,7 +2,7 @@ import { Breadcrumbs, Stack, Text, Title } from "@mantine/core"
 import PostStatus from "../components/PostStatus"
 import { getApi } from "../../../api"
 import type { NodeStatusData } from "../../../api/Api"
-import { Anchor } from "../../../components"
+import { actionFailure, ActionPromiseResult, Anchor } from "../../../components"
 import { useAppSelector } from "../../../store"
 
 export default function ManageStatus() {
@@ -10,9 +10,11 @@ export default function ManageStatus() {
 
   if (!node) return null
 
-  const postStatus = async (data: NodeStatusData) => {
-    getApi()
-      .publicApi.postNodeStatus(data)
+  const postStatus = async (
+    data: NodeStatusData
+  ): Promise<ActionPromiseResult> => {
+    return getApi()
+      .nodeStewardApi.postNodeStatus(data)
       .then((result) => {
         if (result.status === 200) {
           console.log("Node updated successfully", result.data)
@@ -20,9 +22,7 @@ export default function ManageStatus() {
           console.error("Failed to create node", result)
         }
       })
-      .catch((error) => {
-        console.error("Error creating node", error)
-      })
+      .catch(actionFailure)
   }
 
   return (

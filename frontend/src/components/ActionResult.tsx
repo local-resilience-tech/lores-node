@@ -9,11 +9,24 @@ export interface ActionResult {
 
 export type ActionPromiseResult = void | ActionResult
 
+const statusResponses: Record<number, string> = {
+  400: "BadRequest",
+  401: "Unauthorized",
+  403: "Forbidden",
+  404: "NotFound",
+}
+
 export function actionFailure(error: any): ActionPromiseResult {
   console.error("Action failed:", error)
+
+  const errorString =
+    error.response?.data ||
+    statusResponses[error.response?.status] ||
+    "ServerError"
+
   const errorResult = {
     success: false,
-    error: error.response?.data || "ServerError",
+    error: errorString,
   }
   console.log("Action result:", errorResult)
   return errorResult

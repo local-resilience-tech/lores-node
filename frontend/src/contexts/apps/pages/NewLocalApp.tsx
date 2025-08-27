@@ -24,9 +24,7 @@ export default function NewLocalApp() {
         navigate("../")
         return actionSuccess()
       })
-      .catch((error) => {
-        return actionFailure(error)
-      })
+      .catch(actionFailure)
   }
 
   return (
