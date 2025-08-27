@@ -1,6 +1,7 @@
 import {
   Anchor,
   AppShell,
+  Avatar,
   Badge,
   Breadcrumbs,
   Burger,
@@ -18,6 +19,7 @@ import {
   IconBrandDocker,
   IconBrandGit,
   IconBrandGithub,
+  IconGhost,
   IconHome,
   IconTimelineEventText,
 } from "@tabler/icons-react"
@@ -71,6 +73,23 @@ export default function Layout() {
         </Group>
       </AppShell.Header>
       <AppShell.Navbar p={0}>
+        <AppShell.Section className={classes.user_section}>
+          <NavLink
+            label={
+              <Group justify="center" gap="sm">
+                <Avatar>
+                  <IconGhost size={24} />
+                </Avatar>
+                <Text fw="bold">Guest</Text>
+              </Group>
+            }
+            href="/me"
+            key="me"
+            fw="bold"
+            ta="center"
+            onClick={toggle}
+          />
+        </AppShell.Section>
         <AppShell.Section className={classes.menu_section}>
           <Text className={classes.section_title}>
             {node?.name ? (
