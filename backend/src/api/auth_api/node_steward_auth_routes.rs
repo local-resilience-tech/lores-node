@@ -16,15 +16,71 @@ use super::{
 
 pub fn router() -> OpenApiRouter {
     OpenApiRouter::new()
+        .routes(routes!(get_current_user))
         .routes(routes!(node_steward_login))
         .routes(routes!(node_steward_set_password))
+}
+
+#[derive(Debug, Clone, Serialize, ToSchema)]
+struct NodeStewardUser {
+    pub id: String,
+    pub name: String,
+}
+
+#[utoipa::path(
+    get,
+    path = "/",
+    responses(
+        (status = OK, body = Option<NodeStewardUser>),
+        (status = INTERNAL_SERVER_ERROR, body = ()),
+    )
+)]
+async fn get_current_user(
+    Extension(db): Extension<DatabaseState>,
+    auth_session: AuthSession,
+) -> impl IntoResponse {
+    let auth_user = match auth_session.user {
+        Some(user) => user,
+        None => {
+            eprintln!("Failed to get current user");
+            return (StatusCode::OK, Json(Option::<NodeStewardUser>::None)).into_response();
+        }
+    };
+
+    let repo = NodeStewardsRepo::init();
+
+    // Fetch node steward by ID
+    let id = NodeStewardIdentifier {
+        id: auth_user.id.clone(),
+    };
+    let steward = match repo.find(&db.node_data_pool, &id).await {
+        Ok(Some(steward)) => steward,
+        Ok(None) => {
+            return (StatusCode::OK, Json(Option::<NodeStewardUser>::None)).into_response();
+        }
+        Err(e) => {
+            eprintln!("Error finding node steward: {:?}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(NodeStewardSetPasswordError::InternalServerError),
+            )
+                .into_response();
+        }
+    };
+
+    let node_steward_user = NodeStewardUser {
+        id: steward.id.clone(),
+        name: steward.name.clone(),
+    };
+
+    (StatusCode::OK, Json(Some(node_steward_user))).into_response()
 }
 
 #[derive(Debug, Clone, Serialize, ToSchema)]
 enum NodeStewardLoginError {
     InvalidCredentials,
     NoPasswordSet,
-    AccountDisabled,
+    // AccountDisabled,
     InternalServerError,
 }
 
@@ -64,10 +120,10 @@ async fn node_steward_login(
                     StatusCode::UNAUTHORIZED,
                     Json(NodeStewardLoginError::NoPasswordSet),
                 ),
-                axum_login::Error::Backend(AuthError::AccountDisabled) => (
-                    StatusCode::UNAUTHORIZED,
-                    Json(NodeStewardLoginError::AccountDisabled),
-                ),
+                // axum_login::Error::Backend(AuthError::AccountDisabled) => (
+                //     StatusCode::UNAUTHORIZED,
+                //     Json(NodeStewardLoginError::AccountDisabled),
+                // ),
                 _ => (
                     StatusCode::INTERNAL_SERVER_ERROR,
                     Json(NodeStewardLoginError::InternalServerError),

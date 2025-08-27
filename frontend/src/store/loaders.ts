@@ -9,12 +9,20 @@ import { thisNodeLoaded } from "./this_node"
 
 export async function loadInitialData(store: AppStore) {
   const state = store.getState()
+  loadUser(store)
+
   if (state.region === null) loadRegion(store)
   if (state.nodes === null) loadNodes(store)
   if (state.localApps === null) loadLocalApps(store)
   if (state.thisNode === null) loadThisNode(store)
   if (state.regionApps === null) loadRegionApps(store)
   if (state.appRepos === null) loadAppRepos(store)
+}
+
+async function loadUser(store: AppStore) {
+  const result = await fetchApiData(() => getApi().authApi.getCurrentUser())
+  console.log("EFFECT: fetchUser", result)
+  // if (result) store.dispatch(userLoaded(result))
 }
 
 async function loadRegion(store: AppStore) {

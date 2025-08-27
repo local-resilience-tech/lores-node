@@ -79,8 +79,8 @@ pub enum AuthError {
     InvalidCredentials,
     #[error("No password set for user")]
     NoPasswordSet,
-    #[error("Account is disabled")]
-    AccountDisabled,
+    // #[error("Account is disabled")]
+    // AccountDisabled,
     #[error("Internal server error occurred")]
     ServerError,
 }

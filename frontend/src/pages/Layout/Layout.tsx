@@ -1,5 +1,4 @@
 import {
-  Anchor,
   AppShell,
   Avatar,
   Badge,
@@ -8,9 +7,8 @@ import {
   Container,
   Group,
   Text,
-  Title,
 } from "@mantine/core"
-import { NavLink } from "../../components"
+import { Anchor, NavLink } from "../../components"
 import { Outlet } from "react-router-dom"
 import { useDisclosure } from "@mantine/hooks"
 import {
@@ -74,21 +72,14 @@ export default function Layout() {
       </AppShell.Header>
       <AppShell.Navbar p={0}>
         <AppShell.Section className={classes.user_section}>
-          <NavLink
-            label={
-              <Group justify="center" gap="sm">
-                <Avatar>
-                  <IconGhost size={24} />
-                </Avatar>
-                <Text fw="bold">Guest</Text>
-              </Group>
-            }
-            href="/me"
-            key="me"
-            fw="bold"
-            ta="center"
-            onClick={toggle}
-          />
+          <Group justify="center" gap="sm">
+            <Avatar>
+              <IconGhost size={24} />
+            </Avatar>
+            <Text fw="bold">
+              Guest - <Anchor href="/auth/node_steward/login">log in</Anchor>
+            </Text>
+          </Group>
         </AppShell.Section>
         <AppShell.Section className={classes.menu_section}>
           <Text className={classes.section_title}>

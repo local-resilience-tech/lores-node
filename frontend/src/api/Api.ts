@@ -34,7 +34,6 @@ export enum NodeStewardSetPasswordError {
 export enum NodeStewardLoginError {
   InvalidCredentials = "InvalidCredentials",
   NoPasswordSet = "NoPasswordSet",
-  AccountDisabled = "AccountDisabled",
   InternalServerError = "InternalServerError",
 }
 
@@ -508,6 +507,20 @@ export class Api<
         method: "POST",
         body: data,
         type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @name GetCurrentUser
+     * @request GET:/auth_api/node_steward
+     */
+    getCurrentUser: (params: RequestParams = {}) =>
+      this.request<any, any>({
+        path: `/auth_api/node_steward`,
+        method: "GET",
         format: "json",
         ...params,
       }),
