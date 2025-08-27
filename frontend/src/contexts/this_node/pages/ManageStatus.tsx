@@ -2,11 +2,18 @@ import { Breadcrumbs, Stack, Text, Title } from "@mantine/core"
 import PostStatus from "../components/PostStatus"
 import { getApi } from "../../../api"
 import type { NodeStatusData } from "../../../api/Api"
-import { actionFailure, ActionPromiseResult, Anchor } from "../../../components"
+import {
+  actionFailure,
+  ActionPromiseResult,
+  actionSuccess,
+  Anchor,
+} from "../../../components"
 import { useAppSelector } from "../../../store"
+import { useNavigate } from "react-router-dom"
 
 export default function ManageStatus() {
   const node = useAppSelector((state) => state.thisNode)
+  const navigate = useNavigate()
 
   if (!node) return null
 
@@ -15,12 +22,8 @@ export default function ManageStatus() {
   ): Promise<ActionPromiseResult> => {
     return getApi()
       .nodeStewardApi.postNodeStatus(data)
-      .then((result) => {
-        if (result.status === 200) {
-          console.log("Node updated successfully", result.data)
-        } else {
-          console.error("Failed to create node", result)
-        }
+      .then((_) => {
+        navigate("/this_node")
       })
       .catch(actionFailure)
   }
