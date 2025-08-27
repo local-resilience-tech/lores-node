@@ -32,7 +32,12 @@ export default function NodeStewardLoginForm({
     validate: {
       id: (value) => (value ? null : "ID is required"),
       token: (value) => (value ? null : "Token is required"),
-      new_password: (value) => (value ? null : "New password is required"),
+      new_password: (value) => {
+        if (!value) return "New password is required"
+        if (value.length < 8)
+          return "Password must be at least 8 characters long"
+        return null
+      },
     },
   })
 
@@ -76,6 +81,12 @@ export default function NodeStewardLoginForm({
               <DisplayFormError
                 heading="Set password failed - Token expired."
                 description="The token you provided has expired. These tokens only last for 24 hours. Ask the node administrator to generate a new one for you."
+              />
+            ),
+            InvalidNewPassword: (
+              <DisplayFormError
+                heading="Set password failed - Invalid new password."
+                description="The new password is not strong enough."
               />
             ),
           }}

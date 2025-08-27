@@ -27,6 +27,7 @@ export enum NodeStewardSetPasswordError {
   InvalidId = "InvalidId",
   InvalidToken = "InvalidToken",
   TokenExpired = "TokenExpired",
+  InvalidNewPassword = "InvalidNewPassword",
   InternalServerError = "InternalServerError",
 }
 
@@ -540,7 +541,7 @@ export class Api<
       data: NodeStewardSetPasswordRequest,
       params: RequestParams = {},
     ) =>
-      this.request<UserRef, NodeStewardSetPasswordError>({
+      this.request<any, NodeStewardSetPasswordError>({
         path: `/auth_api/node_steward/set_password`,
         method: "POST",
         body: data,

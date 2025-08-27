@@ -145,6 +145,27 @@ impl NodeStewardsRepo {
 
         Ok(())
     }
+
+    pub async fn update_password_and_clear_token(
+        &self,
+        pool: &SqlitePool,
+        identifier: &NodeStewardIdentifier,
+        hashed_password: &str,
+    ) -> Result<(), sqlx::Error> {
+        sqlx::query::<Sqlite>(
+            "
+            UPDATE node_stewards
+            SET hashed_password = ?, password_reset_token = NULL, password_reset_token_expires_at = NULL, updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+            ",
+        )
+        .bind(hashed_password)
+        .bind(&identifier.id)
+        .execute(pool)
+        .await?;
+
+        Ok(())
+    }
 }
 
 fn new_node_steward_id() -> String {

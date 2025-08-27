@@ -1,4 +1,5 @@
 use axum::{http::StatusCode, response::IntoResponse, Extension, Json};
+use password_auth::generate_hash;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use utoipa_axum::{router::OpenApiRouter, routes};
@@ -100,6 +101,7 @@ pub enum NodeStewardSetPasswordError {
     InvalidId,
     InvalidToken,
     TokenExpired,
+    InvalidNewPassword,
     InternalServerError,
 }
 
@@ -157,7 +159,34 @@ async fn node_steward_set_password(
             .into_response();
     }
 
-    // TODO: Hash the new password and set it here
+    // Check that the new password is valid
+    if !password_is_valid(&input.new_password) {
+        return (
+            StatusCode::UNAUTHORIZED,
+            Json(NodeStewardSetPasswordError::InvalidNewPassword),
+        )
+            .into_response();
+    }
 
-    (StatusCode::OK, ()).into_response()
+    // Hash the password and save it
+    let hashed_password = generate_hash(&input.new_password);
+    let result = repo
+        .update_password_and_clear_token(&db.node_data_pool, &id, &hashed_password)
+        .await;
+
+    match result {
+        Ok(_) => (StatusCode::OK, ()).into_response(),
+        Err(e) => {
+            eprintln!("Failed to update node steward password: {:?}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(NodeStewardSetPasswordError::InternalServerError),
+            )
+                .into_response()
+        }
+    }
+}
+
+fn password_is_valid(password: &str) -> bool {
+    password.len() >= 8
 }
