@@ -1,7 +1,6 @@
-import { Badge, Stack, Table, Text } from "@mantine/core"
+import { Badge, Table, Text } from "@mantine/core"
 import { NodeSteward, NodeStewardStatus } from "../../../api/Api"
 import DateText from "../../../components/DateText"
-import { ActionButton, Anchor } from "../../../components"
 import NodeStewardActions, { NodeStewardAction } from "./NodeStewardAction"
 
 function NodeStewardStatusIndicator({ status }: { status: NodeStewardStatus }) {
@@ -40,9 +39,7 @@ export default function NodeStewardsList({
         {nodeStewards.map((steward) => (
           <Table.Tr key={steward.id}>
             <Table.Td>
-              <Anchor href={`show/${steward.id}`}>
-                <Text span>{steward.name}</Text>
-              </Anchor>
+              <Text span>{steward.name}</Text>
             </Table.Td>
             <Table.Td>
               <DateText date={steward.created_at} />

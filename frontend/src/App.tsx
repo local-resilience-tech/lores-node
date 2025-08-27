@@ -16,7 +16,7 @@ import store, { AppStore, loadInitialData } from "./store"
 import NewLocalApp from "./contexts/apps/pages/NewLocalApp"
 import { Stacks } from "./contexts/stacks"
 import { ShowAppRepo, NewAppRepo, AppRepos } from "./contexts/app_repos"
-import { AdminLogin, AuthLayout, SetupAdmin } from "./contexts/auth"
+import { AdminLogin, AuthLayout, SetupAdmin } from "./contexts/admin_auth"
 import { AdminLayout, NewNodeSteward, AllNodeStewards } from "./contexts/admin"
 
 // Import styles of packages that you've installed.
