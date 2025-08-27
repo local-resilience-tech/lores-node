@@ -57,6 +57,14 @@ impl NodeStewardRow {
         self.password_reset_token = Some(new_password_reset_token());
         self.password_reset_token_expires_at = Some(new_reset_token_expiry());
     }
+
+    pub fn token_equals(&self, token: &str) -> bool {
+        if let Some(stored_token) = &self.password_reset_token {
+            stored_token == token && !stored_token.is_empty()
+        } else {
+            false
+        }
+    }
 }
 
 pub struct NodeStewardsRepo {}

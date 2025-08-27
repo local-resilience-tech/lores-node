@@ -1,7 +1,12 @@
-use axum::{http::StatusCode, response::IntoResponse, Json};
-use serde::Serialize;
+use axum::{http::StatusCode, response::IntoResponse, Extension, Json};
+use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use utoipa_axum::{router::OpenApiRouter, routes};
+
+use crate::{
+    data::node_data::node_stewards::{NodeStewardIdentifier, NodeStewardsRepo},
+    DatabaseState,
+};
 
 use super::{
     auth_backend::{AuthError, AuthSession, Credentials, NodeStewardCredentials},
@@ -9,7 +14,9 @@ use super::{
 };
 
 pub fn router() -> OpenApiRouter {
-    OpenApiRouter::new().routes(routes!(node_steward_login))
+    OpenApiRouter::new()
+        .routes(routes!(node_steward_login))
+        .routes(routes!(node_steward_set_password))
 }
 
 #[derive(Debug, Clone, Serialize, ToSchema)]
@@ -38,11 +45,11 @@ async fn node_steward_login(
     let user = match auth_session.authenticate(creds.clone()).await {
         Ok(Some(user)) => user,
         Ok(None) => {
-            return Err((
+            return (
                 StatusCode::UNAUTHORIZED,
                 Json(NodeStewardLoginError::InvalidCredentials),
             )
-                .into_response());
+                .into_response();
         }
 
         Err(e) => {
@@ -65,18 +72,92 @@ async fn node_steward_login(
                     Json(NodeStewardLoginError::InternalServerError),
                 ),
             };
-            return Err(status.into_response());
+            return status.into_response();
         }
     };
 
     if auth_session.login(&user).await.is_err() {
         eprint!("Failed to log in node steward user");
-        return Err((
+        return (
             StatusCode::INTERNAL_SERVER_ERROR,
             Json(NodeStewardLoginError::InternalServerError),
         )
-            .into_response());
+            .into_response();
     }
 
-    return Ok((StatusCode::OK, Json(UserRef::from_backend_user(&user))).into_response());
+    return (StatusCode::OK, Json(UserRef::from_backend_user(&user))).into_response();
+}
+
+#[derive(Debug, Clone, Deserialize, ToSchema)]
+pub struct NodeStewardSetPasswordRequest {
+    pub id: String,
+    pub token: String,
+    pub new_password: String,
+}
+
+#[derive(Debug, Clone, Serialize, ToSchema)]
+pub enum NodeStewardSetPasswordError {
+    InvalidId,
+    InvalidToken,
+    TokenExpired,
+    InternalServerError,
+}
+
+#[utoipa::path(
+    post, path = "/set_password",
+    request_body(content = NodeStewardSetPasswordRequest, content_type = "application/json"),
+    responses(
+        (status = OK, body = ()),
+        (status = INTERNAL_SERVER_ERROR, body = NodeStewardSetPasswordError),
+        (status = UNAUTHORIZED, body = NodeStewardSetPasswordError)
+    )
+)]
+async fn node_steward_set_password(
+    Extension(db): Extension<DatabaseState>,
+    axum::extract::Json(input): axum::extract::Json<NodeStewardSetPasswordRequest>,
+) -> impl IntoResponse {
+    let repo = NodeStewardsRepo::init();
+
+    // Fetch node steward by ID
+    let id = NodeStewardIdentifier { id: input.id };
+    let steward = match repo.find(&db.node_data_pool, &id).await {
+        Ok(Some(steward)) => steward,
+        Ok(None) => {
+            return (
+                StatusCode::UNAUTHORIZED,
+                Json(NodeStewardSetPasswordError::InvalidId),
+            )
+                .into_response();
+        }
+        Err(e) => {
+            eprintln!("Failed to find node steward: {:?}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(NodeStewardSetPasswordError::InternalServerError),
+            )
+                .into_response();
+        }
+    };
+
+    // Check that the token is valid and not empty or missing
+    if !steward.token_equals(&input.token) {
+        return (
+            StatusCode::UNAUTHORIZED,
+            Json(NodeStewardSetPasswordError::InvalidToken),
+        )
+            .into_response();
+    }
+
+    // Check that the token hasn't expired
+    if steward.token_expired() {
+        return (
+            StatusCode::UNAUTHORIZED,
+            Json(NodeStewardSetPasswordError::TokenExpired),
+        )
+            .into_response();
+    }
+
+    // TODO: Hash the new password and set it here
+
+    (StatusCode::OK, ()).into_response()
 }

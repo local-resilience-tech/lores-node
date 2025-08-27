@@ -1,29 +1,28 @@
 import { Stack, Title, Text } from "@mantine/core"
 import { getApi } from "../../../../api"
-import { useNavigate } from "react-router-dom"
+import { NodeStewardSetPasswordRequest } from "../../../../api/Api"
 import {
-  NodeStewardCredentials,
-  NodeStewardLoginError,
-} from "../../../../api/Api"
-import { AxiosError } from "axios"
-import { actionFailure, ActionPromiseResult } from "../../../../components"
+  actionFailure,
+  ActionPromiseResult,
+  actionSuccess,
+  Anchor,
+} from "../../../../components"
 import NodeStewardSetPasswordForm from "../components/NodeStewardSetPasswordForm"
+import { useState } from "react"
 
 export default function NodeStewardSetPassword() {
-  const navigate = useNavigate()
+  const [success, setSuccess] = useState(false)
 
   const onSubmit = async (
-    values: NodeStewardCredentials
+    values: NodeStewardSetPasswordRequest
   ): Promise<ActionPromiseResult> => {
     return getApi()
-      .authApi.nodeStewardLogin(values)
+      .authApi.nodeStewardSetPassword(values)
       .then((response) => {
-        console.log("response", response)
-        navigate("/admin/node_stewards")
+        setSuccess(true)
+        return actionSuccess()
       })
-      .catch((error: AxiosError<NodeStewardLoginError>) => {
-        return actionFailure(error)
-      })
+      .catch(actionFailure)
   }
 
   return (
@@ -34,13 +33,27 @@ export default function NodeStewardSetPassword() {
         </Text>
         <Title order={1}>Set your password</Title>
       </Stack>
-      <Stack gap="md">
-        <Text>
-          You should have been given your id and one-use token by the node
-          admin.
-        </Text>
-      </Stack>
-      <NodeStewardSetPasswordForm onSubmit={onSubmit} />
+
+      {success && (
+        <Stack gap="md">
+          <Text>Password set successfully.</Text>
+          <Text>
+            You can now go ahead and <Anchor href="../login">log in</Anchor>.
+          </Text>
+        </Stack>
+      )}
+
+      {!success && (
+        <Stack gap="lg">
+          <Stack gap="md">
+            <Text>
+              You should have been given your id and one-use token by the node
+              admin.
+            </Text>
+          </Stack>
+          <NodeStewardSetPasswordForm onSubmit={onSubmit} />
+        </Stack>
+      )}
     </Stack>
   )
 }

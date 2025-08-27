@@ -23,6 +23,13 @@ export enum NodeStewardStatus {
   TokenExpired = "TokenExpired",
 }
 
+export enum NodeStewardSetPasswordError {
+  InvalidId = "InvalidId",
+  InvalidToken = "InvalidToken",
+  TokenExpired = "TokenExpired",
+  InternalServerError = "InternalServerError",
+}
+
 export enum NodeStewardLoginError {
   InvalidCredentials = "InvalidCredentials",
   NoPasswordSet = "NoPasswordSet",
@@ -174,6 +181,12 @@ export interface NodeStewardCreationResult {
 export interface NodeStewardCredentials {
   id: string;
   password: string;
+}
+
+export interface NodeStewardSetPasswordRequest {
+  id: string;
+  new_password: string;
+  token: string;
 }
 
 export interface P2PandaLogCounts {
@@ -510,6 +523,25 @@ export class Api<
     ) =>
       this.request<UserRef, NodeStewardLoginError>({
         path: `/auth_api/node_steward/login`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @name NodeStewardSetPassword
+     * @request POST:/auth_api/node_steward/set_password
+     */
+    nodeStewardSetPassword: (
+      data: NodeStewardSetPasswordRequest,
+      params: RequestParams = {},
+    ) =>
+      this.request<UserRef, NodeStewardSetPasswordError>({
+        path: `/auth_api/node_steward/set_password`,
         method: "POST",
         body: data,
         type: ContentType.Json,

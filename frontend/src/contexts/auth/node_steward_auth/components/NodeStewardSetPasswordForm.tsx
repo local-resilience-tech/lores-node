@@ -1,6 +1,6 @@
 import { Button, PasswordInput, Stack, TextInput, Text } from "@mantine/core"
 import { useForm } from "@mantine/form"
-import { NodeStewardCredentials } from "../../../../api/Api"
+import { NodeStewardSetPasswordRequest } from "../../../../api/Api"
 import {
   ActionPromiseResult,
   Anchor,
@@ -10,25 +10,29 @@ import {
 import { DisplayFormError } from "../../../../components/ActionResult"
 
 interface NodeStewardLoginFormProps {
-  onSubmit: (values: NodeStewardCredentials) => Promise<ActionPromiseResult>
+  onSubmit: (
+    values: NodeStewardSetPasswordRequest
+  ) => Promise<ActionPromiseResult>
 }
 
 export default function NodeStewardLoginForm({
   onSubmit,
 }: NodeStewardLoginFormProps) {
   const [actionResult, onSubmitWithResult] =
-    useOnSubmitWithResult<NodeStewardCredentials>(onSubmit)
+    useOnSubmitWithResult<NodeStewardSetPasswordRequest>(onSubmit)
 
   const form = useForm({
     mode: "uncontrolled",
     initialValues: {
       id: "",
-      password: "",
+      token: "",
+      new_password: "",
     },
 
     validate: {
       id: (value) => (value ? null : "ID is required"),
-      password: (value) => (value ? null : "Password is required"),
+      token: (value) => (value ? null : "Token is required"),
+      new_password: (value) => (value ? null : "New password is required"),
     },
   })
 
@@ -41,34 +45,44 @@ export default function NodeStewardLoginForm({
           {...form.getInputProps("id")}
         />
 
+        <TextInput
+          label="Token"
+          placeholder="Node steward token"
+          {...form.getInputProps("token")}
+        />
+
         <PasswordInput
-          label="Password"
-          placeholder="Node steward password"
-          {...form.getInputProps("password")}
+          label="New password"
+          placeholder="Node steward new password"
+          {...form.getInputProps("new_password")}
         />
 
         <DisplayActionResult
           result={actionResult}
           handlers={{
-            NoPasswordSet: (
+            InvalidId: (
               <DisplayFormError
-                heading="Login failed - No password set."
-                description={
-                  <Text c="red">
-                    This user has not set up their password yet.{" "}
-                    <Anchor href="../set_password">
-                      Click here to set a password
-                    </Anchor>
-                    .
-                  </Text>
-                }
+                heading="Set password failed - Invalid ID."
+                description="Check that you typed the ID correctly."
+              />
+            ),
+            InvalidToken: (
+              <DisplayFormError
+                heading="Set password failed - Invalid token."
+                description="Check that you typed the token correctly."
+              />
+            ),
+            TokenExpired: (
+              <DisplayFormError
+                heading="Set password failed - Token expired."
+                description="The token you provided has expired. These tokens only last for 24 hours. Ask the node administrator to generate a new one for you."
               />
             ),
           }}
         />
 
         <Button fullWidth type="submit" loading={form.submitting}>
-          Log in
+          Set password
         </Button>
       </Stack>
     </form>
