@@ -1,11 +1,12 @@
-import { Divider, Stack, Title, Box } from "@mantine/core"
+import { Stack, Title } from "@mantine/core"
 import EditNodeForm from "../components/EditNodeForm"
-import ManageStatus from "../components/ManageStatus"
-import type { Node, UpdateNodeDetails } from "../../../api/Api"
+import type { UpdateNodeDetails } from "../../../api/Api"
 import { getApi } from "../../../api"
 import { useAppSelector } from "../../../store"
+import { useNavigate } from "react-router-dom"
 
-export default function EditNode() {
+export default function ThisNode() {
+  const navigate = useNavigate()
   const node = useAppSelector((state) => state.thisNode)
 
   if (!node) return null
@@ -27,15 +28,8 @@ export default function EditNode() {
 
   return (
     <Stack gap="lg">
-      <Stack>
-        <Title order={1}>Edit This Node</Title>
-        <EditNodeForm node={node} onSubmit={updateNode} />
-      </Stack>
-      <Divider />
-      <Stack>
-        <Title order={2}>Node Status</Title>
-        <ManageStatus />
-      </Stack>
+      <Title order={1}>Edit this node</Title>
+      <EditNodeForm node={node} onSubmit={updateNode} />
     </Stack>
   )
 }

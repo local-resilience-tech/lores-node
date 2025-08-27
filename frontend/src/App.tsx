@@ -5,7 +5,7 @@ import {
   createBrowserRouter,
 } from "react-router-dom"
 import { Layout } from "./pages"
-import { EnsureNode, EditNode } from "./contexts/this_node"
+import { EditNode, EnsureNode, ThisNode } from "./contexts/this_node"
 import { EventLog, ThisP2PandaNode } from "./contexts/this_p2panda_node"
 import { ShowLocalApp, LocalApps, RegionApps } from "./contexts/apps"
 import { EnsureRegion, Nodes } from "./contexts/this_region"
@@ -89,7 +89,8 @@ const router = createBrowserRouter([
             path: "this_node",
             element: <EnsureNode />,
             children: [
-              { path: "", element: <EditNode /> },
+              { path: "", element: <ThisNode /> },
+              { path: "edit", element: <EditNode /> },
               {
                 path: "apps",
                 children: [
