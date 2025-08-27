@@ -6,6 +6,7 @@ import { nodesLoaded } from "./nodes"
 import { regionLoaded } from "./region"
 import { regionAppsLoaded } from "./region_apps"
 import { thisNodeLoaded } from "./this_node"
+import { meLoaded } from "./me"
 
 export async function loadInitialData(store: AppStore) {
   const state = store.getState()
@@ -22,7 +23,7 @@ export async function loadInitialData(store: AppStore) {
 async function loadUser(store: AppStore) {
   const result = await fetchApiData(() => getApi().authApi.getCurrentUser())
   console.log("EFFECT: fetchUser", result)
-  // if (result) store.dispatch(userLoaded(result))
+  if (result) store.dispatch(meLoaded(result))
 }
 
 async function loadRegion(store: AppStore) {

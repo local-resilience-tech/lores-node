@@ -20,6 +20,7 @@ import {
   IconGhost,
   IconHome,
   IconTimelineEventText,
+  IconUser,
 } from "@tabler/icons-react"
 import packageJson from "../../../package.json"
 import pangaLogoUrl from "../../assets/deepsea-panda.svg"
@@ -37,6 +38,7 @@ export default function Layout() {
   const node = useAppSelector((state) => state.thisNode)
   const nodesCount = useAppSelector((state) => state.nodes?.length)
   const localAppsCount = useAppSelector((state) => state.localApps?.length)
+  const me = useAppSelector((state) => state.me)
 
   const {} = useWebSocket(getSocketUrl(), {
     share: true,
@@ -72,14 +74,23 @@ export default function Layout() {
       </AppShell.Header>
       <AppShell.Navbar p={0}>
         <AppShell.Section className={classes.user_section}>
-          <Group justify="center" gap="sm">
-            <Avatar>
-              <IconGhost size={24} />
-            </Avatar>
-            <Text fw="bold">
-              Guest - <Anchor href="/auth/node_steward/login">log in</Anchor>
-            </Text>
-          </Group>
+          {me ? (
+            <Group justify="center" gap="sm">
+              <Avatar>
+                <IconUser size={24} />
+              </Avatar>
+              <Text fw="bold">{me.name}</Text>
+            </Group>
+          ) : (
+            <Group justify="center" gap="sm">
+              <Avatar>
+                <IconGhost size={24} />
+              </Avatar>
+              <Text fw="bold">
+                Guest - <Anchor href="/auth/node_steward/login">log in</Anchor>
+              </Text>
+            </Group>
+          )}
         </AppShell.Section>
         <AppShell.Section className={classes.menu_section}>
           <Text className={classes.section_title}>

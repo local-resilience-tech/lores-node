@@ -189,6 +189,11 @@ export interface NodeStewardSetPasswordRequest {
   token: string;
 }
 
+export interface NodeStewardUser {
+  id: string;
+  name: string;
+}
+
 export interface P2PandaLogCounts {
   counts: LogCount[];
 }
@@ -518,7 +523,7 @@ export class Api<
      * @request GET:/auth_api/node_steward
      */
     getCurrentUser: (params: RequestParams = {}) =>
-      this.request<any, any>({
+      this.request<null | NodeStewardUser, any>({
         path: `/auth_api/node_steward`,
         method: "GET",
         format: "json",
