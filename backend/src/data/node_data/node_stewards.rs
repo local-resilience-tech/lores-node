@@ -57,6 +57,14 @@ impl NodeStewardRow {
         self.password_reset_token = Some(new_password_reset_token());
         self.password_reset_token_expires_at = Some(new_reset_token_expiry());
     }
+
+    pub fn token_equals(&self, token: &str) -> bool {
+        if let Some(stored_token) = &self.password_reset_token {
+            stored_token == token && !stored_token.is_empty()
+        } else {
+            false
+        }
+    }
 }
 
 pub struct NodeStewardsRepo {}
@@ -132,6 +140,27 @@ impl NodeStewardsRepo {
         .bind(&row.password_reset_token)
         .bind(&row.password_reset_token_expires_at)
         .bind(&row.id)
+        .execute(pool)
+        .await?;
+
+        Ok(())
+    }
+
+    pub async fn update_password_and_clear_token(
+        &self,
+        pool: &SqlitePool,
+        identifier: &NodeStewardIdentifier,
+        hashed_password: &str,
+    ) -> Result<(), sqlx::Error> {
+        sqlx::query::<Sqlite>(
+            "
+            UPDATE node_stewards
+            SET hashed_password = ?, password_reset_token = NULL, password_reset_token_expires_at = NULL, updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+            ",
+        )
+        .bind(hashed_password)
+        .bind(&identifier.id)
         .execute(pool)
         .await?;
 

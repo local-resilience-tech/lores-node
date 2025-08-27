@@ -1,15 +1,14 @@
 import {
-  Anchor,
   AppShell,
+  Avatar,
   Badge,
   Breadcrumbs,
   Burger,
   Container,
   Group,
   Text,
-  Title,
 } from "@mantine/core"
-import { NavLink } from "../../components"
+import { Anchor, NavLink } from "../../components"
 import { Outlet } from "react-router-dom"
 import { useDisclosure } from "@mantine/hooks"
 import {
@@ -18,8 +17,10 @@ import {
   IconBrandDocker,
   IconBrandGit,
   IconBrandGithub,
+  IconGhost,
   IconHome,
   IconTimelineEventText,
+  IconUser,
 } from "@tabler/icons-react"
 import packageJson from "../../../package.json"
 import pangaLogoUrl from "../../assets/deepsea-panda.svg"
@@ -37,6 +38,7 @@ export default function Layout() {
   const node = useAppSelector((state) => state.thisNode)
   const nodesCount = useAppSelector((state) => state.nodes?.length)
   const localAppsCount = useAppSelector((state) => state.localApps?.length)
+  const me = useAppSelector((state) => state.me)
 
   const {} = useWebSocket(getSocketUrl(), {
     share: true,
@@ -71,6 +73,25 @@ export default function Layout() {
         </Group>
       </AppShell.Header>
       <AppShell.Navbar p={0}>
+        <AppShell.Section className={classes.user_section}>
+          {me ? (
+            <Group justify="center" gap="sm">
+              <Avatar>
+                <IconUser size={24} />
+              </Avatar>
+              <Text fw="bold">{me.name}</Text>
+            </Group>
+          ) : (
+            <Group justify="center" gap="sm">
+              <Avatar>
+                <IconGhost size={24} />
+              </Avatar>
+              <Text fw="bold">
+                Guest - <Anchor href="/auth/node_steward/login">log in</Anchor>
+              </Text>
+            </Group>
+          )}
+        </AppShell.Section>
         <AppShell.Section className={classes.menu_section}>
           <Text className={classes.section_title}>
             {node?.name ? (

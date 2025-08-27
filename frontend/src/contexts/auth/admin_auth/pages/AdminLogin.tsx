@@ -1,6 +1,6 @@
 import { Stack, Title, Text } from "@mantine/core"
 import AdminLoginForm from "../components/AdminLoginForm"
-import { getApi } from "../../../api"
+import { getApi } from "../../../../api"
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 

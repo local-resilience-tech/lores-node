@@ -23,6 +23,20 @@ export enum NodeStewardStatus {
   TokenExpired = "TokenExpired",
 }
 
+export enum NodeStewardSetPasswordError {
+  InvalidId = "InvalidId",
+  InvalidToken = "InvalidToken",
+  TokenExpired = "TokenExpired",
+  InvalidNewPassword = "InvalidNewPassword",
+  InternalServerError = "InternalServerError",
+}
+
+export enum NodeStewardLoginError {
+  InvalidCredentials = "InvalidCredentials",
+  NoPasswordSet = "NoPasswordSet",
+  InternalServerError = "InternalServerError",
+}
+
 export enum LocalAppInstallStatus {
   Installed = "Installed",
   StackDeployed = "StackDeployed",
@@ -162,6 +176,22 @@ export interface NodeStewardCreationData {
 export interface NodeStewardCreationResult {
   node_steward: NodeSteward;
   password_reset_token: string;
+}
+
+export interface NodeStewardCredentials {
+  id: string;
+  password: string;
+}
+
+export interface NodeStewardSetPasswordRequest {
+  id: string;
+  new_password: string;
+  token: string;
+}
+
+export interface NodeStewardUser {
+  id: string;
+  name: string;
 }
 
 export interface P2PandaLogCounts {
@@ -375,7 +405,7 @@ export class HttpClient<SecurityDataType = unknown> {
 
 /**
  * @title lores-node
- * @version 0.11.3
+ * @version 0.11.4
  * @license
  */
 export class Api<
@@ -479,6 +509,58 @@ export class Api<
     adminLogin: (data: AdminCredentials, params: RequestParams = {}) =>
       this.request<UserRef, string>({
         path: `/auth_api/admin/login`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @name GetCurrentUser
+     * @request GET:/auth_api/node_steward
+     */
+    getCurrentUser: (params: RequestParams = {}) =>
+      this.request<null | NodeStewardUser, any>({
+        path: `/auth_api/node_steward`,
+        method: "GET",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @name NodeStewardLogin
+     * @request POST:/auth_api/node_steward/login
+     */
+    nodeStewardLogin: (
+      data: NodeStewardCredentials,
+      params: RequestParams = {},
+    ) =>
+      this.request<UserRef, NodeStewardLoginError>({
+        path: `/auth_api/node_steward/login`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @name NodeStewardSetPassword
+     * @request POST:/auth_api/node_steward/set_password
+     */
+    nodeStewardSetPassword: (
+      data: NodeStewardSetPasswordRequest,
+      params: RequestParams = {},
+    ) =>
+      this.request<any, NodeStewardSetPasswordError>({
+        path: `/auth_api/node_steward/set_password`,
         method: "POST",
         body: data,
         type: ContentType.Json,

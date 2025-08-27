@@ -5,11 +5,13 @@ import nodesReducer, { nodeUpdated } from "./nodes"
 import appReposReducer, { appRepoUpdated } from "./app_repos"
 import localAppsReducer, { localAppUpdated } from "./local_apps"
 import regionAppsReducer, { regionAppUpdated } from "./region_apps"
+import meReducer from "./me"
 import thisNodeReducer from "./this_node"
 import { ClientEvent } from "../api/Api"
 
 const store = configureStore({
   reducer: {
+    me: meReducer,
     region: regionReducer,
     nodes: nodesReducer,
     appRepos: appReposReducer,
