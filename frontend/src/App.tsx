@@ -26,6 +26,7 @@ import { AdminLayout, NewNodeSteward, AllNodeStewards } from "./contexts/admin"
 import {
   NodeStewardLogin,
   NodeStewardSetPassword,
+  RequireNodeSteward,
 } from "./contexts/auth/node_steward_auth"
 
 // Import styles of packages that you've installed.
@@ -96,7 +97,14 @@ const router = createBrowserRouter([
             children: [
               { path: "", element: <ThisNode /> },
               { path: "edit", element: <EditNode /> },
-              { path: "status", element: <ManageStatus /> },
+              {
+                path: "status",
+                element: (
+                  <RequireNodeSteward>
+                    <ManageStatus />
+                  </RequireNodeSteward>
+                ),
+              },
               {
                 path: "apps",
                 children: [
