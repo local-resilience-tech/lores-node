@@ -1,41 +1,27 @@
 import {
-  Divider,
   Stack,
   Title,
   Text,
   Card,
   Group,
   ActionIcon,
+  Button,
 } from "@mantine/core"
-import EditNodeForm from "../components/EditNodeForm"
-import ManageStatus from "../components/ManageStatus"
-import type { UpdateNodeDetails } from "../../../api/Api"
-import { getApi } from "../../../api"
 import { useAppSelector } from "../../../store"
 import ThisNodeDetails from "../components/ThisNodeDetails"
 import { useNavigate } from "react-router-dom"
 import { IconEdit } from "@tabler/icons-react"
+import DisplayStatus from "../components/DisplayStatus"
+import { getNodeById } from "../../../store/nodes"
 
 export default function ThisNode() {
   const navigate = useNavigate()
   const node = useAppSelector((state) => state.thisNode)
+  const nodeDetails = useAppSelector((state) =>
+    getNodeById(state.nodes, node?.id)
+  )
 
   if (!node) return null
-
-  const updateNode = async (data: UpdateNodeDetails) => {
-    getApi()
-      .publicApi.updateThisNode(data)
-      .then((result) => {
-        if (result.status === 200) {
-          console.log("Node updated successfully", result.data)
-        } else {
-          console.error("Failed to create node", result)
-        }
-      })
-      .catch((error) => {
-        console.error("Error creating node", error)
-      })
-  }
 
   return (
     <Stack gap="lg">
@@ -57,14 +43,24 @@ export default function ThisNode() {
         <Title order={2}>Details</Title>
         <Card>
           <Card.Section>
-            <ThisNodeDetails node={node} />
+            <ThisNodeDetails node={node} nodeDetails={nodeDetails} />
           </Card.Section>
         </Card>
       </Stack>
 
-      <Stack>
+      <Stack align="flex-start">
         <Title order={2}>Node Status</Title>
-        <ManageStatus />
+        <Card>
+          <Card.Section>
+            <DisplayStatus
+              state={nodeDetails?.state}
+              status_text={nodeDetails?.status_text}
+            />
+          </Card.Section>
+        </Card>
+        <Button variant="outline" onClick={() => navigate("./status")}>
+          Update status
+        </Button>
       </Stack>
     </Stack>
   )

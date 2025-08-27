@@ -107,7 +107,7 @@ export default function Layout() {
           </Text>
 
           <NavLink
-            label="Node status"
+            label="This node"
             href="/this_node"
             key={node ? node.id : "this_node"}
             leftSection={<IconHome size={iconSize} />}

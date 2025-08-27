@@ -1,9 +1,15 @@
-import { Stack, Text } from "@mantine/core"
-import PostStatus from "./PostStatus"
+import { Breadcrumbs, Stack, Text, Title } from "@mantine/core"
+import PostStatus from "../components/PostStatus"
 import { getApi } from "../../../api"
 import type { NodeStatusData } from "../../../api/Api"
+import { Anchor } from "../../../components"
+import { useAppSelector } from "../../../store"
 
 export default function ManageStatus() {
+  const node = useAppSelector((state) => state.thisNode)
+
+  if (!node) return null
+
   const postStatus = async (data: NodeStatusData) => {
     getApi()
       .publicApi.postNodeStatus(data)
@@ -20,7 +26,14 @@ export default function ManageStatus() {
   }
 
   return (
-    <Stack>
+    <Stack gap="lg">
+      <Stack gap="xs">
+        <Breadcrumbs>
+          <Anchor href="/this_node">{node.name}</Anchor>
+          <Text c="dimmed">status update</Text>
+        </Breadcrumbs>
+        <Title order={1}>Status update</Title>
+      </Stack>
       <PostStatus onSubmit={postStatus} />
     </Stack>
   )

@@ -1,7 +1,13 @@
 import { Table } from "@mantine/core"
-import { Node } from "../../../api/Api"
+import { Node, NodeDetails } from "../../../api/Api"
 
-export default function ThisNodeDetails({ node }: { node: Node }) {
+export default function ThisNodeDetails({
+  node,
+  nodeDetails,
+}: {
+  node: Node
+  nodeDetails: NodeDetails | null
+}) {
   return (
     <Table>
       <Table.Tbody>
@@ -12,6 +18,10 @@ export default function ThisNodeDetails({ node }: { node: Node }) {
         <Table.Tr>
           <Table.Th>ID</Table.Th>
           <Table.Td>{node.id}</Table.Td>
+        </Table.Tr>
+        <Table.Tr>
+          <Table.Th>Public IPv4</Table.Th>
+          <Table.Td>{nodeDetails?.public_ipv4}</Table.Td>
         </Table.Tr>
       </Table.Tbody>
     </Table>
