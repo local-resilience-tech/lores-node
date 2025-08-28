@@ -13,7 +13,17 @@ lazy_static! {
 }
 
 pub async fn frontend_handler(uri: Uri) -> Result<Response<Body>, (StatusCode, String)> {
-    if uri.path().starts_with("/api") {
+    let api_prefixes = vec![
+        "/public_api",
+        "/auth_api",
+        "/admin_api",
+        "/node_steward_api",
+        "/ws",
+    ];
+    if api_prefixes
+        .iter()
+        .any(|prefix| uri.path().starts_with(prefix))
+    {
         println!(
             "API call detected, not serving static files for URI: {}",
             uri

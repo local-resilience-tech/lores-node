@@ -13,6 +13,7 @@ import { useNavigate } from "react-router-dom"
 import { IconEdit } from "@tabler/icons-react"
 import DisplayStatus from "../components/DisplayStatus"
 import { getNodeById } from "../../../store/nodes"
+import { IfNodeSteward } from "../../auth/node_steward_auth"
 
 export default function ThisNode() {
   const navigate = useNavigate()
@@ -58,9 +59,11 @@ export default function ThisNode() {
             />
           </Card.Section>
         </Card>
-        <Button variant="outline" onClick={() => navigate("./status")}>
-          Update status
-        </Button>
+        <IfNodeSteward>
+          <Button variant="outline" onClick={() => navigate("./status")}>
+            Update status
+          </Button>
+        </IfNodeSteward>
       </Stack>
     </Stack>
   )

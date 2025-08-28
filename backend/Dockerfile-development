@@ -37,18 +37,22 @@ RUN cargo chef cook --recipe-path recipe.json
 COPY ./src src
 COPY ./Cargo.toml Cargo.toml
 COPY ./Cargo.lock Cargo.lock
-COPY ./config.toml config.toml
+COPY ./data/config.toml config.toml
 COPY ./migrations_projectiondb migrations_projectiondb
-COPY ./projections.sqlite projections.sqlite
+COPY ./migrations_nodedatadb migrations_nodedatadb
+COPY ./data/projections.sqlite projections.sqlite
 ENV DATABASE_URL=sqlite:/app/projections.sqlite
 RUN cargo build --bin lores-node
 
 FROM runtime_base AS runtime
 COPY --from=builder /app/target/debug/lores-node lores-node
-COPY ./config.toml config.toml
 COPY ./migrations_projectiondb migrations_projectiondb
-COPY ./projections.sqlite projections.sqlite
-COPY ./operations.sqlite operations.sqlite
+COPY ./migrations_nodedatadb migrations_nodedatadb
+COPY ./Cargo.toml Cargo.toml
+COPY ./data/projections.sqlite projections.sqlite
+COPY ./data/operations.sqlite operations.sqlite
+COPY ./data/node_data.sqlite node_data.sqlite
+COPY ./data/config.toml config.toml
 
 EXPOSE 8200
 EXPOSE 2022/udp

@@ -33,3 +33,12 @@ export default function RequireNodeSteward({
 
   return <>{children}</>
 }
+
+export function IfNodeSteward({ children }: RequireNodeStewardProps) {
+  const me = useAppSelector((state) => state.me)
+  if (!me) {
+    return null
+  }
+
+  return <>{children}</>
+}

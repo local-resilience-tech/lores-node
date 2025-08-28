@@ -75,14 +75,11 @@ async fn main() {
 
     // CORS
     let cors = CorsLayer::new()
-        .allow_origin(base_url.parse::<header::HeaderValue>().unwrap())
-        .allow_methods([
-            Method::GET,
-            Method::POST,
-            Method::PUT,
-            Method::DELETE,
-            Method::OPTIONS,
-        ])
+        .allow_origin(
+            header::HeaderValue::from_str("http://lores.localhost:5173")
+                .expect("Invalid header value"),
+        )
+        .allow_methods([Method::GET, Method::POST, Method::PUT, Method::DELETE])
         .allow_headers([header::AUTHORIZATION, header::ACCEPT, header::CONTENT_TYPE])
         .allow_credentials(true);
 

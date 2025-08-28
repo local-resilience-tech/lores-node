@@ -120,6 +120,10 @@ async fn node_steward_login(
                     StatusCode::UNAUTHORIZED,
                     Json(NodeStewardLoginError::NoPasswordSet),
                 ),
+                axum_login::Error::Backend(AuthError::UserNotFound) => (
+                    StatusCode::UNAUTHORIZED,
+                    Json(NodeStewardLoginError::InvalidCredentials),
+                ),
                 // axum_login::Error::Backend(AuthError::AccountDisabled) => (
                 //     StatusCode::UNAUTHORIZED,
                 //     Json(NodeStewardLoginError::AccountDisabled),
