@@ -16,6 +16,7 @@ import { getApi } from "../../../api"
 import { LocalApp, LocalAppInstallStatus } from "../../../api/Api"
 import { useState } from "react"
 import LocalAppActions, { LocalAppAction } from "../components/LocalAppActions"
+import { IfNodeSteward } from "../../auth/node_steward_auth"
 
 export default function ShowLocalApp() {
   const { appName } = useParams<{ appName: string }>()
@@ -131,10 +132,12 @@ export default function ShowLocalApp() {
           />
         </Stack>
 
-        <Stack>
-          <Title order={2}>Actions</Title>
-          <LocalAppActions actions={actions} app={app} />
-        </Stack>
+        <IfNodeSteward>
+          <Stack>
+            <Title order={2}>Actions</Title>
+            <LocalAppActions actions={actions} app={app} />
+          </Stack>
+        </IfNodeSteward>
       </Stack>
     </Container>
   )
