@@ -832,22 +832,6 @@ export class Api<
     /**
      * No description
      *
-     * @name CreateThisNode
-     * @request POST:/public_api/this_node
-     */
-    createThisNode: (data: CreateNodeDetails, params: RequestParams = {}) =>
-      this.request<Node, string>({
-        path: `/public_api/this_node`,
-        method: "POST",
-        body: data,
-        type: ContentType.Json,
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
      * @name ShowThisPandaNode
      * @request GET:/public_api/this_p2panda_node
      */

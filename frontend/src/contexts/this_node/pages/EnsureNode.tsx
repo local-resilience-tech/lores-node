@@ -43,7 +43,7 @@ export default function EnsureNode() {
 
   const onSubmitNewNode = (data: NewNodeData) => {
     getApi()
-      .publicApi.createThisNode({ name: data.name })
+      .nodeStewardApi.createThisNode({ name: data.name })
       .then((result) => {
         if (result.status === 201) {
           updateNode(result.data)
