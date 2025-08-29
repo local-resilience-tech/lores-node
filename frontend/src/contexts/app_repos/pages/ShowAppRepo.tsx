@@ -22,6 +22,7 @@ import { IconRefresh } from "@tabler/icons-react"
 import { ActionPromiseResult } from "../../../components"
 import { getApi } from "../../../api"
 import { appRepoUpdated } from "../../../store/app_repos"
+import { IfNodeSteward } from "../../auth/node_steward_auth"
 
 export default function ShowAppRepo() {
   const { repoName } = useParams<{ repoName: string }>()
@@ -39,15 +40,13 @@ export default function ShowAppRepo() {
   }
 
   const refreshRepo = async (): Promise<ActionPromiseResult> => {
-    getApi()
-      .publicApi.reloadAppRepo(repoName)
+    return getApi()
+      .nodeStewardApi.reloadAppRepo(repoName)
       .then((result) => {
         dispatch(appRepoUpdated(result.data))
         return actionSuccess()
       })
-      .catch((error) => {
-        return actionFailure(error)
-      })
+      .catch(actionFailure)
   }
 
   return (
@@ -65,9 +64,11 @@ export default function ShowAppRepo() {
               </Text>
               {appRepo.name}
             </Title>
-            <LoadingActionIcon onClick={refreshRepo}>
-              <IconRefresh />
-            </LoadingActionIcon>
+            <IfNodeSteward>
+              <LoadingActionIcon onClick={refreshRepo}>
+                <IconRefresh />
+              </LoadingActionIcon>
+            </IfNodeSteward>
           </Group>
         </Stack>
 
