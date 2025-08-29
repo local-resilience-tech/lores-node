@@ -3,15 +3,12 @@ import EditNodeForm from "../components/EditNodeForm"
 import type { UpdateNodeDetails } from "../../../api/Api"
 import { getApi } from "../../../api"
 import { useAppSelector } from "../../../store"
-import {
-  actionFailure,
-  ActionPromiseResult,
-  actionSuccess,
-  Anchor,
-} from "../../../components"
+import { actionFailure, ActionPromiseResult, Anchor } from "../../../components"
+import { useNavigate } from "react-router-dom"
 
 export default function ThisNode() {
   const node = useAppSelector((state) => state.thisNode)
+  const navigate = useNavigate()
 
   if (!node) return null
 
@@ -20,7 +17,9 @@ export default function ThisNode() {
   ): Promise<ActionPromiseResult> => {
     return getApi()
       .nodeStewardApi.updateThisNode(data)
-      .then(actionSuccess)
+      .then(() => {
+        navigate("..")
+      })
       .catch(actionFailure)
   }
 

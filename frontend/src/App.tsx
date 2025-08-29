@@ -96,7 +96,14 @@ const router = createBrowserRouter([
             element: <EnsureNode />,
             children: [
               { path: "", element: <ThisNode /> },
-              { path: "edit", element: <EditNode /> },
+              {
+                path: "edit",
+                element: (
+                  <RequireNodeSteward>
+                    <EditNode />
+                  </RequireNodeSteward>
+                ),
+              },
               {
                 path: "status",
                 element: (

@@ -35,9 +35,11 @@ export default function ThisNode() {
             {node.name}
           </Title>
         </Stack>
-        <ActionIcon size="lg" onClick={() => navigate("./edit")}>
-          <IconEdit />
-        </ActionIcon>
+        <IfNodeSteward>
+          <ActionIcon size="lg" onClick={() => navigate("./edit")}>
+            <IconEdit />
+          </ActionIcon>
+        </IfNodeSteward>
       </Group>
 
       <Stack gap="xs">
