@@ -38,7 +38,7 @@ export default function ShowLocalApp() {
   const handleUpgrade = async (version: string) => {
     console.log("Upgrading app:", app.name, "to version:", version)
     return getApi()
-      .publicApi.upgradeLocalApp(app.name, { target_version: version })
+      .nodeStewardApi.upgradeLocalApp(app.name, { target_version: version })
       .then((response) => {
         console.log("Upgrade successful:", response)
       })
@@ -51,17 +51,17 @@ export default function ShowLocalApp() {
   const onAppDeploy = async (app: LocalApp) => {
     console.log("Deploying app:", app)
     return getApi()
-      .publicApi.deployLocalApp(app.name)
+      .nodeStewardApi.deployLocalApp(app.name)
       .then((_) => actionSuccess())
-      .catch((error) => actionFailure(error))
+      .catch(actionFailure)
   }
 
   const onAppRemoveDeploy = async (app: LocalApp) => {
     console.log("Removing deployment of app:", app)
     return getApi()
-      .publicApi.removeDeploymentOfLocalApp(app.name)
+      .nodeStewardApi.removeDeploymentOfLocalApp(app.name)
       .then((_) => actionSuccess())
-      .catch((error) => actionFailure(error))
+      .catch(actionFailure)
   }
 
   const onAppRegister = async (app: LocalApp) => {
@@ -69,7 +69,7 @@ export default function ShowLocalApp() {
     return getApi()
       .nodeStewardApi.registerApp({ app_name: app.name })
       .then((_) => actionSuccess())
-      .catch((error) => actionFailure(error))
+      .catch(actionFailure)
   }
 
   const actions: LocalAppAction[] = []

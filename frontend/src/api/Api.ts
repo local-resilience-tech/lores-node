@@ -776,54 +776,6 @@ export class Api<
     /**
      * No description
      *
-     * @name DeployLocalApp
-     * @request POST:/public_api/local_apps/app/{app_name}/deploy
-     */
-    deployLocalApp: (appName: string, params: RequestParams = {}) =>
-      this.request<any, string>({
-        path: `/public_api/local_apps/app/${appName}/deploy`,
-        method: "POST",
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @name RemoveDeploymentOfLocalApp
-     * @request DELETE:/public_api/local_apps/app/{app_name}/deploy
-     */
-    removeDeploymentOfLocalApp: (appName: string, params: RequestParams = {}) =>
-      this.request<any, string>({
-        path: `/public_api/local_apps/app/${appName}/deploy`,
-        method: "DELETE",
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @name UpgradeLocalApp
-     * @request POST:/public_api/local_apps/app/{app_name}/upgrade
-     */
-    upgradeLocalApp: (
-      appName: string,
-      data: LocalAppUpgradeParams,
-      params: RequestParams = {},
-    ) =>
-      this.request<any, UpgradeLocalAppError>({
-        path: `/public_api/local_apps/app/${appName}/upgrade`,
-        method: "POST",
-        body: data,
-        type: ContentType.Json,
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
      * @name ListNodes
      * @request GET:/public_api/nodes
      */
