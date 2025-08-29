@@ -1,6 +1,5 @@
 use axum::{extract::Path, http::StatusCode, response::IntoResponse, Extension, Json};
 use serde::{Deserialize, Serialize};
-use tracing::event;
 use utoipa::ToSchema;
 use utoipa_axum::{router::OpenApiRouter, routes};
 
@@ -8,16 +7,8 @@ use crate::{
     data::entities::LocalApp,
     local_apps::{
         app_repos::{fs::app_repo_from_app_name, AppRepoAppReference},
-        installed_apps::{
-            self,
-            fs::{load_app_config, InstallAppVersionError},
-            AppReference,
-        },
+        installed_apps::{self, fs::InstallAppVersionError, AppReference},
         stack_apps::{self, find_deployed_local_apps},
-    },
-    panda_comms::{
-        container::P2PandaContainer,
-        lores_events::{AppRegisteredDataV1, LoResEventPayload},
     },
 };
 
@@ -26,7 +17,6 @@ use super::super::{client_events::ClientEvent, realtime::RealtimeState};
 pub fn router() -> OpenApiRouter {
     OpenApiRouter::new()
         .routes(routes!(list_local_apps))
-        .routes(routes!(register_app))
         .routes(routes!(deploy_local_app))
         .routes(routes!(remove_deployment_of_local_app))
         .routes(routes!(upgrade_local_app))
@@ -190,44 +180,6 @@ async fn upgrade_local_app(
             (StatusCode::INTERNAL_SERVER_ERROR, Json(error_result)).into_response()
         }
     }
-}
-
-#[utoipa::path(
-    post, path = "/register",
-    request_body(content = AppReference, content_type = "application/json"),
-    responses(
-        (status = 200, body = ()),
-        (status = INTERNAL_SERVER_ERROR, body = ()),
-    )
-)]
-async fn register_app(
-    Extension(panda_container): Extension<P2PandaContainer>,
-    Json(payload): Json<AppReference>,
-) -> impl IntoResponse {
-    match load_app_config(&payload) {
-        Some(app) => {
-            let event_payload = LoResEventPayload::AppRegistered(AppRegisteredDataV1 {
-                name: app.name.clone(),
-                version: app.version.clone(),
-            });
-            let publish_result = panda_container.publish_persisted(event_payload).await;
-            match publish_result {
-                Ok(_) => {
-                    event!(tracing::Level::INFO, "App registered: {}", app.name);
-                    (StatusCode::OK, ())
-                }
-                Err(e) => {
-                    eprintln!("Failed to publish app registration event: {}", e);
-                    (StatusCode::INTERNAL_SERVER_ERROR, ())
-                }
-            }
-        }
-        None => {
-            eprintln!("Failed to load app configuration for: {}", payload.app_name);
-            (StatusCode::INTERNAL_SERVER_ERROR, ())
-        }
-    }
-    .into_response()
 }
 
 async fn local_app_updated(app: &LocalApp, realtime_state: &RealtimeState) {

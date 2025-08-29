@@ -824,22 +824,6 @@ export class Api<
     /**
      * No description
      *
-     * @name RegisterApp
-     * @request POST:/public_api/local_apps/register
-     */
-    registerApp: (data: AppReference, params: RequestParams = {}) =>
-      this.request<any, any>({
-        path: `/public_api/local_apps/register`,
-        method: "POST",
-        body: data,
-        type: ContentType.Json,
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
      * @name ListNodes
      * @request GET:/public_api/nodes
      */

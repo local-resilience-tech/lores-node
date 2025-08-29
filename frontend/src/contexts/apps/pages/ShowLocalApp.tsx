@@ -67,7 +67,7 @@ export default function ShowLocalApp() {
   const onAppRegister = async (app: LocalApp) => {
     console.log("Registering app:", app)
     return getApi()
-      .publicApi.registerApp({ app_name: app.name })
+      .nodeStewardApi.registerApp({ app_name: app.name })
       .then((_) => actionSuccess())
       .catch((error) => actionFailure(error))
   }
