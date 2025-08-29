@@ -832,22 +832,6 @@ export class Api<
     /**
      * No description
      *
-     * @name UpdateThisNode
-     * @request PUT:/public_api/this_node
-     */
-    updateThisNode: (data: UpdateNodeDetails, params: RequestParams = {}) =>
-      this.request<Node, string>({
-        path: `/public_api/this_node`,
-        method: "PUT",
-        body: data,
-        type: ContentType.Json,
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
      * @name CreateThisNode
      * @request POST:/public_api/this_node
      */

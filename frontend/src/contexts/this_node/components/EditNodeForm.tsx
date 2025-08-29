@@ -1,14 +1,21 @@
 import { useForm } from "@mantine/form"
 import type { Node, UpdateNodeDetails } from "../../../api/Api"
 import { Button, Stack, TextInput } from "@mantine/core"
+import {
+  ActionPromiseResult,
+  DisplayActionResult,
+  useOnSubmitWithResult,
+} from "../../../components"
 
-export default function EditNodeForm({
-  node,
-  onSubmit,
-}: {
+interface EditNodeFormProps {
   node: Node
-  onSubmit: (data: UpdateNodeDetails) => void
-}) {
+  onSubmit: (data: UpdateNodeDetails) => Promise<ActionPromiseResult>
+}
+
+export default function EditNodeForm({ node, onSubmit }: EditNodeFormProps) {
+  const [actionResult, onSubmitWithResult] =
+    useOnSubmitWithResult<UpdateNodeDetails>(onSubmit)
+
   const form = useForm<UpdateNodeDetails>({
     mode: "controlled",
     initialValues: {
@@ -33,7 +40,7 @@ export default function EditNodeForm({
   })
 
   return (
-    <form onSubmit={form.onSubmit(onSubmit)}>
+    <form onSubmit={form.onSubmit(onSubmitWithResult)}>
       <Stack>
         <Stack>
           <TextInput
@@ -52,6 +59,8 @@ export default function EditNodeForm({
             {...form.getInputProps("public_ipv4")}
           />
         </Stack>
+
+        <DisplayActionResult result={actionResult} />
 
         <Button loading={form.submitting} type="submit">
           Update

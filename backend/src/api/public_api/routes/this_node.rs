@@ -8,7 +8,7 @@ use crate::{
     data::{entities::Node, projections_read::nodes::NodesReadRepo},
     panda_comms::{
         container::P2PandaContainer,
-        lores_events::{LoResEventPayload, NodeAnnouncedDataV1, NodeUpdatedDataV1},
+        lores_events::{LoResEventPayload, NodeAnnouncedDataV1},
     },
     DatabaseState,
 };
@@ -17,7 +17,6 @@ pub fn router() -> OpenApiRouter {
     OpenApiRouter::new()
         .routes(routes!(show_this_node))
         .routes(routes!(create_this_node))
-        .routes(routes!(update_this_node))
 }
 
 #[utoipa::path(get, path = "/", responses(
@@ -81,49 +80,6 @@ async fn create_this_node(
                 name: data.name.clone(),
             };
             (StatusCode::CREATED, Json(node)).into_response()
-        }
-        Err(e) => {
-            eprintln!("Error publishing event: {}", e);
-            (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response()
-        }
-    }
-}
-
-#[derive(Deserialize, ToSchema, Debug)]
-struct UpdateNodeDetails {
-    name: String,
-    public_ipv4: String,
-}
-
-#[utoipa::path(
-    put,
-    path = "/",
-    responses(
-        (status = OK, body = Node),
-        (status = INTERNAL_SERVER_ERROR, body = String, description = "Internal Server Error"),
-    ),
-    request_body(content = UpdateNodeDetails, content_type = "application/json"),
-)]
-async fn update_this_node(
-    Extension(panda_container): Extension<P2PandaContainer>,
-    axum::extract::Json(data): axum::extract::Json<UpdateNodeDetails>,
-) -> impl IntoResponse {
-    println!("update node: {:?}", data);
-
-    let event_payload = LoResEventPayload::NodeUpdated(NodeUpdatedDataV1 {
-        name: data.name.clone(),
-        public_ipv4: data.public_ipv4.clone(),
-    });
-
-    let result = panda_container.publish_persisted(event_payload).await;
-
-    match result {
-        Ok(_) => {
-            let node = Node {
-                id: "1".to_string(),
-                name: data.name.clone(),
-            };
-            (StatusCode::OK, Json(node)).into_response()
         }
         Err(e) => {
             eprintln!("Error publishing event: {}", e);

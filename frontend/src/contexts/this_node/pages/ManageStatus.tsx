@@ -2,12 +2,7 @@ import { Breadcrumbs, Stack, Text, Title } from "@mantine/core"
 import PostStatus from "../components/PostStatus"
 import { getApi } from "../../../api"
 import type { NodeStatusData } from "../../../api/Api"
-import {
-  actionFailure,
-  ActionPromiseResult,
-  actionSuccess,
-  Anchor,
-} from "../../../components"
+import { actionFailure, ActionPromiseResult, Anchor } from "../../../components"
 import { useAppSelector } from "../../../store"
 import { useNavigate } from "react-router-dom"
 
