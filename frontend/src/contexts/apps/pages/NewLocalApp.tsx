@@ -19,14 +19,12 @@ export default function NewLocalApp() {
     values: AppRepoAppReference
   ): Promise<ActionPromiseResult | void> => {
     return getApi()
-      .publicApi.installAppDefinition(values)
+      .nodeStewardApi.installAppDefinition(values)
       .then(() => {
         navigate("../")
         return actionSuccess()
       })
-      .catch((error) => {
-        return actionFailure(error)
-      })
+      .catch(actionFailure)
   }
 
   return (

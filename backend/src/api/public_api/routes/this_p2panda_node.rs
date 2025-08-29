@@ -1,5 +1,5 @@
 use axum::{http::StatusCode, response::IntoResponse, Extension, Json};
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use utoipa::ToSchema;
 use utoipa_axum::{router::OpenApiRouter, routes};
 
@@ -36,12 +36,6 @@ pub struct P2PandaNodeDetails {
     pub panda_node_id: String,
     pub iroh_node_addr: IrohNodeAddr,
     pub peers: Vec<PandaNodeAddress>,
-}
-
-#[derive(Deserialize, ToSchema)]
-pub struct BootstrapNodeData {
-    pub network_name: String,
-    pub node_id: Option<String>,
 }
 
 #[utoipa::path(get, path = "/", responses(

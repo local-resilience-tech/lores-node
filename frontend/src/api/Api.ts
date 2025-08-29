@@ -405,7 +405,7 @@ export class HttpClient<SecurityDataType = unknown> {
 
 /**
  * @title lores-node
- * @version 0.11.4
+ * @version 0.11.5
  * @license
  */
 export class Api<
@@ -568,30 +568,16 @@ export class Api<
         ...params,
       }),
   };
-  publicApi = {
-    /**
-     * No description
-     *
-     * @name ListAppRepos
-     * @request GET:/public_api/app_repos
-     */
-    listAppRepos: (params: RequestParams = {}) =>
-      this.request<AppRepo[], any>({
-        path: `/public_api/app_repos`,
-        method: "GET",
-        format: "json",
-        ...params,
-      }),
-
+  nodeStewardApi = {
     /**
      * No description
      *
      * @name CreateAppRepo
-     * @request POST:/public_api/app_repos
+     * @request POST:/node_steward_api/app_repos
      */
     createAppRepo: (data: AppRepoSource, params: RequestParams = {}) =>
       this.request<any, any>({
-        path: `/public_api/app_repos`,
+        path: `/node_steward_api/app_repos`,
         method: "POST",
         body: data,
         type: ContentType.Json,
@@ -603,11 +589,187 @@ export class Api<
      * No description
      *
      * @name ReloadAppRepo
-     * @request GET:/public_api/app_repos/reload/{repo_name}
+     * @request GET:/node_steward_api/app_repos/reload/{repo_name}
      */
     reloadAppRepo: (repoName: string, params: RequestParams = {}) =>
       this.request<AppRepo, any>({
-        path: `/public_api/app_repos/reload/${repoName}`,
+        path: `/node_steward_api/app_repos/reload/${repoName}`,
+        method: "GET",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @name DeployLocalApp
+     * @request POST:/node_steward_api/local_apps/app/{app_name}/deploy
+     */
+    deployLocalApp: (appName: string, params: RequestParams = {}) =>
+      this.request<any, string>({
+        path: `/node_steward_api/local_apps/app/${appName}/deploy`,
+        method: "POST",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @name RemoveDeploymentOfLocalApp
+     * @request DELETE:/node_steward_api/local_apps/app/{app_name}/deploy
+     */
+    removeDeploymentOfLocalApp: (appName: string, params: RequestParams = {}) =>
+      this.request<any, string>({
+        path: `/node_steward_api/local_apps/app/${appName}/deploy`,
+        method: "DELETE",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @name UpgradeLocalApp
+     * @request POST:/node_steward_api/local_apps/app/{app_name}/upgrade
+     */
+    upgradeLocalApp: (
+      appName: string,
+      data: LocalAppUpgradeParams,
+      params: RequestParams = {},
+    ) =>
+      this.request<any, UpgradeLocalAppError>({
+        path: `/node_steward_api/local_apps/app/${appName}/upgrade`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @name InstallAppDefinition
+     * @request POST:/node_steward_api/local_apps/definitions
+     */
+    installAppDefinition: (
+      data: AppRepoAppReference,
+      params: RequestParams = {},
+    ) =>
+      this.request<any, InstallLocalAppError>({
+        path: `/node_steward_api/local_apps/definitions`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @name RegisterApp
+     * @request POST:/node_steward_api/local_apps/register
+     */
+    registerApp: (data: AppReference, params: RequestParams = {}) =>
+      this.request<any, any>({
+        path: `/node_steward_api/local_apps/register`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @name UpdateThisNode
+     * @request PUT:/node_steward_api/this_node
+     */
+    updateThisNode: (data: UpdateNodeDetails, params: RequestParams = {}) =>
+      this.request<Node, string>({
+        path: `/node_steward_api/this_node`,
+        method: "PUT",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @name CreateThisNode
+     * @request POST:/node_steward_api/this_node
+     */
+    createThisNode: (data: CreateNodeDetails, params: RequestParams = {}) =>
+      this.request<Node, string>({
+        path: `/node_steward_api/this_node`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @name PostNodeStatus
+     * @request POST:/node_steward_api/this_node/status
+     */
+    postNodeStatus: (data: NodeStatusData, params: RequestParams = {}) =>
+      this.request<any, string>({
+        path: `/node_steward_api/this_node/status`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @name ShowRegion
+     * @request GET:/node_steward_api/this_region
+     */
+    showRegion: (params: RequestParams = {}) =>
+      this.request<null | Region, any>({
+        path: `/node_steward_api/this_region`,
+        method: "GET",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @name Bootstrap
+     * @request POST:/node_steward_api/this_region/bootstrap
+     */
+    bootstrap: (data: BootstrapNodeData, params: RequestParams = {}) =>
+      this.request<any, string>({
+        path: `/node_steward_api/this_region/bootstrap`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+  };
+  publicApi = {
+    /**
+     * No description
+     *
+     * @name ListAppRepos
+     * @request GET:/public_api/app_repos
+     */
+    listAppRepos: (params: RequestParams = {}) =>
+      this.request<AppRepo[], any>({
+        path: `/public_api/app_repos`,
         method: "GET",
         format: "json",
         ...params,
@@ -637,89 +799,6 @@ export class Api<
       this.request<LocalApp[], any>({
         path: `/public_api/local_apps`,
         method: "GET",
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @name DeployLocalApp
-     * @request POST:/public_api/local_apps/app/{app_name}/deploy
-     */
-    deployLocalApp: (appName: string, params: RequestParams = {}) =>
-      this.request<any, string>({
-        path: `/public_api/local_apps/app/${appName}/deploy`,
-        method: "POST",
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @name RemoveDeploymentOfLocalApp
-     * @request DELETE:/public_api/local_apps/app/{app_name}/deploy
-     */
-    removeDeploymentOfLocalApp: (appName: string, params: RequestParams = {}) =>
-      this.request<any, string>({
-        path: `/public_api/local_apps/app/${appName}/deploy`,
-        method: "DELETE",
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @name UpgradeLocalApp
-     * @request POST:/public_api/local_apps/app/{app_name}/upgrade
-     */
-    upgradeLocalApp: (
-      appName: string,
-      data: LocalAppUpgradeParams,
-      params: RequestParams = {},
-    ) =>
-      this.request<any, UpgradeLocalAppError>({
-        path: `/public_api/local_apps/app/${appName}/upgrade`,
-        method: "POST",
-        body: data,
-        type: ContentType.Json,
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @name InstallAppDefinition
-     * @request POST:/public_api/local_apps/definitions
-     */
-    installAppDefinition: (
-      data: AppRepoAppReference,
-      params: RequestParams = {},
-    ) =>
-      this.request<any, InstallLocalAppError>({
-        path: `/public_api/local_apps/definitions`,
-        method: "POST",
-        body: data,
-        type: ContentType.Json,
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @name RegisterApp
-     * @request POST:/public_api/local_apps/register
-     */
-    registerApp: (data: AppReference, params: RequestParams = {}) =>
-      this.request<any, any>({
-        path: `/public_api/local_apps/register`,
-        method: "POST",
-        body: data,
-        type: ContentType.Json,
         format: "json",
         ...params,
       }),
@@ -783,54 +862,6 @@ export class Api<
     /**
      * No description
      *
-     * @name UpdateThisNode
-     * @request PUT:/public_api/this_node
-     */
-    updateThisNode: (data: UpdateNodeDetails, params: RequestParams = {}) =>
-      this.request<Node, string>({
-        path: `/public_api/this_node`,
-        method: "PUT",
-        body: data,
-        type: ContentType.Json,
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @name CreateThisNode
-     * @request POST:/public_api/this_node
-     */
-    createThisNode: (data: CreateNodeDetails, params: RequestParams = {}) =>
-      this.request<Node, string>({
-        path: `/public_api/this_node`,
-        method: "POST",
-        body: data,
-        type: ContentType.Json,
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @name PostNodeStatus
-     * @request POST:/public_api/this_node/status
-     */
-    postNodeStatus: (data: NodeStatusData, params: RequestParams = {}) =>
-      this.request<any, string>({
-        path: `/public_api/this_node/status`,
-        method: "POST",
-        body: data,
-        type: ContentType.Json,
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
      * @name ShowThisPandaNode
      * @request GET:/public_api/this_p2panda_node
      */
@@ -866,22 +897,6 @@ export class Api<
       this.request<null | Region, any>({
         path: `/public_api/this_region`,
         method: "GET",
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @name Bootstrap
-     * @request POST:/public_api/this_region/bootstrap
-     */
-    bootstrap: (data: BootstrapNodeData, params: RequestParams = {}) =>
-      this.request<any, string>({
-        path: `/public_api/this_region/bootstrap`,
-        method: "POST",
-        body: data,
-        type: ContentType.Json,
         format: "json",
         ...params,
       }),

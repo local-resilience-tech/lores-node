@@ -2,12 +2,20 @@ import { Stack, TextInput, Button, Select } from "@mantine/core"
 import { useForm } from "@mantine/form"
 
 import type { NodeStatusData } from "../../../api/Api"
+import {
+  ActionPromiseResult,
+  DisplayActionResult,
+  useOnSubmitWithResult,
+} from "../../../components"
 
 export default function PostStatus({
   onSubmit,
 }: {
-  onSubmit: (data: NodeStatusData) => void
+  onSubmit: (data: NodeStatusData) => Promise<ActionPromiseResult>
 }) {
+  const [actionResult, onSubmitWithResult] =
+    useOnSubmitWithResult<NodeStatusData>(onSubmit)
+
   const form = useForm<NodeStatusData>({
     mode: "controlled",
     initialValues: {},
@@ -27,7 +35,7 @@ export default function PostStatus({
   })
 
   return (
-    <form onSubmit={form.onSubmit(onSubmit)}>
+    <form onSubmit={form.onSubmit(onSubmitWithResult)}>
       <Stack>
         <Stack>
           <TextInput
@@ -52,6 +60,8 @@ export default function PostStatus({
             {...form.getInputProps("state")}
           />
         </Stack>
+
+        <DisplayActionResult result={actionResult} />
 
         <Button loading={form.submitting} type="submit">
           Post

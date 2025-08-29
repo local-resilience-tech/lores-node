@@ -5,7 +5,12 @@ import {
   createBrowserRouter,
 } from "react-router-dom"
 import { Layout } from "./pages"
-import { EnsureNode, EditNode } from "./contexts/this_node"
+import {
+  EditNode,
+  EnsureNode,
+  ManageStatus,
+  ThisNode,
+} from "./contexts/this_node"
 import { EventLog, ThisP2PandaNode } from "./contexts/this_p2panda_node"
 import { ShowLocalApp, LocalApps, RegionApps } from "./contexts/apps"
 import { EnsureRegion, Nodes } from "./contexts/this_region"
@@ -21,6 +26,7 @@ import { AdminLayout, NewNodeSteward, AllNodeStewards } from "./contexts/admin"
 import {
   NodeStewardLogin,
   NodeStewardSetPassword,
+  RequireNodeSteward,
 } from "./contexts/auth/node_steward_auth"
 
 // Import styles of packages that you've installed.
@@ -89,12 +95,35 @@ const router = createBrowserRouter([
             path: "this_node",
             element: <EnsureNode />,
             children: [
-              { path: "", element: <EditNode /> },
+              { path: "", element: <ThisNode /> },
+              {
+                path: "edit",
+                element: (
+                  <RequireNodeSteward>
+                    <EditNode />
+                  </RequireNodeSteward>
+                ),
+              },
+              {
+                path: "status",
+                element: (
+                  <RequireNodeSteward>
+                    <ManageStatus />
+                  </RequireNodeSteward>
+                ),
+              },
               {
                 path: "apps",
                 children: [
                   { path: "", element: <LocalApps /> },
-                  { path: "new", element: <NewLocalApp /> },
+                  {
+                    path: "new",
+                    element: (
+                      <RequireNodeSteward>
+                        <NewLocalApp />
+                      </RequireNodeSteward>
+                    ),
+                  },
                   { path: "app/:appName", element: <ShowLocalApp /> },
                 ],
               },
@@ -102,7 +131,14 @@ const router = createBrowserRouter([
                 path: "app_repos",
                 children: [
                   { path: "", element: <AppRepos /> },
-                  { path: "new", element: <NewAppRepo /> },
+                  {
+                    path: "new",
+                    element: (
+                      <RequireNodeSteward>
+                        <NewAppRepo />
+                      </RequireNodeSteward>
+                    ),
+                  },
                   { path: "repo/:repoName", element: <ShowAppRepo /> },
                 ],
               },

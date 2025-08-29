@@ -1,17 +1,26 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit"
-import type { Node } from "../api/Api"
+import type { NodeDetails } from "../api/Api"
 
-export type NodesState = Node[] | null
+export type NodesState = NodeDetails[] | null
 
-export type NodesMap = Map<string, Node>
+export type NodesMap = Map<string, NodeDetails>
 
-export function hashById(nodes: Node[] | null): NodesMap {
-  if (!nodes) return new Map<string, Node>()
+export function hashById(nodes: NodeDetails[] | null): NodesMap {
+  if (!nodes) return new Map<string, NodeDetails>()
 
   return nodes.reduce((acc, node) => {
     acc.set(node.id, node)
     return acc
-  }, new Map<string, Node>())
+  }, new Map<string, NodeDetails>())
+}
+
+export function getNodeById(
+  nodes: NodeDetails[] | null,
+  id: string | null | undefined
+): NodeDetails | null {
+  if (!nodes || !id) return null
+
+  return nodes.find((node) => node.id === id) || null
 }
 
 export const nodesSlice = createSlice({
@@ -21,7 +30,7 @@ export const nodesSlice = createSlice({
     nodesLoaded: (state, action) => {
       return action.payload as NodesState
     },
-    nodeUpdated: (state: NodesState, action: PayloadAction<Node>) => {
+    nodeUpdated: (state: NodesState, action: PayloadAction<NodeDetails>) => {
       const updatedNode = action.payload
 
       if (state) {

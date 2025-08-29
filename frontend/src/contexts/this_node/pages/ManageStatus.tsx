@@ -1,24 +1,24 @@
-import { Breadcrumbs, Stack, Title, Text } from "@mantine/core"
-import EditNodeForm from "../components/EditNodeForm"
-import type { UpdateNodeDetails } from "../../../api/Api"
+import { Breadcrumbs, Stack, Text, Title } from "@mantine/core"
+import PostStatus from "../components/PostStatus"
 import { getApi } from "../../../api"
-import { useAppSelector } from "../../../store"
+import type { NodeStatusData } from "../../../api/Api"
 import { actionFailure, ActionPromiseResult, Anchor } from "../../../components"
+import { useAppSelector } from "../../../store"
 import { useNavigate } from "react-router-dom"
 
-export default function EditNode() {
+export default function ManageStatus() {
   const node = useAppSelector((state) => state.thisNode)
   const navigate = useNavigate()
 
   if (!node) return null
 
-  const updateNode = async (
-    data: UpdateNodeDetails
+  const postStatus = async (
+    data: NodeStatusData
   ): Promise<ActionPromiseResult> => {
     return getApi()
-      .nodeStewardApi.updateThisNode(data)
-      .then(() => {
-        navigate("..")
+      .nodeStewardApi.postNodeStatus(data)
+      .then((_) => {
+        navigate("/this_node")
       })
       .catch(actionFailure)
   }
@@ -28,11 +28,11 @@ export default function EditNode() {
       <Stack gap="xs">
         <Breadcrumbs>
           <Anchor href="/this_node">{node.name}</Anchor>
-          <Text c="dimmed">edit</Text>
+          <Text c="dimmed">status update</Text>
         </Breadcrumbs>
-        <Title order={1}>Edit this node</Title>
+        <Title order={1}>Status update</Title>
       </Stack>
-      <EditNodeForm node={node} onSubmit={updateNode} />
+      <PostStatus onSubmit={postStatus} />
     </Stack>
   )
 }

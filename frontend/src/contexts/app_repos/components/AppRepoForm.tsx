@@ -2,14 +2,22 @@ import { Button, Stack, TextInput } from "@mantine/core"
 import { useForm } from "@mantine/form"
 import { validateUrl } from "@the-node-forge/url-validator"
 import { AppRepoSource } from "../../../api/Api"
+import {
+  ActionPromiseResult,
+  DisplayActionResult,
+  useOnSubmitWithResult,
+} from "../../../components"
 
 interface InstallAppRepositoryFormProps {
-  onSubmit: (values: AppRepoSource) => Promise<void>
+  onSubmit: (values: AppRepoSource) => Promise<ActionPromiseResult>
 }
 
 export default function InstallAppRepositoryForm({
   onSubmit,
 }: InstallAppRepositoryFormProps) {
+  const [actionResult, onSubmitWithResult] =
+    useOnSubmitWithResult<AppRepoSource>(onSubmit)
+
   const form = useForm<AppRepoSource>({
     initialValues: {
       name: "",
@@ -34,7 +42,7 @@ export default function InstallAppRepositoryForm({
   })
 
   return (
-    <form onSubmit={form.onSubmit(onSubmit)}>
+    <form onSubmit={form.onSubmit(onSubmitWithResult)}>
       <Stack gap="lg">
         <Stack gap="md">
           <TextInput
@@ -50,6 +58,9 @@ export default function InstallAppRepositoryForm({
             {...form.getInputProps("git_url")}
           />
         </Stack>
+
+        <DisplayActionResult result={actionResult} />
+
         <Button type="submit" loading={form.submitting}>
           Install
         </Button>

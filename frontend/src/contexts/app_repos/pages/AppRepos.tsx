@@ -3,6 +3,7 @@ import { IconPlus } from "@tabler/icons-react"
 import { useNavigate } from "react-router-dom"
 import AppRepoList from "../components/AppRepoList"
 import { useAppSelector } from "../../../store"
+import { IfNodeSteward } from "../../auth/node_steward_auth"
 
 export default function LocalApps() {
   const navigate = useNavigate()
@@ -13,9 +14,11 @@ export default function LocalApps() {
       <Stack>
         <Group justify="space-between">
           <Title order={1}>App Repositories</Title>
-          <ActionIcon size="lg" onClick={() => navigate("./new")}>
-            <IconPlus />
-          </ActionIcon>
+          <IfNodeSteward>
+            <ActionIcon size="lg" onClick={() => navigate("./new")}>
+              <IconPlus />
+            </ActionIcon>
+          </IfNodeSteward>
         </Group>
         <AppRepoList repos={repos} />
       </Stack>

@@ -5,6 +5,7 @@ use crate::api::auth_api::auth_backend::AppAuthBackend;
 
 mod admin_api;
 pub mod auth_api;
+mod node_steward_api;
 pub mod public_api;
 
 pub fn api_router() -> OpenApiRouter {
@@ -15,5 +16,10 @@ pub fn api_router() -> OpenApiRouter {
             "/admin_api",
             admin_api::admin_api_router()
                 .route_layer(permission_required!(AppAuthBackend, "admin")),
+        )
+        .nest(
+            "/node_steward_api",
+            node_steward_api::node_steward_api_router()
+                .route_layer(permission_required!(AppAuthBackend, "steward")),
         )
 }

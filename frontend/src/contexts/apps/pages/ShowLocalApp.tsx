@@ -16,6 +16,7 @@ import { getApi } from "../../../api"
 import { LocalApp, LocalAppInstallStatus } from "../../../api/Api"
 import { useState } from "react"
 import LocalAppActions, { LocalAppAction } from "../components/LocalAppActions"
+import { IfNodeSteward } from "../../auth/node_steward_auth"
 
 export default function ShowLocalApp() {
   const { appName } = useParams<{ appName: string }>()
@@ -38,7 +39,7 @@ export default function ShowLocalApp() {
   const handleUpgrade = async (version: string) => {
     console.log("Upgrading app:", app.name, "to version:", version)
     return getApi()
-      .publicApi.upgradeLocalApp(app.name, { target_version: version })
+      .nodeStewardApi.upgradeLocalApp(app.name, { target_version: version })
       .then((response) => {
         console.log("Upgrade successful:", response)
       })
@@ -51,25 +52,25 @@ export default function ShowLocalApp() {
   const onAppDeploy = async (app: LocalApp) => {
     console.log("Deploying app:", app)
     return getApi()
-      .publicApi.deployLocalApp(app.name)
+      .nodeStewardApi.deployLocalApp(app.name)
       .then((_) => actionSuccess())
-      .catch((error) => actionFailure(error))
+      .catch(actionFailure)
   }
 
   const onAppRemoveDeploy = async (app: LocalApp) => {
     console.log("Removing deployment of app:", app)
     return getApi()
-      .publicApi.removeDeploymentOfLocalApp(app.name)
+      .nodeStewardApi.removeDeploymentOfLocalApp(app.name)
       .then((_) => actionSuccess())
-      .catch((error) => actionFailure(error))
+      .catch(actionFailure)
   }
 
   const onAppRegister = async (app: LocalApp) => {
     console.log("Registering app:", app)
     return getApi()
-      .publicApi.registerApp({ app_name: app.name })
+      .nodeStewardApi.registerApp({ app_name: app.name })
       .then((_) => actionSuccess())
-      .catch((error) => actionFailure(error))
+      .catch(actionFailure)
   }
 
   const actions: LocalAppAction[] = []
@@ -131,10 +132,12 @@ export default function ShowLocalApp() {
           />
         </Stack>
 
-        <Stack>
-          <Title order={2}>Actions</Title>
-          <LocalAppActions actions={actions} app={app} />
-        </Stack>
+        <IfNodeSteward>
+          <Stack>
+            <Title order={2}>Actions</Title>
+            <LocalAppActions actions={actions} app={app} />
+          </Stack>
+        </IfNodeSteward>
       </Stack>
     </Container>
   )

@@ -4,9 +4,10 @@ import NewRegionForm from "./NewRegionForm"
 import { IconMapPinPlus, IconMapPlus } from "@tabler/icons-react"
 import { BootstrapNodeData } from "../../../api/Api"
 import { BootstrapNodeForm } from "../../this_p2panda_node"
+import { ActionPromiseResult } from "../../../components"
 
 interface SetRegionProps {
-  onSubmit: (data: BootstrapNodeData) => void
+  onSubmit: (data: BootstrapNodeData) => Promise<ActionPromiseResult>
 }
 
 export default function SetRegion({ onSubmit }: SetRegionProps) {
