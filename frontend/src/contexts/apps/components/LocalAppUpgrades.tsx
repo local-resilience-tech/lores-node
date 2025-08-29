@@ -4,6 +4,7 @@ import { IconAlertCircle } from "@tabler/icons-react"
 import semver from "semver"
 import { useLoading } from "../../shared"
 import { Anchor } from "../../../components"
+import { IfNodeSteward } from "../../auth/node_steward_auth"
 
 export type UpgradeLocalAppError = "AppNotFound" | "InUse" | "ServerError"
 
@@ -75,12 +76,16 @@ export default function LocalAppUpgrades({
             A new version of <strong>{app.name}</strong> is available:{" "}
             <strong>{appDef.latest_version}</strong>
           </Text>
-          <Button
-            onClick={() => withUpgradeLoading(() => onUpgrade(latest_version))}
-            loading={upgradeLoading}
-          >
-            Upgrade
-          </Button>
+          <IfNodeSteward>
+            <Button
+              onClick={() =>
+                withUpgradeLoading(() => onUpgrade(latest_version))
+              }
+              loading={upgradeLoading}
+            >
+              Upgrade
+            </Button>
+          </IfNodeSteward>
           {upgradeError === "InUse" && (
             <Text c="red">
               <strong>Upgrade failed - Repository in use.</strong>
