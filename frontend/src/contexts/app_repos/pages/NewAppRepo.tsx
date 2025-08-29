@@ -1,23 +1,22 @@
 import { Container, Stack, Title, Text } from "@mantine/core"
 import AppRepoForm from "../components/AppRepoForm"
-import { Anchor } from "../../../components"
+import { actionFailure, ActionPromiseResult, Anchor } from "../../../components"
 import { AppRepoSource } from "../../../api/Api"
 import { getApi } from "../../../api"
 import { useNavigate } from "react-router-dom"
 
 export default function NewLocalApp() {
   const navigate = useNavigate()
-  const handleSubmit = async (values: AppRepoSource): Promise<void> => {
-    getApi()
-      .publicApi.createAppRepo(values)
+  const handleSubmit = async (
+    values: AppRepoSource
+  ): Promise<ActionPromiseResult> => {
+    return getApi()
+      .nodeStewardApi.createAppRepo(values)
       .then(() => {
         console.log("App repository created successfully")
         navigate("..")
       })
-      .catch((error) => {
-        console.error("Error creating app repository:", error)
-        throw error
-      })
+      .catch(actionFailure)
   }
 
   return (

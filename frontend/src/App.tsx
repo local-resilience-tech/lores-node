@@ -131,7 +131,14 @@ const router = createBrowserRouter([
                 path: "app_repos",
                 children: [
                   { path: "", element: <AppRepos /> },
-                  { path: "new", element: <NewAppRepo /> },
+                  {
+                    path: "new",
+                    element: (
+                      <RequireNodeSteward>
+                        <NewAppRepo />
+                      </RequireNodeSteward>
+                    ),
+                  },
                   { path: "repo/:repoName", element: <ShowAppRepo /> },
                 ],
               },

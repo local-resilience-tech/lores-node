@@ -572,6 +572,36 @@ export class Api<
     /**
      * No description
      *
+     * @name CreateAppRepo
+     * @request POST:/node_steward_api/app_repos
+     */
+    createAppRepo: (data: AppRepoSource, params: RequestParams = {}) =>
+      this.request<any, any>({
+        path: `/node_steward_api/app_repos`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @name ReloadAppRepo
+     * @request GET:/node_steward_api/app_repos/reload/{repo_name}
+     */
+    reloadAppRepo: (repoName: string, params: RequestParams = {}) =>
+      this.request<AppRepo, any>({
+        path: `/node_steward_api/app_repos/reload/${repoName}`,
+        method: "GET",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
      * @name DeployLocalApp
      * @request POST:/node_steward_api/local_apps/app/{app_name}/deploy
      */
@@ -710,36 +740,6 @@ export class Api<
     listAppRepos: (params: RequestParams = {}) =>
       this.request<AppRepo[], any>({
         path: `/public_api/app_repos`,
-        method: "GET",
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @name CreateAppRepo
-     * @request POST:/public_api/app_repos
-     */
-    createAppRepo: (data: AppRepoSource, params: RequestParams = {}) =>
-      this.request<any, any>({
-        path: `/public_api/app_repos`,
-        method: "POST",
-        body: data,
-        type: ContentType.Json,
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @name ReloadAppRepo
-     * @request GET:/public_api/app_repos/reload/{repo_name}
-     */
-    reloadAppRepo: (repoName: string, params: RequestParams = {}) =>
-      this.request<AppRepo, any>({
-        path: `/public_api/app_repos/reload/${repoName}`,
         method: "GET",
         format: "json",
         ...params,
