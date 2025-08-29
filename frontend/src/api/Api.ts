@@ -729,6 +729,36 @@ export class Api<
         format: "json",
         ...params,
       }),
+
+    /**
+     * No description
+     *
+     * @name ShowRegion
+     * @request GET:/node_steward_api/this_region
+     */
+    showRegion: (params: RequestParams = {}) =>
+      this.request<null | Region, any>({
+        path: `/node_steward_api/this_region`,
+        method: "GET",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @name Bootstrap
+     * @request POST:/node_steward_api/this_region/bootstrap
+     */
+    bootstrap: (data: BootstrapNodeData, params: RequestParams = {}) =>
+      this.request<any, string>({
+        path: `/node_steward_api/this_region/bootstrap`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
   };
   publicApi = {
     /**
@@ -867,22 +897,6 @@ export class Api<
       this.request<null | Region, any>({
         path: `/public_api/this_region`,
         method: "GET",
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @name Bootstrap
-     * @request POST:/public_api/this_region/bootstrap
-     */
-    bootstrap: (data: BootstrapNodeData, params: RequestParams = {}) =>
-      this.request<any, string>({
-        path: `/public_api/this_region/bootstrap`,
-        method: "POST",
-        body: data,
-        type: ContentType.Json,
         format: "json",
         ...params,
       }),

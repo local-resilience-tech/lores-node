@@ -1,8 +1,11 @@
 import { Text, TextInput, Button, Stack } from "@mantine/core"
 import { useForm } from "@mantine/form"
 import { BootstrapNodeData } from "../../../api/Api"
+import { ActionPromiseResult } from "../../../components"
 
-export type SubmitBootstrapNodeFunc = (data: BootstrapNodeData) => void
+export type SubmitBootstrapNodeFunc = (
+  data: BootstrapNodeData
+) => Promise<ActionPromiseResult>
 
 export default function BootstrapNodeForm({
   onSubmit,

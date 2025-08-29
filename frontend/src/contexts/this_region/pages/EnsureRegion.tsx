@@ -5,6 +5,7 @@ import { getApi } from "../../../api"
 import { BootstrapNodeData, Region } from "../../../api/Api"
 import { regionLoaded } from "../../../store/region"
 import { useAppDispatch, useAppSelector } from "../../../store"
+import { ActionPromiseResult } from "../../../components"
 
 export default function EnsureRegion({
   children,
@@ -14,9 +15,11 @@ export default function EnsureRegion({
   const region = useAppSelector((state) => state.region)
   const dispatch = useAppDispatch()
 
-  const onSubmit = async (data: BootstrapNodeData) => {
+  const onSubmit = async (
+    data: BootstrapNodeData
+  ): Promise<ActionPromiseResult> =>
     getApi()
-      .publicApi.bootstrap(data)
+      .nodeStewardApi.bootstrap(data)
       .then((result) => {
         if (result.status === 200) {
           console.log("Successfully bootstrapped", result)
@@ -28,7 +31,6 @@ export default function EnsureRegion({
           console.log("Failed to bootstrap", result)
         }
       })
-  }
 
   return (
     <Container>
