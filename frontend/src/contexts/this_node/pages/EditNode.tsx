@@ -6,7 +6,7 @@ import { useAppSelector } from "../../../store"
 import { actionFailure, ActionPromiseResult, Anchor } from "../../../components"
 import { useNavigate } from "react-router-dom"
 
-export default function ThisNode() {
+export default function EditNode() {
   const node = useAppSelector((state) => state.thisNode)
   const navigate = useNavigate()
 
