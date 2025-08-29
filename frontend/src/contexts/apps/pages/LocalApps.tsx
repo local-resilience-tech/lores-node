@@ -3,6 +3,7 @@ import { useAppSelector } from "../../../store"
 import LocalAppsList, { LocalAppWithRepo } from "../components/LocalAppsList"
 import { IconPlus } from "@tabler/icons-react"
 import { useNavigate } from "react-router-dom"
+import { IfNodeSteward } from "../../auth/node_steward_auth"
 
 type AppErrors = Map<string, string>
 
@@ -26,9 +27,11 @@ export default function LocalApps() {
       <Stack>
         <Group justify="space-between">
           <Title order={1}>Local Apps</Title>
-          <ActionIcon size="lg" onClick={() => navigate("./new")}>
-            <IconPlus />
-          </ActionIcon>
+          <IfNodeSteward>
+            <ActionIcon size="lg" onClick={() => navigate("./new")}>
+              <IconPlus />
+            </ActionIcon>
+          </IfNodeSteward>
         </Group>
 
         {apps && <LocalAppsList apps={appsWithRepos} />}

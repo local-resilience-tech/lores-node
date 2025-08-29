@@ -116,7 +116,14 @@ const router = createBrowserRouter([
                 path: "apps",
                 children: [
                   { path: "", element: <LocalApps /> },
-                  { path: "new", element: <NewLocalApp /> },
+                  {
+                    path: "new",
+                    element: (
+                      <RequireNodeSteward>
+                        <NewLocalApp />
+                      </RequireNodeSteward>
+                    ),
+                  },
                   { path: "app/:appName", element: <ShowLocalApp /> },
                 ],
               },

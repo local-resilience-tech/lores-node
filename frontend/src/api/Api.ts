@@ -572,6 +572,89 @@ export class Api<
     /**
      * No description
      *
+     * @name DeployLocalApp
+     * @request POST:/node_steward_api/local_apps/app/{app_name}/deploy
+     */
+    deployLocalApp: (appName: string, params: RequestParams = {}) =>
+      this.request<any, string>({
+        path: `/node_steward_api/local_apps/app/${appName}/deploy`,
+        method: "POST",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @name RemoveDeploymentOfLocalApp
+     * @request DELETE:/node_steward_api/local_apps/app/{app_name}/deploy
+     */
+    removeDeploymentOfLocalApp: (appName: string, params: RequestParams = {}) =>
+      this.request<any, string>({
+        path: `/node_steward_api/local_apps/app/${appName}/deploy`,
+        method: "DELETE",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @name UpgradeLocalApp
+     * @request POST:/node_steward_api/local_apps/app/{app_name}/upgrade
+     */
+    upgradeLocalApp: (
+      appName: string,
+      data: LocalAppUpgradeParams,
+      params: RequestParams = {},
+    ) =>
+      this.request<any, UpgradeLocalAppError>({
+        path: `/node_steward_api/local_apps/app/${appName}/upgrade`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @name InstallAppDefinition
+     * @request POST:/node_steward_api/local_apps/definitions
+     */
+    installAppDefinition: (
+      data: AppRepoAppReference,
+      params: RequestParams = {},
+    ) =>
+      this.request<any, InstallLocalAppError>({
+        path: `/node_steward_api/local_apps/definitions`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @name RegisterApp
+     * @request POST:/node_steward_api/local_apps/register
+     */
+    registerApp: (data: AppReference, params: RequestParams = {}) =>
+      this.request<any, any>({
+        path: `/node_steward_api/local_apps/register`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
      * @name UpdateThisNode
      * @request PUT:/node_steward_api/this_node
      */
@@ -731,25 +814,6 @@ export class Api<
     ) =>
       this.request<any, UpgradeLocalAppError>({
         path: `/public_api/local_apps/app/${appName}/upgrade`,
-        method: "POST",
-        body: data,
-        type: ContentType.Json,
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @name InstallAppDefinition
-     * @request POST:/public_api/local_apps/definitions
-     */
-    installAppDefinition: (
-      data: AppRepoAppReference,
-      params: RequestParams = {},
-    ) =>
-      this.request<any, InstallLocalAppError>({
-        path: `/public_api/local_apps/definitions`,
         method: "POST",
         body: data,
         type: ContentType.Json,

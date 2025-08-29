@@ -5,6 +5,7 @@ use utoipa::ToSchema;
 use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::{
+    api::public_api::{client_events::ClientEvent, realtime::RealtimeState},
     data::entities::LocalApp,
     local_apps::{
         app_repos::{fs::app_repo_from_app_name, AppRepoAppReference},
@@ -13,7 +14,7 @@ use crate::{
             fs::{load_app_config, InstallAppVersionError},
             AppReference,
         },
-        stack_apps::{self, find_deployed_local_apps},
+        stack_apps::{self},
     },
     panda_comms::{
         container::P2PandaContainer,
@@ -21,24 +22,63 @@ use crate::{
     },
 };
 
-use super::super::{client_events::ClientEvent, realtime::RealtimeState};
-
 pub fn router() -> OpenApiRouter {
     OpenApiRouter::new()
-        .routes(routes!(list_local_apps))
+        .routes(routes!(install_app_definition))
         .routes(routes!(register_app))
         .routes(routes!(deploy_local_app))
         .routes(routes!(remove_deployment_of_local_app))
         .routes(routes!(upgrade_local_app))
 }
 
-#[utoipa::path(get, path = "/", responses(
-    (status = 200, body = Vec<LocalApp>),
-    (status = INTERNAL_SERVER_ERROR, body = ()),
-),)]
-async fn list_local_apps() -> impl IntoResponse {
-    let apps = find_deployed_local_apps();
-    (StatusCode::OK, Json(apps)).into_response()
+#[derive(Serialize, ToSchema, Debug)]
+enum InstallLocalAppError {
+    InUse,
+    ServerError,
+}
+
+#[utoipa::path(
+    post,
+    path = "/definitions",
+    responses(
+        (status = CREATED, body = ()),
+        (status = INTERNAL_SERVER_ERROR, body = InstallLocalAppError),
+    ),
+    request_body(content = AppRepoAppReference, content_type = "application/json")
+)]
+async fn install_app_definition(
+    Extension(realtime_state): Extension<RealtimeState>,
+    Json(payload): Json<AppRepoAppReference>,
+) -> impl IntoResponse {
+    let source = payload.clone();
+    let target = AppReference {
+        app_name: payload.app_name.clone(),
+    };
+
+    println!(
+        "Installing app definition from repo '{}' for app '{} {:?}'",
+        source.repo_name, source.app_name, source.version
+    );
+
+    let result = installed_apps::fs::install_app_definition(&source, &target);
+
+    match result {
+        Ok(app) => {
+            local_app_updated(&app, &realtime_state).await;
+            println!("App definition installed: {}", app.name);
+
+            (StatusCode::CREATED, Json(())).into_response()
+        }
+        Err(e) => {
+            println!("Error installing app definition: {:?}", e);
+
+            let error_result = match e {
+                InstallAppVersionError::InUse => InstallLocalAppError::InUse,
+                _ => InstallLocalAppError::ServerError,
+            };
+            (StatusCode::INTERNAL_SERVER_ERROR, Json(error_result)).into_response()
+        }
+    }
 }
 
 #[utoipa::path(
