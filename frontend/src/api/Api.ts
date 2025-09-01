@@ -405,7 +405,7 @@ export class HttpClient<SecurityDataType = unknown> {
 
 /**
  * @title lores-node
- * @version 0.11.5
+ * @version 0.12.0
  * @license
  */
 export class Api<
@@ -455,6 +455,34 @@ export class Api<
         method: "POST",
         body: data,
         type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @name DisableNodeSteward
+     * @request POST:/admin_api/node_stewards/disable/{steward_id}
+     */
+    disableNodeSteward: (stewardId: string, params: RequestParams = {}) =>
+      this.request<NodeSteward, any>({
+        path: `/admin_api/node_stewards/disable/${stewardId}`,
+        method: "POST",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @name EnableNodeSteward
+     * @request POST:/admin_api/node_stewards/enable/{steward_id}
+     */
+    enableNodeSteward: (stewardId: string, params: RequestParams = {}) =>
+      this.request<NodeSteward, any>({
+        path: `/admin_api/node_stewards/enable/${stewardId}`,
+        method: "POST",
         format: "json",
         ...params,
       }),

@@ -18,19 +18,21 @@ export default function AllNodeStewards() {
   const [nodeStewards, setNodeStewards] = useState<NodeSteward[]>([])
   const [stewardTokens, setStewardTokens] = useState<Record<string, string>>({})
 
+  const handleAuthErrorOrFailure = (error: any) => {
+    if (error.response?.status === 401 || error.response?.status === 403) {
+      navigate("/auth/admin/login")
+    } else {
+      return actionFailure(error)
+    }
+  }
+
   const listNodeStewards = async () => {
     getApi()
       .adminApi.listNodeStewards()
       .then((response) => {
         setNodeStewards(response.data)
       })
-      .catch((error) => {
-        if (error.response?.status === 401 || error.response?.status === 403) {
-          navigate("/auth/admin/login")
-        } else {
-          console.error("Error fetching node stewards:", error)
-        }
-      })
+      .catch(handleAuthErrorOrFailure)
   }
 
   const updateLocalNodeSteward = (record: NodeSteward) => {
@@ -66,16 +68,41 @@ export default function AllNodeStewards() {
               updateStewardToken(record.id, result.data.password_reset_token)
               return actionSuccess()
             })
-            .catch((error) => {
-              if (
-                error.response?.status === 401 ||
-                error.response?.status === 403
-              ) {
-                navigate("/auth/admin/login")
-              } else {
-                return actionFailure(error)
-              }
+            .catch(handleAuthErrorOrFailure)
+        },
+      })
+    }
+
+    if (record.status == NodeStewardStatus.Enabled) {
+      result.push({
+        type: "disable",
+        buttonColor: "red",
+        primary: false,
+        handler: (record: NodeSteward): Promise<ActionPromiseResult> => {
+          return getApi()
+            .adminApi.disableNodeSteward(record.id)
+            .then((result) => {
+              updateLocalNodeSteward(result.data)
+              return actionSuccess()
             })
+            .catch(handleAuthErrorOrFailure)
+        },
+      })
+    }
+
+    if (record.status == NodeStewardStatus.Disabled) {
+      result.push({
+        type: "enable",
+        buttonColor: "green",
+        primary: false,
+        handler: (record: NodeSteward): Promise<ActionPromiseResult> => {
+          return getApi()
+            .adminApi.enableNodeSteward(record.id)
+            .then((result) => {
+              updateLocalNodeSteward(result.data)
+              return actionSuccess()
+            })
+            .catch(handleAuthErrorOrFailure)
         },
       })
     }

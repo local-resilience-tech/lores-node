@@ -18,6 +18,8 @@ pub fn router() -> OpenApiRouter {
         .routes(routes!(list_node_stewards))
         .routes(routes!(create_node_steward))
         .routes(routes!(reset_node_steward_token))
+        .routes(routes!(disable_node_steward))
+        .routes(routes!(enable_node_steward))
 }
 
 #[derive(Serialize, ToSchema)]
@@ -166,6 +168,71 @@ async fn reset_node_steward_token(
         }
         Err(e) => {
             eprintln!("Error saving reset token: {:?}", e);
+            (StatusCode::INTERNAL_SERVER_ERROR, ()).into_response()
+        }
+    }
+}
+
+#[utoipa::path(
+    post,
+    path = "/disable/{steward_id}",
+    params(
+        ("steward_id" = String, Path),
+    ),
+    responses(
+        (status = OK, body = NodeSteward),
+        (status = NOT_FOUND, body = ()),
+        (status = INTERNAL_SERVER_ERROR, body = ()),
+    ),
+)]
+async fn disable_node_steward(
+    Extension(db): Extension<DatabaseState>,
+    Path(steward_id): Path<String>,
+) -> impl IntoResponse {
+    toggle_node_steward_status(db, steward_id, false).await
+}
+
+#[utoipa::path(
+    post,
+    path = "/enable/{steward_id}",
+    params(
+        ("steward_id" = String, Path),
+    ),
+    responses(
+        (status = OK, body = NodeSteward),
+        (status = NOT_FOUND, body = ()),
+        (status = INTERNAL_SERVER_ERROR, body = ()),
+    ),
+)]
+async fn enable_node_steward(
+    Extension(db): Extension<DatabaseState>,
+    Path(steward_id): Path<String>,
+) -> impl IntoResponse {
+    toggle_node_steward_status(db, steward_id, true).await
+}
+
+async fn toggle_node_steward_status(
+    db: DatabaseState,
+    steward_id: String,
+    enabled: bool,
+) -> impl IntoResponse {
+    let repo = NodeStewardsRepo::init();
+    let identifier = NodeStewardIdentifier { id: steward_id };
+
+    let result = repo
+        .update_enabled(&db.node_data_pool, &identifier, enabled)
+        .await;
+
+    if let Err(e) = result {
+        eprintln!("Error updating node steward status: {:?}", e);
+        return (StatusCode::INTERNAL_SERVER_ERROR, ()).into_response();
+    }
+
+    match repo.find(&db.node_data_pool, &identifier).await {
+        Ok(Some(row)) => (StatusCode::OK, Json(NodeSteward::from_row(&row))).into_response(),
+        Ok(None) => (StatusCode::NOT_FOUND, ()).into_response(),
+        Err(e) => {
+            eprintln!("Error finding node steward: {:?}", e);
             (StatusCode::INTERNAL_SERVER_ERROR, ()).into_response()
         }
     }

@@ -8,7 +8,7 @@ import {
 } from "../../../components"
 
 export interface NodeStewardAction {
-  type: "reset_token" | "display_token"
+  type: "reset_token" | "display_token" | "disable" | "enable"
   buttonColor?: MantineColor
   primary?: boolean
   handler?: (record: NodeSteward) => Promise<ActionPromiseResult>
@@ -18,6 +18,8 @@ export interface NodeStewardAction {
 const names: Record<NodeStewardAction["type"], string> = {
   reset_token: "Reset token",
   display_token: "Display token",
+  disable: "Disable",
+  enable: "Enable",
 }
 
 function NodeStewardActionButton({

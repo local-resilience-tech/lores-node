@@ -166,6 +166,27 @@ impl NodeStewardsRepo {
 
         Ok(())
     }
+
+    pub async fn update_enabled(
+        &self,
+        pool: &SqlitePool,
+        identifier: &NodeStewardIdentifier,
+        enabled: bool,
+    ) -> Result<(), sqlx::Error> {
+        sqlx::query::<Sqlite>(
+            "
+            UPDATE node_stewards
+            SET enabled = ?, updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+            ",
+        )
+        .bind(enabled)
+        .bind(&identifier.id)
+        .execute(pool)
+        .await?;
+
+        Ok(())
+    }
 }
 
 fn new_node_steward_id() -> String {
