@@ -19,12 +19,6 @@ pub fn router() -> OpenApiRouter {
         .routes(routes!(bootstrap))
 }
 
-#[derive(Deserialize, ToSchema)]
-pub struct BootstrapNodeData {
-    pub network_name: String,
-    pub node_id: Option<String>,
-}
-
 #[utoipa::path(get, path = "/", responses(
     (status = 200, body = Option<Region>, description = "Returns the current region's network ID if available"),
     (status = INTERNAL_SERVER_ERROR, body = ()),
@@ -47,6 +41,12 @@ async fn show_region(
     .into_response()
 }
 
+#[derive(Deserialize, ToSchema, Debug)]
+pub struct BootstrapNodeData {
+    pub network_name: String,
+    pub node_id: Option<String>,
+}
+
 #[utoipa::path(
     post,
     path = "/bootstrap",
@@ -62,6 +62,7 @@ async fn bootstrap(
     Extension(operation_pool): Extension<sqlx::SqlitePool>,
     axum::extract::Json(data): axum::extract::Json<BootstrapNodeData>,
 ) -> impl IntoResponse {
+    println!("Bootstrapping with data: {:?}", data);
     let repo = ThisP2PandaNodeRepo::init();
 
     let peer_address: Option<SimplifiedNodeAddress> =

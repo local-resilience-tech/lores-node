@@ -1,7 +1,11 @@
 import { TextInput, Button, Stack } from "@mantine/core"
 import { useForm } from "@mantine/form"
 import { BootstrapNodeData } from "../../../api/Api"
-import { ActionPromiseResult } from "../../../components"
+import {
+  ActionPromiseResult,
+  DisplayActionResult,
+  useOnSubmitWithResult,
+} from "../../../components"
 
 export interface NewRegionData {
   name: string
@@ -12,6 +16,9 @@ interface NewRegionFormProps {
 }
 
 export default function NewRegionForm({ onSubmit }: NewRegionFormProps) {
+  const [actionResult, onSubmitWithResult] =
+    useOnSubmitWithResult<BootstrapNodeData>(onSubmit)
+
   const form = useForm<NewRegionData>({
     mode: "controlled",
     initialValues: {
@@ -28,17 +35,19 @@ export default function NewRegionForm({ onSubmit }: NewRegionFormProps) {
     },
   })
 
-  const handleSubmit = (values: NewRegionData) => {
+  const handleSubmit = (
+    values: NewRegionData
+  ): Promise<ActionPromiseResult> => {
     const data: BootstrapNodeData = {
       network_name: values.name,
       node_id: null,
     }
-    onSubmit(data)
+    return onSubmitWithResult(data)
   }
 
   return (
     <form onSubmit={form.onSubmit(handleSubmit)}>
-      <Stack>
+      <Stack gap="lg">
         <Stack>
           <TextInput
             label="Region Name"
@@ -48,6 +57,8 @@ export default function NewRegionForm({ onSubmit }: NewRegionFormProps) {
             {...form.getInputProps("name")}
           />
         </Stack>
+
+        <DisplayActionResult result={actionResult} />
 
         <Stack>
           <Button loading={form.submitting} type="submit">
