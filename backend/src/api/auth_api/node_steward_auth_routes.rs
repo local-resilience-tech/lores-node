@@ -80,7 +80,7 @@ async fn get_current_user(
 enum NodeStewardLoginError {
     InvalidCredentials,
     NoPasswordSet,
-    // AccountDisabled,
+    AccountDisabled,
     InternalServerError,
 }
 
@@ -124,10 +124,10 @@ async fn node_steward_login(
                     StatusCode::UNAUTHORIZED,
                     Json(NodeStewardLoginError::InvalidCredentials),
                 ),
-                // axum_login::Error::Backend(AuthError::AccountDisabled) => (
-                //     StatusCode::UNAUTHORIZED,
-                //     Json(NodeStewardLoginError::AccountDisabled),
-                // ),
+                axum_login::Error::Backend(AuthError::AccountDisabled) => (
+                    StatusCode::UNAUTHORIZED,
+                    Json(NodeStewardLoginError::AccountDisabled),
+                ),
                 _ => (
                     StatusCode::INTERNAL_SERVER_ERROR,
                     Json(NodeStewardLoginError::InternalServerError),

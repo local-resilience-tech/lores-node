@@ -67,6 +67,17 @@ export default function NodeStewardLoginForm({
             InvalidCredentials: (
               <DisplayFormError heading="Login failed - Invalid credentials." />
             ),
+            AccountDisabled: (
+              <DisplayFormError
+                heading="Login failed - Your account is disabled."
+                description={
+                  <Text c="red">
+                    The node admin user has disabled your account, you can reach
+                    out to them for assistance.
+                  </Text>
+                }
+              />
+            ),
           }}
         />
 

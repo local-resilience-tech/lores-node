@@ -79,8 +79,8 @@ pub enum AuthError {
     InvalidCredentials,
     #[error("No password set for user")]
     NoPasswordSet,
-    // #[error("Account is disabled")]
-    // AccountDisabled,
+    #[error("Account is disabled")]
+    AccountDisabled,
     #[error("Internal server error occurred")]
     ServerError,
 }
@@ -166,6 +166,11 @@ impl AppAuthBackend {
             None => return Err(AuthError::NoPasswordSet),
         };
 
+        // Check if disabled
+        if !steward.enabled {
+            return Err(AuthError::AccountDisabled);
+        }
+
         // Check if the password matches the credentials
         self.verify_password(creds.password.clone(), hashed_password.clone())
             .await?;
@@ -193,6 +198,10 @@ impl AppAuthBackend {
                 return Err(AuthError::ServerError);
             }
         };
+
+        if !steward.enabled {
+            return Err(AuthError::AccountDisabled);
+        }
 
         match steward.hashed_password.clone() {
             Some(password_hash) => Ok(Some(User {
