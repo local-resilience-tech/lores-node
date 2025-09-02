@@ -1,10 +1,12 @@
 import { ActionIcon, HoverCard, Stack, Text } from "@mantine/core"
 import { IconAlertCircle } from "@tabler/icons-react"
 import { useState } from "react"
+import { useNavigate } from "react-router-dom"
 
 export interface ActionResult {
   success: boolean
   error?: string
+  login_needed?: boolean
 }
 
 export type ActionPromiseResult = void | ActionResult
@@ -27,6 +29,8 @@ export function actionFailure(error: any): ActionPromiseResult {
   const errorResult = {
     success: false,
     error: errorString,
+    login_needed:
+      error.response?.status === 401 || error.response?.status === 403,
   }
   console.log("Action result:", errorResult)
   return errorResult
@@ -53,12 +57,6 @@ export function useOnSubmitWithResult<ValType>(
 
 export type ActionResultHandlers = Record<string, React.ReactNode>
 
-interface DisplayActionResultProps {
-  result: ActionResult | null
-  displaySuccess?: boolean
-  handlers?: ActionResultHandlers
-}
-
 export function DisplayFormError({
   heading,
   description,
@@ -80,18 +78,32 @@ export function DisplayFormError({
   )
 }
 
+interface DisplayActionResultProps {
+  result: ActionResult | null
+  displaySuccess?: boolean
+  handlers?: ActionResultHandlers
+  redirectToLogin?: boolean
+}
+
 export function DisplayActionResult({
   result,
   handlers = {},
   displaySuccess = false,
+  redirectToLogin = true,
 }: DisplayActionResultProps) {
   console.log("Displaying action result:", result)
+  const navigate = useNavigate()
 
   if (!result) return null
 
   if (result.success) {
     if (displaySuccess) return <Text c="green">Action succeeded!</Text>
   } else if (result.error) {
+    if (result.login_needed && redirectToLogin) {
+      navigate("/auth/node_steward/login")
+      return null
+    }
+
     if (handlers && handlers[result.error]) {
       return handlers[result.error]
     } else {

@@ -11,18 +11,13 @@ use crate::{
         config::{SimplifiedNodeAddress, ThisP2PandaNodeRepo},
         container::{build_public_key_from_hex, P2PandaContainer},
     },
+    DatabaseState,
 };
 
 pub fn router() -> OpenApiRouter {
     OpenApiRouter::new()
         .routes(routes!(show_region))
         .routes(routes!(bootstrap))
-}
-
-#[derive(Deserialize, ToSchema)]
-pub struct BootstrapNodeData {
-    pub network_name: String,
-    pub node_id: Option<String>,
 }
 
 #[utoipa::path(get, path = "/", responses(
@@ -47,6 +42,12 @@ async fn show_region(
     .into_response()
 }
 
+#[derive(Deserialize, ToSchema, Debug)]
+pub struct BootstrapNodeData {
+    pub network_name: String,
+    pub node_id: Option<String>,
+}
+
 #[utoipa::path(
     post,
     path = "/bootstrap",
@@ -59,9 +60,10 @@ async fn show_region(
 async fn bootstrap(
     Extension(config_state): Extension<LoresNodeConfigState>,
     Extension(panda_container): Extension<P2PandaContainer>,
-    Extension(operation_pool): Extension<sqlx::SqlitePool>,
+    Extension(db): Extension<DatabaseState>,
     axum::extract::Json(data): axum::extract::Json<BootstrapNodeData>,
 ) -> impl IntoResponse {
+    println!("Bootstrapping with data: {:?}", data);
     let repo = ThisP2PandaNodeRepo::init();
 
     let peer_address: Option<SimplifiedNodeAddress> =
@@ -98,7 +100,7 @@ async fn bootstrap(
         .await;
 
     // start the container
-    if let Err(e) = panda_container.start(&operation_pool).await {
+    if let Err(e) = panda_container.start(&db.operations_pool).await {
         eprintln!("Failed to start P2PandaContainer: {:?}", e);
         return (
             StatusCode::INTERNAL_SERVER_ERROR,

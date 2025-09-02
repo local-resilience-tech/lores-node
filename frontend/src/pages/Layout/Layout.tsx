@@ -151,7 +151,12 @@ export default function Layout() {
               href="/this_region/nodes"
               leftSection={<IconAffiliate size={iconSize} />}
               rightSection={
-                nodesCount !== undefined && <Badge circle>{nodesCount}</Badge>
+                nodesCount !== undefined &&
+                nodesCount > 0 && (
+                  <Badge circle color={nodesCount > 1 ? "blue" : "gray"}>
+                    {nodesCount}
+                  </Badge>
+                )
               }
               onClick={toggle}
             />

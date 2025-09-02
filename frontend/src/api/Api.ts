@@ -34,6 +34,7 @@ export enum NodeStewardSetPasswordError {
 export enum NodeStewardLoginError {
   InvalidCredentials = "InvalidCredentials",
   NoPasswordSet = "NoPasswordSet",
+  AccountDisabled = "AccountDisabled",
   InternalServerError = "InternalServerError",
 }
 
@@ -45,6 +46,12 @@ export enum LocalAppInstallStatus {
 export enum InstallLocalAppError {
   InUse = "InUse",
   ServerError = "ServerError",
+}
+
+export enum AdminLoginError {
+  InvalidCredentials = "InvalidCredentials",
+  NoPasswordSet = "NoPasswordSet",
+  InternalServerError = "InternalServerError",
 }
 
 export interface AdminCredentials {
@@ -405,7 +412,7 @@ export class HttpClient<SecurityDataType = unknown> {
 
 /**
  * @title lores-node
- * @version 0.12.0
+ * @version 0.12.1
  * @license
  */
 export class Api<
@@ -535,7 +542,7 @@ export class Api<
      * @request POST:/auth_api/admin/login
      */
     adminLogin: (data: AdminCredentials, params: RequestParams = {}) =>
-      this.request<UserRef, string>({
+      this.request<UserRef, AdminLoginError | string>({
         path: `/auth_api/admin/login`,
         method: "POST",
         body: data,

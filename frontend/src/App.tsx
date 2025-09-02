@@ -90,7 +90,7 @@ const router = createBrowserRouter([
         path: "",
         element: <EnsureRegion />,
         children: [
-          { path: "", element: <Navigate to="/this_region/nodes" replace /> },
+          { path: "", element: <Navigate to="/this_node" replace /> },
           {
             path: "this_node",
             element: <EnsureNode />,

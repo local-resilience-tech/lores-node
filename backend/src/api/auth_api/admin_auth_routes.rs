@@ -1,4 +1,6 @@
 use axum::{http::StatusCode, response::IntoResponse, Extension, Json};
+use serde::Serialize;
+use utoipa::ToSchema;
 use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::config::config_state::LoresNodeConfigState;
@@ -49,14 +51,21 @@ async fn generate_admin_password(
     }
 }
 
+#[derive(Debug, Clone, Serialize, ToSchema)]
+enum AdminLoginError {
+    InvalidCredentials,
+    NoPasswordSet,
+    InternalServerError,
+}
+
 #[utoipa::path(
     post, path = "/login",
+    request_body(content = AdminCredentials, content_type = "application/json"),
     responses(
         (status = OK, body = UserRef),
         (status = INTERNAL_SERVER_ERROR, body = String),
-        (status = UNAUTHORIZED, body = String)
-    ),
-    request_body(content = AdminCredentials, content_type = "application/json")
+        (status = UNAUTHORIZED, body = AdminLoginError)
+    )
 )]
 async fn admin_login(
     mut auth_session: AuthSession,
@@ -67,25 +76,41 @@ async fn admin_login(
     let user = match auth_session.authenticate(creds.clone()).await {
         Ok(Some(user)) => user,
         Ok(None) => {
-            return Err((StatusCode::UNAUTHORIZED, "Invalid credentials").into_response());
+            return (
+                StatusCode::UNAUTHORIZED,
+                Json(AdminLoginError::InvalidCredentials),
+            )
+                .into_response();
         }
 
         Err(e) => {
             eprintln!("Authentication failed: {:?}", e);
             let status = match e {
-                axum_login::Error::Backend(AuthError::InvalidCredentials) => {
-                    (StatusCode::UNAUTHORIZED, "Invalid credentials")
-                }
-                _ => (StatusCode::INTERNAL_SERVER_ERROR, "Internal server error"),
+                axum_login::Error::Backend(AuthError::InvalidCredentials) => (
+                    StatusCode::UNAUTHORIZED,
+                    Json(AdminLoginError::InvalidCredentials),
+                ),
+                axum_login::Error::Backend(AuthError::NoPasswordSet) => (
+                    StatusCode::UNAUTHORIZED,
+                    Json(AdminLoginError::NoPasswordSet),
+                ),
+                _ => (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(AdminLoginError::InternalServerError),
+                ),
             };
-            return Err(status.into_response());
+            return status.into_response();
         }
     };
 
     if auth_session.login(&user).await.is_err() {
         eprint!("Failed to log in admin user");
-        return Err(StatusCode::INTERNAL_SERVER_ERROR.into_response());
+        return (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(AdminLoginError::InternalServerError),
+        )
+            .into_response();
     }
 
-    return Ok((StatusCode::OK, Json(UserRef::from_backend_user(&user))).into_response());
+    return (StatusCode::OK, Json(UserRef::from_backend_user(&user))).into_response();
 }

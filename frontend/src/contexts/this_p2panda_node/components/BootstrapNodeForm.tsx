@@ -1,7 +1,11 @@
 import { Text, TextInput, Button, Stack } from "@mantine/core"
 import { useForm } from "@mantine/form"
 import { BootstrapNodeData } from "../../../api/Api"
-import { ActionPromiseResult } from "../../../components"
+import {
+  ActionPromiseResult,
+  DisplayActionResult,
+  useOnSubmitWithResult,
+} from "../../../components"
 
 export type SubmitBootstrapNodeFunc = (
   data: BootstrapNodeData
@@ -12,6 +16,9 @@ export default function BootstrapNodeForm({
 }: {
   onSubmit: SubmitBootstrapNodeFunc
 }) {
+  const [actionResult, onSubmitWithResult] =
+    useOnSubmitWithResult<BootstrapNodeData>(onSubmit)
+
   const form = useForm<BootstrapNodeData>({
     mode: "controlled",
     initialValues: {
@@ -35,8 +42,8 @@ export default function BootstrapNodeForm({
   })
 
   return (
-    <form onSubmit={form.onSubmit(onSubmit)}>
-      <Stack>
+    <form onSubmit={form.onSubmit(onSubmitWithResult)}>
+      <Stack gap="lg">
         <Text c="dimmed">
           TODO: We don't yet provide much feedback on whether you put in the
           correct details here, please type carefully.
@@ -57,6 +64,9 @@ export default function BootstrapNodeForm({
             {...form.getInputProps("node_id")}
           />
         </Stack>
+
+        <DisplayActionResult result={actionResult} />
+
         <Stack>
           <Button loading={form.submitting} type="submit">
             Connect

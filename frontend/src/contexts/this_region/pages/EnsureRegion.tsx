@@ -5,7 +5,11 @@ import { getApi } from "../../../api"
 import { BootstrapNodeData, Region } from "../../../api/Api"
 import { regionLoaded } from "../../../store/region"
 import { useAppDispatch, useAppSelector } from "../../../store"
-import { ActionPromiseResult } from "../../../components"
+import {
+  actionFailure,
+  ActionPromiseResult,
+  actionSuccess,
+} from "../../../components"
 
 export default function EnsureRegion({
   children,
@@ -27,10 +31,10 @@ export default function EnsureRegion({
             network_id: data.network_name,
           }
           dispatch(regionLoaded(newRegion))
-        } else {
-          console.log("Failed to bootstrap", result)
+          return actionSuccess()
         }
       })
+      .catch(actionFailure)
 
   return (
     <Container>

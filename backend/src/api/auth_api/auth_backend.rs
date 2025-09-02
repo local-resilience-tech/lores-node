@@ -39,6 +39,12 @@ impl AuthUser for User {
     }
 }
 
+impl User {
+    pub fn is_node_steward(&self) -> bool {
+        self.id != ADMIN_USER_ID
+    }
+}
+
 #[derive(Debug, Clone, Deserialize, ToSchema)]
 pub struct AdminCredentials {
     pub password: String,
@@ -152,10 +158,11 @@ impl AppAuthBackend {
         let steward = match repo.find(&self.node_data_pool, &id).await {
             Ok(Some(steward)) => steward,
             Ok(None) => {
+                eprintln!("AUTH FAILED: Node steward not found");
                 return Err(AuthError::UserNotFound);
             }
             Err(e) => {
-                eprintln!("Failed to find node steward: {:?}", e);
+                eprintln!("AUTH FAILED: Failed to find node steward: {:?}", e);
                 return Err(AuthError::ServerError);
             }
         };
@@ -168,6 +175,7 @@ impl AppAuthBackend {
 
         // Check if disabled
         if !steward.enabled {
+            eprintln!("AUTH FAILED: The specified node steward account is disabled");
             return Err(AuthError::AccountDisabled);
         }
 
@@ -191,15 +199,17 @@ impl AppAuthBackend {
         let steward = match repo.find(&self.node_data_pool, &id).await {
             Ok(Some(steward)) => steward,
             Ok(None) => {
+                eprintln!("RETRIEVE USER FAILED: Node steward not found");
                 return Err(AuthError::UserNotFound);
             }
             Err(e) => {
-                eprintln!("Failed to find node steward: {:?}", e);
+                eprintln!("RETRIEVE USER FAILED: Failed to find node steward: {:?}", e);
                 return Err(AuthError::ServerError);
             }
         };
 
         if !steward.enabled {
+            eprintln!("RETRIEVE USER FAILED: The specified node steward account is disabled");
             return Err(AuthError::AccountDisabled);
         }
 
@@ -218,7 +228,7 @@ impl AppAuthBackend {
 
         match hashed_password {
             Some(hash) => Ok(hash),
-            None => Err(AuthError::UserNotFound),
+            None => Err(AuthError::NoPasswordSet),
         }
     }
 
@@ -232,7 +242,10 @@ impl AppAuthBackend {
                 AuthError::ServerError
             })?;
 
-        verification_result.map_err(|_| AuthError::InvalidCredentials)?;
+        verification_result.map_err(|_| {
+            eprintln!("AUTH FAILED: Failed to verify password");
+            AuthError::InvalidCredentials
+        })?;
 
         Ok(())
     }

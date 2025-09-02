@@ -1,12 +1,26 @@
-import { Button, PasswordInput, Stack } from "@mantine/core"
+import { Button, PasswordInput, Stack, Text } from "@mantine/core"
 import { useForm } from "@mantine/form"
+import {
+  ActionPromiseResult,
+  Anchor,
+  DisplayActionResult,
+  useOnSubmitWithResult,
+} from "../../../../components"
+import { DisplayFormError } from "../../../../components/ActionResult"
+
+export interface AdminLoginData {
+  password: string
+}
 
 interface AdminLoginFormProps {
-  onSubmit: (values: { password: string }) => Promise<void>
+  onSubmit: (values: AdminLoginData) => Promise<ActionPromiseResult>
 }
 
 export default function AdminLoginForm({ onSubmit }: AdminLoginFormProps) {
-  const form = useForm({
+  const [actionResult, onSubmitWithResult] =
+    useOnSubmitWithResult<AdminLoginData>(onSubmit)
+
+  const form = useForm<AdminLoginData>({
     mode: "uncontrolled",
     initialValues: {
       password: "",
@@ -18,14 +32,36 @@ export default function AdminLoginForm({ onSubmit }: AdminLoginFormProps) {
   })
 
   return (
-    <form onSubmit={form.onSubmit(onSubmit)}>
+    <form onSubmit={form.onSubmit(onSubmitWithResult)}>
       <Stack gap="lg">
         <PasswordInput
           label="Password"
           placeholder="Admin password"
           {...form.getInputProps("password")}
         />
-        <Button fullWidth type="submit">
+
+        <DisplayActionResult
+          result={actionResult}
+          handlers={{
+            NoPasswordSet: (
+              <DisplayFormError
+                heading="Login failed - No password set."
+                description={
+                  <Text c="red">
+                    This node is in the process of being setup. As you're the
+                    first user here, you're able to{" "}
+                    <Anchor href="/setup">set the admin password</Anchor>.
+                  </Text>
+                }
+              />
+            ),
+            InvalidCredentials: (
+              <DisplayFormError heading="Login failed - Invalid credentials." />
+            ),
+          }}
+        />
+
+        <Button fullWidth type="submit" loading={form.submitting}>
           Log in
         </Button>
       </Stack>

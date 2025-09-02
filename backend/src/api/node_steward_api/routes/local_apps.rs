@@ -5,7 +5,10 @@ use utoipa::ToSchema;
 use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::{
-    api::public_api::{client_events::ClientEvent, realtime::RealtimeState},
+    api::{
+        auth_api::auth_backend::AuthSession,
+        public_api::{client_events::ClientEvent, realtime::RealtimeState},
+    },
     data::entities::LocalApp,
     local_apps::{
         app_repos::{fs::app_repo_from_app_name, AppRepoAppReference},
@@ -242,6 +245,7 @@ async fn upgrade_local_app(
 )]
 async fn register_app(
     Extension(panda_container): Extension<P2PandaContainer>,
+    auth_session: AuthSession,
     Json(payload): Json<AppReference>,
 ) -> impl IntoResponse {
     match load_app_config(&payload) {
@@ -250,7 +254,9 @@ async fn register_app(
                 name: app.name.clone(),
                 version: app.version.clone(),
             });
-            let publish_result = panda_container.publish_persisted(event_payload).await;
+            let publish_result = panda_container
+                .publish_persisted(event_payload, auth_session.user)
+                .await;
             match publish_result {
                 Ok(_) => {
                     event!(tracing::Level::INFO, "App registered: {}", app.name);

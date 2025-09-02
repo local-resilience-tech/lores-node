@@ -1,17 +1,27 @@
 import { Stack, Text, TextInput, Button } from "@mantine/core"
 import { useForm } from "@mantine/form"
+import {
+  ActionPromiseResult,
+  DisplayActionResult,
+  useOnSubmitWithResult,
+} from "../../../components"
 
 export interface NewNodeData {
   name: string
 }
 
-export type SubmitNewNodeFunc = (data: NewNodeData) => void
+export type SubmitNewNodeFunc = (
+  data: NewNodeData
+) => Promise<ActionPromiseResult>
 
-export default function NewNode({
-  onSubmitNewNode,
-}: {
-  onSubmitNewNode: SubmitNewNodeFunc
-}) {
+interface NewNodeProps {
+  onSubmit: SubmitNewNodeFunc
+}
+
+export default function NewNode({ onSubmit: onSubmit }: NewNodeProps) {
+  const [actionResult, onSubmitWithResult] =
+    useOnSubmitWithResult<NewNodeData>(onSubmit)
+
   const form = useForm<NewNodeData>({
     mode: "controlled",
     initialValues: {
@@ -41,8 +51,8 @@ export default function NewNode({
         </Text>
       </Stack>
 
-      <form onSubmit={form.onSubmit(onSubmitNewNode)}>
-        <Stack>
+      <form onSubmit={form.onSubmit(onSubmitWithResult)}>
+        <Stack gap="lg">
           <TextInput
             label="Node Name"
             placeholder="Enter node name"
@@ -50,6 +60,9 @@ export default function NewNode({
             key="name"
             {...form.getInputProps("name")}
           />
+
+          <DisplayActionResult result={actionResult} />
+
           <Button loading={form.submitting} type="submit">
             Set Name
           </Button>
