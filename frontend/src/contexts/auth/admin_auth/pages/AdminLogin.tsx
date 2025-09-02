@@ -3,31 +3,22 @@ import AdminLoginForm from "../components/AdminLoginForm"
 import { getApi } from "../../../../api"
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
+import { actionFailure, ActionPromiseResult } from "../../../../components"
 
 type AuthResult = "unauthorized" | "server_error"
 
 export default function AdminLogin() {
-  const [result, setResult] = useState<AuthResult | null>(null)
   const navigate = useNavigate()
 
-  const onSubmit = async (values: { password: string }) => {
+  const onSubmit = async (values: {
+    password: string
+  }): Promise<ActionPromiseResult> =>
     getApi()
       .authApi.adminLogin(values)
       .then((response) => {
-        console.log("response", response)
         navigate("/admin/node_stewards")
       })
-      .catch((error) => {
-        console.error("error", error)
-        switch (error.status) {
-          case 401:
-            setResult("unauthorized")
-            break
-          default:
-            setResult("server_error")
-        }
-      })
-  }
+      .catch(actionFailure)
 
   return (
     <Stack gap="lg">
@@ -47,14 +38,7 @@ export default function AdminLogin() {
           node that you use for all other operations.
         </Text>
       </Stack>
-      {result === "unauthorized" && (
-        <Text c="red">Invalid credentials, please try again.</Text>
-      )}
-      {result === "server_error" && (
-        <Text c="red">
-          An unexpected error occurred, please try again later.
-        </Text>
-      )}
+
       <AdminLoginForm onSubmit={onSubmit} />
     </Stack>
   )

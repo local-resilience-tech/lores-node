@@ -222,7 +222,7 @@ impl AppAuthBackend {
 
         match hashed_password {
             Some(hash) => Ok(hash),
-            None => Err(AuthError::UserNotFound),
+            None => Err(AuthError::NoPasswordSet),
         }
     }
 
