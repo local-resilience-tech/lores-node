@@ -1,34 +1,30 @@
-import {
-  ActionIcon,
-  Container,
-  Group,
-  Stack,
-  Table,
-  Title,
-  Text,
-} from "@mantine/core"
+import { Container, Group, Stack, Table, Title, Text } from "@mantine/core"
 import { IconRefresh } from "@tabler/icons-react"
 import { getApi } from "../../../api"
 import { useEffect, useState } from "react"
 import { P2PandaLogCounts } from "../../../api/Api"
 import { useAppSelector } from "../../../store"
-import { hashById, NodesMap } from "../../../store/nodes"
+import { hashById } from "../../../store/nodes"
+import {
+  ActionPromiseResult,
+  actionSuccess,
+  actionFailure,
+  LoadingActionIcon,
+} from "../../../components"
 
 export default function EventLog() {
   const [logCounts, setLogCounts] = useState<null | P2PandaLogCounts>(null)
   const nodesHash = hashById(useAppSelector((state) => state.nodes))
 
-  const loadEventLog = async () => {
+  const loadEventLog = async (): Promise<ActionPromiseResult> =>
     getApi()
       .publicApi.p2PandaLogCounts()
       .then((response) => {
         console.log("Event log loaded:", response.data)
         setLogCounts(response.data)
+        return actionSuccess()
       })
-      .catch((error) => {
-        console.error("Error loading event log:", error)
-      })
-  }
+      .catch(actionFailure)
 
   const nodeName = (nodeId: string) => {
     if (!nodesHash) return null
@@ -44,9 +40,9 @@ export default function EventLog() {
       <Stack>
         <Group justify="space-between">
           <Title order={1}>P2Panda Event Log</Title>
-          <ActionIcon onClick={loadEventLog}>
+          <LoadingActionIcon onClick={loadEventLog}>
             <IconRefresh />
-          </ActionIcon>
+          </LoadingActionIcon>
         </Group>
         {logCounts && (
           <Table>
