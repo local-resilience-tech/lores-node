@@ -11,6 +11,7 @@ use crate::{
         config::{SimplifiedNodeAddress, ThisP2PandaNodeRepo},
         container::{build_public_key_from_hex, P2PandaContainer},
     },
+    DatabaseState,
 };
 
 pub fn router() -> OpenApiRouter {
@@ -59,7 +60,7 @@ pub struct BootstrapNodeData {
 async fn bootstrap(
     Extension(config_state): Extension<LoresNodeConfigState>,
     Extension(panda_container): Extension<P2PandaContainer>,
-    Extension(operation_pool): Extension<sqlx::SqlitePool>,
+    Extension(db): Extension<DatabaseState>,
     axum::extract::Json(data): axum::extract::Json<BootstrapNodeData>,
 ) -> impl IntoResponse {
     println!("Bootstrapping with data: {:?}", data);
@@ -99,7 +100,7 @@ async fn bootstrap(
         .await;
 
     // start the container
-    if let Err(e) = panda_container.start(&operation_pool).await {
+    if let Err(e) = panda_container.start(&db.operations_pool).await {
         eprintln!("Failed to start P2PandaContainer: {:?}", e);
         return (
             StatusCode::INTERNAL_SERVER_ERROR,
