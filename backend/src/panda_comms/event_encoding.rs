@@ -2,16 +2,23 @@ use anyhow::Result;
 use p2panda_core::cbor::{decode_cbor, encode_cbor, DecodeError, EncodeError};
 
 use super::lores_events::{
-    LoResEvent, LoResEventHeader, LoResEventPayload, LoResPossibleEventPayload, LoResWirePayload,
+    LoResEvent, LoResEventHeader, LoResEventMetadataV1, LoResEventPayload,
+    LoResPossibleEventPayload, LoResWirePayload,
 };
 
 pub fn encode_lores_event_payload(
     event_payload: LoResEventPayload,
+    metadata: LoResEventMetadataV1,
 ) -> Result<Vec<u8>, EncodeError> {
-    encode_lores_wire_event(LoResPossibleEventPayload::LoResEventPayload(event_payload))
+    let wire_payload = LoResWirePayload {
+        metadata,
+        event_payload: LoResPossibleEventPayload::LoResEventPayload(event_payload),
+    };
+
+    encode_lores_wire_event(wire_payload)
 }
 
-fn encode_lores_wire_event(wire_event: LoResPossibleEventPayload) -> Result<Vec<u8>, EncodeError> {
+fn encode_lores_wire_event(wire_event: LoResWirePayload) -> Result<Vec<u8>, EncodeError> {
     encode_cbor(&wire_event)
 }
 
@@ -75,7 +82,11 @@ mod tests {
             name: "Test Node".to_string(),
         });
 
-        let encoded = encode_lores_event_payload(payload.clone()).unwrap();
+        let metadata = LoResEventMetadataV1 {
+            node_steward_id: None,
+        };
+
+        let encoded = encode_lores_event_payload(payload.clone(), metadata).unwrap();
         let decoded = decode_lores_event_payload(&encoded).unwrap();
 
         assert_eq!(payload, decoded);

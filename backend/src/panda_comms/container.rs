@@ -14,7 +14,8 @@ use std::sync::Arc;
 use tokio::sync::{broadcast, mpsc, Mutex};
 use tokio::{self};
 
-use crate::panda_comms::lores_events::LoResEventHeader;
+use crate::api::auth_api::auth_backend::User;
+use crate::panda_comms::lores_events::{LoResEventHeader, LoResEventMetadataV1};
 
 use super::event_encoding::{decode_lores_event, encode_lores_event_payload};
 use super::lores_events::{LoResEvent, LoResEventPayload};
@@ -207,13 +208,23 @@ impl P2PandaContainer {
         *node_api_lock = maybe_node_api;
     }
 
-    pub async fn publish_persisted(&self, event_payload: LoResEventPayload) -> Result<()> {
+    pub async fn publish_persisted(
+        &self,
+        event_payload: LoResEventPayload,
+        current_user: Option<User>,
+    ) -> Result<()> {
         let mut node_api = self.node_api.lock().await;
         let node_api = node_api.as_mut().ok_or(anyhow::Error::msg(
             "Trying to publish but network not started",
         ))?;
 
-        let encoded_payload = encode_lores_event_payload(event_payload)?;
+        let node_steward_id = match current_user {
+            Some(user) if user.is_node_steward() => Some(user.id.clone()),
+            _ => None,
+        };
+        let metadata = LoResEventMetadataV1 { node_steward_id };
+
+        let encoded_payload = encode_lores_event_payload(event_payload, metadata)?;
 
         let extensions = NodeExtensions {
             log_id: Some(LogId(LOG_ID.to_string())),

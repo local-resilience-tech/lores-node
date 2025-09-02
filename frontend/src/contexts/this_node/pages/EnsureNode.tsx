@@ -7,6 +7,11 @@ import type { Node } from "../../../api/Api"
 import { useAppDispatch, useAppSelector } from "../../../store"
 import { thisNodeLoaded } from "../../../store/this_node"
 import { Outlet } from "react-router"
+import {
+  actionFailure,
+  ActionPromiseResult,
+  actionSuccess,
+} from "../../../components"
 
 const getNode = async (): Promise<Node | null> => {
   const result = await getApi().publicApi.showThisNode()
@@ -41,20 +46,14 @@ export default function EnsureNode() {
     if (node == null) fetchNode()
   }, [])
 
-  const onSubmitNewNode = (data: NewNodeData) => {
+  const onSubmitNewNode = (data: NewNodeData): Promise<ActionPromiseResult> =>
     getApi()
       .nodeStewardApi.createThisNode({ name: data.name })
       .then((result) => {
-        if (result.status === 201) {
-          updateNode(result.data)
-        } else {
-          console.error("Failed to create node", result)
-        }
+        updateNode(result.data)
+        return actionSuccess()
       })
-      .catch((error) => {
-        console.error("Error creating node", error)
-      })
-  }
+      .catch(actionFailure)
 
   if (loading) return <Loading />
 
@@ -62,7 +61,7 @@ export default function EnsureNode() {
     <>
       {node == null && (
         <Container>
-          <NewNode onSubmitNewNode={onSubmitNewNode} />
+          <NewNode onSubmit={onSubmitNewNode} />
         </Container>
       )}
       {node != null && <Outlet />}

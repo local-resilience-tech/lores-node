@@ -39,6 +39,12 @@ impl AuthUser for User {
     }
 }
 
+impl User {
+    pub fn is_node_steward(&self) -> bool {
+        self.id != ADMIN_USER_ID
+    }
+}
+
 #[derive(Debug, Clone, Deserialize, ToSchema)]
 pub struct AdminCredentials {
     pub password: String,

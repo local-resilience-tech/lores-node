@@ -4,6 +4,7 @@ use utoipa::ToSchema;
 use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::{
+    api::auth_api::auth_backend::AuthSession,
     data::entities::Node,
     panda_comms::{
         container::P2PandaContainer,
@@ -36,13 +37,16 @@ struct CreateNodeDetails {
 )]
 async fn create_this_node(
     Extension(panda_container): Extension<P2PandaContainer>,
+    auth_session: AuthSession,
     axum::extract::Json(data): axum::extract::Json<CreateNodeDetails>,
 ) -> impl IntoResponse {
     let event_payload = LoResEventPayload::NodeAnnounced(NodeAnnouncedDataV1 {
         name: data.name.clone(),
     });
 
-    let result = panda_container.publish_persisted(event_payload).await;
+    let result = panda_container
+        .publish_persisted(event_payload, auth_session.user)
+        .await;
 
     match result {
         Ok(_) => {
@@ -76,6 +80,7 @@ struct UpdateNodeDetails {
 )]
 async fn update_this_node(
     Extension(panda_container): Extension<P2PandaContainer>,
+    auth_session: AuthSession,
     axum::extract::Json(data): axum::extract::Json<UpdateNodeDetails>,
 ) -> impl IntoResponse {
     println!("update node: {:?}", data);
@@ -85,7 +90,9 @@ async fn update_this_node(
         public_ipv4: data.public_ipv4.clone(),
     });
 
-    let result = panda_container.publish_persisted(event_payload).await;
+    let result = panda_container
+        .publish_persisted(event_payload, auth_session.user)
+        .await;
 
     match result {
         Ok(_) => {
@@ -119,6 +126,7 @@ struct NodeStatusData {
 )]
 async fn post_node_status(
     Extension(panda_container): Extension<P2PandaContainer>,
+    auth_session: AuthSession,
     axum::extract::Json(data): axum::extract::Json<NodeStatusData>,
 ) -> impl IntoResponse {
     println!("post status: {:?}", data);
@@ -128,7 +136,9 @@ async fn post_node_status(
         state: data.state.clone(),
     });
 
-    let result = panda_container.publish_persisted(event_payload).await;
+    let result = panda_container
+        .publish_persisted(event_payload, auth_session.user)
+        .await;
 
     match result {
         Ok(_) => (StatusCode::OK, Json(())).into_response(),

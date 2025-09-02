@@ -42,13 +42,13 @@ pub enum LoResPossibleEventPayload {
 }
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
-pub struct LoresEventMetadataV1 {
+pub struct LoResEventMetadataV1 {
     pub node_steward_id: Option<String>,
 }
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
 pub struct LoResWirePayload {
-    pub metadata: LoresEventMetadataV1,
+    pub metadata: LoResEventMetadataV1,
     pub event_payload: LoResPossibleEventPayload,
 }
 
