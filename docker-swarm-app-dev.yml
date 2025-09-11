@@ -1,0 +1,47 @@
+services:
+  lores-node:
+    image: ghcr.io/local-resilience-tech/lores-node:latest
+    networks:
+      - proxy
+    ports:
+      - "8200:8200"
+      - "2022:2022/udp"
+      - "2023:2023/udp"
+    environment:
+      - FRONTEND_PATH=/app/frontend
+      - DATABASE_URL=sqlite:/app/projections.sqlite
+      - CONFIG_PATH=/app/config.toml
+      - APP_REPOS_PATH=/app/app_repos
+      - APPS_PATH=/app/apps
+      - BASE_URL=http://lores.localhost:5173
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./backend/data/app_repos:/app/app_repos
+      - ./backend/data/apps:/app/apps
+  traefik:
+    logging:
+      options:
+        max-size: "1m"
+    image: traefik:3.2
+    networks:
+      - proxy
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      - "80:80"
+      - "443:443"
+    command:
+      - --accesslog=true
+      # Possible log levels: DEBUG, INFO, WARN, ERROR (default), FATAL, PANIC
+      - --log.level=INFO
+      - --providers.swarm.network=lores
+      - --providers.swarm.watch
+      - --providers.swarm.exposedByDefault=false
+      - --providers.swarm.defaultRule=Host(`lores.localhost`)
+      - --api
+      - --entryPoints.web.address=:80
+networks:
+  proxy:
+    name: lores
+    driver: overlay
+    attachable: true
