@@ -7,10 +7,33 @@ import { regionLoaded } from "./region"
 import { regionAppsLoaded } from "./region_apps"
 import { thisNodeLoaded } from "./this_node"
 import { meLoaded } from "./me"
+import { redirect } from "react-router-dom"
+import { GetCurrentNodeStewardError } from "../api/Api"
 
 export async function loadInitialData(store: AppStore) {
   const state = store.getState()
-  loadUser(store)
+
+  try {
+    await getApi()
+      .authApi.getCurrentUser()
+      .then((result) => {
+        console.log("EFFECT: fetchUser", result)
+        if (result) store.dispatch(meLoaded(result.data))
+      })
+      .catch((error) => {
+        console.error("Error fetching current user:", error)
+        if (error.status === 500) {
+          return Promise.reject(error.response.data)
+        }
+      })
+  } catch (error_type: any) {
+    switch (error_type as GetCurrentNodeStewardError) {
+      case "AdminNotFound":
+        throw redirect("/setup")
+      default:
+        console.error("Unknown error:", error_type)
+    }
+  }
 
   if (state.region === null) loadRegion(store)
   if (state.nodes === null) loadNodes(store)
@@ -21,9 +44,16 @@ export async function loadInitialData(store: AppStore) {
 }
 
 async function loadUser(store: AppStore) {
-  const result = await fetchApiData(() => getApi().authApi.getCurrentUser())
-  console.log("EFFECT: fetchUser", result)
-  if (result) store.dispatch(meLoaded(result))
+  getApi()
+    .authApi.getCurrentUser()
+    .then((result) => {
+      console.log("EFFECT: fetchUser", result)
+      if (result) store.dispatch(meLoaded(result))
+    })
+    .catch((error) => {
+      console.error("Error fetching current user:", error)
+      return Promise.reject(redirect("/login"))
+    })
 }
 
 async function loadRegion(store: AppStore) {

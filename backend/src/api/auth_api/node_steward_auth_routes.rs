@@ -5,11 +5,13 @@ use utoipa::ToSchema;
 use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::{
+    config::config_state::LoresNodeConfigState,
     data::node_data::node_stewards::{NodeStewardIdentifier, NodeStewardsRepo},
     DatabaseState,
 };
 
 use super::{
+    admin_user_repo::AdminUserRepo,
     auth_backend::{AuthError, AuthSession, Credentials, NodeStewardCredentials},
     UserRef,
 };
@@ -27,18 +29,34 @@ struct NodeStewardUser {
     pub name: String,
 }
 
+#[derive(Debug, Clone, Serialize, ToSchema)]
+enum GetCurrentNodeStewardError {
+    InternalServerError,
+    AdminNotFound,
+}
+
 #[utoipa::path(
     get,
     path = "/",
     responses(
         (status = OK, body = Option<NodeStewardUser>),
-        (status = INTERNAL_SERVER_ERROR, body = ()),
+        (status = INTERNAL_SERVER_ERROR, body = GetCurrentNodeStewardError),
     )
 )]
 async fn get_current_user(
     Extension(db): Extension<DatabaseState>,
+    Extension(config_state): Extension<LoresNodeConfigState>,
     auth_session: AuthSession,
 ) -> impl IntoResponse {
+    let admin_repo = AdminUserRepo::new(&config_state);
+    if !admin_repo.has_admin_password().await {
+        return (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(GetCurrentNodeStewardError::AdminNotFound),
+        )
+            .into_response();
+    }
+
     let auth_user = match auth_session.user {
         Some(user) => user,
         None => {
@@ -62,7 +80,7 @@ async fn get_current_user(
             eprintln!("Error finding node steward: {:?}", e);
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(NodeStewardSetPasswordError::InternalServerError),
+                Json(GetCurrentNodeStewardError::InternalServerError),
             )
                 .into_response();
         }

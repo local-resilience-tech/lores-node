@@ -49,6 +49,10 @@ impl AdminUserRepo {
         config.hashed_admin_password.clone()
     }
 
+    pub async fn has_admin_password(&self) -> bool {
+        self.get_hashed_password().await.is_some()
+    }
+
     fn generate_admin_password(&self) -> String {
         let pw_config = PasswordConfig::new(20).unwrap();
         generate_password(&pw_config)

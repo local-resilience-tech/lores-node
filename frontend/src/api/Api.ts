@@ -48,6 +48,11 @@ export enum InstallLocalAppError {
   ServerError = "ServerError",
 }
 
+export enum GetCurrentNodeStewardError {
+  InternalServerError = "InternalServerError",
+  AdminNotFound = "AdminNotFound",
+}
+
 export enum AdminLoginError {
   InvalidCredentials = "InvalidCredentials",
   NoPasswordSet = "NoPasswordSet",
@@ -412,7 +417,7 @@ export class HttpClient<SecurityDataType = unknown> {
 
 /**
  * @title lores-node
- * @version 0.12.1
+ * @version 0.13.0
  * @license
  */
 export class Api<
@@ -558,7 +563,7 @@ export class Api<
      * @request GET:/auth_api/node_steward
      */
     getCurrentUser: (params: RequestParams = {}) =>
-      this.request<null | NodeStewardUser, any>({
+      this.request<null | NodeStewardUser, GetCurrentNodeStewardError>({
         path: `/auth_api/node_steward`,
         method: "GET",
         format: "json",

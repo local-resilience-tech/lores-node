@@ -5,7 +5,6 @@ use utoipa_axum::router::OpenApiRouter;
 mod admin_auth_routes;
 mod admin_user_repo;
 pub mod auth_backend;
-mod auth_repo;
 mod node_steward_auth_routes;
 
 pub fn auth_api_router() -> OpenApiRouter {
