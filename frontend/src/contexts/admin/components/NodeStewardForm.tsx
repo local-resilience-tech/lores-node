@@ -41,7 +41,7 @@ export default function NodeStewardForm({ onSubmit }: NodeStewardFormProps) {
         </Stack>
         <DisplayActionResult result={actionResult} />
         <Button type="submit" loading={form.submitting}>
-          Install
+          Create
         </Button>
       </Stack>
     </form>
