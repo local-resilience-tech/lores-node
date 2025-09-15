@@ -10,6 +10,8 @@ services:
     environment:
       - FRONTEND_PATH=/app/frontend
       - DATABASE_URL=sqlite:/app/data/projections.sqlite
+      - NODE_DATA_DATABASE_URL=sqlite:/app/node_data.sqlite
+      - OPERATION_DATABASE_URL=sqlite:/app/operations.sqlite
       - CONFIG_PATH=/app/data/config.toml
       - APP_REPOS_PATH=/app/app_repos
       - APPS_PATH=/app/apps
