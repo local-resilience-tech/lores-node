@@ -40,6 +40,9 @@ export default function Layout() {
   const localAppsCount = useAppSelector((state) => state.localApps?.length)
   const me = useAppSelector((state) => state.me)
 
+  const readyForApps = region && node
+  const pandaRunning = region
+
   const {} = useWebSocket(getSocketUrl(), {
     share: true,
     onOpen: (event) => {
@@ -113,23 +116,27 @@ export default function Layout() {
             leftSection={<IconHome size={iconSize} />}
             onClick={toggle}
           />
-          <NavLink
-            label="Local apps"
-            href="/this_node/apps"
-            leftSection={<IconApps size={iconSize} />}
-            onClick={toggle}
-            rightSection={
-              localAppsCount !== undefined && (
-                <Badge circle>{localAppsCount}</Badge>
-              )
-            }
-          />
-          <NavLink
-            label="App repositories"
-            href="/this_node/app_repos"
-            leftSection={<IconBrandGit size={iconSize} />}
-            onClick={toggle}
-          />
+          {readyForApps && (
+            <>
+              <NavLink
+                label="Local apps"
+                href="/this_node/apps"
+                leftSection={<IconApps size={iconSize} />}
+                onClick={toggle}
+                rightSection={
+                  localAppsCount !== undefined && (
+                    <Badge circle>{localAppsCount}</Badge>
+                  )
+                }
+              />
+              <NavLink
+                label="App repositories"
+                href="/this_node/app_repos"
+                leftSection={<IconBrandGit size={iconSize} />}
+                onClick={toggle}
+              />
+            </>
+          )}
         </AppShell.Section>
 
         {region && (
@@ -169,38 +176,42 @@ export default function Layout() {
           </AppShell.Section>
         )}
 
-        <AppShell.Section className={classes.footer_section}>
-          <Text className={classes.section_title}>Debug</Text>
-          <NavLink
-            label="P2Panda node"
-            href="/debug/p2panda_node"
-            leftSection={
-              <img src={pangaLogoUrl} alt="P2Panda Icon" width={iconSize} />
-            }
-            onClick={toggle}
-          />
-          <NavLink
-            label="Event log"
-            href="/debug/event_log"
-            leftSection={<IconTimelineEventText size={iconSize} />}
-            onClick={toggle}
-          />
-          <NavLink
-            label="Docker stacks"
-            href="/debug/stacks"
-            leftSection={<IconBrandDocker size={iconSize} />}
-            onClick={toggle}
-          />
-          <NavLink
-            c="dimmed"
-            label={"v" + packageJson.version}
-            href={
-              packageJson.homepage + "/releases/tag/v" + packageJson.version
-            }
-            leftSection={<IconBrandGithub size={18} />}
-            onClick={toggle}
-          />
-        </AppShell.Section>
+        {pandaRunning && (
+          <AppShell.Section className={classes.footer_section}>
+            <Text className={classes.section_title}>Debug</Text>
+            <NavLink
+              label="P2Panda node"
+              href="/debug/p2panda_node"
+              leftSection={
+                <img src={pangaLogoUrl} alt="P2Panda Icon" width={iconSize} />
+              }
+              onClick={toggle}
+            />
+            <NavLink
+              label="Event log"
+              href="/debug/event_log"
+              leftSection={<IconTimelineEventText size={iconSize} />}
+              onClick={toggle}
+            />
+            {readyForApps && (
+              <NavLink
+                label="Docker stacks"
+                href="/debug/stacks"
+                leftSection={<IconBrandDocker size={iconSize} />}
+                onClick={toggle}
+              />
+            )}
+            <NavLink
+              c="dimmed"
+              label={"v" + packageJson.version}
+              href={
+                packageJson.homepage + "/releases/tag/v" + packageJson.version
+              }
+              leftSection={<IconBrandGithub size={18} />}
+              onClick={toggle}
+            />
+          </AppShell.Section>
+        )}
       </AppShell.Navbar>
       <AppShell.Main>
         <Container p={0}>
