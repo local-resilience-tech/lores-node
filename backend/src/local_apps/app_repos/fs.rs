@@ -86,8 +86,8 @@ fn app_repo_source_from_path(path: &PathBuf) -> Option<AppRepoSource> {
             name: name.to_string(),
             git_url: url,
         }),
-        Err(_) => {
-            eprintln!("Failed to get git URL for app repo: {}", name);
+        Err(e) => {
+            eprintln!("Failed to get git URL for app repo: {}: {:?}", name, e);
             None
         }
     }

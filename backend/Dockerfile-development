@@ -53,6 +53,7 @@ COPY ./data/projections.sqlite projections.sqlite
 COPY ./data/operations.sqlite operations.sqlite
 COPY ./data/node_data.sqlite node_data.sqlite
 COPY ./data/config.toml config.toml
+COPY ./docker-gitconfig.txt /root/.gitconfig
 
 EXPOSE 8200
 EXPOSE 2022/udp

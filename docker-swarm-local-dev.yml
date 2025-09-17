@@ -18,13 +18,15 @@ services:
     environment:
       - FRONTEND_PATH=/app/frontend
       - DATABASE_URL=sqlite:/app/projections.sqlite
+      - NODE_DATA_DATABASE_URL=sqlite:/app/node_data.sqlite
+      - OPERATION_DATABASE_URL=sqlite:/app/operations.sqlite
       - CONFIG_PATH=/app/config.toml
       - APP_REPOS_PATH=/app/app_repos
       - APPS_PATH=/app/apps
       - BASE_URL=http://lores.localhost:5173
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - ./backend/data/app_repos:/app/app_repos
+      - /home/jade/dev/lores/dev_app_repos:/app/app_repos
       - ./backend/data/apps:/app/apps
   traefik:
     logging:
