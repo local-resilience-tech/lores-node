@@ -6,49 +6,49 @@ publish = false
 
 [dependencies]
 
-iroh = "0.34.1"
-anyhow = "1.0.98"
-async-trait = "0.1.88"
-axum = { version = "0.8.4", features = ["ws"] }
+anyhow = "1.0.100"
+async-trait = "0.1.89"
+axum = { version = "0.8.5", features = ["ws"] }
+axum-login = "0.17.0"
+chrono = { version = "0.4.42", features = ["serde"] }
+confy = "1.0.0"
+copy_dir = "0.1.3"
 experimental-node = { git = "https://github.com/p2panda/experimental-node", rev = "b7a61e634b90f79a37ea02d7eeade264da34b9cc" }
+futures-util = "0.3.31"
+git2 = { version = "0.20.2", features = ["vendored-openssl"] }
+hex = "0.4.3"
+iroh = "0.34.1"
+lazy_static = "1.5.0"
+openssl = { version = "0.10.73", features = ["vendored"] }
 p2panda-blobs = "0.4.0"
 p2panda-core = "0.4.0"
+p2panda-discovery = { version = "0.4.0", features = ["mdns"] }
 p2panda-net = "0.4.0"
 p2panda-store = { version = "0.4.0", features = ["sqlite"] }
 p2panda-stream = "0.4.0"
-p2panda-discovery = { version = "0.4.0", features = ["mdns"] }
 p2panda-sync = { version = "0.4.0", features = ["log-sync"] }
-hex = "0.4.3"
-lazy_static = "1.5.0"
-semver = "1.0.26"
+password-auth = "1.0.0"
+pwgen2 = "0.7.3"
+semver = "1.0.27"
 serde = { version = "1.0.219", features = ["derive"] }
-serde_json = "1.0.141"
+serde_json = "1.0.145"
+serde_yaml = "0.9.34"
+short-uuid = "0.2.0"
 sqlx = { version = "0.8.6", features = [
   "runtime-tokio-native-tls",
   "sqlite",
   "chrono",
 ] }
-tempfile = "3.17.1"
+tempfile = "3.23.0"
+thiserror = "2.0.17"
+time = "0.3.44"
 tokio = { version = "1.46.1", features = ["macros", "rt-multi-thread"] }
 tower = "0.5.2"
 tower-http = { version = "0.6.6", features = ["cors", "fs", "trace"] }
+tower-sessions = { version = "0.14.0", features = ["signed"] }
+tracing = "0.1.41"
+tracing-subscriber = { version = "0.3.20", features = ["env-filter"] }
 utoipa = "5.3.1"
 utoipa-axum = "0.2.0"
 utoipa-swagger-ui = { version = "9.0.2", features = ["axum", "vendored"] }
-tracing = "0.1.41"
-tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }
-openssl = { version = "0.10.73", features = ["vendored"] }
-confy = "1.0.0"
-futures-util = "0.3.31"
-git2 = { version = "0.20.2", features = ["vendored-openssl"] }
-copy_dir = "0.1.3"
-password-auth = "1.0.0"
-tower-sessions = { version = "0.14.0", features = ["signed"] }
-axum-login = "0.17.0"
-thiserror = "2.0.16"
-time = "0.3.41"
-uuid = "1.18.0"
-short-uuid = "0.2.0"
-chrono = { version = "0.4.41", features = ["serde"] }
-pwgen2 = "0.7.3"
-serde_yaml = "0.9.34"
+uuid = "1.18.1"
