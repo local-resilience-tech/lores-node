@@ -5,7 +5,7 @@ import {
   actionSuccess,
   Anchor,
 } from "../../../components"
-import { useParams } from "react-router-dom"
+import { useNavigate, useParams } from "react-router-dom"
 import { useAppSelector } from "../../../store"
 import LocalAppDetails from "../components/LocalAppDetails"
 import { useAppRepo } from "../../../store/app_repos"
@@ -19,6 +19,7 @@ import LocalAppActions, { LocalAppAction } from "../components/LocalAppActions"
 import { IfNodeSteward } from "../../auth/node_steward_auth"
 
 export default function ShowLocalApp() {
+  const navigate = useNavigate()
   const { appName } = useParams<{ appName: string }>()
   const app = useAppSelector((state) =>
     (state.localApps || []).find((a) => a.name === appName)
@@ -96,6 +97,18 @@ export default function ShowLocalApp() {
     buttonColor: "blue",
     handler: onAppRegister,
   })
+
+  if (app.has_config_schema) {
+    actions.push({
+      type: "configure",
+      buttonColor: "green",
+      handler: async (_) => {
+        navigate(`./configure`)
+        return actionSuccess()
+      },
+      primary: true,
+    })
+  }
 
   return (
     <Container>
