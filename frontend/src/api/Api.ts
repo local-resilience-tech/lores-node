@@ -140,6 +140,7 @@ export interface IrohNodeAddr {
 }
 
 export interface LocalApp {
+  has_config_schema: boolean;
   name: string;
   repo_name?: string | null;
   status: LocalAppInstallStatus;
@@ -417,7 +418,7 @@ export class HttpClient<SecurityDataType = unknown> {
 
 /**
  * @title lores-node
- * @version 0.13.0
+ * @version 0.13.4
  * @license
  */
 export class Api<

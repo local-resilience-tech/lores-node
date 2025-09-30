@@ -33,6 +33,7 @@ pub fn load_app_config(app_ref: &AppReference) -> Option<LocalApp> {
                 status: LocalAppInstallStatus::Installed,
                 repo_name: app_repo_from_app_name(app_definition.name.as_str())
                     .map(|repo| repo.repo_name),
+                has_config_schema: false,
             }),
             Err(_) => {
                 eprintln!(

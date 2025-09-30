@@ -41,6 +41,7 @@ pub struct LocalApp {
     pub repo_name: Option<String>,
     pub version: String,
     pub status: LocalAppInstallStatus,
+    pub has_config_schema: bool,
 }
 
 #[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]

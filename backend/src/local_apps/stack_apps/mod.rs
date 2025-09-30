@@ -23,6 +23,7 @@ pub fn find_deployed_local_apps() -> Vec<LocalApp> {
             status: LocalAppInstallStatus::Installed,
             repo_name: app_repo_from_app_name(app_definition.name.as_str())
                 .map(|repo| repo.repo_name),
+            has_config_schema: false,
         })
         .collect();
 
