@@ -8,7 +8,7 @@ use super::{
             git_app_repos::{with_checked_out_app_version, CheckoutAppVersionError},
             AppRepoAppReference,
         },
-        shared::app_definitions::{config::app_config_from_string, AppVersionDefinition},
+        shared::app_definitions::{parse_app_definition, AppVersionDefinition},
     },
     app_folder::AppFolder,
     apps_folder::AppsFolder,
@@ -26,7 +26,7 @@ pub fn load_app_config(app_ref: &AppReference) -> Option<LocalApp> {
     let config_file_path = app_folder.config_file_path();
 
     match fs::read_to_string(config_file_path.clone()) {
-        Ok(file_contents) => match app_config_from_string(file_contents) {
+        Ok(file_contents) => match parse_app_definition(file_contents) {
             Ok(app_definition) => Some(LocalApp {
                 name: app_definition.name.clone(),
                 version: app_definition.version,

@@ -2,7 +2,7 @@ use semver::Version;
 use std::{os::unix::fs::symlink, path::PathBuf};
 
 use super::{
-    super::shared::app_definitions::{config::app_config_from_string, AppVersionDefinition},
+    super::shared::app_definitions::{parse_app_definition, AppVersionDefinition},
     apps_folder::AppsFolder,
     AppReference,
 };
@@ -25,7 +25,7 @@ impl AppFolder {
     }
 
     pub fn config_file_path(&self) -> PathBuf {
-        self.current_version_path().join("config/app.toml")
+        self.current_version_path().join("lores_app.yml")
     }
 
     pub fn ensure_exists(&self) -> Result<(), ()> {
@@ -38,7 +38,7 @@ impl AppFolder {
     pub fn app_version_definition(&self) -> Option<AppVersionDefinition> {
         let config_file_path = self.config_file_path();
         match std::fs::read_to_string(config_file_path.clone()) {
-            Ok(file_contents) => app_config_from_string(file_contents).ok(),
+            Ok(file_contents) => parse_app_definition(file_contents).ok(),
             Err(_) => {
                 eprintln!("Could not read file `{}`", config_file_path.display());
                 None
