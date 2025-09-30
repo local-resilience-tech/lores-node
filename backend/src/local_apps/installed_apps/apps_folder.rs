@@ -1,7 +1,8 @@
 use std::{env, path::PathBuf};
 
 use super::{
-    super::shared::app_definitions::AppVersionDefinition, app_folder::AppFolder, AppReference,
+    app_folder::{AppFolder, InstalledAppDetails},
+    AppReference,
 };
 
 lazy_static! {
@@ -22,10 +23,10 @@ impl AppsFolder {
         self.path.clone()
     }
 
-    pub fn app_definitions(&self) -> Vec<AppVersionDefinition> {
+    pub fn apps(&self) -> Vec<InstalledAppDetails> {
         self.app_folders()
             .into_iter()
-            .filter_map(|app_folder| app_folder.app_version_definition())
+            .filter_map(|app_folder| app_folder.app_details())
             .collect()
     }
 

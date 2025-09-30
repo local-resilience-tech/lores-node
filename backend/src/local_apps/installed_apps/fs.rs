@@ -8,22 +8,22 @@ use super::{
             git_app_repos::{with_checked_out_app_version, CheckoutAppVersionError},
             AppRepoAppReference,
         },
-        shared::app_definitions::{parse_app_definition, AppVersionDefinition},
+        shared::app_definitions::parse_app_definition,
     },
-    app_folder::AppFolder,
+    app_folder::{AppFolder, InstalledAppDetails},
     apps_folder::AppsFolder,
     AppReference,
 };
 use crate::data::entities::{LocalApp, LocalAppInstallStatus};
 
-pub fn find_installed_apps() -> Vec<AppVersionDefinition> {
+pub fn find_installed_apps() -> Vec<InstalledAppDetails> {
     let apps_folder = AppsFolder::new();
-    apps_folder.app_definitions()
+    apps_folder.apps()
 }
 
 pub fn load_app_config(app_ref: &AppReference) -> Option<LocalApp> {
     let app_folder = AppFolder::new(app_ref.clone());
-    let config_file_path = app_folder.config_file_path();
+    let config_file_path = app_folder.app_definition_file_path();
 
     match fs::read_to_string(config_file_path.clone()) {
         Ok(file_contents) => match parse_app_definition(file_contents) {
@@ -33,7 +33,7 @@ pub fn load_app_config(app_ref: &AppReference) -> Option<LocalApp> {
                 status: LocalAppInstallStatus::Installed,
                 repo_name: app_repo_from_app_name(app_definition.name.as_str())
                     .map(|repo| repo.repo_name),
-                has_config_schema: false,
+                has_config_schema: app_folder.has_config_schema(),
             }),
             Err(_) => {
                 eprintln!(
