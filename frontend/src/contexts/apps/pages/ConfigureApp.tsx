@@ -1,4 +1,4 @@
-import { Breadcrumbs, Container, Stack, Title, Text } from "@mantine/core"
+import { Breadcrumbs, Container, Stack, Title, Text, Tabs } from "@mantine/core"
 import { Anchor } from "../../../components"
 import { useAppSelector } from "../../../store"
 import { useParams } from "react-router-dom"
@@ -56,7 +56,25 @@ export default function ConfigureApp() {
             {app.name}
           </Title>
         </Stack>
-        <ConfigSchemaForm schema={configSchema} />
+
+        <Tabs defaultValue="form">
+          <Tabs.List>
+            <Tabs.Tab value="form">
+              Form
+            </Tabs.Tab>
+            <Tabs.Tab value="schema">
+              Schema
+            </Tabs.Tab>
+          </Tabs.List>
+
+          <Tabs.Panel value="form" pt="md">
+            <ConfigSchemaForm schema={configSchema} />
+          </Tabs.Panel>
+
+          <Tabs.Panel value="schema" pt="md">
+            <pre>{JSON.stringify(configSchema, null, 2)}</pre>
+          </Tabs.Panel>
+        </Tabs>
       </Stack>
 
     </Container>
