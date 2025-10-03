@@ -278,22 +278,27 @@ async fn register_app(
 
 #[utoipa::path(
     get, 
-    path = "/config_schema",
-    request_body(content = AppReference, content_type = "application/json"),
+    path = "/app/{app_name}/config_schema",
+    params(
+        ("app_name" = String, Path),
+    ),
     responses(
         (status = 200, body = serde_json::Value),
         (status = INTERNAL_SERVER_ERROR, body = ()),
     )
 )]
-async fn get_local_app_config_schema(Json(payload): Json<AppReference>) -> impl IntoResponse {
-    match load_app_config_schema(&payload) {
+async fn get_local_app_config_schema(Path(app_name): Path<String>,) -> impl IntoResponse {
+    println!("Fetching config schema for local app: {}", app_name);
+    let app_ref = AppReference { app_name };
+
+    match load_app_config_schema(&app_ref) {
         Ok(Some(schema)) => (StatusCode::OK, Json(schema)).into_response(),
         Ok(None) => {
-            eprintln!("No config schema found for app: {}", payload.app_name);
+            eprintln!("No config schema found for app: {}", app_ref.app_name);
             (StatusCode::INTERNAL_SERVER_ERROR, Json(serde_json::json!({"error": "No config schema found"}))).into_response()
         }
         Err(e) => {
-            eprintln!("Error loading config schema for app '{}': {}", payload.app_name, e);
+            eprintln!("Error loading config schema for app '{}': {}", app_ref.app_name, e);
             (StatusCode::INTERNAL_SERVER_ERROR, Json(serde_json::json!({"error": "Failed to load config schema"}))).into_response()
         }
     }

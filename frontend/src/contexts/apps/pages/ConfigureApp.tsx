@@ -2,15 +2,41 @@ import { Breadcrumbs, Container, Stack, Title, Text } from "@mantine/core"
 import { Anchor } from "../../../components"
 import { useAppSelector } from "../../../store"
 import { useParams } from "react-router-dom"
+import { useEffect, useState } from "react"
+import { getApi } from "../../../api"
 
 export default function ConfigureApp() {
   const { appName } = useParams<{ appName: string }>()
   const app = useAppSelector((state) =>
     (state.localApps || []).find((a) => a.name === appName)
   )
+  const [configSchema, setConfigSchema] = useState<object | null | undefined>(undefined)
+
+  const loadConfigSchema = async () => {
+    if (!app) return
+    getApi().nodeStewardApi.getLocalAppConfigSchema(app.name).then((res => {
+      console.log("Config schema:", res.data)
+      setConfigSchema(res.data)
+    })).catch(err => {
+      console.error("Failed to load config schema:", err)
+      setConfigSchema(null)
+    })
+  }
+
+  useEffect(() => {
+    loadConfigSchema()
+  }, [app])
 
   if (!appName || !app) {
     return <Container>Error: App not found</Container>
+  }
+
+  if (configSchema === undefined) {
+    return <Container>Loading config schema...</Container>
+  }
+
+  if (configSchema === null) {
+    return <Container>Error loading config schema.</Container>
   }
 
   return (

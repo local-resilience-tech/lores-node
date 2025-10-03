@@ -643,6 +643,20 @@ export class Api<
     /**
      * No description
      *
+     * @name GetLocalAppConfigSchema
+     * @request GET:/node_steward_api/local_apps/app/{app_name}/config_schema
+     */
+    getLocalAppConfigSchema: (appName: string, params: RequestParams = {}) =>
+      this.request<any, any>({
+        path: `/node_steward_api/local_apps/app/${appName}/config_schema`,
+        method: "GET",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
      * @name DeployLocalApp
      * @request POST:/node_steward_api/local_apps/app/{app_name}/deploy
      */
