@@ -13,9 +13,7 @@ use crate::{
     local_apps::{
         app_repos::{fs::app_repo_from_app_name, AppRepoAppReference},
         installed_apps::{
-            self,
-            fs::{load_app_config, InstallAppVersionError},
-            AppReference,
+            self, config_schema::load_app_config_schema, fs::{load_app_config, InstallAppVersionError}, AppReference
         },
         stack_apps::{self},
     },
@@ -32,6 +30,7 @@ pub fn router() -> OpenApiRouter {
         .routes(routes!(deploy_local_app))
         .routes(routes!(remove_deployment_of_local_app))
         .routes(routes!(upgrade_local_app))
+        .routes(routes!(get_local_app_config_schema))
 }
 
 #[derive(Serialize, ToSchema, Debug)]
@@ -274,6 +273,30 @@ async fn register_app(
         }
     }
     .into_response()
+}
+
+
+#[utoipa::path(
+    get, 
+    path = "/config_schema",
+    request_body(content = AppReference, content_type = "application/json"),
+    responses(
+        (status = 200, body = serde_json::Value),
+        (status = INTERNAL_SERVER_ERROR, body = ()),
+    )
+)]
+async fn get_local_app_config_schema(Json(payload): Json<AppReference>) -> impl IntoResponse {
+    match load_app_config_schema(&payload) {
+        Ok(Some(schema)) => (StatusCode::OK, Json(schema)).into_response(),
+        Ok(None) => {
+            eprintln!("No config schema found for app: {}", payload.app_name);
+            (StatusCode::INTERNAL_SERVER_ERROR, Json(serde_json::json!({"error": "No config schema found"}))).into_response()
+        }
+        Err(e) => {
+            eprintln!("Error loading config schema for app '{}': {}", payload.app_name, e);
+            (StatusCode::INTERNAL_SERVER_ERROR, Json(serde_json::json!({"error": "Failed to load config schema"}))).into_response()
+        }
+    }
 }
 
 async fn local_app_updated(app: &LocalApp, realtime_state: &RealtimeState) {
