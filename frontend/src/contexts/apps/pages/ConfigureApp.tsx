@@ -4,6 +4,7 @@ import { useAppSelector } from "../../../store"
 import { useParams } from "react-router-dom"
 import { useEffect, useState } from "react"
 import { getApi } from "../../../api"
+import ConfigSchemaForm from "../components/ConfigSchemaForm"
 
 export default function ConfigureApp() {
   const { appName } = useParams<{ appName: string }>()
@@ -41,19 +42,23 @@ export default function ConfigureApp() {
 
   return (
     <Container>
-      <Stack gap="xs">
-        <Breadcrumbs>
-          <Anchor href="/this_node/apps">Local Apps</Anchor>
-          <Anchor href={`/this_node/apps/app/${app.name}`}>{app.name}</Anchor>
-          <Text c="dimmed">configure</Text>
-        </Breadcrumbs>
-        <Title order={1}>
-          <Text span inherit c="dimmed">
-            Configure App:{" "}
-          </Text>
-          {app.name}
-        </Title>
+      <Stack gap="lg">
+        <Stack gap="xs">
+          <Breadcrumbs>
+            <Anchor href="/this_node/apps">Local Apps</Anchor>
+            <Anchor href={`/this_node/apps/app/${app.name}`}>{app.name}</Anchor>
+            <Text c="dimmed">configure</Text>
+          </Breadcrumbs>
+          <Title order={1}>
+            <Text span inherit c="dimmed">
+              Configure App:{" "}
+            </Text>
+            {app.name}
+          </Title>
+        </Stack>
+        <ConfigSchemaForm schema={configSchema} />
       </Stack>
+
     </Container>
   )
 }

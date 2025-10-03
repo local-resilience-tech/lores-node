@@ -22,7 +22,20 @@
   },
   "explorerExclude.backup": {},
   "rust-analyzer.cargo.sysroot": "discover",
-  "cSpell.words": ["Aquadoggo", "iroh", "Liftoff", "Scrib"],
+  "cSpell.words": [
+    "Aquadoggo",
+    "iroh",
+    "Liftoff",
+    "Scrib"
+  ],
   "ansible.python.interpreterPath": "/bin/python3",
-  "editor.wordWrapColumn": 140
+  "editor.wordWrapColumn": 140,
+  "[typescript]": {
+    "editor.tabSize": 2,
+    "editor.detectIndentation": false // Optional: Disable automatic indentation detection
+  },
+  "[typescriptreact]": {
+    "editor.tabSize": 2,
+    "editor.detectIndentation": false // Optional: Disable automatic indentation detection
+  },
 }
