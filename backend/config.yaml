@@ -1,0 +1,3 @@
+public_key_hex = "e1809474993c99df6d92146207c8006ab0e9d3192c374864571c4644a3b3930f"
+private_key_hex = "cb474a72b2e073ab781f03d1bfa81fd6f5197d8169014046f97834c7e4e3f611"
+hashed_admin_password = "$argon2id$v=19$m=19456,t=2,p=1$iRZMNRvagILwIHxtcf5rsg$2agloerT+lHguisEVcPbVqAUIO76qfkEVLkm4ExYuTQ"
