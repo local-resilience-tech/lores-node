@@ -646,10 +646,16 @@ export class Api<
      * @name UpdateLocalAppConfig
      * @request PUT:/node_steward_api/local_apps/app/{app_name}/config
      */
-    updateLocalAppConfig: (appName: string, params: RequestParams = {}) =>
+    updateLocalAppConfig: (
+      appName: string,
+      data: any,
+      params: RequestParams = {},
+    ) =>
       this.request<any, any>({
         path: `/node_steward_api/local_apps/app/${appName}/config`,
         method: "PUT",
+        body: data,
+        type: ContentType.Json,
         format: "json",
         ...params,
       }),

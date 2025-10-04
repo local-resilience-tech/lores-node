@@ -35,6 +35,8 @@ export default function ConfigureApp() {
 
   const updateConfig = async (newConfig: any) => {
     if (!app) return
+
+    console.log("Updating config to:", newConfig)
     getApi()
       .nodeStewardApi.updateLocalAppConfig(app.name, newConfig)
       .then(() => {

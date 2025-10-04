@@ -15,3 +15,33 @@ pub fn load_app_config_schema(
 
     Ok(Some(schema_json))
 }
+
+pub fn validate_app_config(
+    app_ref: &AppReference,
+    config: &serde_json::Value,
+) -> Result<(), anyhow::Error> {
+    let schema = match load_app_config_schema(app_ref)? {
+        Some(s) => s,
+        None => return Ok(()), // No schema means no validation needed
+    };
+
+    match validate_config_against_schema(&schema, config) {
+        true => Ok(()),
+        false => anyhow::bail!("Configuration does not conform to schema"),
+    }
+}
+
+pub fn save_app_config(
+    app_ref: &AppReference,
+    config: &serde_json::Value,
+) -> Result<(), anyhow::Error> {
+    println!("Saving config for app: {:?}", app_ref);
+    Ok(())
+}
+
+fn validate_config_against_schema(
+    schema: &serde_json::Value,
+    instance: &serde_json::Value,
+) -> bool {
+    jsonschema::is_valid(schema, instance)
+}

@@ -17,14 +17,19 @@ export default function JsonSchemaForm({
   onSubmit,
 }: JsonSchemaFormProps) {
   const log = (type: any) => console.log.bind(console, type)
+
   const [actionResult, onSubmitWithResult] =
     useOnSubmitWithResult<any>(onSubmit)
+
+  const handleSubmit = (data: any, event: FormEvent<any>) => {
+    onSubmitWithResult(data.formData)
+  }
 
   const form = (
     <Form
       schema={schema}
       validator={validator}
-      onSubmit={onSubmitWithResult}
+      onSubmit={handleSubmit}
       onError={log("errors")}
     />
   )

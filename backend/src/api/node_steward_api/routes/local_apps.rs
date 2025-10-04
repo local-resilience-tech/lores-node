@@ -14,7 +14,7 @@ use crate::{
         app_repos::{fs::app_repo_from_app_name, AppRepoAppReference},
         installed_apps::{
             self,
-            config_schema::load_app_config_schema,
+            config_schema::{load_app_config_schema, save_app_config, validate_app_config},
             fs::{load_app_config, InstallAppVersionError},
             AppReference,
         },
@@ -324,18 +324,42 @@ async fn get_local_app_config_schema(Path(app_name): Path<String>) -> impl IntoR
     params(
         ("app_name" = String, Path),
     ),
+    request_body(content_type = "application/json"),
     responses(
         (status = 200, body = ()),
         (status = INTERNAL_SERVER_ERROR, body = ()),
     )
 )]
-async fn update_local_app_config() -> impl IntoResponse {
-    // Implementation for updating local app config goes here
-    (
-        StatusCode::INTERNAL_SERVER_ERROR,
-        Json(serde_json::json!({"error": "Not implemented"})),
-    )
-        .into_response()
+async fn update_local_app_config(
+    Path(app_name): Path<String>,
+    Json(payload): Json<serde_json::Value>,
+) -> impl IntoResponse {
+    println!("Updating local app config with payload: {:?}", payload);
+    let app_ref = AppReference { app_name };
+
+    match validate_app_config(&app_ref, &payload) {
+        Ok(_) => println!("Config validated successfully"),
+        Err(e) => {
+            eprintln!("Config validation failed: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({"error": "Config validation failed"})),
+            )
+                .into_response();
+        }
+    }
+
+    match save_app_config(&app_ref, &payload) {
+        Ok(_) => (StatusCode::OK, Json(())).into_response(),
+        Err(e) => {
+            eprintln!("Error saving config for app '{}': {}", app_ref.app_name, e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({"error": "Failed to save config"})),
+            )
+                .into_response()
+        }
+    }
 }
 
 async fn local_app_updated(app: &LocalApp, realtime_state: &RealtimeState) {
