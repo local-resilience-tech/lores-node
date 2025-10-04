@@ -1,27 +1,42 @@
-import { Breadcrumbs, Container, Stack, Title, Text, Tabs } from "@mantine/core"
-import { Anchor } from "../../../components"
+import { Breadcrumbs, Container, Stack, Title, Text } from "@mantine/core"
+import { Anchor, JsonSchemaForm } from "../../../components"
 import { useAppSelector } from "../../../store"
 import { useParams } from "react-router-dom"
 import { useEffect, useState } from "react"
 import { getApi } from "../../../api"
-import ConfigSchemaForm from "../components/ConfigSchemaForm"
 
 export default function ConfigureApp() {
   const { appName } = useParams<{ appName: string }>()
   const app = useAppSelector((state) =>
     (state.localApps || []).find((a) => a.name === appName)
   )
-  const [configSchema, setConfigSchema] = useState<object | null | undefined>(undefined)
+  const [configSchema, setConfigSchema] = useState<object | null | undefined>(
+    undefined
+  )
 
   const loadConfigSchema = async () => {
     if (!app) return
-    getApi().nodeStewardApi.getLocalAppConfigSchema(app.name).then((res => {
-      console.log("Config schema:", res.data)
-      setConfigSchema(res.data)
-    })).catch(err => {
-      console.error("Failed to load config schema:", err)
-      setConfigSchema(null)
-    })
+    getApi()
+      .nodeStewardApi.getLocalAppConfigSchema(app.name)
+      .then((res) => {
+        console.log("Config schema:", res.data)
+        setConfigSchema(res.data)
+      })
+      .catch((err) => {
+        console.error("Failed to load config schema:", err)
+        setConfigSchema(null)
+      })
+  }
+
+  const updateConfig = async (newConfig: any) => {
+    if (!app) return
+    try {
+      await getApi().nodeStewardApi.updateLocalAppConfig(app.name, newConfig)
+      alert("Configuration updated successfully.")
+    } catch (err) {
+      console.error("Failed to update config:", err)
+      alert("Failed to update configuration.")
+    }
   }
 
   useEffect(() => {
@@ -57,26 +72,12 @@ export default function ConfigureApp() {
           </Title>
         </Stack>
 
-        <Tabs defaultValue="form">
-          <Tabs.List>
-            <Tabs.Tab value="form">
-              Form
-            </Tabs.Tab>
-            <Tabs.Tab value="schema">
-              Schema
-            </Tabs.Tab>
-          </Tabs.List>
-
-          <Tabs.Panel value="form" pt="md">
-            <ConfigSchemaForm schema={configSchema} />
-          </Tabs.Panel>
-
-          <Tabs.Panel value="schema" pt="md">
-            <pre>{JSON.stringify(configSchema, null, 2)}</pre>
-          </Tabs.Panel>
-        </Tabs>
+        <JsonSchemaForm
+          schema={configSchema}
+          displaySchema
+          handleSubmit={updateConfig}
+        />
       </Stack>
-
     </Container>
   )
 }
