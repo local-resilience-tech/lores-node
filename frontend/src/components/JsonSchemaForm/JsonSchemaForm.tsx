@@ -3,33 +3,28 @@ import validator from "@rjsf/validator-ajv8"
 import Form from "@rjsf/mantine"
 import { FormEvent } from "react"
 import { Tabs } from "@mantine/core"
+import { ActionPromiseResult, useOnSubmitWithResult } from "../ActionResult"
 
 export interface JsonSchemaFormProps {
   displaySchema?: boolean
   schema: RJSFSchema
-  handleSubmit?: (data: any) => void
+  onSubmit: (data: any) => Promise<ActionPromiseResult>
 }
 
 export default function JsonSchemaForm({
   schema,
   displaySchema,
-  handleSubmit,
+  onSubmit,
 }: JsonSchemaFormProps) {
   const log = (type: any) => console.log.bind(console, type)
-
-  const onSubmit = (data: any, event: FormEvent<any>) => {
-    console.log("submitted", data)
-    if (handleSubmit) {
-      handleSubmit(data)
-    }
-  }
+  const [actionResult, onSubmitWithResult] =
+    useOnSubmitWithResult<any>(onSubmit)
 
   const form = (
     <Form
       schema={schema}
       validator={validator}
-      onChange={log("changed")}
-      onSubmit={onSubmit}
+      onSubmit={onSubmitWithResult}
       onError={log("errors")}
     />
   )

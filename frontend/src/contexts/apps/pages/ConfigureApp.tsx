@@ -1,5 +1,10 @@
 import { Breadcrumbs, Container, Stack, Title, Text } from "@mantine/core"
-import { Anchor, JsonSchemaForm } from "../../../components"
+import {
+  actionFailure,
+  actionSuccess,
+  Anchor,
+  JsonSchemaForm,
+} from "../../../components"
 import { useAppSelector } from "../../../store"
 import { useParams } from "react-router-dom"
 import { useEffect, useState } from "react"
@@ -30,13 +35,12 @@ export default function ConfigureApp() {
 
   const updateConfig = async (newConfig: any) => {
     if (!app) return
-    try {
-      await getApi().nodeStewardApi.updateLocalAppConfig(app.name, newConfig)
-      alert("Configuration updated successfully.")
-    } catch (err) {
-      console.error("Failed to update config:", err)
-      alert("Failed to update configuration.")
-    }
+    getApi()
+      .nodeStewardApi.updateLocalAppConfig(app.name, newConfig)
+      .then(() => {
+        return actionSuccess()
+      })
+      .catch(actionFailure)
   }
 
   useEffect(() => {
@@ -75,7 +79,7 @@ export default function ConfigureApp() {
         <JsonSchemaForm
           schema={configSchema}
           displaySchema
-          handleSubmit={updateConfig}
+          onSubmit={updateConfig}
         />
       </Stack>
     </Container>
