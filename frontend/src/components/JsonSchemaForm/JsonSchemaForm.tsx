@@ -8,12 +8,14 @@ import { ActionPromiseResult, useOnSubmitWithResult } from "../ActionResult"
 export interface JsonSchemaFormProps {
   displaySchema?: boolean
   schema: RJSFSchema
+  initialData?: any
   onSubmit: (data: any) => Promise<ActionPromiseResult>
 }
 
 export default function JsonSchemaForm({
   schema,
   displaySchema,
+  initialData,
   onSubmit,
 }: JsonSchemaFormProps) {
   const log = (type: any) => console.log.bind(console, type)
@@ -28,6 +30,7 @@ export default function JsonSchemaForm({
   const form = (
     <Form
       schema={schema}
+      formData={initialData}
       validator={validator}
       onSubmit={handleSubmit}
       onError={log("errors")}

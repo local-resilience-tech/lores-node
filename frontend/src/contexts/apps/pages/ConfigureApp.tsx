@@ -18,6 +18,7 @@ export default function ConfigureApp() {
   const [configSchema, setConfigSchema] = useState<object | null | undefined>(
     undefined
   )
+  const [config, setConfig] = useState<object | null | undefined>(undefined)
 
   const loadConfigSchema = async () => {
     if (!app) return
@@ -30,6 +31,20 @@ export default function ConfigureApp() {
       .catch((err) => {
         console.error("Failed to load config schema:", err)
         setConfigSchema(null)
+      })
+  }
+
+  const loadConfig = async () => {
+    if (!app) return
+    getApi()
+      .nodeStewardApi.getLocalAppConfig(app.name)
+      .then((res) => {
+        console.log("Current config:", res.data)
+        setConfig(res.data)
+      })
+      .catch((err) => {
+        console.error("Failed to load current config:", err)
+        setConfig(null)
       })
   }
 
@@ -47,6 +62,7 @@ export default function ConfigureApp() {
 
   useEffect(() => {
     loadConfigSchema()
+    loadConfig()
   }, [app])
 
   if (!appName || !app) {
@@ -55,6 +71,10 @@ export default function ConfigureApp() {
 
   if (configSchema === undefined) {
     return <Container>Loading config schema...</Container>
+  }
+
+  if (config === undefined) {
+    return <Container>Loading config...</Container>
   }
 
   if (configSchema === null) {
@@ -80,6 +100,7 @@ export default function ConfigureApp() {
 
         <JsonSchemaForm
           schema={configSchema}
+          initialData={config}
           displaySchema
           onSubmit={updateConfig}
         />

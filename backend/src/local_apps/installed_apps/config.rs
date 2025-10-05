@@ -1,5 +1,5 @@
 use super::{
-    fs::{load_config_schema_text, save_config_text},
+    fs::{load_config_schema_text, load_config_text, save_config_text},
     AppReference,
 };
 
@@ -43,6 +43,13 @@ pub fn save_app_config(
     save_config_text(app_ref, &config.to_string())?;
 
     Ok(())
+}
+
+pub fn load_app_config(app_ref: &AppReference) -> Result<serde_json::Value, anyhow::Error> {
+    let config_text = load_config_text(app_ref)?;
+    let config_json = serde_json::from_str(&config_text)?;
+
+    Ok(config_json)
 }
 
 fn validate_config_against_schema(

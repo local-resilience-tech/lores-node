@@ -45,7 +45,7 @@ pub fn remove_local_app(app_ref: &AppReference) -> Result<LocalApp, anyhow::Erro
 }
 
 fn find_local_app(app_ref: &AppReference) -> Result<LocalApp, anyhow::Error> {
-    let app = installed_apps::fs::load_app_config(app_ref)
+    let app = installed_apps::fs::load_local_app_details(app_ref)
         .ok_or_else(|| anyhow::anyhow!("Failed to load app config for {}", app_ref.app_name))?;
     let deployed_stacks = docker_stack_ls().unwrap_or_default();
 

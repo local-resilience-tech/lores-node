@@ -14,8 +14,10 @@ use crate::{
         app_repos::{fs::app_repo_from_app_name, AppRepoAppReference},
         installed_apps::{
             self,
-            config_schema::{load_app_config_schema, save_app_config, validate_app_config},
-            fs::{load_app_config, InstallAppVersionError},
+            config::{
+                load_app_config, load_app_config_schema, save_app_config, validate_app_config,
+            },
+            fs::{load_local_app_details, InstallAppVersionError},
             AppReference,
         },
         stack_apps::{self},
@@ -34,6 +36,7 @@ pub fn router() -> OpenApiRouter {
         .routes(routes!(remove_deployment_of_local_app))
         .routes(routes!(upgrade_local_app))
         .routes(routes!(get_local_app_config_schema))
+        .routes(routes!(get_local_app_config))
         .routes(routes!(update_local_app_config))
 }
 
@@ -251,7 +254,7 @@ async fn register_app(
     auth_session: AuthSession,
     Json(payload): Json<AppReference>,
 ) -> impl IntoResponse {
-    match load_app_config(&payload) {
+    match load_local_app_details(&payload) {
         Some(app) => {
             let event_payload = LoResEventPayload::AppRegistered(AppRegisteredDataV1 {
                 name: app.name.clone(),
@@ -312,6 +315,34 @@ async fn get_local_app_config_schema(Path(app_name): Path<String>) -> impl IntoR
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(serde_json::json!({"error": "Failed to load config schema"})),
+            )
+                .into_response()
+        }
+    }
+}
+
+#[utoipa::path(
+    get,
+    path = "/app/{app_name}/config",
+    params(
+        ("app_name" = String, Path),
+    ),
+    responses(
+        (status = 200, body = serde_json::Value),
+        (status = INTERNAL_SERVER_ERROR, body = ()),
+    )
+)]
+async fn get_local_app_config(Path(app_name): Path<String>) -> impl IntoResponse {
+    println!("Fetching config for local app: {}", app_name);
+    let app_ref = AppReference { app_name };
+
+    match load_app_config(&app_ref) {
+        Ok(config) => (StatusCode::OK, Json(config)).into_response(),
+        Err(e) => {
+            eprintln!("Error loading config for app '{}': {}", app_ref.app_name, e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({"error": "Failed to load config"})),
             )
                 .into_response()
         }
