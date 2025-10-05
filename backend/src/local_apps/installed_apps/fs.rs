@@ -58,6 +58,22 @@ pub fn load_config_schema_text(app_ref: &AppReference) -> Result<String, anyhow:
     Ok(content)
 }
 
+pub fn save_config_text(app_ref: &AppReference, config_text: &str) -> Result<(), anyhow::Error> {
+    let app_folder = AppFolder::new(app_ref.clone());
+    let config_file_path = app_folder.config_file_path();
+
+    app_folder.ensure_exists().map_err(|_| {
+        anyhow::anyhow!(
+            "Failed to ensure config directory exists for app: {:?}",
+            app_ref
+        )
+    })?;
+
+    fs::write(&config_file_path, config_text)?;
+
+    Ok(())
+}
+
 #[derive(Debug)]
 #[allow(dead_code)]
 pub enum InstallAppVersionError {

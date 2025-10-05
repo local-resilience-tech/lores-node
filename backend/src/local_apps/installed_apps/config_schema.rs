@@ -1,4 +1,7 @@
-use super::{fs::load_config_schema_text, AppReference};
+use super::{
+    fs::{load_config_schema_text, save_config_text},
+    AppReference,
+};
 
 pub fn load_app_config_schema(
     app_ref: &AppReference,
@@ -36,6 +39,9 @@ pub fn save_app_config(
     config: &serde_json::Value,
 ) -> Result<(), anyhow::Error> {
     println!("Saving config for app: {:?}", app_ref);
+
+    save_config_text(app_ref, &config.to_string())?;
+
     Ok(())
 }
 

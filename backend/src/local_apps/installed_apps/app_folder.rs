@@ -38,6 +38,18 @@ impl AppFolder {
         self.current_version_path().join("config_schema.json")
     }
 
+    pub fn config_file_path(&self) -> PathBuf {
+        self.config_dir_path().join("config.json")
+    }
+
+    pub fn config_dir_path(&self) -> PathBuf {
+        self.app_data_path().join("lores_config")
+    }
+
+    pub fn app_data_path(&self) -> PathBuf {
+        self.root_path().join("data")
+    }
+
     pub fn has_config_schema(&self) -> bool {
         println!(
             "Checking if config schema exists at: {}",
@@ -51,6 +63,8 @@ impl AppFolder {
     pub fn ensure_exists(&self) -> Result<(), ()> {
         ensure_path(&self.root_path())?;
         ensure_path(&self.versions_path())?;
+        ensure_path(&self.app_data_path())?;
+        ensure_path(&self.config_dir_path())?;
 
         Ok(())
     }
