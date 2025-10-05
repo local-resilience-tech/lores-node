@@ -5,7 +5,7 @@ import { ActionPromiseResult, ActionResult } from "../../../components"
 import { ActionResultErrorIcon } from "../../../components/ActionResult"
 
 export interface LocalAppAction {
-  type: "deploy" | "remove" | "register"
+  type: "deploy" | "remove" | "register" | "configure"
   buttonColor?: MantineColor
   primary?: boolean
   handler: (app: LocalApp) => Promise<ActionPromiseResult>

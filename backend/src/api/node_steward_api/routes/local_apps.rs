@@ -14,7 +14,10 @@ use crate::{
         app_repos::{fs::app_repo_from_app_name, AppRepoAppReference},
         installed_apps::{
             self,
-            fs::{load_app_config, InstallAppVersionError},
+            config::{
+                load_app_config, load_app_config_schema, save_app_config, validate_app_config,
+            },
+            fs::{load_local_app_details, InstallAppVersionError},
             AppReference,
         },
         stack_apps::{self},
@@ -32,6 +35,9 @@ pub fn router() -> OpenApiRouter {
         .routes(routes!(deploy_local_app))
         .routes(routes!(remove_deployment_of_local_app))
         .routes(routes!(upgrade_local_app))
+        .routes(routes!(get_local_app_config_schema))
+        .routes(routes!(get_local_app_config))
+        .routes(routes!(update_local_app_config))
 }
 
 #[derive(Serialize, ToSchema, Debug)]
@@ -248,7 +254,7 @@ async fn register_app(
     auth_session: AuthSession,
     Json(payload): Json<AppReference>,
 ) -> impl IntoResponse {
-    match load_app_config(&payload) {
+    match load_local_app_details(&payload) {
         Some(app) => {
             let event_payload = LoResEventPayload::AppRegistered(AppRegisteredDataV1 {
                 name: app.name.clone(),
@@ -274,6 +280,117 @@ async fn register_app(
         }
     }
     .into_response()
+}
+
+#[utoipa::path(
+    get,
+    path = "/app/{app_name}/config_schema",
+    params(
+        ("app_name" = String, Path),
+    ),
+    responses(
+        (status = 200, body = serde_json::Value),
+        (status = INTERNAL_SERVER_ERROR, body = ()),
+    )
+)]
+async fn get_local_app_config_schema(Path(app_name): Path<String>) -> impl IntoResponse {
+    println!("Fetching config schema for local app: {}", app_name);
+    let app_ref = AppReference { app_name };
+
+    match load_app_config_schema(&app_ref) {
+        Ok(Some(schema)) => (StatusCode::OK, Json(schema)).into_response(),
+        Ok(None) => {
+            eprintln!("No config schema found for app: {}", app_ref.app_name);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({"error": "No config schema found"})),
+            )
+                .into_response()
+        }
+        Err(e) => {
+            eprintln!(
+                "Error loading config schema for app '{}': {}",
+                app_ref.app_name, e
+            );
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({"error": "Failed to load config schema"})),
+            )
+                .into_response()
+        }
+    }
+}
+
+#[utoipa::path(
+    get,
+    path = "/app/{app_name}/config",
+    params(
+        ("app_name" = String, Path),
+    ),
+    responses(
+        (status = 200, body = serde_json::Value),
+        (status = INTERNAL_SERVER_ERROR, body = ()),
+    )
+)]
+async fn get_local_app_config(Path(app_name): Path<String>) -> impl IntoResponse {
+    println!("Fetching config for local app: {}", app_name);
+    let app_ref = AppReference { app_name };
+
+    match load_app_config(&app_ref) {
+        Ok(config) => (StatusCode::OK, Json(config)).into_response(),
+        Err(e) => {
+            eprintln!("Error loading config for app '{}': {}", app_ref.app_name, e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({"error": "Failed to load config"})),
+            )
+                .into_response()
+        }
+    }
+}
+
+#[utoipa::path(
+    put,
+    path = "/app/{app_name}/config",
+    params(
+        ("app_name" = String, Path),
+    ),
+    request_body(content_type = "application/json"),
+    responses(
+        (status = 200, body = ()),
+        (status = INTERNAL_SERVER_ERROR, body = ()),
+    )
+)]
+async fn update_local_app_config(
+    Path(app_name): Path<String>,
+    Json(payload): Json<serde_json::Value>,
+) -> impl IntoResponse {
+    println!("Updating local app config with payload: {:?}", payload);
+    let app_ref = AppReference { app_name };
+
+    match validate_app_config(&app_ref, &payload) {
+        Ok(_) => println!("Config validated successfully"),
+        Err(e) => {
+            eprintln!("Config validation failed: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({"error": "Config validation failed"})),
+            )
+                .into_response();
+        }
+    }
+
+    match save_app_config(&app_ref, &payload) {
+        Ok(_) => (StatusCode::OK, Json(())).into_response(),
+        Err(e) => {
+            eprintln!("Error saving config for app '{}': {}", app_ref.app_name, e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({"error": "Failed to save config"})),
+            )
+                .into_response()
+        }
+    }
 }
 
 async fn local_app_updated(app: &LocalApp, realtime_state: &RealtimeState) {

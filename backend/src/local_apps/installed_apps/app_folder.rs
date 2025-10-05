@@ -7,6 +7,12 @@ use super::{
     AppReference,
 };
 
+pub struct InstalledAppDetails {
+    pub name: String,
+    pub version: String,
+    pub has_config_schema: bool,
+}
+
 pub struct AppFolder {
     pub app_ref: AppReference,
     pub apps_folder: AppsFolder,
@@ -24,21 +30,57 @@ impl AppFolder {
         self.current_version_path().join("compose.yml")
     }
 
-    pub fn config_file_path(&self) -> PathBuf {
+    pub fn app_definition_file_path(&self) -> PathBuf {
         self.current_version_path().join("lores_app.yml")
+    }
+
+    pub fn config_schema_file_path(&self) -> PathBuf {
+        self.current_version_path().join("config_schema.json")
+    }
+
+    pub fn config_file_path(&self) -> PathBuf {
+        self.config_dir_path().join("config.json")
+    }
+
+    pub fn config_dir_path(&self) -> PathBuf {
+        self.app_data_path().join("lores_config")
+    }
+
+    pub fn app_data_path(&self) -> PathBuf {
+        self.root_path().join("data")
+    }
+
+    pub fn has_config_schema(&self) -> bool {
+        println!(
+            "Checking if config schema exists at: {}",
+            self.config_schema_file_path().display()
+        );
+        let exists = self.config_schema_file_path().exists();
+        println!("Config schema exists: {}", exists);
+        exists
     }
 
     pub fn ensure_exists(&self) -> Result<(), ()> {
         ensure_path(&self.root_path())?;
         ensure_path(&self.versions_path())?;
+        ensure_path(&self.app_data_path())?;
+        ensure_path(&self.config_dir_path())?;
 
         Ok(())
     }
 
-    pub fn app_version_definition(&self) -> Option<AppVersionDefinition> {
-        let config_file_path = self.config_file_path();
+    pub fn app_details(&self) -> Option<InstalledAppDetails> {
+        let config_file_path = self.app_definition_file_path();
         match std::fs::read_to_string(config_file_path.clone()) {
-            Ok(file_contents) => parse_app_definition(file_contents).ok(),
+            Ok(file_contents) => {
+                parse_app_definition(file_contents)
+                    .ok()
+                    .map(|def: AppVersionDefinition| InstalledAppDetails {
+                        name: def.name,
+                        version: def.version,
+                        has_config_schema: self.has_config_schema(),
+                    })
+            }
             Err(_) => {
                 eprintln!("Could not read file `{}`", config_file_path.display());
                 None

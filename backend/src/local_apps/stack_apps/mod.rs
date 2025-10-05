@@ -12,17 +12,17 @@ use super::{
 };
 
 pub fn find_deployed_local_apps() -> Vec<LocalApp> {
-    let app_definitions = installed_apps::fs::find_installed_apps();
+    let apps_details = installed_apps::fs::find_installed_apps();
     let deployed_stacks = docker_stack_ls().unwrap_or_default();
 
-    let local_apps = app_definitions
+    let local_apps = apps_details
         .into_iter()
-        .map(|app_definition| LocalApp {
-            name: app_definition.name.clone(),
-            version: app_definition.version,
+        .map(|app_details| LocalApp {
+            name: app_details.name.clone(),
+            version: app_details.version,
             status: LocalAppInstallStatus::Installed,
-            repo_name: app_repo_from_app_name(app_definition.name.as_str())
-                .map(|repo| repo.repo_name),
+            repo_name: app_repo_from_app_name(app_details.name.as_str()).map(|repo| repo.repo_name),
+            has_config_schema: app_details.has_config_schema,
         })
         .collect();
 
@@ -45,7 +45,7 @@ pub fn remove_local_app(app_ref: &AppReference) -> Result<LocalApp, anyhow::Erro
 }
 
 fn find_local_app(app_ref: &AppReference) -> Result<LocalApp, anyhow::Error> {
-    let app = installed_apps::fs::load_app_config(app_ref)
+    let app = installed_apps::fs::load_local_app_details(app_ref)
         .ok_or_else(|| anyhow::anyhow!("Failed to load app config for {}", app_ref.app_name))?;
     let deployed_stacks = docker_stack_ls().unwrap_or_default();
 

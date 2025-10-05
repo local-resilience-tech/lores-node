@@ -140,6 +140,7 @@ export interface IrohNodeAddr {
 }
 
 export interface LocalApp {
+  has_config_schema: boolean;
   name: string;
   repo_name?: string | null;
   status: LocalAppInstallStatus;
@@ -417,7 +418,7 @@ export class HttpClient<SecurityDataType = unknown> {
 
 /**
  * @title lores-node
- * @version 0.13.0
+ * @version 0.13.4
  * @license
  */
 export class Api<
@@ -634,6 +635,54 @@ export class Api<
     reloadAppRepo: (repoName: string, params: RequestParams = {}) =>
       this.request<AppRepo, any>({
         path: `/node_steward_api/app_repos/reload/${repoName}`,
+        method: "GET",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @name GetLocalAppConfig
+     * @request GET:/node_steward_api/local_apps/app/{app_name}/config
+     */
+    getLocalAppConfig: (appName: string, params: RequestParams = {}) =>
+      this.request<any, any>({
+        path: `/node_steward_api/local_apps/app/${appName}/config`,
+        method: "GET",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @name UpdateLocalAppConfig
+     * @request PUT:/node_steward_api/local_apps/app/{app_name}/config
+     */
+    updateLocalAppConfig: (
+      appName: string,
+      data: any,
+      params: RequestParams = {},
+    ) =>
+      this.request<any, any>({
+        path: `/node_steward_api/local_apps/app/${appName}/config`,
+        method: "PUT",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @name GetLocalAppConfigSchema
+     * @request GET:/node_steward_api/local_apps/app/{app_name}/config_schema
+     */
+    getLocalAppConfigSchema: (appName: string, params: RequestParams = {}) =>
+      this.request<any, any>({
+        path: `/node_steward_api/local_apps/app/${appName}/config_schema`,
         method: "GET",
         format: "json",
         ...params,
