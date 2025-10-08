@@ -1,15 +1,18 @@
 use crate::{
     data::entities::{LocalApp, LocalAppInstallStatus},
     docker::{
-        docker_stack::{docker_stack_deploy, docker_stack_ls, docker_stack_rm},
+        docker_stack::{docker_stack_compose_and_deploy, docker_stack_ls, docker_stack_rm},
         DockerStack,
     },
 };
 
+use self::system_compose_files::SystemComposeFiles;
 use super::{
     app_repos::fs::app_repo_from_app_name,
     installed_apps::{self, app_folder::AppFolder, AppReference},
 };
+
+mod system_compose_files;
 
 pub fn find_deployed_local_apps() -> Vec<LocalApp> {
     let apps_details = installed_apps::fs::find_installed_apps();
@@ -32,9 +35,14 @@ pub fn find_deployed_local_apps() -> Vec<LocalApp> {
 
 pub fn deploy_local_app(app_ref: &AppReference) -> Result<LocalApp, anyhow::Error> {
     let app_folder = AppFolder::new(app_ref.clone());
-    let compose_file_path = app_folder.compose_file_path();
+    let system_files = SystemComposeFiles::new(app_folder.apps_folder.system_folder());
 
-    docker_stack_deploy(&app_ref.app_name, &compose_file_path)?;
+    let compose_file_path = app_folder.compose_file_path();
+    let system_paths = system_files.ordered_paths()?;
+
+    let all_compose_paths = [vec![compose_file_path], system_paths].concat();
+
+    docker_stack_compose_and_deploy(&app_ref.app_name, &all_compose_paths)?;
 
     find_local_app(&app_ref)
 }
