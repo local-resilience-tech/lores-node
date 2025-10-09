@@ -155,21 +155,35 @@ pub fn docker_stack_compose_and_deploy(
     let config_child = config_command
         .spawn()
         .map_err(|e| anyhow::anyhow!("Failed to start compose config command: {}", e))?;
-    let config_out = config_child.stdout.expect("Failed to open echo stdout");
+    let config_out = config_child.stdout.expect("Failed to open config stdout");
 
-    // Create a deploy command that reads from stdin
+    // Create a sed command that reads from config output
+    let mut sed_command = Command::new("sed");
+    sed_command
+        .arg("-e")
+        .arg("/published:/ s/\"//g")
+        .arg("-e")
+        .arg("/^name\\:/d")
+        .stdin(Stdio::from(config_out))
+        .stdout(Stdio::piped());
+
+    let sed_child = sed_command
+        .spawn()
+        .map_err(|e| anyhow::anyhow!("Failed to start sed command: {}", e))?;
+    let sed_out = sed_child.stdout.expect("Failed to open sed stdout");
+
+    // Create a deploy command that reads from sed output
     let mut deploy_command = Command::new("docker");
     deploy_command
         .arg("stack")
         .arg("deploy")
         .arg("--compose-file")
         .arg("-") // Read from stdin
-        .arg(stack_name)
-        .env("NODE_LOCAL_DOMAIN", "lores.localhost");
+        .arg(stack_name);
 
-    // Run the deploy command with the config as stdin
+    // Run the deploy command with the sed output as stdin
     let deploy_child = deploy_command
-        .stdin(Stdio::from(config_out))
+        .stdin(Stdio::from(sed_out))
         .spawn()
         .map_err(|e| anyhow::anyhow!("Failed to start deploy command: {}", e))?;
 
