@@ -1,4 +1,7 @@
-use std::{path::PathBuf, process::Command};
+use std::{
+    path::PathBuf,
+    process::{Command, Stdio},
+};
 
 use super::{DockerService, DockerStack};
 
@@ -129,28 +132,84 @@ pub fn docker_stack_rm(stack_name: &str) -> Result<(), anyhow::Error> {
     Ok(())
 }
 
-pub fn docker_stack_deploy(stack_name: &str, compose_file: &PathBuf) -> Result<(), anyhow::Error> {
-    let output = Command::new("docker")
-        .arg("stack")
-        .arg("deploy")
-        .arg("--compose-file")
-        .arg(compose_file)
-        .arg(stack_name)
-        .env("NODE_LOCAL_DOMAIN", "lores.localhost") // This is just to prove that it works
-        .output()
-        .map_err(|e| anyhow::anyhow!("Failed to execute command: {}", e))?;
-
-    if !output.status.success() {
-        let stderr = String::from_utf8_lossy(&output.stderr);
+pub fn docker_stack_compose_and_deploy(
+    stack_name: &str,
+    compose_files: &[PathBuf],
+) -> Result<(), anyhow::Error> {
+    if compose_files.is_empty() {
         return Err(anyhow::anyhow!(
-            "Failed to deploy stack '{}': {}",
-            stack_name,
-            stderr
+            "At least one compose file must be provided"
         ));
     }
 
+    // First get the composed config
+    let mut config_command = docker_compose_output_config_command(compose_files);
+    config_command.stdout(Stdio::piped());
+
+    println!(
+        "Running compose config command: {:?} {:?}",
+        config_command.get_program(),
+        config_command.get_args()
+    );
+
+    let config_child = config_command
+        .spawn()
+        .map_err(|e| anyhow::anyhow!("Failed to start compose config command: {}", e))?;
+    let config_out = config_child.stdout.expect("Failed to open config stdout");
+
+    // Create a sed command that reads from config output
+    let mut sed_command = Command::new("sed");
+    sed_command
+        .arg("-e")
+        .arg("/published:/ s/\"//g")
+        .arg("-e")
+        .arg("/^name\\:/d")
+        .stdin(Stdio::from(config_out))
+        .stdout(Stdio::piped());
+
+    let sed_child = sed_command
+        .spawn()
+        .map_err(|e| anyhow::anyhow!("Failed to start sed command: {}", e))?;
+    let sed_out = sed_child.stdout.expect("Failed to open sed stdout");
+
+    // Create a deploy command that reads from sed output
+    let mut deploy_command = Command::new("docker");
+    deploy_command
+        .arg("stack")
+        .arg("deploy")
+        .arg("--compose-file")
+        .arg("-") // Read from stdin
+        .arg(stack_name);
+
+    // Run the deploy command with the sed output as stdin
+    let deploy_child = deploy_command
+        .stdin(Stdio::from(sed_out))
+        .spawn()
+        .map_err(|e| anyhow::anyhow!("Failed to start deploy command: {}", e))?;
+
+    let output = deploy_child
+        .wait_with_output()
+        .expect("Failed to wait on deploy");
+
     println!("Successfully deployed stack: {}", stack_name);
+    println!("Deploy output: {}", String::from_utf8_lossy(&output.stdout));
     Ok(())
+}
+
+fn docker_compose_output_config_command(compose_files: &[PathBuf]) -> Command {
+    let mut command = Command::new("docker");
+    command.arg("compose");
+
+    // Add each compose file with its own -f argument
+    for file in compose_files {
+        command.arg("-f").arg(file);
+    }
+
+    command.arg("config");
+
+    command.arg("--format").arg("yaml");
+
+    command
 }
 
 fn split_state_and_duration(state: &str) -> (String, String) {
