@@ -1,9 +1,11 @@
 use std::{
+    collections::HashMap,
     path::PathBuf,
     process::{Command, Stdio},
 };
 
 use super::{DockerService, DockerStack};
+use std::io::Write;
 
 #[derive(Debug, Clone, serde::Deserialize)]
 struct DockerStackLsResult {
@@ -135,6 +137,8 @@ pub fn docker_stack_rm(stack_name: &str) -> Result<(), anyhow::Error> {
 pub fn docker_stack_compose_and_deploy(
     stack_name: &str,
     compose_files: &[PathBuf],
+    compose_env_vars: &HashMap<String, String>,
+    deploy_env_vars: &HashMap<String, String>,
 ) -> Result<(), anyhow::Error> {
     if compose_files.is_empty() {
         return Err(anyhow::anyhow!(
@@ -143,7 +147,7 @@ pub fn docker_stack_compose_and_deploy(
     }
 
     // First get the composed config
-    let mut config_command = docker_compose_output_config_command(compose_files);
+    let mut config_command = docker_compose_output_config_command(compose_files, compose_env_vars);
     config_command.stdout(Stdio::piped());
 
     println!(
@@ -167,36 +171,78 @@ pub fn docker_stack_compose_and_deploy(
         .stdin(Stdio::from(config_out))
         .stdout(Stdio::piped());
 
-    let sed_child = sed_command
-        .spawn()
-        .map_err(|e| anyhow::anyhow!("Failed to start sed command: {}", e))?;
-    let sed_out = sed_child.stdout.expect("Failed to open sed stdout");
+    // Capture sed output in a variable
+    let sed_output = sed_command
+        .output()
+        .map_err(|e| anyhow::anyhow!("Failed to run sed command: {}", e))?;
 
-    // Create a deploy command that reads from sed output
+    if !sed_output.status.success() {
+        return Err(anyhow::anyhow!(
+            "sed command failed: {}",
+            String::from_utf8_lossy(&sed_output.stderr)
+        ));
+    }
+
+    let processed_config = String::from_utf8(sed_output.stdout.clone())
+        .map_err(|e| anyhow::anyhow!("Invalid UTF-8 in processed config: {}", e))?;
+
+    // Print the processed config for debugging
+    println!("Processed config for deployment:\n{}", processed_config);
+
+    docker_stack_deploy(stack_name, &processed_config, deploy_env_vars)
+}
+
+pub fn docker_stack_deploy(
+    stack_name: &str,
+    input_compose_contents: &str,
+    deploy_env_vars: &HashMap<String, String>,
+) -> Result<(), anyhow::Error> {
+    // Create a deploy command that reads the processed config from stdin
     let mut deploy_command = Command::new("docker");
     deploy_command
         .arg("stack")
         .arg("deploy")
         .arg("--compose-file")
         .arg("-") // Read from stdin
-        .arg(stack_name);
+        .envs(deploy_env_vars)
+        .arg(stack_name)
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped());
 
-    // Run the deploy command with the sed output as stdin
-    let deploy_child = deploy_command
-        .stdin(Stdio::from(sed_out))
+    // Run the deploy command with the processed config as stdin
+    let mut deploy_child = deploy_command
         .spawn()
         .map_err(|e| anyhow::anyhow!("Failed to start deploy command: {}", e))?;
+
+    // Take ownership of stdin and write to it
+    if let Some(mut stdin) = deploy_child.stdin.take() {
+        stdin
+            .write_all(input_compose_contents.as_bytes())
+            .map_err(|e| anyhow::anyhow!("Failed to write to deploy command stdin: {}", e))?;
+        // stdin is automatically dropped here when it goes out of scope
+    }
 
     let output = deploy_child
         .wait_with_output()
         .expect("Failed to wait on deploy");
+
+    if !output.status.success() {
+        return Err(anyhow::anyhow!(
+            "Deploy failed: {}",
+            String::from_utf8_lossy(&output.stderr)
+        ));
+    }
 
     println!("Successfully deployed stack: {}", stack_name);
     println!("Deploy output: {}", String::from_utf8_lossy(&output.stdout));
     Ok(())
 }
 
-fn docker_compose_output_config_command(compose_files: &[PathBuf]) -> Command {
+fn docker_compose_output_config_command(
+    compose_files: &[PathBuf],
+    compose_env_vars: &HashMap<String, String>,
+) -> Command {
     let mut command = Command::new("docker");
     command.arg("compose");
 
@@ -205,9 +251,11 @@ fn docker_compose_output_config_command(compose_files: &[PathBuf]) -> Command {
         command.arg("-f").arg(file);
     }
 
-    command.arg("config");
-
-    command.arg("--format").arg("yaml");
+    command
+        .arg("config")
+        .arg("--format")
+        .arg("yaml")
+        .envs(compose_env_vars);
 
     command
 }

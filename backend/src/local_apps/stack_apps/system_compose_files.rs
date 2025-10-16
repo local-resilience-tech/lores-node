@@ -61,6 +61,11 @@ networks: !reset null
         let content = r#"version: "3.8"
 volumes:
   lores_config:
+    driver: local
+    driver_opts:
+      type: 'none'
+      o: 'bind'
+      device: '${HOST_OS_APP_CONFIG_DIR}'
 networks:
   lores:
     external: true

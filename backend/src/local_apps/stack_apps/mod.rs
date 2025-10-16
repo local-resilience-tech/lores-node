@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use crate::{
     data::entities::{LocalApp, LocalAppInstallStatus},
     docker::{
@@ -42,7 +44,20 @@ pub fn deploy_local_app(app_ref: &AppReference) -> Result<LocalApp, anyhow::Erro
 
     let all_compose_paths = [vec![compose_file_path], system_paths].concat();
 
-    docker_stack_compose_and_deploy(&app_ref.app_name, &all_compose_paths)?;
+    let compose_env_vars = HashMap::from([(
+        "HOST_OS_APP_CONFIG_DIR".to_string(),
+        app_folder.config_dir_path().to_string_lossy().to_string(),
+    )]);
+
+    let deploy_env_vars =
+        HashMap::from([("NODE_LOCAL_DOMAIN".to_string(), "example.host".to_string())]);
+
+    docker_stack_compose_and_deploy(
+        &app_ref.app_name,
+        &all_compose_paths,
+        &compose_env_vars,
+        &deploy_env_vars,
+    )?;
 
     find_local_app(&app_ref)
 }

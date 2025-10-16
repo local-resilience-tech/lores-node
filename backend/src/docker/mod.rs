@@ -1,6 +1,7 @@
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
+pub mod docker_compose;
 pub mod docker_stack;
 
 #[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
