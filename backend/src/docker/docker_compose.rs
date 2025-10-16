@@ -15,8 +15,7 @@ pub fn docker_compose_app_file(
     }
 
     // First get the composed config
-    let mut config_command = docker_compose_output_config_command(compose_files, compose_env_vars);
-    config_command.stdout(Stdio::piped());
+    let config_command = docker_compose_output_config_command(compose_files, compose_env_vars);
 
     println!(
         "Running compose config command: {:?} {:?}",
@@ -24,25 +23,16 @@ pub fn docker_compose_app_file(
         config_command.get_args()
     );
 
-    let config_child = config_command
-        .spawn()
-        .map_err(|e| anyhow::anyhow!("Failed to start compose config command: {}", e))?;
-    let config_out = config_child.stdout.expect("Failed to open config stdout");
-
     // Create a sed command that reads from config output
     let mut sed_command = Command::new("sed");
     sed_command
         .arg("-e")
         .arg("/published:/ s/\"//g")
         .arg("-e")
-        .arg("/^name\\:/d")
-        .stdin(Stdio::from(config_out))
-        .stdout(Stdio::piped());
+        .arg("/^name\\:/d");
 
-    // Capture sed output in a variable
-    let sed_output = sed_command
-        .output()
-        .map_err(|e| anyhow::anyhow!("Failed to run sed command: {}", e))?;
+    // Pipe the commands together
+    let sed_output = pipe_commands(vec![config_command, sed_command])?;
 
     if !sed_output.status.success() {
         return Err(anyhow::anyhow!(
@@ -55,6 +45,48 @@ pub fn docker_compose_app_file(
         .map_err(|e| anyhow::anyhow!("Invalid UTF-8 in processed config: {}", e))?;
 
     Ok(processed_config)
+}
+
+/// Connects multiple commands via pipes, executing them in sequence and piping stdout to the next command's stdin.
+/// Returns the output of the last command in the chain.
+fn pipe_commands(mut commands: Vec<Command>) -> Result<std::process::Output, anyhow::Error> {
+    if commands.is_empty() {
+        return Err(anyhow::anyhow!("No commands provided to pipe"));
+    }
+
+    if commands.len() == 1 {
+        return commands[0]
+            .output()
+            .map_err(|e| anyhow::anyhow!("Failed to run single command: {}", e));
+    }
+
+    // Set up all intermediate commands to pipe
+    let mut child_processes = Vec::with_capacity(commands.len() - 1);
+
+    for i in 0..commands.len() - 1 {
+        commands[i].stdout(Stdio::piped());
+
+        let mut child = commands[i]
+            .spawn()
+            .map_err(|e| anyhow::anyhow!("Failed to start command {}: {}", i, e))?;
+
+        let stdout = child
+            .stdout
+            .take()
+            .expect(&format!("Failed to open command {} stdout", i));
+
+        // Next command takes this command's stdout as its stdin
+        commands[i + 1].stdin(Stdio::from(stdout));
+
+        child_processes.push(child);
+    }
+
+    // Run the final command and get its output
+    commands
+        .last_mut()
+        .unwrap()
+        .output()
+        .map_err(|e| anyhow::anyhow!("Failed to run final command: {}", e))
 }
 
 fn docker_compose_output_config_command(
