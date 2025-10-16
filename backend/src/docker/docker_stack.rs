@@ -1,10 +1,9 @@
 use std::{
     collections::HashMap,
-    path::PathBuf,
     process::{Command, Stdio},
 };
 
-use super::{docker_compose::docker_compose_app_file, DockerService, DockerStack};
+use super::{DockerService, DockerStack};
 use std::io::Write;
 
 #[derive(Debug, Clone, serde::Deserialize)]
@@ -132,20 +131,6 @@ pub fn docker_stack_rm(stack_name: &str) -> Result<(), anyhow::Error> {
 
     println!("Successfully removed stack: {}", stack_name);
     Ok(())
-}
-
-pub fn docker_stack_compose_and_deploy(
-    stack_name: &str,
-    compose_files: &[PathBuf],
-    compose_env_vars: &HashMap<String, String>,
-    deploy_env_vars: &HashMap<String, String>,
-) -> Result<(), anyhow::Error> {
-    let processed_config = docker_compose_app_file(compose_files, compose_env_vars)?;
-
-    // Print the processed config for debugging
-    println!("Processed config for deployment:\n{}", processed_config);
-
-    docker_stack_deploy(stack_name, &processed_config, deploy_env_vars)
 }
 
 pub fn docker_stack_deploy(
