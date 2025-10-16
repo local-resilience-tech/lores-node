@@ -10,7 +10,10 @@
     "release": "release-it",
     "build_docker_frontend": "sudo docker build -f ./frontend/Dockerfile-development -t lores-frontend-dev ./frontend",
     "build_docker_backend": "sudo docker build -f ./backend/Dockerfile-development -t lores-node-dev ./backend",
-    "swarm": "npm run build_docker_backend; npm run build_docker_frontend; sudo UID=${UID} GID=${GID} docker stack deploy --detach=false --prune -c ./docker-swarm-local-dev.yml lores-node-dev; sudo docker ps",
-    "swarm-down": "sudo docker stack rm lores-node-dev"
+    "swarm": "npm run build_docker_backend && npm run build_docker_frontend && sudo UID=${UID} GID=${GID} docker stack deploy --detach=false --prune -c ./docker-swarm-local-dev.yml lores-node-dev; sudo docker ps; sudo docker logs -f $(npm run backend_cid --silent)",
+    "backend_cid": "sudo docker ps -aqf \"ancestor=lores-node-dev:latest\"",
+    "swarm-down": "sudo docker stack rm lores-node-dev",
+    "waitdown": "timeout 30 bash -c 'while [ $(npm run backend_cid --silent) ]; do echo \"waiting for backend to stop...\"; sleep 2; done'",
+    "swarm-restart": "npm run swarm-down; npm run waitdown; npm run swarm"
   }
 }

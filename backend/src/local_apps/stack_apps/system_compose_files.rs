@@ -32,12 +32,6 @@ impl SystemComposeFiles {
         Ok(())
     }
 
-    pub fn ordered_paths(&self) -> Result<Vec<PathBuf>, anyhow::Error> {
-        self.ensure_system_compose_files()?;
-
-        Ok(vec![self.reset_path(), self.setup_path()])
-    }
-
     pub fn reset_path(&self) -> PathBuf {
         self.path.join("system-compose-reset-2025-10-08.yml")
     }
@@ -61,6 +55,11 @@ networks: !reset null
         let content = r#"version: "3.8"
 volumes:
   lores_config:
+    driver: local
+    driver_opts:
+      type: 'none'
+      o: 'bind'
+      device: '${HOST_OS_APP_CONFIG_DIR}'
 networks:
   lores:
     external: true

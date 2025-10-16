@@ -30,6 +30,14 @@ impl AppFolder {
         self.current_version_path().join("compose.yml")
     }
 
+    pub fn intermediate_compose_file_path(&self) -> PathBuf {
+        self.intermediate_dir_path().join("merged_compose.yml")
+    }
+
+    pub fn intermediate_dir_path(&self) -> PathBuf {
+        self.root_path().join("intermediate")
+    }
+
     pub fn app_definition_file_path(&self) -> PathBuf {
         self.current_version_path().join("lores_app.yml")
     }
@@ -65,6 +73,7 @@ impl AppFolder {
         ensure_path(&self.versions_path())?;
         ensure_path(&self.app_data_path())?;
         ensure_path(&self.config_dir_path())?;
+        ensure_path(&self.intermediate_dir_path())?;
 
         Ok(())
     }
