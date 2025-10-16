@@ -1,10 +1,10 @@
 use std::{
     collections::HashMap,
+    path::PathBuf,
     process::{Command, Stdio},
 };
 
 use super::{DockerService, DockerStack};
-use std::io::Write;
 
 #[derive(Debug, Clone, serde::Deserialize)]
 struct DockerStackLsResult {
@@ -135,8 +135,8 @@ pub fn docker_stack_rm(stack_name: &str) -> Result<(), anyhow::Error> {
 
 pub fn docker_stack_deploy(
     stack_name: &str,
-    input_compose_contents: &str,
-    deploy_env_vars: &HashMap<String, String>,
+    compose_file_path: &PathBuf,
+    env_vars: &HashMap<String, String>,
 ) -> Result<(), anyhow::Error> {
     // Create a deploy command that reads the processed config from stdin
     let mut deploy_command = Command::new("docker");
@@ -144,29 +144,16 @@ pub fn docker_stack_deploy(
         .arg("stack")
         .arg("deploy")
         .arg("--compose-file")
-        .arg("-") // Read from stdin
-        .envs(deploy_env_vars)
+        .arg(compose_file_path)
+        .envs(env_vars)
         .arg(stack_name)
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped());
 
-    // Run the deploy command with the processed config as stdin
-    let mut deploy_child = deploy_command
-        .spawn()
-        .map_err(|e| anyhow::anyhow!("Failed to start deploy command: {}", e))?;
-
-    // Take ownership of stdin and write to it
-    if let Some(mut stdin) = deploy_child.stdin.take() {
-        stdin
-            .write_all(input_compose_contents.as_bytes())
-            .map_err(|e| anyhow::anyhow!("Failed to write to deploy command stdin: {}", e))?;
-        // stdin is automatically dropped here when it goes out of scope
-    }
-
-    let output = deploy_child
-        .wait_with_output()
-        .expect("Failed to wait on deploy");
+    let output = deploy_command
+        .output()
+        .map_err(|e| anyhow::anyhow!("Failed to execute docker stack deploy: {}", e))?;
 
     if !output.status.success() {
         return Err(anyhow::anyhow!(

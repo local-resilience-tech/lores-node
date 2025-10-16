@@ -3,6 +3,7 @@ use utoipa::ToSchema;
 
 pub mod docker_compose;
 pub mod docker_stack;
+mod utilities;
 
 #[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
 pub struct DockerStack {

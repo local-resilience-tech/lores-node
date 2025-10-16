@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use crate::{
     data::entities::{LocalApp, LocalAppInstallStatus},
     docker::{
-        docker_compose::docker_compose_app_file,
+        docker_compose::docker_compose_merge_files_no_interpolate,
         docker_stack::{docker_stack_deploy, docker_stack_ls, docker_stack_rm},
         DockerStack,
     },
@@ -38,14 +38,17 @@ pub fn find_deployed_local_apps() -> Vec<LocalApp> {
 
 pub fn deploy_local_app(app_ref: &AppReference) -> Result<LocalApp, anyhow::Error> {
     let app_folder = AppFolder::new(app_ref.clone());
+    app_folder.ensure_exists().map_err(|_| {
+        anyhow::anyhow!(
+            "Failed to ensure app folder exists for {}",
+            app_ref.app_name
+        )
+    })?;
+
     let system_files = SystemComposeFiles::new(app_folder.apps_folder.system_folder());
+    system_files.ensure_system_compose_files()?;
 
-    let compose_file_path = app_folder.compose_file_path();
-    let system_paths = system_files.ordered_paths()?;
-
-    let all_compose_paths = [vec![compose_file_path], system_paths].concat();
-
-    let compose_env_vars = HashMap::from([(
+    let setup_env_vars = HashMap::from([(
         "HOST_OS_APP_CONFIG_DIR".to_string(),
         app_folder.config_dir_path().to_string_lossy().to_string(),
     )]);
@@ -53,18 +56,27 @@ pub fn deploy_local_app(app_ref: &AppReference) -> Result<LocalApp, anyhow::Erro
     let deploy_env_vars =
         HashMap::from([("NODE_LOCAL_DOMAIN".to_string(), "example.host".to_string())]);
 
-    let processed_compose_config = docker_compose_app_file(&all_compose_paths, &compose_env_vars)?;
-
-    // Print the processed config for debugging
     println!(
-        "Processed config for deployment:\n{}",
-        processed_compose_config
+        "About to merge compose files to: {}",
+        app_folder.intermediate_compose_file_path().display()
     );
+
+    docker_compose_merge_files_no_interpolate(
+        vec![
+            app_folder.compose_file_path(),
+            system_files.reset_path(),
+            system_files.setup_path(),
+        ],
+        &app_folder.intermediate_compose_file_path(),
+    )?;
+
+    let mut env_vars = setup_env_vars.clone();
+    env_vars.extend(deploy_env_vars.clone());
 
     docker_stack_deploy(
         &app_ref.app_name,
-        &processed_compose_config,
-        &deploy_env_vars,
+        &app_folder.intermediate_compose_file_path(),
+        &env_vars,
     )?;
 
     find_local_app(&app_ref)
