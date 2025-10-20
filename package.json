@@ -14,6 +14,7 @@
     "backend_cid": "sudo docker ps -aqf \"ancestor=lores-node-dev:latest\"",
     "swarm-down": "sudo docker stack rm lores-node-dev",
     "waitdown": "timeout 30 bash -c 'while [ $(npm run backend_cid --silent) ]; do echo \"waiting for backend to stop...\"; sleep 2; done'",
+    "logs": "sudo docker logs -f $(npm run backend_cid --silent)",
     "swarm-restart": "npm run swarm-down; npm run waitdown; npm run swarm"
   }
 }

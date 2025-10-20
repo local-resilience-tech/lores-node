@@ -26,7 +26,7 @@ services:
       - BASE_URL=http://lores.localhost:5173
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - /home/jade/dev/lores/dev_app_repos:/app/app_repos
+      - ./backend/data/app_repos:/app/app_repos
       - ./backend/data/apps:/app/apps
   traefik:
     logging:
