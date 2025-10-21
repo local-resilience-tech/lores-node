@@ -23,6 +23,14 @@ export default function ThisNodeDetails({
           <Table.Th>Public IPv4</Table.Th>
           <Table.Td>{nodeDetails?.public_ipv4}</Table.Td>
         </Table.Tr>
+        <Table.Tr>
+          <Table.Th>Domain on Local Network</Table.Th>
+          <Table.Td>{nodeDetails?.domain_on_local_network}</Table.Td>
+        </Table.Tr>
+        <Table.Tr>
+          <Table.Th>Domain on Internet</Table.Th>
+          <Table.Td>{nodeDetails?.domain_on_internet}</Table.Td>
+        </Table.Tr>
       </Table.Tbody>
     </Table>
   )

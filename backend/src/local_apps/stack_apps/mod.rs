@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use crate::{
-    data::entities::{LocalApp, LocalAppInstallStatus},
+    data::entities::{LocalApp, LocalAppInstallStatus, Node},
     docker::{
         docker_compose::docker_compose_merge_files_no_interpolate,
         docker_stack::{docker_stack_deploy, docker_stack_ls, docker_stack_rm},
@@ -36,7 +36,7 @@ pub fn find_deployed_local_apps() -> Vec<LocalApp> {
     local_apps
 }
 
-pub fn deploy_local_app(app_ref: &AppReference) -> Result<LocalApp, anyhow::Error> {
+pub fn deploy_local_app(app_ref: &AppReference, node: &Node) -> Result<LocalApp, anyhow::Error> {
     let app_folder = AppFolder::new(app_ref.clone());
     app_folder.ensure_exists().map_err(|_| {
         anyhow::anyhow!(
@@ -53,8 +53,12 @@ pub fn deploy_local_app(app_ref: &AppReference) -> Result<LocalApp, anyhow::Erro
         app_folder.config_dir_path().to_string_lossy().to_string(),
     )]);
 
-    let deploy_env_vars =
-        HashMap::from([("NODE_LOCAL_DOMAIN".to_string(), "example.host".to_string())]);
+    let deploy_env_vars = HashMap::from([(
+        "NODE_LOCAL_DOMAIN".to_string(),
+        node.domain_on_local_network
+            .clone()
+            .unwrap_or("localhost".to_string()),
+    )]);
 
     println!(
         "About to merge compose files to: {}",

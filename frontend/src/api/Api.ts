@@ -158,11 +158,16 @@ export interface LogCount {
 }
 
 export interface Node {
+  domain_on_internet?: string | null;
+  domain_on_local_network?: string | null;
   id: string;
   name: string;
+  public_ipv4?: string | null;
 }
 
 export interface NodeDetails {
+  domain_on_internet?: string | null;
+  domain_on_local_network?: string | null;
   id: string;
   name: string;
   public_ipv4?: string | null;

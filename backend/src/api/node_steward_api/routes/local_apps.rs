@@ -9,7 +9,8 @@ use crate::{
         auth_api::auth_backend::AuthSession,
         public_api::{client_events::ClientEvent, realtime::RealtimeState},
     },
-    data::entities::LocalApp,
+    config::config_state::LoresNodeConfigState,
+    data::{entities::LocalApp, projections_read::nodes::NodesReadRepo},
     local_apps::{
         app_repos::{fs::app_repo_from_app_name, AppRepoAppReference},
         installed_apps::{
@@ -26,6 +27,7 @@ use crate::{
         container::P2PandaContainer,
         lores_events::{AppRegisteredDataV1, LoResEventPayload},
     },
+    DatabaseState,
 };
 
 pub fn router() -> OpenApiRouter {
@@ -103,6 +105,8 @@ async fn install_app_definition(
 )]
 async fn deploy_local_app(
     Extension(realtime_state): Extension<RealtimeState>,
+    Extension(db): Extension<DatabaseState>,
+    Extension(config_state): Extension<LoresNodeConfigState>,
     Path(app_name): Path<String>,
 ) -> impl IntoResponse {
     println!("Deploying local app: {}", app_name);
@@ -110,7 +114,32 @@ async fn deploy_local_app(
     let app_ref = AppReference {
         app_name: app_name.clone(),
     };
-    let result = stack_apps::deploy_local_app(&app_ref);
+    let node_repo = NodesReadRepo::init();
+    let config = config_state.get().await;
+    let public_key_hex = match config.public_key_hex {
+        Some(key) => key,
+        None => {
+            eprintln!("No public key hex found in config");
+            return (StatusCode::INTERNAL_SERVER_ERROR, "Public key not found").into_response();
+        }
+    };
+
+    let node = match node_repo
+        .find(&db.projections_pool, public_key_hex.clone())
+        .await
+    {
+        Ok(Some(node)) => node,
+        Ok(None) => {
+            eprintln!("Node not found for public key: {}", public_key_hex);
+            return (StatusCode::INTERNAL_SERVER_ERROR, "Node not found").into_response();
+        }
+        Err(e) => {
+            eprintln!("Failed to find node: {}", e);
+            return (StatusCode::INTERNAL_SERVER_ERROR, Json(e.to_string())).into_response();
+        }
+    };
+
+    let result = stack_apps::deploy_local_app(&app_ref, &node);
 
     match result {
         Ok(app) => {
