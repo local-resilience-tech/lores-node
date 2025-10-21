@@ -10,7 +10,7 @@
     "release": "release-it",
     "build_docker_frontend": "sudo docker build -f ./frontend/Dockerfile-development -t lores-frontend-dev ./frontend",
     "build_docker_backend": "sudo docker build -f ./backend/Dockerfile-development -t lores-node-dev ./backend",
-    "up": "npm run build_docker_backend && npm run build_docker_frontend && sudo UID=${UID} GID=${GID} docker stack deploy --detach=false --prune -c ./docker-swarm-local-dev.yml lores-node-dev; sudo docker ps; npm run logs",
+    "up": "npm run build_docker_backend && npm run build_docker_frontend && sudo UID=${UID} GID=${GID} HOST_OS_APPS_PATH=$(pwd)/backend/data/apps docker stack deploy --detach=false --prune -c ./docker-swarm-local-dev.yml lores-node-dev; sudo docker ps; npm run logs",
     "down": "sudo docker stack rm lores-node-dev",
     "restart": "npm run down; npm run waitdown; npm run up",
     "logs": "sudo docker logs -f $(npm run backend_cid --silent)",

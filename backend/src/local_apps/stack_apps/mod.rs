@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, env};
 
 use crate::{
     data::entities::{LocalApp, LocalAppInstallStatus, Node},
@@ -16,6 +16,10 @@ use super::{
 };
 
 mod system_compose_files;
+
+lazy_static! {
+    pub static ref HOST_OS_APPS_PATH: String = env::var("HOST_OS_APPS_PATH").unwrap();
+}
 
 pub fn find_deployed_local_apps() -> Vec<LocalApp> {
     let apps_details = installed_apps::fs::find_installed_apps();
@@ -51,7 +55,10 @@ pub fn deploy_local_app(app_ref: &AppReference, node: &Node) -> Result<LocalApp,
     let setup_env_vars = HashMap::from([
         (
             "HOST_OS_APP_CONFIG_DIR".to_string(),
-            app_folder.config_dir_path().to_string_lossy().to_string(),
+            app_folder
+                .config_dir_path(Some(HOST_OS_APPS_PATH.clone()))
+                .to_string_lossy()
+                .to_string(),
         ),
         ("LORES_APP_NAME".to_string(), app_ref.app_name.clone()),
     ]);

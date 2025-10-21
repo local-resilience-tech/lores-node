@@ -40,7 +40,7 @@ impl AppFolder {
     }
 
     pub fn intermediate_dir_path(&self) -> PathBuf {
-        self.root_path().join("intermediate")
+        self.root_path(None).join("intermediate")
     }
 
     pub fn app_definition_file_path(&self) -> PathBuf {
@@ -52,15 +52,15 @@ impl AppFolder {
     }
 
     pub fn config_file_path(&self) -> PathBuf {
-        self.config_dir_path().join("config.json")
+        self.config_dir_path(None).join("config.json")
     }
 
-    pub fn config_dir_path(&self) -> PathBuf {
-        self.app_data_path().join("lores_config")
+    pub fn config_dir_path(&self, override_base: Option<String>) -> PathBuf {
+        self.app_data_path(override_base).join("lores_config")
     }
 
-    pub fn app_data_path(&self) -> PathBuf {
-        self.root_path().join("data")
+    pub fn app_data_path(&self, override_base: Option<String>) -> PathBuf {
+        self.root_path(override_base).join("data")
     }
 
     pub fn has_config_schema(&self) -> bool {
@@ -74,10 +74,10 @@ impl AppFolder {
     }
 
     pub fn ensure_exists(&self) -> Result<(), ()> {
-        ensure_path(&self.root_path())?;
+        ensure_path(&self.root_path(None))?;
         ensure_path(&self.versions_path())?;
-        ensure_path(&self.app_data_path())?;
-        ensure_path(&self.config_dir_path())?;
+        ensure_path(&self.app_data_path(None))?;
+        ensure_path(&self.config_dir_path(None))?;
         ensure_path(&self.intermediate_dir_path())?;
 
         Ok(())
@@ -139,7 +139,7 @@ impl AppFolder {
     }
 
     fn current_version_path(&self) -> PathBuf {
-        self.root_path().join("current")
+        self.root_path(None).join("current")
     }
 
     fn version_path(&self, version: &str) -> PathBuf {
@@ -151,11 +151,15 @@ impl AppFolder {
     }
 
     fn versions_path(&self) -> PathBuf {
-        self.root_path().join("versions")
+        self.root_path(None).join("versions")
     }
 
-    fn root_path(&self) -> PathBuf {
-        self.apps_folder.path().join(&self.app_ref.app_name)
+    fn root_path(&self, override_base: Option<String>) -> PathBuf {
+        let base_path = match override_base {
+            Some(path) => PathBuf::from(path),
+            None => self.apps_folder.path(),
+        };
+        base_path.join(&self.app_ref.app_name)
     }
 }
 
