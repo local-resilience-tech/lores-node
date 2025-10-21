@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use crate::{
     data::entities::{LocalApp, LocalAppInstallStatus, Node},
     docker::{
-        docker_compose::docker_compose_merge_files_no_interpolate,
+        docker_compose::{docker_compose_interpolate, docker_compose_merge_files_no_interpolate},
         docker_stack::{docker_stack_deploy, docker_stack_ls, docker_stack_rm},
         DockerStack,
     },
@@ -48,10 +48,13 @@ pub fn deploy_local_app(app_ref: &AppReference, node: &Node) -> Result<LocalApp,
     let system_files = SystemComposeFiles::new(app_folder.apps_folder.system_folder());
     system_files.ensure_system_compose_files()?;
 
-    let setup_env_vars = HashMap::from([(
-        "HOST_OS_APP_CONFIG_DIR".to_string(),
-        app_folder.config_dir_path().to_string_lossy().to_string(),
-    )]);
+    let setup_env_vars = HashMap::from([
+        (
+            "HOST_OS_APP_CONFIG_DIR".to_string(),
+            app_folder.config_dir_path().to_string_lossy().to_string(),
+        ),
+        ("LORES_APP_NAME".to_string(), app_ref.app_name.clone()),
+    ]);
 
     let deploy_env_vars = HashMap::from([(
         "NODE_LOCAL_DOMAIN".to_string(),
@@ -62,8 +65,14 @@ pub fn deploy_local_app(app_ref: &AppReference, node: &Node) -> Result<LocalApp,
 
     println!(
         "About to merge compose files to: {}",
-        app_folder.intermediate_compose_file_path().display()
+        app_folder.merged_compose_file_path().display()
     );
+
+    print!("Setup env vars: ");
+    for (key, value) in &setup_env_vars {
+        print!("{}={}, ", key, value);
+    }
+    println!();
 
     docker_compose_merge_files_no_interpolate(
         vec![
@@ -71,16 +80,21 @@ pub fn deploy_local_app(app_ref: &AppReference, node: &Node) -> Result<LocalApp,
             system_files.reset_path(),
             system_files.setup_path(),
         ],
-        &app_folder.intermediate_compose_file_path(),
+        &app_folder.merged_compose_file_path(),
     )?;
 
     let mut env_vars = setup_env_vars.clone();
     env_vars.extend(deploy_env_vars.clone());
 
+    docker_compose_interpolate(
+        &app_folder.merged_compose_file_path(),
+        &app_folder.interpolated_compose_file_path(),
+        &env_vars,
+    )?;
+
     docker_stack_deploy(
         &app_ref.app_name,
-        &app_folder.intermediate_compose_file_path(),
-        &env_vars,
+        &app_folder.interpolated_compose_file_path(),
     )?;
 
     find_local_app(&app_ref)

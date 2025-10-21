@@ -1,5 +1,5 @@
 use super::utilities::pipe_commands;
-use std::{path::PathBuf, process::Command};
+use std::{collections::HashMap, path::PathBuf, process::Command};
 
 pub fn docker_compose_merge_files_no_interpolate(
     compose_files: Vec<PathBuf>,
@@ -47,6 +47,44 @@ fn docker_compose_merge_files_no_interpolate_to_string(
     Ok(merged_config)
 }
 
+pub fn docker_compose_interpolate(
+    input_path: &PathBuf,
+    output_path: &PathBuf,
+    env_vars: &HashMap<String, String>,
+) -> Result<(), anyhow::Error> {
+    let output = pipe_commands(vec![
+        docker_compose_interpolate_command(input_path, env_vars),
+        make_compose_stack_compatible_command(),
+    ])?;
+
+    if !output.status.success() {
+        return Err(anyhow::anyhow!(
+            "docker compose config failed: {}",
+            String::from_utf8_lossy(&output.stderr)
+        ));
+    }
+
+    std::fs::write(output_path, &output.stdout)
+        .map_err(|e| anyhow::anyhow!("Failed to write interpolated compose file: {}", e))?;
+
+    Ok(())
+}
+
+fn docker_compose_interpolate_command(
+    input_path: &PathBuf,
+    env_vars: &HashMap<String, String>,
+) -> Command {
+    let mut command = Command::new("docker");
+    command.arg("compose");
+    command.arg("-f").arg(input_path);
+    command.arg("config");
+    command.arg("--format").arg("yaml");
+    command.arg("--no-path-resolution");
+    command.envs(env_vars);
+
+    command
+}
+
 fn docker_compose_merge_files_no_interpolate_command(compose_files: Vec<PathBuf>) -> Command {
     let mut command = Command::new("docker");
     command.arg("compose");
@@ -59,7 +97,8 @@ fn docker_compose_merge_files_no_interpolate_command(compose_files: Vec<PathBuf>
         .arg("config")
         .arg("--format")
         .arg("yaml")
-        .arg("--no-interpolate");
+        .arg("--no-interpolate")
+        .arg("--no-path-resolution");
 
     command
 }

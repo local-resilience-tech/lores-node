@@ -60,6 +60,7 @@ volumes:
       type: 'none'
       o: 'bind'
       device: '${HOST_OS_APP_CONFIG_DIR}'
+    name: 'lores_app_config_${LORES_APP_NAME}'
 networks:
   lores:
     external: true

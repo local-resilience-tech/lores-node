@@ -1,5 +1,4 @@
 use std::{
-    collections::HashMap,
     path::PathBuf,
     process::{Command, Stdio},
 };
@@ -136,7 +135,6 @@ pub fn docker_stack_rm(stack_name: &str) -> Result<(), anyhow::Error> {
 pub fn docker_stack_deploy(
     stack_name: &str,
     compose_file_path: &PathBuf,
-    env_vars: &HashMap<String, String>,
 ) -> Result<(), anyhow::Error> {
     // Create a deploy command that reads the processed config from stdin
     let mut deploy_command = Command::new("docker");
@@ -145,7 +143,6 @@ pub fn docker_stack_deploy(
         .arg("deploy")
         .arg("--compose-file")
         .arg(compose_file_path)
-        .envs(env_vars)
         .arg(stack_name)
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
