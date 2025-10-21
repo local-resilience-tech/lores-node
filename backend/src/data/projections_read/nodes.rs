@@ -17,7 +17,7 @@ impl NodesReadRepo {
         let node = sqlx::query_as!(
             Node,
             "
-            SELECT nodes.id as id, nodes.name as name
+            SELECT id, name, public_ipv4, domain_on_local_network, domain_on_internet
             FROM nodes
             WHERE nodes.id = ?
             LIMIT 1
@@ -38,7 +38,7 @@ impl NodesReadRepo {
         let node = sqlx::query_as!(
             NodeDetails,
             "
-            SELECT id, name, public_ipv4, s.text as status_text, s.state as state
+            SELECT id, name, public_ipv4, domain_on_local_network, domain_on_internet, s.text as status_text, s.state as state
             FROM nodes
             LEFT JOIN current_node_statuses AS s ON nodes.id = s.node_id
             WHERE nodes.id = ?
@@ -56,7 +56,7 @@ impl NodesReadRepo {
         let nodes = sqlx::query_as!(
             NodeDetails,
             "
-            SELECT id, name, public_ipv4, s.text as status_text, s.state as state
+            SELECT id, name, public_ipv4, domain_on_local_network, domain_on_internet, s.text as status_text, s.state as state
             FROM nodes
             LEFT JOIN current_node_statuses AS s ON nodes.id = s.node_id"
         )

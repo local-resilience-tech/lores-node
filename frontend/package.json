@@ -17,6 +17,7 @@
     "swagger": "npx swagger-typescript-api generate --path http://localhost:8200/api-docs/openapi.json --output src/api --http-client fetch --clean"
   },
   "dependencies": {
+    "@chainsafe/is-ip": "^2.1.0",
     "@emotion/react": "^11.13.3",
     "@mantine/core": "^8.3.2",
     "@mantine/form": "^8.3.2",
@@ -30,6 +31,7 @@
     "@the-node-forge/url-validator": "^1.0.6",
     "axios": "^1.10.0",
     "date-fns": "^4.1.0",
+    "is-valid-hostname": "^1.0.2",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-redux": "^9.2.0",

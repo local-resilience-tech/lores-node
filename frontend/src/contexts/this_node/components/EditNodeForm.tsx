@@ -6,10 +6,19 @@ import {
   DisplayActionResult,
   useOnSubmitWithResult,
 } from "../../../components"
+import isValidHostname from "is-valid-hostname"
+import { isIPv4 } from "@chainsafe/is-ip"
 
 interface EditNodeFormProps {
   node: Node
   onSubmit: (data: UpdateNodeDetails) => Promise<ActionPromiseResult>
+}
+
+const defaultInitialValues: UpdateNodeDetails = {
+  name: "",
+  public_ipv4: "",
+  domain_on_local_network: undefined,
+  domain_on_internet: undefined,
 }
 
 export default function EditNodeForm({ node, onSubmit }: EditNodeFormProps) {
@@ -19,8 +28,8 @@ export default function EditNodeForm({ node, onSubmit }: EditNodeFormProps) {
   const form = useForm<UpdateNodeDetails>({
     mode: "controlled",
     initialValues: {
-      name: node.name,
-      public_ipv4: "",
+      ...defaultInitialValues,
+      ...node,
     },
     validate: {
       name: (value) => {
@@ -32,8 +41,17 @@ export default function EditNodeForm({ node, onSubmit }: EditNodeFormProps) {
       },
       public_ipv4: (value) => {
         if (!value) return null // Optional field
-        if (!/^((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)\.?\b){4}$/.test(value))
-          return "Invalid IPv4 address"
+        if (!isIPv4(value)) return "Invalid IPv4 address"
+        return null
+      },
+      domain_on_local_network: (value) => {
+        if (!value) return null // Optional field
+        if (!isValidHostname(value)) return "Invalid hostname for local network"
+        return null
+      },
+      domain_on_internet: (value) => {
+        if (!value) return null // Optional field
+        if (!isValidHostname(value)) return "Invalid hostname for internet"
         return null
       },
     },
@@ -57,6 +75,22 @@ export default function EditNodeForm({ node, onSubmit }: EditNodeFormProps) {
             description="The public IPv4 address of your node"
             key="public_ipv4"
             {...form.getInputProps("public_ipv4")}
+          />
+
+          <TextInput
+            label="Domain on Local Network"
+            placeholder={`${form.values.name || "lores"}.local`}
+            description="Hostname that is valid for clients on the local network"
+            key="domain_on_local_network"
+            {...form.getInputProps("domain_on_local_network")}
+          />
+
+          <TextInput
+            label="Domain on Internet"
+            placeholder={`${form.values.name || "lores"}.regionname.net`}
+            description="Hostname that is valid for clients accessing over the internet"
+            key="domain_on_internet"
+            {...form.getInputProps("domain_on_internet")}
           />
         </Stack>
 

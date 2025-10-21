@@ -10,6 +10,8 @@ pub struct NodeAnnouncedDataV1 {
 pub struct NodeUpdatedDataV1 {
     pub name: String,
     pub public_ipv4: String,
+    pub domain_on_local_network: Option<String>,
+    pub domain_on_internet: Option<String>,
 }
 
 #[derive(Deserialize, Serialize, Clone, PartialEq, Debug)]

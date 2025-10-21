@@ -1,7 +1,7 @@
 use sqlx::{Sqlite, SqlitePool};
 
 use crate::{
-    data::{entities::Node, projections_write::nodes::NodesWriteRepo},
+    data::projections_write::nodes::NodesWriteRepo,
     event_handlers::handler_utilities::{
         handle_db_write_error, read_node_updated_event, HandlerResult,
     },
@@ -37,11 +37,8 @@ impl NodeAnnouncedHandler {
     ) -> Result<(), sqlx::Error> {
         let repo = NodesWriteRepo::init();
 
-        let node = Node {
-            id: header.author_node_id.clone(),
-            name: payload.name.clone(),
-        };
-        repo.upsert(pool, node).await?;
+        repo.upsert_name(pool, &header.author_node_id, &payload.name)
+            .await?;
         Ok(())
     }
 }

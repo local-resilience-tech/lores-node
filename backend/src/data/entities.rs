@@ -6,6 +6,9 @@ use utoipa::ToSchema;
 pub struct Node {
     pub id: String,
     pub name: String,
+    pub public_ipv4: Option<String>,
+    pub domain_on_local_network: Option<String>,
+    pub domain_on_internet: Option<String>,
 }
 
 #[derive(sqlx::FromRow, Serialize, Deserialize, ToSchema, Debug, Clone)]
@@ -13,6 +16,8 @@ pub struct NodeDetails {
     pub id: String,
     pub name: String,
     pub public_ipv4: Option<String>,
+    pub domain_on_local_network: Option<String>,
+    pub domain_on_internet: Option<String>,
     pub status_text: Option<String>,
     pub state: Option<String>,
 }

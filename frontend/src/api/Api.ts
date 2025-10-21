@@ -233,6 +233,8 @@ export interface RegionAppWithInstallations {
 }
 
 export interface UpdateNodeDetails {
+  domain_on_internet?: string | null;
+  domain_on_local_network?: string | null;
   name: string;
   public_ipv4: string;
 }
@@ -418,7 +420,7 @@ export class HttpClient<SecurityDataType = unknown> {
 
 /**
  * @title lores-node
- * @version 0.13.4
+ * @version 0.13.6
  * @license
  */
 export class Api<

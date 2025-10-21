@@ -53,6 +53,9 @@ async fn create_this_node(
             let node = Node {
                 id: "1".to_string(),
                 name: data.name.clone(),
+                public_ipv4: None,
+                domain_on_local_network: None,
+                domain_on_internet: None,
             };
             (StatusCode::CREATED, Json(node)).into_response()
         }
@@ -67,6 +70,8 @@ async fn create_this_node(
 struct UpdateNodeDetails {
     name: String,
     public_ipv4: String,
+    domain_on_local_network: Option<String>,
+    domain_on_internet: Option<String>,
 }
 
 #[utoipa::path(
@@ -88,6 +93,8 @@ async fn update_this_node(
     let event_payload = LoResEventPayload::NodeUpdated(NodeUpdatedDataV1 {
         name: data.name.clone(),
         public_ipv4: data.public_ipv4.clone(),
+        domain_on_local_network: data.domain_on_local_network.clone(),
+        domain_on_internet: data.domain_on_internet.clone(),
     });
 
     let result = panda_container
@@ -99,6 +106,9 @@ async fn update_this_node(
             let node = Node {
                 id: "1".to_string(),
                 name: data.name.clone(),
+                public_ipv4: Some(data.public_ipv4.clone()),
+                domain_on_local_network: data.domain_on_local_network.clone(),
+                domain_on_internet: data.domain_on_internet.clone(),
             };
             (StatusCode::OK, Json(node)).into_response()
         }

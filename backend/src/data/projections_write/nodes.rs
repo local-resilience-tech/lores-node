@@ -2,12 +2,6 @@ use sqlx::SqlitePool;
 
 use super::super::entities::Node;
 
-pub struct NodeUpdateRow {
-    pub id: String,
-    pub name: String,
-    pub public_ipv4: Option<String>,
-}
-
 pub struct NodesWriteRepo {}
 
 impl NodesWriteRepo {
@@ -15,11 +9,16 @@ impl NodesWriteRepo {
         NodesWriteRepo {}
     }
 
-    pub async fn upsert(&self, pool: &SqlitePool, node: Node) -> Result<(), sqlx::Error> {
+    pub async fn upsert_name(
+        &self,
+        pool: &SqlitePool,
+        id: &String,
+        name: &String,
+    ) -> Result<(), sqlx::Error> {
         let _node = sqlx::query!(
             "INSERT INTO nodes (id, name) VALUES (?, ?) ON CONFLICT(id) DO UPDATE SET name = excluded.name",
-            node.id,
-            node.name
+            id,
+            name
         )
         .execute(pool)
         .await?;
@@ -27,11 +26,28 @@ impl NodesWriteRepo {
         Ok(())
     }
 
-    pub async fn update(&self, pool: &SqlitePool, node: NodeUpdateRow) -> Result<(), sqlx::Error> {
+    pub async fn upsert(&self, pool: &SqlitePool, node: &Node) -> Result<(), sqlx::Error> {
         let _node = sqlx::query!(
-            "UPDATE nodes SET name = ?, public_ipv4 = ? WHERE id = ?",
+            "INSERT INTO nodes (id, name, public_ipv4, domain_on_local_network, domain_on_internet) VALUES (?, ?, ?, ?, ?) ON CONFLICT(id) DO UPDATE SET name = excluded.name, public_ipv4 = excluded.public_ipv4, domain_on_local_network = excluded.domain_on_local_network, domain_on_internet = excluded.domain_on_internet",
+            node.id,
             node.name,
             node.public_ipv4,
+            node.domain_on_local_network,
+            node.domain_on_internet
+        )
+        .execute(pool)
+        .await?;
+
+        Ok(())
+    }
+
+    pub async fn update(&self, pool: &SqlitePool, node: &Node) -> Result<(), sqlx::Error> {
+        let _node = sqlx::query!(
+            "UPDATE nodes SET name = ?, public_ipv4 = ?, domain_on_local_network = ?, domain_on_internet = ? WHERE id = ?",
+            node.name,
+            node.public_ipv4,
+            node.domain_on_local_network,
+            node.domain_on_internet,
             node.id
         )
         .execute(pool)
