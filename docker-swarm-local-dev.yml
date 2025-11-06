@@ -45,7 +45,7 @@ services:
     command:
       - --accesslog=true
       # Possible log levels: DEBUG, INFO, WARN, ERROR (default), FATAL, PANIC
-      - --log.level=INFO
+      - --log.level=DEBUG
       # Use your favourite settings here, but add:
       - --providers.swarm.network=lores
       - --providers.swarm.watch
@@ -56,6 +56,15 @@ services:
       - --providers.swarm.defaultRule=Host(`lores.localhost`)
       - --api
       - --entryPoints.web.address=:80
+    deploy:
+      labels:
+        traefik.enable: "true"
+        traefik.http.routers.api.rule: Host(`traefik.${TOP_DOMAIN:-localhost}`)
+        traefik.http.routers.api.entryPoints: web
+        traefik.http.routers.api.service: api@internal
+        # traefik.http.routers.api.middlewares: auth
+        traefik.http.services.dummy.loadbalancer.server.port: 4242
+        # echo $(htpasswd -nB user) | sed -e s/\\$/\\$\\$/g
 networks:
   proxy:
     name: lores
