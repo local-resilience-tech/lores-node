@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO nodes (id, name, public_ipv4, domain_on_local_network, domain_on_internet) VALUES (?, ?, ?, ?, ?) ON CONFLICT(id) DO UPDATE SET name = excluded.name, public_ipv4 = excluded.public_ipv4, domain_on_local_network = excluded.domain_on_local_network, domain_on_internet = excluded.domain_on_internet",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 5
+    },
+    "nullable": []
+  },
+  "hash": "4632b51b37aef69ee9281a5954e45d8e424c04203a38846e74675c3c87f55783"
+}

@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "\n            SELECT id, name, public_ipv4, s.text as status_text, s.state as state\n            FROM nodes\n            LEFT JOIN current_node_statuses AS s ON nodes.id = s.node_id",
+  "query": "\n            SELECT id, name, public_ipv4, domain_on_local_network, domain_on_internet\n            FROM nodes\n            WHERE nodes.id = ?\n            LIMIT 1\n            ",
   "describe": {
     "columns": [
       {
@@ -19,18 +19,18 @@
         "type_info": "Text"
       },
       {
-        "name": "status_text",
+        "name": "domain_on_local_network",
         "ordinal": 3,
         "type_info": "Text"
       },
       {
-        "name": "state",
+        "name": "domain_on_internet",
         "ordinal": 4,
         "type_info": "Text"
       }
     ],
     "parameters": {
-      "Right": 0
+      "Right": 1
     },
     "nullable": [
       false,
@@ -40,5 +40,5 @@
       true
     ]
   },
-  "hash": "5707c0aaf6e8aa322b9655b1b6d887d82d04171c22692fd5b42df146ecc9caa7"
+  "hash": "036a3db6b978ed150c947ad157b44c8add03b62dcd6f07705ac20a2eb75e5548"
 }

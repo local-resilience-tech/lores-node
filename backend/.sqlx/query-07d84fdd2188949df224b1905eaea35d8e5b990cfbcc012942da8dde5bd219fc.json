@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE nodes SET name = ?, public_ipv4 = ?, domain_on_local_network = ?, domain_on_internet = ? WHERE id = ?",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 5
+    },
+    "nullable": []
+  },
+  "hash": "07d84fdd2188949df224b1905eaea35d8e5b990cfbcc012942da8dde5bd219fc"
+}
