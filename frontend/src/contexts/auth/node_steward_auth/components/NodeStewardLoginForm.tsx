@@ -32,6 +32,8 @@ export default function NodeStewardLoginForm({
     },
   })
 
+  console.log("rendering NodeStewardLoginForm")
+
   return (
     <form onSubmit={form.onSubmit(onSubmitWithResult)}>
       <Stack gap="lg">
@@ -49,6 +51,7 @@ export default function NodeStewardLoginForm({
 
         <DisplayActionResult
           result={actionResult}
+          redirectToLogin={false}
           handlers={{
             NoPasswordSet: (
               <DisplayFormError

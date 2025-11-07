@@ -42,6 +42,7 @@ export default function AdminLoginForm({ onSubmit }: AdminLoginFormProps) {
 
         <DisplayActionResult
           result={actionResult}
+          redirectToLogin={false}
           handlers={{
             NoPasswordSet: (
               <DisplayFormError
