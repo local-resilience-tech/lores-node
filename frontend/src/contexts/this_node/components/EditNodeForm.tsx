@@ -29,7 +29,12 @@ export default function EditNodeForm({ node, onSubmit }: EditNodeFormProps) {
     mode: "controlled",
     initialValues: {
       ...defaultInitialValues,
-      ...node,
+      ...{
+        name: node.name,
+        public_ipv4: node.public_ipv4 || "",
+        domain_on_local_network: node.domain_on_local_network || "",
+        domain_on_internet: node.domain_on_internet || "",
+      },
     },
     validate: {
       name: (value) => {
