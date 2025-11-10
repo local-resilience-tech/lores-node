@@ -10,7 +10,7 @@ services:
   lores-node:
     image: lores-node-dev
     networks:
-      - proxy
+      - lores
     ports:
       - "8200:8200"
       - "2022:2022/udp"
@@ -36,7 +36,7 @@ services:
         max-size: "1m"
     image: traefik:3.2
     networks:
-      - proxy
+      - lores
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     ports:
@@ -66,7 +66,7 @@ services:
         traefik.http.services.dummy.loadbalancer.server.port: 4242
         # echo $(htpasswd -nB user) | sed -e s/\\$/\\$\\$/g
 networks:
-  proxy:
+  lores:
     name: lores
     driver: overlay
     attachable: true

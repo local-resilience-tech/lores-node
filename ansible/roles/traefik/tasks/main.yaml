@@ -1,6 +1,6 @@
 - name: Ensure Docker proxy network exists
   community.docker.docker_network:
-    name: proxy
+    name: lores
     attachable: true
     driver: overlay
     scope: swarm
@@ -17,7 +17,7 @@
                 max-size: "1m"
             image: traefik:3.2
             networks:
-              - proxy
+              - lores
             volumes:
               - acme:/etc/traefik/acme
               - /var/run/docker.sock:/var/run/docker.sock
@@ -29,7 +29,7 @@
               # Possible log levels: DEBUG, INFO, WARN, ERROR (default), FATAL, PANIC
               #- --log.level=INFO
               # Use your favourite settings here, but add:
-              - --providers.swarm.network=proxy
+              - --providers.swarm.network=lores
               - --providers.swarm.watch
               - --providers.swarm.exposedByDefault=false
               # By default a traefiek-enabled service can be accessed at
@@ -66,5 +66,5 @@
         volumes:
           acme:
         networks:
-          proxy:
+          lores:
             external: true

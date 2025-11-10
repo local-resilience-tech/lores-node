@@ -2,7 +2,7 @@ services:
   lores-node:
     image: ghcr.io/local-resilience-tech/lores-node:latest
     networks:
-      - proxy
+      - lores
     ports:
       - "8200:8200"
       - "2022:2022/udp"
@@ -27,7 +27,7 @@ services:
         max-size: "1m"
     image: traefik:3.2
     networks:
-      - proxy
+      - lores
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     ports:
@@ -44,7 +44,7 @@ services:
       - --api
       - --entryPoints.web.address=:80
 networks:
-  proxy:
+  lores:
     name: lores
     driver: overlay
     attachable: true
