@@ -64,12 +64,20 @@ pub fn deploy_local_app(app_ref: &AppReference, node: &Node) -> Result<LocalApp,
         ("LORES_APP_NAME".to_string(), app_ref.app_name.clone()),
     ]);
 
-    let deploy_env_vars = HashMap::from([(
-        "NODE_LOCAL_DOMAIN".to_string(),
-        node.domain_on_local_network
-            .clone()
-            .unwrap_or("localhost".to_string()),
-    )]);
+    let deploy_env_vars = HashMap::from([
+        (
+            "NODE_LOCAL_DOMAIN".to_string(),
+            node.domain_on_local_network
+                .clone()
+                .unwrap_or("localhost".to_string()),
+        ),
+        (
+            "NODE_INTERNET_DOMAIN".to_string(),
+            node.domain_on_internet
+                .clone()
+                .unwrap_or("localhost".to_string()),
+        ),
+    ]);
 
     println!(
         "About to merge compose files to: {}",
