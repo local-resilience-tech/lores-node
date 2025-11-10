@@ -144,6 +144,7 @@ export interface LocalApp {
   name: string;
   repo_name?: string | null;
   status: LocalAppInstallStatus;
+  url?: null | NodeAppUrl;
   version: string;
 }
 
@@ -163,6 +164,11 @@ export interface Node {
   id: string;
   name: string;
   public_ipv4?: string | null;
+}
+
+export interface NodeAppUrl {
+  internet_url?: string | null;
+  local_network_url?: string | null;
 }
 
 export interface NodeDetails {
@@ -425,7 +431,7 @@ export class HttpClient<SecurityDataType = unknown> {
 
 /**
  * @title lores-node
- * @version 0.13.6
+ * @version 0.13.9
  * @license
  */
 export class Api<

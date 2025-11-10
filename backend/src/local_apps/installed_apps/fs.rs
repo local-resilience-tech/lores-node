@@ -34,6 +34,7 @@ pub fn load_local_app_details(app_ref: &AppReference) -> Option<LocalApp> {
                 repo_name: app_repo_from_app_name(app_definition.name.as_str())
                     .map(|repo| repo.repo_name),
                 has_config_schema: app_folder.has_config_schema(),
+                url: None,
             }),
             Err(_) => {
                 eprintln!(

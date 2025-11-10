@@ -167,15 +167,42 @@ async fn deploy_local_app(
     ),
 )]
 async fn remove_deployment_of_local_app(
+    Extension(db): Extension<DatabaseState>,
+    Extension(config_state): Extension<LoresNodeConfigState>,
     Extension(realtime_state): Extension<RealtimeState>,
     Path(app_name): Path<String>,
 ) -> impl IntoResponse {
     println!("Removing deployment of local app: {}", app_name);
 
+    let config = config_state.get().await;
+    let public_key_hex = match config.public_key_hex {
+        Some(key) => key,
+        None => {
+            eprintln!("No public key hex found in config");
+            return (StatusCode::INTERNAL_SERVER_ERROR, "Public key not found").into_response();
+        }
+    };
+
+    let node_repo = NodesReadRepo::init();
+    let node = match node_repo
+        .find(&db.projections_pool, public_key_hex.clone())
+        .await
+    {
+        Ok(Some(node)) => node,
+        Ok(None) => {
+            eprintln!("Node not found for public key: {}", public_key_hex);
+            return (StatusCode::INTERNAL_SERVER_ERROR, "Node not found").into_response();
+        }
+        Err(e) => {
+            eprintln!("Failed to find node: {}", e);
+            return (StatusCode::INTERNAL_SERVER_ERROR, Json(e.to_string())).into_response();
+        }
+    };
+
     let app_ref = AppReference {
         app_name: app_name.clone(),
     };
-    let result = stack_apps::remove_local_app(&app_ref);
+    let result = stack_apps::remove_local_app(&app_ref, &node);
 
     match result {
         Ok(app) => {
