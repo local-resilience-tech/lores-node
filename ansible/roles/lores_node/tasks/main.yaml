@@ -60,7 +60,7 @@
               labels:
                 traefik.enable: "true"
                 traefik.http.routers.site-manager.rule: "Host(`{{ inventory_hostname }}`)"
-                traefik.http.routers.site-manager.entryPoints: websecure
+                traefik.http.routers.site-manager.entryPoints: web
                 traefik.http.routers.site-manager.service: site-manager
                 traefik.http.services.site-manager.loadbalancer.server.port: 8200
                 shepherd.enable: "true"

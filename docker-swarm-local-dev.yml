@@ -50,7 +50,7 @@ services:
       - --providers.swarm.network=lores
       - --providers.swarm.watch
       - --providers.swarm.exposedByDefault=false
-      # By default a traefiek-enabled service can be accessed at
+      # By default a traefik-enabled service can be accessed at
       # https://stackName.TOP_DOMAIN (where TOP_DOMAIN is specified at
       # the proxy stack's create time, or set to 'localhost' by default.
       - --providers.swarm.defaultRule=Host(`lores.localhost`)
