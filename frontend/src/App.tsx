@@ -20,6 +20,7 @@ import {
 } from "./contexts/apps"
 import { EnsureRegion, Nodes } from "./contexts/this_region"
 import { MantineProvider } from "@mantine/core"
+import { ModalsProvider } from "@mantine/modals"
 import { Provider as ReduxProvider } from "react-redux"
 import { theme } from "./mantine-theme"
 import store, { AppStore, loadInitialData } from "./store"
@@ -182,9 +183,11 @@ const router = createBrowserRouter([
 function App() {
   return (
     <MantineProvider defaultColorScheme="dark" theme={theme}>
-      <ReduxProvider store={store}>
-        <RouterProvider router={router} />
-      </ReduxProvider>
+      <ModalsProvider>
+        <ReduxProvider store={store}>
+          <RouterProvider router={router} />
+        </ReduxProvider>
+      </ModalsProvider>
     </MantineProvider>
   )
 }

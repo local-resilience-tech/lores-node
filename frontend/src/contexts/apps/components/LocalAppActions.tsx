@@ -11,11 +11,15 @@ import { useState } from "react"
 import { ActionPromiseResult, ActionResult } from "../../../components"
 import { ActionResultErrorIcon } from "../../../components/ActionResult"
 
+export type LocalAppActionHandler = (
+  app: LocalApp
+) => Promise<ActionPromiseResult>
+
 export interface LocalAppAction {
   type: "deploy" | "remove" | "register" | "configure" | "delete"
   buttonColor?: MantineColor
   primary?: boolean
-  handler: (app: LocalApp) => Promise<ActionPromiseResult>
+  handler: LocalAppActionHandler
   disabled?: boolean
   tooltip?: string
 }
@@ -32,7 +36,7 @@ function LocalAppAction({
 
   const handleButtonPress = async (
     app: LocalApp,
-    handler: (app: LocalApp) => Promise<ActionPromiseResult>
+    handler: LocalAppActionHandler
   ) => {
     try {
       setLoading(true)

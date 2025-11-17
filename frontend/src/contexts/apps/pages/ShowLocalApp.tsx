@@ -1,5 +1,10 @@
 import { Breadcrumbs, Container, Stack, Title, Text, Card } from "@mantine/core"
-import { actionFailure, actionSuccess, Anchor } from "../../../components"
+import {
+  actionFailure,
+  ActionPromiseResult,
+  actionSuccess,
+  Anchor,
+} from "../../../components"
 import { useNavigate, useParams } from "react-router-dom"
 import { useAppSelector } from "../../../store"
 import LocalAppDetails from "../components/LocalAppDetails"
@@ -10,8 +15,49 @@ import LocalAppUpgrades, {
 import { getApi } from "../../../api"
 import { LocalApp, LocalAppInstallStatus } from "../../../api/Api"
 import { useState } from "react"
-import LocalAppActions, { LocalAppAction } from "../components/LocalAppActions"
+import LocalAppActions, {
+  LocalAppAction,
+  LocalAppActionHandler,
+} from "../components/LocalAppActions"
 import { IfNodeSteward } from "../../auth/node_steward_auth"
+import { modals } from "@mantine/modals"
+
+function confirmAction(
+  actionHandler: LocalAppActionHandler,
+  title?: string,
+  children?: React.ReactNode
+): LocalAppActionHandler {
+  let result: Promise<ActionPromiseResult> | null = null
+
+  const handler = async (app: LocalApp) => {
+    const openModal = () =>
+      modals.openConfirmModal({
+        title: title ?? "Please confirm your action",
+        children: children ?? (
+          <Text size="sm">
+            This action is so important that you are required to confirm it with
+            a modal. Please click one of these buttons to proceed.
+          </Text>
+        ),
+        labels: { confirm: "Confirm", cancel: "Cancel" },
+        onCancel: () => (result = null),
+        onConfirm: () => (result = actionHandler(app)),
+      })
+
+    openModal()
+    console.log("Modal result:", result)
+    if (result) {
+      return result
+    } else {
+      return {
+        success: false,
+        error: "Action cancelled",
+        login_needed: false,
+      }
+    }
+  }
+  return handler
+}
 
 export default function ShowLocalApp() {
   const navigate = useNavigate()
@@ -93,7 +139,14 @@ export default function ShowLocalApp() {
     actions.push({
       type: "delete",
       buttonColor: "red",
-      handler: onAppDelete,
+      handler: confirmAction(
+        onAppDelete,
+        "Confirm App Deletion",
+        <Text size="sm">
+          Are you sure you want to delete the app "{app.name}"? This action
+          cannot be undone.
+        </Text>
+      ),
     })
   }
 
