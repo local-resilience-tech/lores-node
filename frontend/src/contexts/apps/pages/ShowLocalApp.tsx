@@ -1,10 +1,5 @@
 import { Breadcrumbs, Container, Stack, Title, Text, Card } from "@mantine/core"
-import {
-  actionFailure,
-  ActionResult,
-  actionSuccess,
-  Anchor,
-} from "../../../components"
+import { actionFailure, actionSuccess, Anchor } from "../../../components"
 import { useNavigate, useParams } from "react-router-dom"
 import { useAppSelector } from "../../../store"
 import LocalAppDetails from "../components/LocalAppDetails"
@@ -74,6 +69,10 @@ export default function ShowLocalApp() {
       .catch(actionFailure)
   }
 
+  const onAppDelete = async (app: LocalApp) => {
+    console.log("Deleting app:", app)
+  }
+
   const actions: LocalAppAction[] = []
   if (app.status === LocalAppInstallStatus.Installed) {
     actions.push({
@@ -89,6 +88,12 @@ export default function ShowLocalApp() {
       type: "remove",
       buttonColor: "red",
       handler: onAppRemoveDeploy,
+    })
+  } else {
+    actions.push({
+      type: "delete",
+      buttonColor: "red",
+      handler: onAppDelete,
     })
   }
 

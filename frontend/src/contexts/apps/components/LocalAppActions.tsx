@@ -1,14 +1,23 @@
-import { Button, Group, HoverCard, MantineColor, Stack } from "@mantine/core"
+import {
+  Button,
+  Group,
+  HoverCard,
+  MantineColor,
+  Stack,
+  Tooltip,
+} from "@mantine/core"
 import { LocalApp } from "../../../api/Api"
 import { useState } from "react"
 import { ActionPromiseResult, ActionResult } from "../../../components"
 import { ActionResultErrorIcon } from "../../../components/ActionResult"
 
 export interface LocalAppAction {
-  type: "deploy" | "remove" | "register" | "configure"
+  type: "deploy" | "remove" | "register" | "configure" | "delete"
   buttonColor?: MantineColor
   primary?: boolean
   handler: (app: LocalApp) => Promise<ActionPromiseResult>
+  disabled?: boolean
+  tooltip?: string
 }
 
 function LocalAppAction({
@@ -37,17 +46,26 @@ function LocalAppAction({
     }
   }
 
+  const button = (
+    <Button
+      onClick={() => handleButtonPress(app, action.handler)}
+      size="sm"
+      variant={action.primary ? "filled" : "outline"}
+      color={action.buttonColor}
+      loading={loading}
+      disabled={action.disabled}
+    >
+      {action.type.charAt(0).toUpperCase() + action.type.slice(1)}
+    </Button>
+  )
+
   return (
     <Group gap="xs">
-      <Button
-        onClick={() => handleButtonPress(app, action.handler)}
-        size="sm"
-        variant={action.primary ? "filled" : "outline"}
-        color={action.buttonColor}
-        loading={loading}
-      >
-        {action.type.charAt(0).toUpperCase() + action.type.slice(1)}
-      </Button>
+      {action.tooltip ? (
+        <Tooltip label={action.tooltip}>{button}</Tooltip>
+      ) : (
+        button
+      )}
       <ActionResultErrorIcon result={result} />
     </Group>
   )
