@@ -22,41 +22,43 @@ import LocalAppActions, {
 import { IfNodeSteward } from "../../auth/node_steward_auth"
 import { modals } from "@mantine/modals"
 
+function awaitConfirmModal(
+  title?: string,
+  children?: React.ReactNode
+): Promise<boolean> {
+  return new Promise((resolve) => {
+    modals.openConfirmModal({
+      title: title ?? "Please confirm your action",
+      children: children ?? (
+        <Text size="sm">
+          This action is so important that you are required to confirm it with a
+          modal. Please click one of these buttons to proceed.
+        </Text>
+      ),
+      labels: { confirm: "Confirm", cancel: "Cancel" },
+      onCancel: () => resolve(false),
+      onConfirm: () => resolve(true),
+    })
+  })
+}
+
 function confirmAction(
   actionHandler: LocalAppActionHandler,
   title?: string,
   children?: React.ReactNode
 ): LocalAppActionHandler {
-  let result: Promise<ActionPromiseResult> | null = null
-
-  const handler = async (app: LocalApp) => {
-    const openModal = () =>
-      modals.openConfirmModal({
-        title: title ?? "Please confirm your action",
-        children: children ?? (
-          <Text size="sm">
-            This action is so important that you are required to confirm it with
-            a modal. Please click one of these buttons to proceed.
-          </Text>
-        ),
-        labels: { confirm: "Confirm", cancel: "Cancel" },
-        onCancel: () => (result = null),
-        onConfirm: () => (result = actionHandler(app)),
-      })
-
-    openModal()
-    console.log("Modal result:", result)
-    if (result) {
-      return result
+  return async (app: LocalApp) => {
+    const confirmed = await awaitConfirmModal(title, children)
+    if (confirmed) {
+      return actionHandler(app)
     } else {
-      return {
+      const result: ActionPromiseResult = {
         success: false,
-        error: "Action cancelled",
-        login_needed: false,
+        error: "Action cancelled by user",
       }
+      return result
     }
   }
-  return handler
 }
 
 export default function ShowLocalApp() {
@@ -117,6 +119,10 @@ export default function ShowLocalApp() {
 
   const onAppDelete = async (app: LocalApp) => {
     console.log("Deleting app:", app)
+    return getApi()
+      .nodeStewardApi.deleteLocalApp(app.name)
+      .then((_) => actionSuccess())
+      .catch(actionFailure)
   }
 
   const actions: LocalAppAction[] = []

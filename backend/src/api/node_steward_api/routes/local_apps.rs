@@ -33,6 +33,7 @@ use crate::{
 pub fn router() -> OpenApiRouter {
     OpenApiRouter::new()
         .routes(routes!(install_app_definition))
+        .routes(routes!(delete_local_app))
         .routes(routes!(register_app))
         .routes(routes!(deploy_local_app))
         .routes(routes!(remove_deployment_of_local_app))
@@ -90,6 +91,22 @@ async fn install_app_definition(
             (StatusCode::INTERNAL_SERVER_ERROR, Json(error_result)).into_response()
         }
     }
+}
+
+#[utoipa::path(
+    delete,
+    path = "/app/{app_name}",
+    params(
+        ("app_name" = String, Path),
+    ),
+    responses(
+        (status = OK, body = ()),
+        (status = INTERNAL_SERVER_ERROR, body = InstallLocalAppError),
+    )
+)]
+async fn delete_local_app(Path(app_name): Path<String>) -> impl IntoResponse {
+    println!("Deleting local app: {}", app_name);
+    (StatusCode::OK, Json(())).into_response()
 }
 
 #[utoipa::path(
