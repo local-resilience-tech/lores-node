@@ -113,6 +113,9 @@ export type ClientEvent =
     }
   | {
       LocalAppUpdated: LocalApp;
+    }
+  | {
+      LocalAppDeleted: AppReference;
     };
 
 export interface CreateNodeDetails {

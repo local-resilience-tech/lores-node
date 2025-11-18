@@ -76,7 +76,10 @@ export default function ShowLocalApp() {
     console.log("Deleting app:", app)
     return getApi()
       .nodeStewardApi.deleteLocalApp(app.name)
-      .then((_) => actionSuccess())
+      .then((_) => {
+        navigate("../")
+        return actionSuccess()
+      })
       .catch(actionFailure)
   }
 

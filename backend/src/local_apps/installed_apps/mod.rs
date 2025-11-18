@@ -1,4 +1,4 @@
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
 pub mod app_folder;
@@ -6,7 +6,7 @@ mod apps_folder;
 pub mod config;
 pub mod fs;
 
-#[derive(Deserialize, ToSchema, Debug, Clone)]
+#[derive(Deserialize, Serialize, ToSchema, Debug, Clone)]
 pub struct AppReference {
     pub app_name: String,
 }

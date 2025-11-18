@@ -104,8 +104,18 @@ async fn install_app_definition(
         (status = INTERNAL_SERVER_ERROR, body = InstallLocalAppError),
     )
 )]
-async fn delete_local_app(Path(app_name): Path<String>) -> impl IntoResponse {
+async fn delete_local_app(
+    Path(app_name): Path<String>,
+    Extension(realtime_state): Extension<RealtimeState>,
+) -> impl IntoResponse {
     println!("Deleting local app: {}", app_name);
+
+    let app_ref = AppReference {
+        app_name: app_name.clone(),
+    };
+    let client_event = ClientEvent::LocalAppDeleted(app_ref.clone());
+    realtime_state.broadcast_app_event(client_event).await;
+
     (StatusCode::OK, Json(())).into_response()
 }
 
