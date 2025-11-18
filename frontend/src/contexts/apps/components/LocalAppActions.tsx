@@ -10,6 +10,7 @@ import { LocalApp } from "../../../api/Api"
 import { useState } from "react"
 import { ActionPromiseResult, ActionResult } from "../../../components"
 import { ActionResultErrorIcon } from "../../../components/ActionResult"
+import { awaitConfirmModal } from "../../shared"
 
 export type LocalAppActionHandler = (
   app: LocalApp
@@ -89,4 +90,23 @@ export default function LocalAppActions({
       ))}
     </Stack>
   )
+}
+
+export function confirmLocalAppAction(
+  actionHandler: LocalAppActionHandler,
+  title?: string,
+  children?: React.ReactNode
+): LocalAppActionHandler {
+  return async (app: LocalApp) => {
+    const confirmed = await awaitConfirmModal(title, children)
+    if (confirmed) {
+      return actionHandler(app)
+    } else {
+      const result: ActionPromiseResult = {
+        success: false,
+        error: "Action cancelled by user",
+      }
+      return result
+    }
+  }
 }

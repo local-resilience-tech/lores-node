@@ -1,10 +1,5 @@
 import { Breadcrumbs, Container, Stack, Title, Text, Card } from "@mantine/core"
-import {
-  actionFailure,
-  ActionPromiseResult,
-  actionSuccess,
-  Anchor,
-} from "../../../components"
+import { actionFailure, actionSuccess, Anchor } from "../../../components"
 import { useNavigate, useParams } from "react-router-dom"
 import { useAppSelector } from "../../../store"
 import LocalAppDetails from "../components/LocalAppDetails"
@@ -16,50 +11,10 @@ import { getApi } from "../../../api"
 import { LocalApp, LocalAppInstallStatus } from "../../../api/Api"
 import { useState } from "react"
 import LocalAppActions, {
+  confirmLocalAppAction,
   LocalAppAction,
-  LocalAppActionHandler,
 } from "../components/LocalAppActions"
 import { IfNodeSteward } from "../../auth/node_steward_auth"
-import { modals } from "@mantine/modals"
-
-function awaitConfirmModal(
-  title?: string,
-  children?: React.ReactNode
-): Promise<boolean> {
-  return new Promise((resolve) => {
-    modals.openConfirmModal({
-      title: title ?? "Please confirm your action",
-      children: children ?? (
-        <Text size="sm">
-          This action is so important that you are required to confirm it with a
-          modal. Please click one of these buttons to proceed.
-        </Text>
-      ),
-      labels: { confirm: "Confirm", cancel: "Cancel" },
-      onCancel: () => resolve(false),
-      onConfirm: () => resolve(true),
-    })
-  })
-}
-
-function confirmAction(
-  actionHandler: LocalAppActionHandler,
-  title?: string,
-  children?: React.ReactNode
-): LocalAppActionHandler {
-  return async (app: LocalApp) => {
-    const confirmed = await awaitConfirmModal(title, children)
-    if (confirmed) {
-      return actionHandler(app)
-    } else {
-      const result: ActionPromiseResult = {
-        success: false,
-        error: "Action cancelled by user",
-      }
-      return result
-    }
-  }
-}
 
 export default function ShowLocalApp() {
   const navigate = useNavigate()
@@ -145,7 +100,7 @@ export default function ShowLocalApp() {
     actions.push({
       type: "delete",
       buttonColor: "red",
-      handler: confirmAction(
+      handler: confirmLocalAppAction(
         onAppDelete,
         "Confirm App Deletion",
         <Text size="sm">
