@@ -22,6 +22,8 @@
     "@mantine/core": "^8.3.2",
     "@mantine/form": "^8.3.2",
     "@mantine/hooks": "^8.3.2",
+    "@mantine/modals": "^8.3.8",
+    "@mantine/notifications": "^8.3.8",
     "@reduxjs/toolkit": "^2.8.2",
     "@rjsf/core": "^6.0.0-beta.20",
     "@rjsf/mantine": "^6.0.0-beta.20",

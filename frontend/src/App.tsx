@@ -20,6 +20,8 @@ import {
 } from "./contexts/apps"
 import { EnsureRegion, Nodes } from "./contexts/this_region"
 import { MantineProvider } from "@mantine/core"
+import { ModalsProvider } from "@mantine/modals"
+import { Notifications } from "@mantine/notifications"
 import { Provider as ReduxProvider } from "react-redux"
 import { theme } from "./mantine-theme"
 import store, { AppStore, loadInitialData } from "./store"
@@ -37,6 +39,7 @@ import {
 // Import styles of packages that you've installed.
 // All packages except `@mantine/hooks` require styles imports
 import "@mantine/core/styles.css"
+import "@mantine/notifications/styles.css"
 
 function withStore(
   func: (store: AppStore) => any,
@@ -182,9 +185,12 @@ const router = createBrowserRouter([
 function App() {
   return (
     <MantineProvider defaultColorScheme="dark" theme={theme}>
-      <ReduxProvider store={store}>
-        <RouterProvider router={router} />
-      </ReduxProvider>
+      <ModalsProvider>
+        <Notifications />
+        <ReduxProvider store={store}>
+          <RouterProvider router={router} />
+        </ReduxProvider>
+      </ModalsProvider>
     </MantineProvider>
   )
 }

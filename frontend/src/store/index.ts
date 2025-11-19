@@ -3,7 +3,10 @@ import { configureStore } from "@reduxjs/toolkit"
 import regionReducer from "./region"
 import nodesReducer, { nodeUpdated } from "./nodes"
 import appReposReducer, { appRepoUpdated } from "./app_repos"
-import localAppsReducer, { localAppUpdated } from "./local_apps"
+import localAppsReducer, {
+  localAppUpdated,
+  localAppDeleted,
+} from "./local_apps"
 import regionAppsReducer, { regionAppUpdated } from "./region_apps"
 import meReducer from "./me"
 import thisNodeReducer from "./this_node"
@@ -44,6 +47,8 @@ export async function handleClientEvent(event: ClientEvent) {
     store.dispatch(appRepoUpdated(event.AppRepoUpdated))
   } else if ("LocalAppUpdated" in event) {
     store.dispatch(localAppUpdated(event.LocalAppUpdated))
+  } else if ("LocalAppDeleted" in event) {
+    store.dispatch(localAppDeleted(event.LocalAppDeleted))
   } else {
     console.warn("Unhandled event type:", event)
   }

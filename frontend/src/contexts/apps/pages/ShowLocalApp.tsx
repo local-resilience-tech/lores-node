@@ -10,8 +10,12 @@ import LocalAppUpgrades, {
 import { getApi } from "../../../api"
 import { LocalApp, LocalAppInstallStatus } from "../../../api/Api"
 import { useState } from "react"
-import LocalAppActions, { LocalAppAction } from "../components/LocalAppActions"
+import LocalAppActions, {
+  confirmLocalAppAction,
+  LocalAppAction,
+} from "../components/LocalAppActions"
 import { IfNodeSteward } from "../../auth/node_steward_auth"
+import { notifications } from "@mantine/notifications"
 
 export default function ShowLocalApp() {
   const navigate = useNavigate()
@@ -71,6 +75,17 @@ export default function ShowLocalApp() {
 
   const onAppDelete = async (app: LocalApp) => {
     console.log("Deleting app:", app)
+    return getApi()
+      .nodeStewardApi.deleteLocalApp(app.name)
+      .then((_) => {
+        navigate("../")
+        notifications.show({
+          message: `App "${app.name}" deleted successfully`,
+          autoClose: 3000,
+        })
+        return actionSuccess()
+      })
+      .catch(actionFailure)
   }
 
   const actions: LocalAppAction[] = []
@@ -93,7 +108,14 @@ export default function ShowLocalApp() {
     actions.push({
       type: "delete",
       buttonColor: "red",
-      handler: onAppDelete,
+      handler: confirmLocalAppAction(
+        onAppDelete,
+        "Confirm App Deletion",
+        <Text size="sm">
+          Are you sure you want to delete the app "{app.name}"? This action
+          cannot be undone.
+        </Text>
+      ),
     })
   }
 

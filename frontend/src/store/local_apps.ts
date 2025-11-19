@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit"
-import type { LocalApp } from "../api/Api"
+import type { AppReference, LocalApp } from "../api/Api"
 
 export type AppsState = LocalApp[] | null
 
@@ -21,8 +21,14 @@ const localAppsSlice = createSlice({
       }
       return state
     },
+    localAppDeleted: (state, action: PayloadAction<AppReference>) => {
+      if (state === null) return state
+      const { app_name } = action.payload
+      return state.filter((app) => app.name !== app_name)
+    },
   },
 })
 
-export const { localAppsLoaded, localAppUpdated } = localAppsSlice.actions
+export const { localAppsLoaded, localAppUpdated, localAppDeleted } =
+  localAppsSlice.actions
 export default localAppsSlice.reducer

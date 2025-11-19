@@ -113,6 +113,9 @@ export type ClientEvent =
     }
   | {
       LocalAppUpdated: LocalApp;
+    }
+  | {
+      LocalAppDeleted: AppReference;
     };
 
 export interface CreateNodeDetails {
@@ -431,7 +434,7 @@ export class HttpClient<SecurityDataType = unknown> {
 
 /**
  * @title lores-node
- * @version 0.13.9
+ * @version 0.13.11
  * @license
  */
 export class Api<
@@ -649,6 +652,20 @@ export class Api<
       this.request<AppRepo, any>({
         path: `/node_steward_api/app_repos/reload/${repoName}`,
         method: "GET",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @name DeleteLocalApp
+     * @request DELETE:/node_steward_api/local_apps/app/{app_name}
+     */
+    deleteLocalApp: (appName: string, params: RequestParams = {}) =>
+      this.request<any, InstallLocalAppError>({
+        path: `/node_steward_api/local_apps/app/${appName}`,
+        method: "DELETE",
         format: "json",
         ...params,
       }),

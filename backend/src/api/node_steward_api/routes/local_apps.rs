@@ -33,6 +33,7 @@ use crate::{
 pub fn router() -> OpenApiRouter {
     OpenApiRouter::new()
         .routes(routes!(install_app_definition))
+        .routes(routes!(delete_local_app))
         .routes(routes!(register_app))
         .routes(routes!(deploy_local_app))
         .routes(routes!(remove_deployment_of_local_app))
@@ -88,6 +89,46 @@ async fn install_app_definition(
                 _ => InstallLocalAppError::ServerError,
             };
             (StatusCode::INTERNAL_SERVER_ERROR, Json(error_result)).into_response()
+        }
+    }
+}
+
+#[utoipa::path(
+    delete,
+    path = "/app/{app_name}",
+    params(
+        ("app_name" = String, Path),
+    ),
+    responses(
+        (status = OK, body = ()),
+        (status = INTERNAL_SERVER_ERROR, body = InstallLocalAppError),
+    )
+)]
+async fn delete_local_app(
+    Path(app_name): Path<String>,
+    Extension(realtime_state): Extension<RealtimeState>,
+) -> impl IntoResponse {
+    println!("Deleting local app: {}", app_name);
+
+    let app_ref = AppReference {
+        app_name: app_name.clone(),
+    };
+
+    match installed_apps::fs::delete_app_definition(&app_ref) {
+        Ok(_) => {
+            println!("Successfully deleted local app: {}", app_name);
+            let client_event = ClientEvent::LocalAppDeleted(app_ref.clone());
+            realtime_state.broadcast_app_event(client_event).await;
+
+            (StatusCode::OK, Json(())).into_response()
+        }
+        Err(e) => {
+            eprintln!("Failed to delete local app '{}': {}", app_name, e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(InstallLocalAppError::ServerError),
+            )
+                .into_response();
         }
     }
 }

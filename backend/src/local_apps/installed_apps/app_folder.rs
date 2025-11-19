@@ -83,6 +83,19 @@ impl AppFolder {
         Ok(())
     }
 
+    pub fn delete(&self) -> Result<(), anyhow::Error> {
+        let root_path = self.root_path(None);
+        std::fs::remove_dir_all(&root_path).map_err(|e| {
+            let error_msg = format!(
+                "Failed to delete app folder at `{}`: {}",
+                root_path.display(),
+                e
+            );
+            eprintln!("{}", error_msg);
+            anyhow::anyhow!(error_msg)
+        })
+    }
+
     pub fn app_details(&self) -> Option<InstalledAppDetails> {
         let config_file_path = self.app_definition_file_path();
         match std::fs::read_to_string(config_file_path.clone()) {
