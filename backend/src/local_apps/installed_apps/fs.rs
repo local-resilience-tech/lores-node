@@ -130,3 +130,10 @@ pub fn install_app_definition(
 
     load_local_app_details(target).ok_or(InstallAppVersionError::LoadingAppError)
 }
+
+pub fn delete_app_definition(app_ref: &AppReference) -> Result<(), anyhow::Error> {
+    let app_folder = AppFolder::new(app_ref.clone());
+    app_folder.delete()?;
+
+    Ok(())
+}

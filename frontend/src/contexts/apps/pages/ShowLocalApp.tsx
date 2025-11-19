@@ -15,6 +15,7 @@ import LocalAppActions, {
   LocalAppAction,
 } from "../components/LocalAppActions"
 import { IfNodeSteward } from "../../auth/node_steward_auth"
+import { notifications } from "@mantine/notifications"
 
 export default function ShowLocalApp() {
   const navigate = useNavigate()
@@ -78,6 +79,10 @@ export default function ShowLocalApp() {
       .nodeStewardApi.deleteLocalApp(app.name)
       .then((_) => {
         navigate("../")
+        notifications.show({
+          message: `App "${app.name}" deleted successfully`,
+          autoClose: 3000,
+        })
         return actionSuccess()
       })
       .catch(actionFailure)

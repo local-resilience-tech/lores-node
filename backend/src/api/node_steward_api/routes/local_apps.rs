@@ -113,10 +113,24 @@ async fn delete_local_app(
     let app_ref = AppReference {
         app_name: app_name.clone(),
     };
-    let client_event = ClientEvent::LocalAppDeleted(app_ref.clone());
-    realtime_state.broadcast_app_event(client_event).await;
 
-    (StatusCode::OK, Json(())).into_response()
+    match installed_apps::fs::delete_app_definition(&app_ref) {
+        Ok(_) => {
+            println!("Successfully deleted local app: {}", app_name);
+            let client_event = ClientEvent::LocalAppDeleted(app_ref.clone());
+            realtime_state.broadcast_app_event(client_event).await;
+
+            (StatusCode::OK, Json(())).into_response()
+        }
+        Err(e) => {
+            eprintln!("Failed to delete local app '{}': {}", app_name, e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(InstallLocalAppError::ServerError),
+            )
+                .into_response();
+        }
+    }
 }
 
 #[utoipa::path(
