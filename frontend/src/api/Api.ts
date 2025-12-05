@@ -434,7 +434,7 @@ export class HttpClient<SecurityDataType = unknown> {
 
 /**
  * @title lores-node
- * @version 0.13.11
+ * @version 0.13.12
  * @license
  */
 export class Api<
@@ -714,20 +714,6 @@ export class Api<
       this.request<any, any>({
         path: `/node_steward_api/local_apps/app/${appName}/config_schema`,
         method: "GET",
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @name DeployLocalApp
-     * @request POST:/node_steward_api/local_apps/app/{app_name}/deploy
-     */
-    deployLocalApp: (appName: string, params: RequestParams = {}) =>
-      this.request<any, string>({
-        path: `/node_steward_api/local_apps/app/${appName}/deploy`,
-        method: "POST",
         format: "json",
         ...params,
       }),
