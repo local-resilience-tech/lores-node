@@ -30,12 +30,6 @@ impl AppsFolder {
             .collect()
     }
 
-    pub fn system_folder(&self) -> PathBuf {
-        let path = self.path().join("system");
-        Self::ensure_path(&path).unwrap();
-        path
-    }
-
     fn app_folders(&self) -> Vec<AppFolder> {
         self.app_names()
             .into_iter()
@@ -60,13 +54,6 @@ impl AppsFolder {
             .filter(|p| p.is_dir())
             .filter(|p| p.file_name().and_then(|n| n.to_str()) != Some(".git"))
             .collect()
-    }
-
-    fn ensure_path(path: &PathBuf) -> Result<(), ()> {
-        if !path.exists() {
-            std::fs::create_dir_all(path).map_err(|_| ())?;
-        }
-        Ok(())
     }
 }
 

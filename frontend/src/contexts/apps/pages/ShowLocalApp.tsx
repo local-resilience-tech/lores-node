@@ -49,14 +49,6 @@ export default function ShowLocalApp() {
       })
   }
 
-  const onAppDeploy = async (app: LocalApp) => {
-    console.log("Deploying app:", app)
-    return getApi()
-      .nodeStewardApi.deployLocalApp(app.name)
-      .then((_) => actionSuccess())
-      .catch(actionFailure)
-  }
-
   const onAppRemoveDeploy = async (app: LocalApp) => {
     console.log("Removing deployment of app:", app)
     return getApi()
@@ -89,14 +81,6 @@ export default function ShowLocalApp() {
   }
 
   const actions: LocalAppAction[] = []
-  if (app.status === LocalAppInstallStatus.Installed) {
-    actions.push({
-      type: "deploy",
-      buttonColor: "blue",
-      primary: true,
-      handler: onAppDeploy,
-    })
-  }
 
   if (app.status === LocalAppInstallStatus.StackDeployed) {
     actions.push({
@@ -142,7 +126,7 @@ export default function ShowLocalApp() {
       <Stack gap="lg">
         <Stack gap="xs">
           <Breadcrumbs>
-            <Anchor href="/this_node/apps">Local Apps</Anchor>
+            <Anchor href="/this_node/`apps">Local Apps</Anchor>
             <Text c="dimmed">{app.name}</Text>
           </Breadcrumbs>
           <Title order={1}>

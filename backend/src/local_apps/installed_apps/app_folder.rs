@@ -26,19 +26,6 @@ impl AppFolder {
         }
     }
 
-    pub fn compose_file_path(&self) -> PathBuf {
-        self.current_version_path().join("compose.yml")
-    }
-
-    pub fn merged_compose_file_path(&self) -> PathBuf {
-        self.intermediate_dir_path().join("merged_compose.yml")
-    }
-
-    pub fn interpolated_compose_file_path(&self) -> PathBuf {
-        self.intermediate_dir_path()
-            .join("interpolated_compose.yml")
-    }
-
     pub fn intermediate_dir_path(&self) -> PathBuf {
         self.root_path(None).join("intermediate")
     }

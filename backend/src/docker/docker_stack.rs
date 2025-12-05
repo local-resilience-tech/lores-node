@@ -1,7 +1,4 @@
-use std::{
-    path::PathBuf,
-    process::{Command, Stdio},
-};
+use std::process::Command;
 
 use super::{DockerService, DockerStack};
 
@@ -129,38 +126,6 @@ pub fn docker_stack_rm(stack_name: &str) -> Result<(), anyhow::Error> {
     }
 
     println!("Successfully removed stack: {}", stack_name);
-    Ok(())
-}
-
-pub fn docker_stack_deploy(
-    stack_name: &str,
-    compose_file_path: &PathBuf,
-) -> Result<(), anyhow::Error> {
-    // Create a deploy command that reads the processed config from stdin
-    let mut deploy_command = Command::new("docker");
-    deploy_command
-        .arg("stack")
-        .arg("deploy")
-        .arg("--compose-file")
-        .arg(compose_file_path)
-        .arg(stack_name)
-        .stdin(Stdio::piped())
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped());
-
-    let output = deploy_command
-        .output()
-        .map_err(|e| anyhow::anyhow!("Failed to execute docker stack deploy: {}", e))?;
-
-    if !output.status.success() {
-        return Err(anyhow::anyhow!(
-            "Deploy failed: {}",
-            String::from_utf8_lossy(&output.stderr)
-        ));
-    }
-
-    println!("Successfully deployed stack: {}", stack_name);
-    println!("Deploy output: {}", String::from_utf8_lossy(&output.stdout));
     Ok(())
 }
 
