@@ -1,5 +1,5 @@
 use axum::{extract::Path, http::StatusCode, response::IntoResponse, Extension, Json};
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use tracing::event;
 use utoipa::ToSchema;
 use utoipa_axum::{router::OpenApiRouter, routes};
@@ -11,7 +11,7 @@ use crate::{
     },
     data::entities::LocalApp,
     local_apps::{
-        app_repos::{fs::app_repo_from_app_name, AppRepoAppReference},
+        app_repos::AppRepoAppReference,
         installed_apps::{
             self,
             config::{
@@ -32,7 +32,6 @@ pub fn router() -> OpenApiRouter {
         .routes(routes!(install_app_definition))
         .routes(routes!(delete_local_app))
         .routes(routes!(register_app))
-        .routes(routes!(upgrade_local_app))
         .routes(routes!(get_local_app_config_schema))
         .routes(routes!(get_local_app_config))
         .routes(routes!(update_local_app_config))
@@ -124,82 +123,6 @@ async fn delete_local_app(
                 Json(InstallLocalAppError::ServerError),
             )
                 .into_response();
-        }
-    }
-}
-
-#[derive(Deserialize, ToSchema, Debug)]
-struct LocalAppUpgradeParams {
-    target_version: String,
-}
-
-#[derive(Serialize, ToSchema, Debug)]
-enum UpgradeLocalAppError {
-    AppNotFound,
-    InUse,
-    ServerError,
-}
-
-#[utoipa::path(
-    post,
-    path = "/app/{app_name}/upgrade",
-    params(
-        ("app_name" = String, Path),
-    ),
-    request_body(content = LocalAppUpgradeParams, content_type = "application/json"),
-    responses(
-        (status = OK, body = ()),
-        (status = INTERNAL_SERVER_ERROR, body = UpgradeLocalAppError),
-    ),
-)]
-async fn upgrade_local_app(
-    Extension(realtime_state): Extension<RealtimeState>,
-    Path(app_name): Path<String>,
-    Json(payload): Json<LocalAppUpgradeParams>,
-) -> impl IntoResponse {
-    println!(
-        "Deploying local app {} to version {}",
-        app_name, payload.target_version
-    );
-
-    let repo_ref = match app_repo_from_app_name(&app_name) {
-        Some(app_ref) => app_ref,
-        None => {
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(UpgradeLocalAppError::AppNotFound),
-            )
-                .into_response()
-        }
-    };
-
-    let repo_app_ref = AppRepoAppReference {
-        repo_name: repo_ref.repo_name.clone(),
-        app_name: app_name.clone(),
-        version: payload.target_version.clone(),
-    };
-
-    let app_ref = AppReference {
-        app_name: app_name.clone(),
-    };
-
-    let result = installed_apps::fs::install_app_definition(&repo_app_ref, &app_ref);
-
-    match result {
-        Ok(app) => {
-            local_app_updated(&app, &realtime_state).await;
-            println!("App definition installed: {}", app.name);
-
-            (StatusCode::CREATED, Json(())).into_response()
-        }
-        Err(e) => {
-            println!("Error installing app definition: {:?}", e);
-
-            let error_result = match e {
-                InstallAppVersionError::InUse => UpgradeLocalAppError::InUse,
-                _ => UpgradeLocalAppError::ServerError,
-            };
-            (StatusCode::INTERNAL_SERVER_ERROR, Json(error_result)).into_response()
         }
     }
 }

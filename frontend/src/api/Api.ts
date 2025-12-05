@@ -10,12 +10,6 @@
  * ---------------------------------------------------------------
  */
 
-export enum UpgradeLocalAppError {
-  AppNotFound = "AppNotFound",
-  InUse = "InUse",
-  ServerError = "ServerError",
-}
-
 export enum NodeStewardStatus {
   Enabled = "Enabled",
   Disabled = "Disabled",
@@ -149,10 +143,6 @@ export interface LocalApp {
   status: LocalAppInstallStatus;
   url?: null | NodeAppUrl;
   version: string;
-}
-
-export interface LocalAppUpgradeParams {
-  target_version: string;
 }
 
 export interface LogCount {
@@ -714,26 +704,6 @@ export class Api<
       this.request<any, any>({
         path: `/node_steward_api/local_apps/app/${appName}/config_schema`,
         method: "GET",
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @name UpgradeLocalApp
-     * @request POST:/node_steward_api/local_apps/app/{app_name}/upgrade
-     */
-    upgradeLocalApp: (
-      appName: string,
-      data: LocalAppUpgradeParams,
-      params: RequestParams = {},
-    ) =>
-      this.request<any, UpgradeLocalAppError>({
-        path: `/node_steward_api/local_apps/app/${appName}/upgrade`,
-        method: "POST",
-        body: data,
-        type: ContentType.Json,
         format: "json",
         ...params,
       }),

@@ -4,12 +4,9 @@ import { useNavigate, useParams } from "react-router-dom"
 import { useAppSelector } from "../../../store"
 import LocalAppDetails from "../components/LocalAppDetails"
 import { useAppRepo } from "../../../store/app_repos"
-import LocalAppUpgrades, {
-  UpgradeLocalAppError,
-} from "../components/LocalAppUpgrades"
+import LocalAppUpgrades from "../components/LocalAppUpgrades"
 import { getApi } from "../../../api"
 import { LocalApp, LocalAppInstallStatus } from "../../../api/Api"
-import { useState } from "react"
 import LocalAppActions, {
   confirmLocalAppAction,
   LocalAppAction,
@@ -24,9 +21,6 @@ export default function ShowLocalApp() {
     (state.localApps || []).find((a) => a.name === appName)
   )
   const appRepo = useAppRepo(app?.repo_name)
-  const [upgradeError, setUpgradeError] = useState<UpgradeLocalAppError | null>(
-    null
-  )
 
   if (!appName) {
     return <Container>Error: App name is required</Container>
@@ -34,19 +28,6 @@ export default function ShowLocalApp() {
 
   if (!app) {
     return <Container>Error: App not found</Container>
-  }
-
-  const handleUpgrade = async (version: string) => {
-    console.log("Upgrading app:", app.name, "to version:", version)
-    return getApi()
-      .nodeStewardApi.upgradeLocalApp(app.name, { target_version: version })
-      .then((response) => {
-        console.log("Upgrade successful:", response)
-      })
-      .catch((error) => {
-        console.error("Upgrade failed:", error)
-        setUpgradeError(error.response?.data || "ServerError")
-      })
   }
 
   const onAppRegister = async (app: LocalApp) => {
@@ -135,12 +116,7 @@ export default function ShowLocalApp() {
 
         <Stack>
           <Title order={2}>Upgrades</Title>
-          <LocalAppUpgrades
-            app={app}
-            appRepo={appRepo}
-            onUpgrade={handleUpgrade}
-            upgradeError={upgradeError}
-          />
+          <LocalAppUpgrades app={app} appRepo={appRepo} />
         </Stack>
 
         <IfNodeSteward>
