@@ -9,8 +9,7 @@ use crate::{
         auth_api::auth_backend::AuthSession,
         public_api::{client_events::ClientEvent, realtime::RealtimeState},
     },
-    config::config_state::LoresNodeConfigState,
-    data::{entities::LocalApp, projections_read::nodes::NodesReadRepo},
+    data::entities::LocalApp,
     local_apps::{
         app_repos::{fs::app_repo_from_app_name, AppRepoAppReference},
         installed_apps::{
@@ -21,13 +20,11 @@ use crate::{
             fs::{load_local_app_details, InstallAppVersionError},
             AppReference,
         },
-        stack_apps::{self},
     },
     panda_comms::{
         container::P2PandaContainer,
         lores_events::{AppRegisteredDataV1, LoResEventPayload},
     },
-    DatabaseState,
 };
 
 pub fn router() -> OpenApiRouter {
@@ -35,7 +32,6 @@ pub fn router() -> OpenApiRouter {
         .routes(routes!(install_app_definition))
         .routes(routes!(delete_local_app))
         .routes(routes!(register_app))
-        .routes(routes!(remove_deployment_of_local_app))
         .routes(routes!(upgrade_local_app))
         .routes(routes!(get_local_app_config_schema))
         .routes(routes!(get_local_app_config))
@@ -128,72 +124,6 @@ async fn delete_local_app(
                 Json(InstallLocalAppError::ServerError),
             )
                 .into_response();
-        }
-    }
-}
-
-#[utoipa::path(
-    delete,
-    path = "/app/{app_name}/deploy",
-    params(
-        ("app_name" = String, Path),
-    ),
-    responses(
-        (status = OK, body = ()),
-        (status = INTERNAL_SERVER_ERROR, body = String),
-    ),
-)]
-async fn remove_deployment_of_local_app(
-    Extension(db): Extension<DatabaseState>,
-    Extension(config_state): Extension<LoresNodeConfigState>,
-    Extension(realtime_state): Extension<RealtimeState>,
-    Path(app_name): Path<String>,
-) -> impl IntoResponse {
-    println!("Removing deployment of local app: {}", app_name);
-
-    let config = config_state.get().await;
-    let public_key_hex = match config.public_key_hex {
-        Some(key) => key,
-        None => {
-            eprintln!("No public key hex found in config");
-            return (StatusCode::INTERNAL_SERVER_ERROR, "Public key not found").into_response();
-        }
-    };
-
-    let node_repo = NodesReadRepo::init();
-    let node = match node_repo
-        .find(&db.projections_pool, public_key_hex.clone())
-        .await
-    {
-        Ok(Some(node)) => node,
-        Ok(None) => {
-            eprintln!("Node not found for public key: {}", public_key_hex);
-            return (StatusCode::INTERNAL_SERVER_ERROR, "Node not found").into_response();
-        }
-        Err(e) => {
-            eprintln!("Failed to find node: {}", e);
-            return (StatusCode::INTERNAL_SERVER_ERROR, Json(e.to_string())).into_response();
-        }
-    };
-
-    let app_ref = AppReference {
-        app_name: app_name.clone(),
-    };
-    let result = stack_apps::remove_local_app(&app_ref, &node);
-
-    match result {
-        Ok(app) => {
-            local_app_updated(&app, &realtime_state).await;
-
-            println!("Successfully removed local app: {}", app_name);
-            (StatusCode::OK, Json(())).into_response()
-        }
-        Err(e) => {
-            eprintln!(
-                "Failed to remove deployment of local app '{}': {}",
-                app_name, e
-            );
-            (StatusCode::INTERNAL_SERVER_ERROR, Json(e.to_string())).into_response()
         }
     }
 }

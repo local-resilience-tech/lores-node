@@ -49,14 +49,6 @@ export default function ShowLocalApp() {
       })
   }
 
-  const onAppRemoveDeploy = async (app: LocalApp) => {
-    console.log("Removing deployment of app:", app)
-    return getApi()
-      .nodeStewardApi.removeDeploymentOfLocalApp(app.name)
-      .then((_) => actionSuccess())
-      .catch(actionFailure)
-  }
-
   const onAppRegister = async (app: LocalApp) => {
     console.log("Registering app:", app)
     return getApi()
@@ -83,11 +75,6 @@ export default function ShowLocalApp() {
   const actions: LocalAppAction[] = []
 
   if (app.status === LocalAppInstallStatus.StackDeployed) {
-    actions.push({
-      type: "remove",
-      buttonColor: "red",
-      handler: onAppRemoveDeploy,
-    })
   } else {
     actions.push({
       type: "delete",

@@ -721,20 +721,6 @@ export class Api<
     /**
      * No description
      *
-     * @name RemoveDeploymentOfLocalApp
-     * @request DELETE:/node_steward_api/local_apps/app/{app_name}/deploy
-     */
-    removeDeploymentOfLocalApp: (appName: string, params: RequestParams = {}) =>
-      this.request<any, string>({
-        path: `/node_steward_api/local_apps/app/${appName}/deploy`,
-        method: "DELETE",
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
      * @name UpgradeLocalApp
      * @request POST:/node_steward_api/local_apps/app/{app_name}/upgrade
      */
