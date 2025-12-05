@@ -3,7 +3,7 @@ use utoipa::ToSchema;
 
 use crate::{
     data::entities::{LocalApp, NodeDetails, RegionAppWithInstallations},
-    local_apps::{app_repos::AppRepo, installed_apps::AppReference},
+    local_apps::app_repos::AppRepo,
 };
 
 #[derive(Debug, Clone, Serialize, ToSchema)]
@@ -12,5 +12,4 @@ pub enum ClientEvent {
     RegionAppUpdated(RegionAppWithInstallations),
     AppRepoUpdated(AppRepo),
     LocalAppUpdated(LocalApp),
-    LocalAppDeleted(AppReference),
 }
