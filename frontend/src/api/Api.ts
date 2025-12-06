@@ -74,11 +74,6 @@ export interface AppRepo {
   name: string;
 }
 
-export interface AppRepoSource {
-  git_url: string;
-  name: string;
-}
-
 export interface BootstrapNodeData {
   network_name: string;
   node_id?: string | null;
@@ -90,9 +85,6 @@ export type ClientEvent =
     }
   | {
       RegionAppUpdated: RegionAppWithInstallations;
-    }
-  | {
-      AppRepoUpdated: AppRepo;
     };
 
 export interface CreateNodeDetails {
@@ -599,22 +591,6 @@ export class Api<
       }),
   };
   nodeStewardApi = {
-    /**
-     * No description
-     *
-     * @name CreateAppRepo
-     * @request POST:/node_steward_api/app_repos
-     */
-    createAppRepo: (data: AppRepoSource, params: RequestParams = {}) =>
-      this.request<any, any>({
-        path: `/node_steward_api/app_repos`,
-        method: "POST",
-        body: data,
-        type: ContentType.Json,
-        format: "json",
-        ...params,
-      }),
-
     /**
      * No description
      *
