@@ -37,11 +37,6 @@ export enum LocalAppInstallStatus {
   StackDeployed = "StackDeployed",
 }
 
-export enum InstallLocalAppError {
-  InUse = "InUse",
-  ServerError = "ServerError",
-}
-
 export enum GetCurrentNodeStewardError {
   InternalServerError = "InternalServerError",
   AdminNotFound = "AdminNotFound",
@@ -79,12 +74,6 @@ export interface AppRepo {
   name: string;
 }
 
-export interface AppRepoAppReference {
-  app_name: string;
-  repo_name: string;
-  version: string;
-}
-
 export interface AppRepoSource {
   git_url: string;
   name: string;
@@ -104,9 +93,6 @@ export type ClientEvent =
     }
   | {
       AppRepoUpdated: AppRepo;
-    }
-  | {
-      LocalAppUpdated: LocalApp;
     };
 
 export interface CreateNodeDetails {
@@ -639,25 +625,6 @@ export class Api<
       this.request<AppRepo, any>({
         path: `/node_steward_api/app_repos/reload/${repoName}`,
         method: "GET",
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @name InstallAppDefinition
-     * @request POST:/node_steward_api/local_apps/definitions
-     */
-    installAppDefinition: (
-      data: AppRepoAppReference,
-      params: RequestParams = {},
-    ) =>
-      this.request<any, InstallLocalAppError>({
-        path: `/node_steward_api/local_apps/definitions`,
-        method: "POST",
-        body: data,
-        type: ContentType.Json,
         format: "json",
         ...params,
       }),

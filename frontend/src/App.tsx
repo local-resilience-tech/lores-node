@@ -20,7 +20,6 @@ import { Notifications } from "@mantine/notifications"
 import { Provider as ReduxProvider } from "react-redux"
 import { theme } from "./mantine-theme"
 import store, { AppStore, loadInitialData } from "./store"
-import NewLocalApp from "./contexts/apps/pages/NewLocalApp"
 import { Stacks } from "./contexts/stacks"
 import { ShowAppRepo, NewAppRepo, AppRepos } from "./contexts/app_repos"
 import { AdminLogin, AuthLayout, SetupAdmin } from "./contexts/auth/admin_auth"
@@ -119,14 +118,6 @@ const router = createBrowserRouter([
                 path: "apps",
                 children: [
                   { path: "", element: <LocalApps /> },
-                  {
-                    path: "new",
-                    element: (
-                      <RequireNodeSteward>
-                        <NewLocalApp />
-                      </RequireNodeSteward>
-                    ),
-                  },
                   { path: "app/:appName", element: <ShowLocalApp /> },
                 ],
               },

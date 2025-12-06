@@ -1,17 +1,5 @@
 use git2::Repository;
 
-pub fn checkout_tag_detatched(repo: &Repository, tag_name: &str) -> Result<(), git2::Error> {
-    let reference = format!("refs/tags/{}", tag_name);
-    let (object, reference) = repo.revparse_ext(&reference)?;
-
-    repo.checkout_tree(&object, None)?;
-
-    match reference {
-        Some(gref) => repo.set_head(gref.name().unwrap()),
-        None => repo.set_head_detached(object.id()),
-    }
-}
-
 pub fn checkout_latest_main(repo: &Repository) -> Result<(), git2::Error> {
     // First fetch the latest changes from origin
     fetch_origin_main(repo)?;

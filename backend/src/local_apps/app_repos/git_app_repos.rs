@@ -1,16 +1,13 @@
-use std::path::PathBuf;
-
 use anyhow::Error;
 use git2::Repository;
 use semver::VersionReq;
 
 use crate::local_apps::{
-    app_repos::{AppRepoAppReference, AppRepoReference},
-    shared::app_definitions::AppVersionDefinition,
+    app_repos::AppRepoReference, shared::app_definitions::AppVersionDefinition,
 };
 
 use super::{
-    fs::{app_repo_app_path, app_repo_at_source, app_repo_path},
+    fs::{app_repo_at_source, app_repo_path},
     git_commands, AppRepo, AppRepoSource,
 };
 
@@ -78,72 +75,6 @@ pub fn git_version_tags(repo: &AppRepoReference) -> Result<Vec<AppVersionDefinit
     Ok(definitions)
 }
 
-#[derive(Debug)]
-pub enum CheckoutAppVersionError {
-    InUse,
-    Other(Error),
-    CallbackError(Error),
-}
-
-impl CheckoutAppVersionError {
-    #[allow(dead_code)]
-    pub fn as_inner(&self) -> Option<&Error> {
-        match self {
-            CheckoutAppVersionError::Other(err) => Some(err),
-            _ => None,
-        }
-    }
-}
-
-pub fn with_checked_out_app_version(
-    app_ref: &AppRepoAppReference,
-    callback: impl FnOnce(&PathBuf) -> Result<(), CheckoutAppVersionError>,
-) -> Result<(), CheckoutAppVersionError> {
-    let repo_ref = app_ref.repo_ref();
-
-    let in_use = is_detached(&repo_ref).map_err(|e| CheckoutAppVersionError::Other(e))?;
-
-    if in_use {
-        println!(
-            "Cannot checkout app version {} for repo {} because it is already detached, that probably means another process is using it.",
-            app_ref.version, app_ref.repo_name,
-        );
-        return Err(CheckoutAppVersionError::InUse);
-    }
-    checkout_app_version(&app_ref).map_err(|e| CheckoutAppVersionError::Other(e))?;
-
-    let path = app_repo_app_path(&app_ref);
-    let callback_result = callback(&path);
-
-    checkout_latest_main(&repo_ref).map_err(|e| CheckoutAppVersionError::Other(e))?;
-
-    callback_result?;
-
-    Ok(())
-}
-
-fn is_detached(repo_ref: &AppRepoReference) -> Result<bool, Error> {
-    let repo = open_repository(repo_ref)?;
-    repo.head_detached().map_err(Error::from)
-}
-
-pub fn checkout_app_version(app_ref: &AppRepoAppReference) -> Result<(), Error> {
-    let repo_ref = app_ref.repo_ref();
-    fetch_origin_main(&repo_ref)?;
-
-    let repo = open_repository(&repo_ref)?;
-    let tag_name = app_ref_to_git_tag(app_ref);
-
-    git_commands::checkout_tag_detatched(&repo, &tag_name)?;
-
-    println!(
-        "Checked out tag: {} on repo {}",
-        tag_name, repo_ref.repo_name
-    );
-
-    Ok(())
-}
-
 pub fn checkout_latest_main(repo_ref: &AppRepoReference) -> Result<(), Error> {
     let git_repo = open_repository(repo_ref)?;
 
@@ -182,10 +113,6 @@ pub fn tag_to_app_definition(tag: &str) -> Option<AppVersionDefinition> {
         eprintln!("Invalid tag for AppDefinition: {}", tag);
         None
     }
-}
-
-fn app_ref_to_git_tag(app_ref: &AppRepoAppReference) -> String {
-    format!("{}-v{}", app_ref.app_name, app_ref.version)
 }
 
 fn open_repository(repo_ref: &AppRepoReference) -> Result<Repository, Error> {

@@ -36,11 +36,3 @@ pub struct AppRepoAppReference {
     pub app_name: String,
     pub version: String,
 }
-
-impl AppRepoAppReference {
-    pub fn repo_ref(&self) -> AppRepoReference {
-        AppRepoReference {
-            repo_name: self.repo_name.clone(),
-        }
-    }
-}

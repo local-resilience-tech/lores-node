@@ -4,7 +4,7 @@ use std::{env, path::PathBuf};
 use super::{
     super::shared::app_definitions::AppVersionDefinition,
     git_app_repos::{git_origin_url, git_version_tags},
-    AppDefinition, AppRepo, AppRepoAppReference, AppRepoReference, AppRepoSource,
+    AppDefinition, AppRepo, AppRepoReference, AppRepoSource,
 };
 
 lazy_static! {
@@ -96,10 +96,6 @@ fn app_repo_source_from_path(path: &PathBuf) -> Option<AppRepoSource> {
 fn versioned_app_definitions_in_repo(repo_ref: &AppRepoReference) -> Vec<AppDefinition> {
     let tag_versions = git_version_tags(repo_ref).unwrap_or_default();
     combine_app_definitions(tag_versions)
-}
-
-pub fn app_repo_app_path(app_ref: &AppRepoAppReference) -> PathBuf {
-    app_repo_path(&app_ref.repo_ref()).join(&app_ref.app_name)
 }
 
 pub fn app_repo_path(repo_ref: &AppRepoReference) -> PathBuf {

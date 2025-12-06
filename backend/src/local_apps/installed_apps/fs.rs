@@ -1,15 +1,7 @@
-use anyhow::{Error, Result};
 use std::fs::{self};
 
 use super::{
-    super::{
-        app_repos::{
-            fs::app_repo_from_app_name,
-            git_app_repos::{with_checked_out_app_version, CheckoutAppVersionError},
-            AppRepoAppReference,
-        },
-        shared::app_definitions::parse_app_definition,
-    },
+    super::{app_repos::fs::app_repo_from_app_name, shared::app_definitions::parse_app_definition},
     app_folder::{AppFolder, InstalledAppDetails},
     apps_folder::AppsFolder,
     AppReference,
@@ -49,52 +41,4 @@ pub fn load_local_app_details(app_ref: &AppReference) -> Option<LocalApp> {
             None
         }
     }
-}
-
-#[derive(Debug)]
-#[allow(dead_code)]
-pub enum InstallAppVersionError {
-    InUse,
-    FileSystemError,
-    LoadingAppError,
-    CheckoutError,
-    OtherError,
-}
-
-pub fn install_app_definition(
-    source: &AppRepoAppReference,
-    target: &AppReference,
-) -> Result<LocalApp, InstallAppVersionError> {
-    with_checked_out_app_version(source, |source_path| {
-        let app_folder = AppFolder::new(target.clone());
-
-        println!(
-            "In install callback `{:?}` to `{:?}`",
-            source_path, app_folder.app_ref.app_name
-        );
-
-        app_folder
-            .ensure_exists()
-            .map_err(|_| CheckoutAppVersionError::CallbackError(Error::msg("FileSystemError")))?;
-
-        app_folder
-            .copy_in_version(&source_path, &source.version)
-            .map_err(|_| CheckoutAppVersionError::CallbackError(Error::msg("FileSystemError")))?;
-
-        app_folder
-            .make_current_version(&source.version)
-            .map_err(|_| CheckoutAppVersionError::CallbackError(Error::msg("FileSystemError")))?;
-
-        Ok(())
-    })
-    .map_err(|e| match e {
-        CheckoutAppVersionError::InUse => InstallAppVersionError::InUse,
-        CheckoutAppVersionError::CallbackError(inner) => match inner.to_string().as_str() {
-            "FileSystemError" => InstallAppVersionError::FileSystemError,
-            _ => InstallAppVersionError::OtherError,
-        },
-        _ => InstallAppVersionError::CheckoutError,
-    })?;
-
-    load_local_app_details(target).ok_or(InstallAppVersionError::LoadingAppError)
 }
