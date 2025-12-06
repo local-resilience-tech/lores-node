@@ -1,5 +1,5 @@
 use super::{
-    fs::{load_config_schema_text, load_config_text, save_config_text},
+    fs::{load_config_schema_text, load_config_text},
     AppReference,
 };
 
@@ -19,42 +19,9 @@ pub fn load_app_config_schema(
     Ok(Some(schema_json))
 }
 
-pub fn validate_app_config(
-    app_ref: &AppReference,
-    config: &serde_json::Value,
-) -> Result<(), anyhow::Error> {
-    let schema = match load_app_config_schema(app_ref)? {
-        Some(s) => s,
-        None => return Ok(()), // No schema means no validation needed
-    };
-
-    match validate_config_against_schema(&schema, config) {
-        true => Ok(()),
-        false => anyhow::bail!("Configuration does not conform to schema"),
-    }
-}
-
-pub fn save_app_config(
-    app_ref: &AppReference,
-    config: &serde_json::Value,
-) -> Result<(), anyhow::Error> {
-    println!("Saving config for app: {:?}", app_ref);
-
-    save_config_text(app_ref, &config.to_string())?;
-
-    Ok(())
-}
-
 pub fn load_app_config(app_ref: &AppReference) -> Result<serde_json::Value, anyhow::Error> {
     let config_text = load_config_text(app_ref)?;
     let config_json = serde_json::from_str(&config_text)?;
 
     Ok(config_json)
-}
-
-fn validate_config_against_schema(
-    schema: &serde_json::Value,
-    instance: &serde_json::Value,
-) -> bool {
-    jsonschema::is_valid(schema, instance)
 }
