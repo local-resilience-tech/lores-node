@@ -42,18 +42,6 @@ export default function ShowLocalApp() {
     handler: onAppRegister,
   })
 
-  if (app.has_config_schema) {
-    actions.push({
-      type: "configure",
-      buttonColor: "green",
-      handler: async (_) => {
-        navigate(`./configure`)
-        return actionSuccess()
-      },
-      primary: true,
-    })
-  }
-
   return (
     <Container>
       <Stack gap="lg">

@@ -51,22 +51,6 @@ pub fn load_local_app_details(app_ref: &AppReference) -> Option<LocalApp> {
     }
 }
 
-pub fn load_config_schema_text(app_ref: &AppReference) -> Result<String, anyhow::Error> {
-    let app_folder = AppFolder::new(app_ref.clone());
-    let config_file_path = app_folder.config_schema_file_path();
-
-    let content = fs::read_to_string(&config_file_path)?;
-    Ok(content)
-}
-
-pub fn load_config_text(app_ref: &AppReference) -> Result<String, anyhow::Error> {
-    let app_folder = AppFolder::new(app_ref.clone());
-    let config_file_path = app_folder.config_file_path();
-
-    let content = fs::read_to_string(&config_file_path)?;
-    Ok(content)
-}
-
 #[derive(Debug)]
 #[allow(dead_code)]
 pub enum InstallAppVersionError {

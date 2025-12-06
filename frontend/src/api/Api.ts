@@ -646,54 +646,6 @@ export class Api<
     /**
      * No description
      *
-     * @name GetLocalAppConfig
-     * @request GET:/node_steward_api/local_apps/app/{app_name}/config
-     */
-    getLocalAppConfig: (appName: string, params: RequestParams = {}) =>
-      this.request<any, any>({
-        path: `/node_steward_api/local_apps/app/${appName}/config`,
-        method: "GET",
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @name UpdateLocalAppConfig
-     * @request PUT:/node_steward_api/local_apps/app/{app_name}/config
-     */
-    updateLocalAppConfig: (
-      appName: string,
-      data: any,
-      params: RequestParams = {},
-    ) =>
-      this.request<any, any>({
-        path: `/node_steward_api/local_apps/app/${appName}/config`,
-        method: "PUT",
-        body: data,
-        type: ContentType.Json,
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @name GetLocalAppConfigSchema
-     * @request GET:/node_steward_api/local_apps/app/{app_name}/config_schema
-     */
-    getLocalAppConfigSchema: (appName: string, params: RequestParams = {}) =>
-      this.request<any, any>({
-        path: `/node_steward_api/local_apps/app/${appName}/config_schema`,
-        method: "GET",
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
      * @name InstallAppDefinition
      * @request POST:/node_steward_api/local_apps/definitions
      */

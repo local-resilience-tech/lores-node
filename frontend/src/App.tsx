@@ -12,12 +12,7 @@ import {
   ThisNode,
 } from "./contexts/this_node"
 import { EventLog, ThisP2PandaNode } from "./contexts/this_p2panda_node"
-import {
-  ShowLocalApp,
-  LocalApps,
-  RegionApps,
-  ConfigureApp,
-} from "./contexts/apps"
+import { ShowLocalApp, LocalApps, RegionApps } from "./contexts/apps"
 import { EnsureRegion, Nodes } from "./contexts/this_region"
 import { MantineProvider } from "@mantine/core"
 import { ModalsProvider } from "@mantine/modals"
@@ -129,14 +124,6 @@ const router = createBrowserRouter([
                     element: (
                       <RequireNodeSteward>
                         <NewLocalApp />
-                      </RequireNodeSteward>
-                    ),
-                  },
-                  {
-                    path: "app/:appName/configure",
-                    element: (
-                      <RequireNodeSteward>
-                        <ConfigureApp />
                       </RequireNodeSteward>
                     ),
                   },

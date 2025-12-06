@@ -3,7 +3,6 @@ use utoipa::ToSchema;
 
 pub mod app_folder;
 mod apps_folder;
-pub mod config;
 pub mod fs;
 
 #[derive(Deserialize, Serialize, ToSchema, Debug, Clone)]

@@ -38,10 +38,6 @@ impl AppFolder {
         self.current_version_path().join("config_schema.json")
     }
 
-    pub fn config_file_path(&self) -> PathBuf {
-        self.config_dir_path(None).join("config.json")
-    }
-
     pub fn config_dir_path(&self, override_base: Option<String>) -> PathBuf {
         self.app_data_path(override_base).join("lores_config")
     }
