@@ -75,19 +75,6 @@ pub fn git_version_tags(repo: &AppRepoReference) -> Result<Vec<AppVersionDefinit
     Ok(definitions)
 }
 
-pub fn checkout_latest_main(repo_ref: &AppRepoReference) -> Result<(), Error> {
-    let git_repo = open_repository(repo_ref)?;
-
-    git_commands::checkout_latest_main(&git_repo)?;
-
-    println!(
-        "Checked out latest main branch from origin for: {}",
-        repo_ref.repo_name
-    );
-
-    Ok(())
-}
-
 fn fetch_origin_main(repo_ref: &AppRepoReference) -> Result<(), Error> {
     let git_repo = open_repository(repo_ref)?;
     git_commands::fetch_origin_main(&git_repo).map_err(Error::from)

@@ -56,19 +56,6 @@ pub fn app_repo_at_source(repo_src: &AppRepoSource) -> Option<AppRepo> {
     })
 }
 
-pub fn app_repo_from_ref(repo_ref: &AppRepoReference) -> Result<AppRepo, anyhow::Error> {
-    let apps = versioned_app_definitions_in_repo(&repo_ref);
-    let git_url = git_origin_url(repo_ref).map_err(|e| {
-        anyhow::Error::msg(format!("Failed to get git URL for app repository: {}", e))
-    })?;
-
-    Ok(AppRepo {
-        name: repo_ref.repo_name.clone(),
-        git_url,
-        apps,
-    })
-}
-
 pub fn list_installed_app_repo_sources() -> Vec<AppRepoSource> {
     list_installed_app_repo_paths()
         .into_iter()
