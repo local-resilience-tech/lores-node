@@ -100,7 +100,6 @@ export interface IrohNodeAddr {
 }
 
 export interface LocalApp {
-  has_config_schema: boolean;
   name: string;
   status: LocalAppInstallStatus;
   url?: null | NodeAppUrl;

@@ -51,7 +51,6 @@ pub struct LocalApp {
     pub name: String,
     pub version: String,
     pub status: LocalAppInstallStatus,
-    pub has_config_schema: bool,
     pub url: Option<NodeAppUrl>,
 }
 

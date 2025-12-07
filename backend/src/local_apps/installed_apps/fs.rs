@@ -23,7 +23,6 @@ pub fn load_local_app_details(app_ref: &AppReference) -> Option<LocalApp> {
                 name: app_definition.name.clone(),
                 version: app_definition.version,
                 status: LocalAppInstallStatus::Installed,
-                has_config_schema: app_folder.has_config_schema(),
                 url: None,
             }),
             Err(_) => {

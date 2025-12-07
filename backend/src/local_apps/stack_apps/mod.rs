@@ -21,7 +21,6 @@ pub fn find_deployed_local_apps(node: &Node) -> Vec<LocalApp> {
             name: app_details.name.clone(),
             version: app_details.version,
             status: LocalAppInstallStatus::Installed,
-            has_config_schema: app_details.has_config_schema,
             url: None,
         })
         .collect();

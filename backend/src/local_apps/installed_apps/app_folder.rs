@@ -9,7 +9,6 @@ use super::{
 pub struct InstalledAppDetails {
     pub name: String,
     pub version: String,
-    pub has_config_schema: bool,
 }
 
 pub struct AppFolder {
@@ -29,20 +28,6 @@ impl AppFolder {
         self.current_version_path().join("lores_app.yml")
     }
 
-    pub fn config_schema_file_path(&self) -> PathBuf {
-        self.current_version_path().join("config_schema.json")
-    }
-
-    pub fn has_config_schema(&self) -> bool {
-        println!(
-            "Checking if config schema exists at: {}",
-            self.config_schema_file_path().display()
-        );
-        let exists = self.config_schema_file_path().exists();
-        println!("Config schema exists: {}", exists);
-        exists
-    }
-
     pub fn app_details(&self) -> Option<InstalledAppDetails> {
         let config_file_path = self.app_definition_file_path();
         match std::fs::read_to_string(config_file_path.clone()) {
@@ -52,7 +37,6 @@ impl AppFolder {
                     .map(|def: AppVersionDefinition| InstalledAppDetails {
                         name: def.name,
                         version: def.version,
-                        has_config_schema: self.has_config_schema(),
                     })
             }
             Err(_) => {
