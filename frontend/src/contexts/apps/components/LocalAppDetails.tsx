@@ -15,10 +15,6 @@ export default function LocalAppDetails({ app }: { app: LocalApp }) {
           <Table.Td>{app.version}</Table.Td>
         </Table.Tr>
         <Table.Tr>
-          <Table.Th>Repository</Table.Th>
-          <Table.Td>{app.repo_name || "N/A"}</Table.Td>
-        </Table.Tr>
-        <Table.Tr>
           <Table.Th>Status</Table.Th>
           <Table.Td>
             <LocalAppStatusBadge status={app.status} />

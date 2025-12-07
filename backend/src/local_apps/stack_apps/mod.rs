@@ -5,7 +5,7 @@ use crate::{
     docker::{docker_stack::docker_stack_ls, DockerStack},
 };
 
-use super::{app_repos::fs::app_repo_from_app_name, installed_apps::fs::find_installed_apps};
+use super::installed_apps::fs::find_installed_apps;
 
 lazy_static! {
     pub static ref HOST_OS_APPS_PATH: String = env::var("HOST_OS_APPS_PATH").unwrap();
@@ -21,7 +21,6 @@ pub fn find_deployed_local_apps(node: &Node) -> Vec<LocalApp> {
             name: app_details.name.clone(),
             version: app_details.version,
             status: LocalAppInstallStatus::Installed,
-            repo_name: app_repo_from_app_name(app_details.name.as_str()).map(|repo| repo.repo_name),
             has_config_schema: app_details.has_config_schema,
             url: None,
         })

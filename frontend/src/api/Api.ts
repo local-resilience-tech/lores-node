@@ -102,7 +102,6 @@ export interface IrohNodeAddr {
 export interface LocalApp {
   has_config_schema: boolean;
   name: string;
-  repo_name?: string | null;
   status: LocalAppInstallStatus;
   url?: null | NodeAppUrl;
   version: string;

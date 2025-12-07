@@ -1,7 +1,7 @@
 use std::fs::{self};
 
 use super::{
-    super::{app_repos::fs::app_repo_from_app_name, shared::app_definitions::parse_app_definition},
+    super::shared::app_definitions::parse_app_definition,
     app_folder::{AppFolder, InstalledAppDetails},
     apps_folder::AppsFolder,
     AppReference,
@@ -23,8 +23,6 @@ pub fn load_local_app_details(app_ref: &AppReference) -> Option<LocalApp> {
                 name: app_definition.name.clone(),
                 version: app_definition.version,
                 status: LocalAppInstallStatus::Installed,
-                repo_name: app_repo_from_app_name(app_definition.name.as_str())
-                    .map(|repo| repo.repo_name),
                 has_config_schema: app_folder.has_config_schema(),
                 url: None,
             }),
