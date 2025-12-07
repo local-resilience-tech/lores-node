@@ -21,7 +21,6 @@ import { Provider as ReduxProvider } from "react-redux"
 import { theme } from "./mantine-theme"
 import store, { AppStore, loadInitialData } from "./store"
 import { Stacks } from "./contexts/stacks"
-import { ShowAppRepo, AppRepos } from "./contexts/app_repos"
 import { AdminLogin, AuthLayout, SetupAdmin } from "./contexts/auth/admin_auth"
 import { AdminLayout, NewNodeSteward, AllNodeStewards } from "./contexts/admin"
 import {
@@ -119,13 +118,6 @@ const router = createBrowserRouter([
                 children: [
                   { path: "", element: <LocalApps /> },
                   { path: "app/:appName", element: <ShowLocalApp /> },
-                ],
-              },
-              {
-                path: "app_repos",
-                children: [
-                  { path: "", element: <AppRepos /> },
-                  { path: "repo/:repoName", element: <ShowAppRepo /> },
                 ],
               },
             ],

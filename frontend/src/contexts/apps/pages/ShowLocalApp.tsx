@@ -1,22 +1,18 @@
 import { Breadcrumbs, Container, Stack, Title, Text, Card } from "@mantine/core"
 import { actionFailure, actionSuccess, Anchor } from "../../../components"
-import { useNavigate, useParams } from "react-router-dom"
+import { useParams } from "react-router-dom"
 import { useAppSelector } from "../../../store"
 import LocalAppDetails from "../components/LocalAppDetails"
-import { useAppRepo } from "../../../store/app_repos"
-import LocalAppUpgrades from "../components/LocalAppUpgrades"
 import { getApi } from "../../../api"
 import { LocalApp } from "../../../api/Api"
 import LocalAppActions, { LocalAppAction } from "../components/LocalAppActions"
 import { IfNodeSteward } from "../../auth/node_steward_auth"
 
 export default function ShowLocalApp() {
-  const navigate = useNavigate()
   const { appName } = useParams<{ appName: string }>()
   const app = useAppSelector((state) =>
     (state.localApps || []).find((a) => a.name === appName)
   )
-  const appRepo = useAppRepo(app?.repo_name)
 
   if (!appName) {
     return <Container>Error: App name is required</Container>
@@ -65,11 +61,6 @@ export default function ShowLocalApp() {
               <LocalAppDetails app={app} />
             </Card.Section>
           </Card>
-        </Stack>
-
-        <Stack>
-          <Title order={2}>Upgrades</Title>
-          <LocalAppUpgrades app={app} appRepo={appRepo} />
         </Stack>
 
         <IfNodeSteward>

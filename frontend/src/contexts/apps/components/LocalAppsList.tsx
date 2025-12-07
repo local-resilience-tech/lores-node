@@ -1,17 +1,11 @@
 import { Table } from "@mantine/core"
-import { AppDefinition, AppRepo, LocalApp } from "../../../api/Api"
+import { LocalApp } from "../../../api/Api"
 import { useLoading } from "../../shared"
 import { Anchor } from "../../../components"
 import LocalAppStatusBadge from "./LocalAppStatusBadge"
 
-export interface LocalAppWithRepo {
-  app: LocalApp
-  repo: AppRepo | undefined
-  repo_app_definition: AppDefinition | undefined
-}
-
 interface AppsListProps {
-  apps: LocalAppWithRepo[]
+  apps: LocalApp[]
 }
 
 export default function LocalAppsList({ apps }: AppsListProps) {
@@ -21,17 +15,12 @@ export default function LocalAppsList({ apps }: AppsListProps) {
         <Table.Tr>
           <Table.Th>Name</Table.Th>
           <Table.Th>Version</Table.Th>
-          <Table.Th>Latest</Table.Th>
           <Table.Th>Status</Table.Th>
         </Table.Tr>
       </Table.Thead>
       <Table.Tbody>
-        {apps.map((appWithRepo) => (
-          <LocalAppRow
-            key={appWithRepo.app.name}
-            app={appWithRepo.app}
-            repo_app_definition={appWithRepo.repo_app_definition}
-          />
+        {apps.map((app) => (
+          <LocalAppRow key={app.name} app={app} />
         ))}
       </Table.Tbody>
     </Table>
@@ -40,20 +29,10 @@ export default function LocalAppsList({ apps }: AppsListProps) {
 
 interface LocalAppRowProps {
   app: LocalApp
-  repo_app_definition?: AppDefinition
 }
 
-function LocalAppRow({ app, repo_app_definition }: LocalAppRowProps) {
+function LocalAppRow({ app }: LocalAppRowProps) {
   const [loading, withLoading] = useLoading(false)
-
-  const handleButtonPress = (
-    app: LocalApp,
-    action: (app: LocalApp) => Promise<void>
-  ) => {
-    withLoading(async () => {
-      await action(app)
-    })
-  }
 
   return (
     <Table.Tr key={app.name}>
@@ -61,7 +40,6 @@ function LocalAppRow({ app, repo_app_definition }: LocalAppRowProps) {
         <Anchor href={`app/${app.name}`}>{app.name}</Anchor>
       </Table.Td>
       <Table.Td>{app.version}</Table.Td>
-      <Table.Td>{repo_app_definition?.latest_version}</Table.Td>
       <Table.Td>
         <LocalAppStatusBadge status={app.status} />
       </Table.Td>

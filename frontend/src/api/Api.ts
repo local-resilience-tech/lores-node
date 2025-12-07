@@ -52,12 +52,6 @@ export interface AdminCredentials {
   password: string;
 }
 
-export interface AppDefinition {
-  latest_version?: string | null;
-  name: string;
-  versions: string[];
-}
-
 export interface AppInstallation {
   app_name: string;
   node_id: string;
@@ -66,12 +60,6 @@ export interface AppInstallation {
 
 export interface AppReference {
   app_name: string;
-}
-
-export interface AppRepo {
-  apps: AppDefinition[];
-  git_url: string;
-  name: string;
 }
 
 export interface BootstrapNodeData {
@@ -686,20 +674,6 @@ export class Api<
       }),
   };
   publicApi = {
-    /**
-     * No description
-     *
-     * @name ListAppRepos
-     * @request GET:/public_api/app_repos
-     */
-    listAppRepos: (params: RequestParams = {}) =>
-      this.request<AppRepo[], any>({
-        path: `/public_api/app_repos`,
-        method: "GET",
-        format: "json",
-        ...params,
-      }),
-
     /**
      * No description
      *
