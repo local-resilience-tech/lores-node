@@ -12,6 +12,5 @@ services:
       - FRONTEND_PATH=/app/frontend
       - DATABASE_URL=sqlite:/app/projections.sqlite
       - CONFIG_PATH=/app/config.toml
-      - APPS_PATH=/local_apps
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock

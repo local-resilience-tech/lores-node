@@ -5,12 +5,6 @@
     state: directory
     mode: "0755"
 
-- name: Ensure that the app directory exists
-  ansible.builtin.file:
-    path: "{{ host_apps_path }}"
-    state: directory
-    mode: "0755"
-
 - name: Ensure LoRes Node stack is configured
   community.docker.docker_stack:
     state: present
@@ -35,11 +29,8 @@
               OPERATION_DATABASE_URL: "sqlite:/data/operations.sqlite"
               NODE_DATA_DATABASE_URL: "sqlite:/data/node_data.sqlite"
               CONFIG_PATH: "/data/config.toml"
-              APPS_PATH: "/apps"
-              HOST_OS_APPS_PATH: "/etc/lores-node/apps"
             volumes:
               - data:/data
-              - "{{ host_apps_path }}:/apps"
               - /var/run/docker.sock:/var/run/docker.sock
             networks:
               - lores

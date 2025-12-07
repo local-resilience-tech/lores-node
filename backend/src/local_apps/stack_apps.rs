@@ -1,15 +1,9 @@
-use std::env;
-
 use crate::{
     data::entities::{LocalApp, LocalAppInstallStatus, Node, NodeAppUrl},
     docker::{docker_stack::docker_stack_ls, DockerStack},
 };
 
 use super::installed_apps::find_installed_apps;
-
-lazy_static! {
-    pub static ref HOST_OS_APPS_PATH: String = env::var("HOST_OS_APPS_PATH").unwrap();
-}
 
 pub fn find_deployed_local_apps(node: &Node) -> Vec<LocalApp> {
     let apps_details = find_installed_apps();
