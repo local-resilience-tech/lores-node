@@ -5,7 +5,7 @@ use crate::{
     docker::{docker_stack::docker_stack_ls, DockerStack},
 };
 
-use super::installed_apps::fs::find_installed_apps;
+use super::installed_apps::find_installed_apps;
 
 lazy_static! {
     pub static ref HOST_OS_APPS_PATH: String = env::var("HOST_OS_APPS_PATH").unwrap();

@@ -4,7 +4,7 @@ use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::{
     api::auth_api::auth_backend::AuthSession,
-    local_apps::installed_apps::{fs::load_local_app_details, AppReference},
+    local_apps::installed_apps::{load_local_app_details, AppReference},
     panda_comms::{
         container::P2PandaContainer,
         lores_events::{AppRegisteredDataV1, LoResEventPayload},
