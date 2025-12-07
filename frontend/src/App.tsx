@@ -12,12 +12,7 @@ import {
   ThisNode,
 } from "./contexts/this_node"
 import { EventLog, ThisP2PandaNode } from "./contexts/this_p2panda_node"
-import {
-  ShowLocalApp,
-  LocalApps,
-  RegionApps,
-  ConfigureApp,
-} from "./contexts/apps"
+import { ShowLocalApp, LocalApps, RegionApps } from "./contexts/apps"
 import { EnsureRegion, Nodes } from "./contexts/this_region"
 import { MantineProvider } from "@mantine/core"
 import { ModalsProvider } from "@mantine/modals"
@@ -25,9 +20,7 @@ import { Notifications } from "@mantine/notifications"
 import { Provider as ReduxProvider } from "react-redux"
 import { theme } from "./mantine-theme"
 import store, { AppStore, loadInitialData } from "./store"
-import NewLocalApp from "./contexts/apps/pages/NewLocalApp"
 import { Stacks } from "./contexts/stacks"
-import { ShowAppRepo, NewAppRepo, AppRepos } from "./contexts/app_repos"
 import { AdminLogin, AuthLayout, SetupAdmin } from "./contexts/auth/admin_auth"
 import { AdminLayout, NewNodeSteward, AllNodeStewards } from "./contexts/admin"
 import {
@@ -124,38 +117,7 @@ const router = createBrowserRouter([
                 path: "apps",
                 children: [
                   { path: "", element: <LocalApps /> },
-                  {
-                    path: "new",
-                    element: (
-                      <RequireNodeSteward>
-                        <NewLocalApp />
-                      </RequireNodeSteward>
-                    ),
-                  },
-                  {
-                    path: "app/:appName/configure",
-                    element: (
-                      <RequireNodeSteward>
-                        <ConfigureApp />
-                      </RequireNodeSteward>
-                    ),
-                  },
                   { path: "app/:appName", element: <ShowLocalApp /> },
-                ],
-              },
-              {
-                path: "app_repos",
-                children: [
-                  { path: "", element: <AppRepos /> },
-                  {
-                    path: "new",
-                    element: (
-                      <RequireNodeSteward>
-                        <NewAppRepo />
-                      </RequireNodeSteward>
-                    ),
-                  },
-                  { path: "repo/:repoName", element: <ShowAppRepo /> },
                 ],
               },
             ],

@@ -49,10 +49,8 @@ pub struct NodeAppUrl {
 #[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
 pub struct LocalApp {
     pub name: String,
-    pub repo_name: Option<String>,
     pub version: String,
     pub status: LocalAppInstallStatus,
-    pub has_config_schema: bool,
     pub url: Option<NodeAppUrl>,
 }
 

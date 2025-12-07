@@ -10,12 +10,6 @@
  * ---------------------------------------------------------------
  */
 
-export enum UpgradeLocalAppError {
-  AppNotFound = "AppNotFound",
-  InUse = "InUse",
-  ServerError = "ServerError",
-}
-
 export enum NodeStewardStatus {
   Enabled = "Enabled",
   Disabled = "Disabled",
@@ -43,11 +37,6 @@ export enum LocalAppInstallStatus {
   StackDeployed = "StackDeployed",
 }
 
-export enum InstallLocalAppError {
-  InUse = "InUse",
-  ServerError = "ServerError",
-}
-
 export enum GetCurrentNodeStewardError {
   InternalServerError = "InternalServerError",
   AdminNotFound = "AdminNotFound",
@@ -63,12 +52,6 @@ export interface AdminCredentials {
   password: string;
 }
 
-export interface AppDefinition {
-  latest_version?: string | null;
-  name: string;
-  versions: string[];
-}
-
 export interface AppInstallation {
   app_name: string;
   node_id: string;
@@ -77,23 +60,6 @@ export interface AppInstallation {
 
 export interface AppReference {
   app_name: string;
-}
-
-export interface AppRepo {
-  apps: AppDefinition[];
-  git_url: string;
-  name: string;
-}
-
-export interface AppRepoAppReference {
-  app_name: string;
-  repo_name: string;
-  version: string;
-}
-
-export interface AppRepoSource {
-  git_url: string;
-  name: string;
 }
 
 export interface BootstrapNodeData {
@@ -107,15 +73,6 @@ export type ClientEvent =
     }
   | {
       RegionAppUpdated: RegionAppWithInstallations;
-    }
-  | {
-      AppRepoUpdated: AppRepo;
-    }
-  | {
-      LocalAppUpdated: LocalApp;
-    }
-  | {
-      LocalAppDeleted: AppReference;
     };
 
 export interface CreateNodeDetails {
@@ -143,16 +100,10 @@ export interface IrohNodeAddr {
 }
 
 export interface LocalApp {
-  has_config_schema: boolean;
   name: string;
-  repo_name?: string | null;
   status: LocalAppInstallStatus;
   url?: null | NodeAppUrl;
   version: string;
-}
-
-export interface LocalAppUpgradeParams {
-  target_version: string;
 }
 
 export interface LogCount {
@@ -434,7 +385,7 @@ export class HttpClient<SecurityDataType = unknown> {
 
 /**
  * @title lores-node
- * @version 0.13.11
+ * @version 0.13.12
  * @license
  */
 export class Api<
@@ -629,165 +580,6 @@ export class Api<
     /**
      * No description
      *
-     * @name CreateAppRepo
-     * @request POST:/node_steward_api/app_repos
-     */
-    createAppRepo: (data: AppRepoSource, params: RequestParams = {}) =>
-      this.request<any, any>({
-        path: `/node_steward_api/app_repos`,
-        method: "POST",
-        body: data,
-        type: ContentType.Json,
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @name ReloadAppRepo
-     * @request GET:/node_steward_api/app_repos/reload/{repo_name}
-     */
-    reloadAppRepo: (repoName: string, params: RequestParams = {}) =>
-      this.request<AppRepo, any>({
-        path: `/node_steward_api/app_repos/reload/${repoName}`,
-        method: "GET",
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @name DeleteLocalApp
-     * @request DELETE:/node_steward_api/local_apps/app/{app_name}
-     */
-    deleteLocalApp: (appName: string, params: RequestParams = {}) =>
-      this.request<any, InstallLocalAppError>({
-        path: `/node_steward_api/local_apps/app/${appName}`,
-        method: "DELETE",
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @name GetLocalAppConfig
-     * @request GET:/node_steward_api/local_apps/app/{app_name}/config
-     */
-    getLocalAppConfig: (appName: string, params: RequestParams = {}) =>
-      this.request<any, any>({
-        path: `/node_steward_api/local_apps/app/${appName}/config`,
-        method: "GET",
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @name UpdateLocalAppConfig
-     * @request PUT:/node_steward_api/local_apps/app/{app_name}/config
-     */
-    updateLocalAppConfig: (
-      appName: string,
-      data: any,
-      params: RequestParams = {},
-    ) =>
-      this.request<any, any>({
-        path: `/node_steward_api/local_apps/app/${appName}/config`,
-        method: "PUT",
-        body: data,
-        type: ContentType.Json,
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @name GetLocalAppConfigSchema
-     * @request GET:/node_steward_api/local_apps/app/{app_name}/config_schema
-     */
-    getLocalAppConfigSchema: (appName: string, params: RequestParams = {}) =>
-      this.request<any, any>({
-        path: `/node_steward_api/local_apps/app/${appName}/config_schema`,
-        method: "GET",
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @name DeployLocalApp
-     * @request POST:/node_steward_api/local_apps/app/{app_name}/deploy
-     */
-    deployLocalApp: (appName: string, params: RequestParams = {}) =>
-      this.request<any, string>({
-        path: `/node_steward_api/local_apps/app/${appName}/deploy`,
-        method: "POST",
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @name RemoveDeploymentOfLocalApp
-     * @request DELETE:/node_steward_api/local_apps/app/{app_name}/deploy
-     */
-    removeDeploymentOfLocalApp: (appName: string, params: RequestParams = {}) =>
-      this.request<any, string>({
-        path: `/node_steward_api/local_apps/app/${appName}/deploy`,
-        method: "DELETE",
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @name UpgradeLocalApp
-     * @request POST:/node_steward_api/local_apps/app/{app_name}/upgrade
-     */
-    upgradeLocalApp: (
-      appName: string,
-      data: LocalAppUpgradeParams,
-      params: RequestParams = {},
-    ) =>
-      this.request<any, UpgradeLocalAppError>({
-        path: `/node_steward_api/local_apps/app/${appName}/upgrade`,
-        method: "POST",
-        body: data,
-        type: ContentType.Json,
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @name InstallAppDefinition
-     * @request POST:/node_steward_api/local_apps/definitions
-     */
-    installAppDefinition: (
-      data: AppRepoAppReference,
-      params: RequestParams = {},
-    ) =>
-      this.request<any, InstallLocalAppError>({
-        path: `/node_steward_api/local_apps/definitions`,
-        method: "POST",
-        body: data,
-        type: ContentType.Json,
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
      * @name RegisterApp
      * @request POST:/node_steward_api/local_apps/register
      */
@@ -880,20 +672,6 @@ export class Api<
       }),
   };
   publicApi = {
-    /**
-     * No description
-     *
-     * @name ListAppRepos
-     * @request GET:/public_api/app_repos
-     */
-    listAppRepos: (params: RequestParams = {}) =>
-      this.request<AppRepo[], any>({
-        path: `/public_api/app_repos`,
-        method: "GET",
-        format: "json",
-        ...params,
-      }),
-
     /**
      * No description
      *

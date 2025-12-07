@@ -129,12 +129,6 @@ export default function Layout() {
                   )
                 }
               />
-              <NavLink
-                label="App repositories"
-                href="/this_node/app_repos"
-                leftSection={<IconBrandGit size={iconSize} />}
-                onClick={toggle}
-              />
             </>
           )}
         </AppShell.Section>

@@ -13,14 +13,10 @@ services:
       - NODE_DATA_DATABASE_URL=sqlite:/app/node_data.sqlite
       - OPERATION_DATABASE_URL=sqlite:/app/operations.sqlite
       - CONFIG_PATH=/app/data/config.toml
-      - APP_REPOS_PATH=/app/app_repos
-      - APPS_PATH=/app/apps
       - BASE_URL=http://lores.localhost:5173
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - data:/app/data
-      - apps:/app/apps
-      - ${LORES_APP_REPOS_PATH}:/app/app_repos
   traefik:
     logging:
       options:
@@ -50,4 +46,3 @@ networks:
     attachable: true
 volumes:
   data:
-  apps:
