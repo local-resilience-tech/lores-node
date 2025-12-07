@@ -8,5 +8,4 @@
     - lores_node
   vars:
     host_apps_path: /etc/lores-node/apps
-    host_app_repos_path: /etc/lores-node/app_repos
     client_config_path: /lores_config
