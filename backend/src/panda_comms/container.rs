@@ -232,7 +232,7 @@ impl P2PandaContainer {
         };
 
         node_api
-            .publish_persisted(TOPIC_NAME, &encoded_payload, Some(LOG_ID), Some(extensions))
+            .publish_persisted(TOPIC_NAME, &encoded_payload, Some(LOG_ID), extensions)
             .await?;
 
         Ok(())

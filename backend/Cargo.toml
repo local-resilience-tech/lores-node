@@ -13,7 +13,7 @@ axum-login = "0.17.0"
 chrono = { version = "0.4.42", features = ["serde"] }
 confy = "1.0.0"
 copy_dir = "0.1.3"
-experimental-node = { git = "https://github.com/p2panda/experimental-node", rev = "b7a61e634b90f79a37ea02d7eeade264da34b9cc" }
+experimental-node = { git = "https://github.com/p2panda/experimental-node", branch = "latest-p2panda-main" }
 futures-util = "0.3.31"
 git2 = { version = "0.20.2", features = ["vendored-openssl"] }
 hex = "0.4.3"
@@ -21,13 +21,19 @@ iroh = "0.34.1"
 jsonschema = "0.33.0"
 lazy_static = "1.5.0"
 openssl = { version = "0.10.73", features = ["vendored"] }
-p2panda-blobs = "0.4.0"
-p2panda-core = "0.4.0"
-p2panda-discovery = { version = "0.4.0", features = ["mdns"] }
-p2panda-net = "0.4.0"
-p2panda-store = { version = "0.4.0", features = ["sqlite"] }
-p2panda-stream = "0.4.0"
-p2panda-sync = { version = "0.4.0", features = ["log-sync"] }
+p2panda-blobs = { git = "https://github.com/p2panda/p2panda.git", rev = "5425873f747ea6751217193471e3f45a2b12e8b8" }
+p2panda-core = { git = "https://github.com/p2panda/p2panda.git", rev = "5425873f747ea6751217193471e3f45a2b12e8b8" }
+p2panda-discovery = { git = "https://github.com/p2panda/p2panda.git", rev = "5425873f747ea6751217193471e3f45a2b12e8b8", features = [
+  "mdns",
+] }
+p2panda-net = { git = "https://github.com/p2panda/p2panda.git", rev = "5425873f747ea6751217193471e3f45a2b12e8b8" }
+p2panda-store = { git = "https://github.com/p2panda/p2panda.git", rev = "5425873f747ea6751217193471e3f45a2b12e8b8", features = [
+  "sqlite",
+] }
+p2panda-stream = { git = "https://github.com/p2panda/p2panda.git", rev = "5425873f747ea6751217193471e3f45a2b12e8b8" }
+p2panda-sync = { git = "https://github.com/p2panda/p2panda.git", rev = "5425873f747ea6751217193471e3f45a2b12e8b8", features = [
+  "log-sync",
+] }
 password-auth = "1.0.0"
 pwgen2 = "0.7.3"
 semver = "1.0.27"
