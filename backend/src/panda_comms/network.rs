@@ -63,7 +63,7 @@ impl Network {
         bootstrap_node_id: Option<PublicKey>,
         operation_store: &OperationStore,
     ) -> Result<Self, NetworkError> {
-        println!("Initializing P2Panda Network...");
+        println!("Initializing P2Panda Network (id: {})", network_id.to_hex());
 
         let address_book = AddressBook::builder().spawn().await?;
         if let Some(bootstrap_info) = bootstrap_node_info(bootstrap_node_id) {
@@ -88,6 +88,9 @@ impl Network {
             .spawn()
             .await?;
 
+        let heartbeat_tx = gossip.stream(NODE_ADMIN_TOPIC_ID).await?;
+        let mut heartbeat_rx = heartbeat_tx.subscribe();
+
         let topic_map = LoResNodeTopicMap::default();
         topic_map
             .insert(NODE_ADMIN_TOPIC_ID, private_key.public_key(), LOG_ID)
@@ -101,6 +104,17 @@ impl Network {
         )
         .spawn()
         .await?;
+
+        // Receive and log each (ephemeral) message.
+        {
+            tokio::spawn(async move {
+                loop {
+                    if let Some(Ok(message)) = heartbeat_rx.next().await {
+                        println!("received message: {:?}", message);
+                    }
+                }
+            });
+        }
 
         let sync_tx = log_sync.stream(NODE_ADMIN_TOPIC_ID, true).await?;
         let mut sync_rx = sync_tx.subscribe().await.map_err(|e| {
