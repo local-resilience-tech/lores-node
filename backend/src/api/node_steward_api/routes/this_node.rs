@@ -1,16 +1,12 @@
-use axum::{http::StatusCode, response::IntoResponse, Extension, Json};
+use axum::{http::StatusCode, response::IntoResponse, Json};
 use serde::Deserialize;
 use utoipa::ToSchema;
 use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::{
-    api::auth_api::auth_backend::AuthSession,
     data::entities::Node,
-    panda_comms::{
-        container::P2PandaContainer,
-        lores_events::{
-            LoResEventPayload, NodeAnnouncedDataV1, NodeStatusPostedDataV1, NodeUpdatedDataV1,
-        },
+    panda_comms::lores_events::{
+        LoResEventPayload, NodeAnnouncedDataV1, NodeStatusPostedDataV1, NodeUpdatedDataV1,
     },
 };
 
@@ -36,17 +32,19 @@ struct CreateNodeDetails {
     request_body(content = CreateNodeDetails, content_type = "application/json"),
 )]
 async fn create_this_node(
-    Extension(panda_container): Extension<P2PandaContainer>,
-    auth_session: AuthSession,
+    // Extension(panda_container): Extension<P2PandaContainer>,
+    // auth_session: AuthSession,
     axum::extract::Json(data): axum::extract::Json<CreateNodeDetails>,
 ) -> impl IntoResponse {
     let event_payload = LoResEventPayload::NodeAnnounced(NodeAnnouncedDataV1 {
         name: data.name.clone(),
     });
+    println!("Created event payload: {:?}", event_payload);
 
-    let result = panda_container
-        .publish_persisted(event_payload, auth_session.user)
-        .await;
+    // let result = panda_container
+    //     .publish_persisted(event_payload, auth_session.user)
+    //     .await;
+    let result: Result<(), ()> = Ok(());
 
     match result {
         Ok(_) => {
@@ -59,9 +57,9 @@ async fn create_this_node(
             };
             (StatusCode::CREATED, Json(node)).into_response()
         }
-        Err(e) => {
-            eprintln!("Error publishing event: {}", e);
-            (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response()
+        Err(_) => {
+            // eprintln!("Error publishing event: {}", e);
+            (StatusCode::INTERNAL_SERVER_ERROR, ()).into_response()
         }
     }
 }
@@ -84,8 +82,8 @@ struct UpdateNodeDetails {
     request_body(content = UpdateNodeDetails, content_type = "application/json"),
 )]
 async fn update_this_node(
-    Extension(panda_container): Extension<P2PandaContainer>,
-    auth_session: AuthSession,
+    // Extension(panda_container): Extension<P2PandaContainer>,
+    // auth_session: AuthSession,
     axum::extract::Json(data): axum::extract::Json<UpdateNodeDetails>,
 ) -> impl IntoResponse {
     println!("update node: {:?}", data);
@@ -96,10 +94,12 @@ async fn update_this_node(
         domain_on_local_network: data.domain_on_local_network.clone(),
         domain_on_internet: data.domain_on_internet.clone(),
     });
+    println!("Prepared event payload: {:?}", event_payload);
 
-    let result = panda_container
-        .publish_persisted(event_payload, auth_session.user)
-        .await;
+    // let result = panda_container
+    //     .publish_persisted(event_payload, auth_session.user)
+    //     .await;
+    let result: Result<(), ()> = Ok(());
 
     match result {
         Ok(_) => {
@@ -112,9 +112,9 @@ async fn update_this_node(
             };
             (StatusCode::OK, Json(node)).into_response()
         }
-        Err(e) => {
-            eprintln!("Error publishing event: {}", e);
-            (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response()
+        Err(_) => {
+            // eprintln!("Error publishing event: {}", e);
+            (StatusCode::INTERNAL_SERVER_ERROR, ()).into_response()
         }
     }
 }
@@ -135,8 +135,8 @@ struct NodeStatusData {
     request_body(content = NodeStatusData, content_type = "application/json"),
 )]
 async fn post_node_status(
-    Extension(panda_container): Extension<P2PandaContainer>,
-    auth_session: AuthSession,
+    // Extension(panda_container): Extension<P2PandaContainer>,
+    // auth_session: AuthSession,
     axum::extract::Json(data): axum::extract::Json<NodeStatusData>,
 ) -> impl IntoResponse {
     println!("post status: {:?}", data);
@@ -145,16 +145,18 @@ async fn post_node_status(
         text: data.text.clone(),
         state: data.state.clone(),
     });
+    println!("Created event payload: {:?}", event_payload);
 
-    let result = panda_container
-        .publish_persisted(event_payload, auth_session.user)
-        .await;
+    // let result = panda_container
+    //     .publish_persisted(event_payload, auth_session.user)
+    //     .await;
+    let result: Result<(), ()> = Ok(());
 
     match result {
         Ok(_) => (StatusCode::OK, Json(())).into_response(),
-        Err(e) => {
-            eprintln!("Error publishing event: {}", e);
-            (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response()
+        Err(_) => {
+            // eprintln!("Error publishing event: {}", e);
+            (StatusCode::INTERNAL_SERVER_ERROR, ()).into_response()
         }
     }
 }

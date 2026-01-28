@@ -1,2 +1,4 @@
 public_key_hex = "4969389a4f2f03a4b4538dfae9d4ba568c54b1afcb6f545b5ef91aa28c6b1117"
 private_key_hex = "e17e7d3b7d685c2b848e032b899c0050d124bdc5d0691958fd9c26d9580834a4"
+network_name = "merri-bek"
+hashed_admin_password = "$argon2id$v=19$m=19456,t=2,p=1$+HknmRUHMBrS3DsR7H0ihQ$UXSybctfg01qFOl1A6dqMQcf8qNHCuaaGwU5nTcC1qc"

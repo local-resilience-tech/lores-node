@@ -4,10 +4,8 @@ use axum::{
     Extension,
 };
 use axum_login::AuthManagerLayerBuilder;
-use p2panda_core::PublicKey;
 use sqlx::SqlitePool;
 use time::Duration;
-use tokio::sync::mpsc;
 use tower_http::{cors::CorsLayer, trace::TraceLayer};
 use tower_sessions::{Expiry, MemoryStore, SessionManagerLayer};
 use tracing_subscriber::EnvFilter;
@@ -16,18 +14,13 @@ use utoipa_axum::router::OpenApiRouter;
 use utoipa_swagger_ui::SwaggerUi;
 
 use crate::{
+    // event_handlers::handle_event,,
     api::{
         api_router,
         auth_api::auth_backend::AppAuthBackend,
         public_api::realtime::{self, RealtimeState},
     },
     config::{config::LoresNodeConfig, config_state::LoresNodeConfigState},
-    event_handlers::handle_event,
-    panda_comms::{
-        config::ThisP2PandaNodeRepo,
-        container::{build_public_key_from_hex, P2PandaContainer},
-        lores_events::LoResEvent,
-    },
     static_server::frontend_handler,
 };
 
@@ -113,11 +106,11 @@ async fn main() {
     let realtime_state = RealtimeState::new();
 
     // P2PANDA
-    let (channel_tx, channel_rx): (mpsc::Sender<LoResEvent>, mpsc::Receiver<LoResEvent>) =
-        mpsc::channel(32);
-    let container = P2PandaContainer::new(channel_tx);
-    start_panda(&config_state, &container, &operations_pool).await;
-    start_panda_event_handler(channel_rx, projections_pool.clone(), realtime_state.clone());
+    // let (channel_tx, channel_rx): (mpsc::Sender<LoResEvent>, mpsc::Receiver<LoResEvent>) =
+    //     mpsc::channel(32);
+    // let container = P2PandaContainer::new(channel_tx);
+    // start_panda(&config_state, &container, &operations_pool).await;
+    // start_panda_event_handler(channel_rx, projections_pool.clone(), realtime_state.clone());
 
     // ROUTES
     let (router, api) = OpenApiRouter::with_openapi(ApiDoc::openapi())
@@ -136,7 +129,7 @@ async fn main() {
             node_data_pool,
         }))
         .layer(Extension(config_state))
-        .layer(Extension(container))
+        // .layer(Extension(container))
         .layer(auth_layer)
         .layer(Extension(realtime_state));
 
@@ -152,58 +145,58 @@ async fn main() {
     axum::serve(listener, app).await.unwrap();
 }
 
-async fn start_panda(
-    config_state: &LoresNodeConfigState,
-    container: &P2PandaContainer,
-    operations_pool: &SqlitePool,
-) {
-    let repo = ThisP2PandaNodeRepo::init();
-    let config = config_state.get().await;
+// async fn start_panda(
+//     config_state: &LoresNodeConfigState,
+//     container: &P2PandaContainer,
+//     operations_pool: &SqlitePool,
+// ) {
+//     let repo = ThisP2PandaNodeRepo::init();
+//     let config = config_state.get().await;
 
-    match config.network_name.clone() {
-        Some(network_name) => {
-            println!("Using network name: {:?}", network_name);
-            container.set_network_name(network_name.clone()).await;
-        }
-        None => {
-            println!("No network name set");
-        }
-    }
+//     match config.network_name.clone() {
+//         Some(network_name) => {
+//             println!("Using network name: {:?}", network_name);
+//             container.set_network_name(network_name.clone()).await;
+//         }
+//         None => {
+//             println!("No network name set");
+//         }
+//     }
 
-    let private_key = match repo.get_or_create_private_key(config_state).await {
-        Ok(key) => key,
-        Err(e) => {
-            println!("Failed to get or create private key: {:?}", e);
-            return;
-        }
-    };
+//     let private_key = match repo.get_or_create_private_key(config_state).await {
+//         Ok(key) => key,
+//         Err(e) => {
+//             println!("Failed to get or create private key: {:?}", e);
+//             return;
+//         }
+//     };
 
-    container.set_private_key(private_key).await;
+//     container.set_private_key(private_key).await;
 
-    let bootstrap_details = repo.get_bootstrap_details(config_state).await;
+//     let bootstrap_details = repo.get_bootstrap_details(config_state).await;
 
-    let bootstrap_node_id: Option<PublicKey> = match &bootstrap_details {
-        Some(details) => build_public_key_from_hex(details.node_id.clone()),
-        None => None,
-    };
-    container.set_bootstrap_node_id(bootstrap_node_id).await;
+//     let bootstrap_node_id: Option<PublicKey> = match &bootstrap_details {
+//         Some(details) => build_public_key_from_hex(details.node_id.clone()),
+//         None => None,
+//     };
+//     container.set_bootstrap_node_id(bootstrap_node_id).await;
 
-    if let Err(e) = container.start(operations_pool).await {
-        println!("Failed to start P2PandaContainer on liftoff: {:?}", e);
-    }
-}
+//     if let Err(e) = container.start(operations_pool).await {
+//         println!("Failed to start P2PandaContainer on liftoff: {:?}", e);
+//     }
+// }
 
-fn start_panda_event_handler(
-    channel_rx: mpsc::Receiver<LoResEvent>,
-    pool: SqlitePool,
-    realtime_state: RealtimeState,
-) {
-    tokio::spawn(async move {
-        let mut events_rx = channel_rx;
+// fn start_panda_event_handler(
+//     channel_rx: mpsc::Receiver<LoResEvent>,
+//     pool: SqlitePool,
+//     realtime_state: RealtimeState,
+// ) {
+//     tokio::spawn(async move {
+//         let mut events_rx = channel_rx;
 
-        // Start the event loop to handle events
-        while let Some(event) = events_rx.recv().await {
-            handle_event(event, &pool, &realtime_state).await;
-        }
-    });
-}
+//         // Start the event loop to handle events
+//         while let Some(event) = events_rx.recv().await {
+//             handle_event(event, &pool, &realtime_state).await;
+//         }
+//     });
+// }
