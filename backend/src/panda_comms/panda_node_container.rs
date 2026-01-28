@@ -1,14 +1,15 @@
 use p2panda_core::{identity::PUBLIC_KEY_LEN, Hash, PrivateKey, PublicKey};
 use sqlx::SqlitePool;
 use std::sync::Arc;
-use tokio::sync::Mutex;
+use tokio::sync::{mpsc, Mutex};
 
-use crate::{
-    api::auth_api::auth_backend::User,
-    panda_comms::{lores_events::LoResEventPayload, panda_node_inner::PandaPublishError},
+use crate::api::auth_api::auth_backend::User;
+
+use super::{
+    lores_events::{LoResEvent, LoResEventPayload},
+    panda_node::{PandaNode, PandaNodeError},
+    panda_node_inner::PandaPublishError,
 };
-
-use super::panda_node::{PandaNode, PandaNodeError};
 
 #[derive(Default, Clone)]
 pub struct NodeParams {
@@ -21,15 +22,17 @@ pub struct NodeParams {
 pub struct PandaNodeContainer {
     params: Arc<Mutex<NodeParams>>,
     node: Arc<Mutex<Option<PandaNode>>>,
+    events_tx: mpsc::Sender<LoResEvent>,
 }
 
 impl PandaNodeContainer {
-    pub fn new() -> Self {
+    pub fn new(events_tx: mpsc::Sender<LoResEvent>) -> Self {
         let params = Arc::new(Mutex::new(NodeParams::default()));
 
         PandaNodeContainer {
             params,
             node: Arc::new(Mutex::new(None)),
+            events_tx,
         }
     }
 

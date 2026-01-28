@@ -1,3 +1,4 @@
+use futures_util::StreamExt;
 use p2panda_core::{Hash, PrivateKey, PublicKey};
 use p2panda_net::{
     address_book::AddressBookError,
@@ -5,8 +6,10 @@ use p2panda_net::{
     gossip::GossipError,
     iroh_endpoint::EndpointError,
     iroh_mdns::{MdnsDiscoveryError, MdnsDiscoveryMode},
+    utils::ShortFormat,
     AddressBook, Endpoint, Gossip, MdnsDiscovery, TopicId,
 };
+use p2panda_sync::protocols::TopicLogSyncEvent;
 use thiserror::Error;
 
 use super::{
@@ -43,6 +46,8 @@ pub enum NetworkError {
     Gossip(#[from] GossipError),
     #[error(transparent)]
     LogSync(#[from] LogSyncError),
+    #[error("LogSync stream error: {0}")]
+    SyncHandleError(String),
 }
 
 #[allow(dead_code)]
@@ -96,6 +101,41 @@ impl Network {
         )
         .spawn()
         .await?;
+
+        let sync_tx = log_sync.stream(NODE_ADMIN_TOPIC_ID, true).await?;
+        let mut sync_rx = sync_tx.subscribe().await.map_err(|e| {
+            NetworkError::SyncHandleError(format!("Failed to subscribe to log sync: {}", e))
+        })?;
+
+        // Receive messages from the sync stream.
+        {
+            tokio::task::spawn(async move {
+                println!("P2Panda Network initialized, starting sync stream...");
+                while let Some(Ok(from_sync)) = sync_rx.next().await {
+                    match from_sync.event {
+                        TopicLogSyncEvent::SyncStarted(_) => {
+                            println!("started sync session with {}", from_sync.remote.fmt_short());
+                        }
+                        TopicLogSyncEvent::SyncFinished(metrics) => {
+                            println!(
+                            "finished sync session with {}, bytes received = {}, bytes sent = {}",
+                            from_sync.remote.fmt_short(),
+                            metrics.total_bytes_remote.unwrap_or_default(),
+                            metrics.total_bytes_local.unwrap_or_default()
+                        );
+                        }
+                        TopicLogSyncEvent::Operation(operation) => {
+                            println!(
+                                "Received operation from {}: {:?}",
+                                from_sync.remote.fmt_short(),
+                                operation
+                            );
+                        }
+                        _ => (),
+                    }
+                }
+            });
+        }
 
         Ok(Network { endpoint, log_sync })
     }

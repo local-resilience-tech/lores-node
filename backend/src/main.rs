@@ -7,6 +7,7 @@ use axum_login::AuthManagerLayerBuilder;
 use p2panda_core::PublicKey;
 use sqlx::SqlitePool;
 use time::Duration;
+use tokio::sync::mpsc;
 use tower_http::{cors::CorsLayer, trace::TraceLayer};
 use tower_sessions::{Expiry, MemoryStore, SessionManagerLayer};
 use tracing_subscriber::EnvFilter;
@@ -22,8 +23,10 @@ use crate::{
         public_api::realtime::{self, RealtimeState},
     },
     config::{config::LoresNodeConfig, config_state::LoresNodeConfigState},
+    event_handlers::handle_event,
     panda_comms::{
         config::ThisP2PandaNodeRepo,
+        lores_events::LoResEvent,
         panda_node_container::{build_public_key_from_hex, PandaNodeContainer},
     },
     static_server::frontend_handler,
@@ -111,12 +114,11 @@ async fn main() {
     let realtime_state = RealtimeState::new();
 
     // P2PANDA
-    // let (channel_tx, channel_rx): (mpsc::Sender<LoResEvent>, mpsc::Receiver<LoResEvent>) =
-    //     mpsc::channel(32);
-    // let container = P2PandaContainer::new(channel_tx);
-    let panda_container = PandaNodeContainer::new();
+    let (channel_tx, channel_rx): (mpsc::Sender<LoResEvent>, mpsc::Receiver<LoResEvent>) =
+        mpsc::channel(32);
+    let panda_container = PandaNodeContainer::new(channel_tx);
     start_panda(&config_state, &panda_container, &operations_pool).await;
-    // start_panda_event_handler(channel_rx, projections_pool.clone(), realtime_state.clone());
+    start_panda_event_handler(channel_rx, projections_pool.clone(), realtime_state.clone());
 
     // ROUTES
     let (router, api) = OpenApiRouter::with_openapi(ApiDoc::openapi())
@@ -192,17 +194,17 @@ async fn start_panda(
     }
 }
 
-// fn start_panda_event_handler(
-//     channel_rx: mpsc::Receiver<LoResEvent>,
-//     pool: SqlitePool,
-//     realtime_state: RealtimeState,
-// ) {
-//     tokio::spawn(async move {
-//         let mut events_rx = channel_rx;
+fn start_panda_event_handler(
+    channel_rx: mpsc::Receiver<LoResEvent>,
+    pool: SqlitePool,
+    realtime_state: RealtimeState,
+) {
+    tokio::spawn(async move {
+        let mut events_rx = channel_rx;
 
-//         // Start the event loop to handle events
-//         while let Some(event) = events_rx.recv().await {
-//             handle_event(event, &pool, &realtime_state).await;
-//         }
-//     });
-// }
+        // Start the event loop to handle events
+        while let Some(event) = events_rx.recv().await {
+            handle_event(event, &pool, &realtime_state).await;
+        }
+    });
+}
