@@ -102,6 +102,19 @@ impl PandaNodeContainer {
 
         Ok(())
     }
+
+    pub async fn is_started(&self) -> bool {
+        let node = self.node.lock().await;
+        node.is_some()
+    }
+
+    pub async fn get_public_key(&self) -> Result<PublicKey, Box<dyn std::error::Error>> {
+        let params_lock = self.params.lock().await;
+        match params_lock.private_key {
+            Some(ref key) => Ok(key.public_key()),
+            None => Err("Private key not set".into()),
+        }
+    }
 }
 
 // // TODO: This should be in p2panda-core, submit a PR

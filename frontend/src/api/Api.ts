@@ -93,12 +93,6 @@ export interface DockerStackWithServices {
   services: DockerService[];
 }
 
-export interface IrohNodeAddr {
-  direct_addresses: string[];
-  node_id: string;
-  relay_url?: string | null;
-}
-
 export interface LocalApp {
   name: string;
   status: LocalAppInstallStatus;
@@ -177,15 +171,7 @@ export interface P2PandaLogCounts {
 }
 
 export interface P2PandaNodeDetails {
-  iroh_node_addr: IrohNodeAddr;
   panda_node_id: string;
-  peers: PandaNodeAddress[];
-}
-
-export interface PandaNodeAddress {
-  direct_addresses: string[];
-  public_key: string;
-  relay_url?: string | null;
 }
 
 export interface Region {
@@ -385,7 +371,7 @@ export class HttpClient<SecurityDataType = unknown> {
 
 /**
  * @title lores-node
- * @version 0.13.12
+ * @version 0.14.1
  * @license
  */
 export class Api<
