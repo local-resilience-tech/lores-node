@@ -3,6 +3,11 @@ use sqlx::SqlitePool;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
+use crate::{
+    api::auth_api::auth_backend::User,
+    panda_comms::{lores_events::LoResEventPayload, panda_node_inner::PandaPublishError},
+};
+
 use super::panda_node::{PandaNode, PandaNodeError};
 
 #[derive(Default, Clone)]
@@ -113,6 +118,19 @@ impl PandaNodeContainer {
         match params_lock.private_key {
             Some(ref key) => Ok(key.public_key()),
             None => Err("Private key not set".into()),
+        }
+    }
+
+    pub async fn publish_persisted(
+        &self,
+        event_payload: LoResEventPayload,
+        current_user: Option<User>,
+    ) -> Result<(), PandaPublishError> {
+        let node_lock = self.node.lock().await;
+
+        match node_lock.as_ref() {
+            Some(node) => node.publish_persisted(event_payload, current_user).await,
+            None => Err(PandaPublishError::NodeNotStarted),
         }
     }
 }

@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 /// Custom extensions for p2panda header.
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub struct LoResMeshExtensions {
     // /// Identifier of the topic this operation relates to.
     // #[serde(rename = "d")]

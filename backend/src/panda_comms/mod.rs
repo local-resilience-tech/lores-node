@@ -1,4 +1,5 @@
 pub mod config;
+mod event_encoding;
 pub mod log_access;
 pub mod lores_events;
 mod network;

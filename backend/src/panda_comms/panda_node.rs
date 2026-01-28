@@ -3,7 +3,12 @@ use sqlx::SqlitePool;
 use std::sync::Arc;
 use thiserror::Error;
 
-use crate::panda_comms::{network, operations};
+use crate::{
+    api::auth_api::auth_backend::User,
+    panda_comms::{
+        lores_events::LoResEventPayload, network, operations, panda_node_inner::PandaPublishError,
+    },
+};
 
 use super::panda_node_inner::PandaNodeInner;
 
@@ -75,5 +80,15 @@ impl PandaNode {
             inner: Arc::new(inner),
             runtime,
         })
+    }
+
+    pub async fn publish_persisted(
+        &self,
+        event_payload: LoResEventPayload,
+        current_user: Option<User>,
+    ) -> Result<(), PandaPublishError> {
+        self.inner
+            .publish_persisted(event_payload, current_user)
+            .await
     }
 }

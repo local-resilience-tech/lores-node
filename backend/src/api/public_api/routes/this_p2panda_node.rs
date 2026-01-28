@@ -34,7 +34,7 @@ async fn show_this_panda_node(
     }
 
     let public_key = panda_container.get_public_key().await.unwrap();
-    println!("public key: {:?}", public_key);
+    println!("public key: {:?}", public_key.to_hex());
 
     let node_details = P2PandaNodeDetails {
         panda_node_id: public_key.to_hex(),
