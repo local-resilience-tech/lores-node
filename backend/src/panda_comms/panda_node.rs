@@ -12,6 +12,8 @@ pub enum PandaNodeError {
     RuntimeStartup(#[from] std::io::Error),
     #[error(transparent)]
     RuntimeSpawn(#[from] tokio::task::JoinError),
+    #[error(transparent)]
+    NetworkError(#[from] network::NetworkError),
 }
 
 pub struct RequiredNodeParams {
@@ -55,10 +57,14 @@ impl PandaNode {
 
         let network_id = params.network_id.clone();
         let private_key = params.private_key.clone();
+        let bootstrap_node_id = params.bootstrap_node_id.clone();
 
-        let inner = runtime
-            .spawn(async move { PandaNodeInner::new(network_id, private_key).await })
-            .await??;
+        let inner =
+            runtime
+                .spawn(async move {
+                    PandaNodeInner::new(network_id, private_key, bootstrap_node_id).await
+                })
+                .await??;
 
         Ok(PandaNode {
             inner: Arc::new(inner),
