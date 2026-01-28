@@ -1,5 +1,8 @@
+use p2panda_core::{Hash, PrivateKey, PublicKey};
 use std::sync::Arc;
 use thiserror::Error;
+
+use crate::panda_comms::network;
 
 use super::panda_node_inner::PandaNodeInner;
 
@@ -11,8 +14,15 @@ pub enum PandaNodeError {
     RuntimeSpawn(#[from] tokio::task::JoinError),
 }
 
+pub struct RequiredNodeParams {
+    pub private_key: PrivateKey,
+    pub network_id: Hash,
+    pub bootstrap_node_id: Option<PublicKey>,
+}
+
 pub struct PandaNode {
     inner: Arc<PandaNodeInner>,
+    runtime: OwnedRuntimeOrHandle,
 }
 
 enum OwnedRuntimeOrHandle {
@@ -32,7 +42,7 @@ impl std::ops::Deref for OwnedRuntimeOrHandle {
 }
 
 impl PandaNode {
-    pub async fn new() -> Result<Self, PandaNodeError> {
+    pub async fn new(params: &RequiredNodeParams) -> Result<Self, PandaNodeError> {
         let runtime = if let Ok(handle) = tokio::runtime::Handle::try_current() {
             OwnedRuntimeOrHandle::Handle(handle)
         } else {
@@ -43,12 +53,16 @@ impl PandaNode {
             )
         };
 
+        let network_id = params.network_id.clone();
+        let private_key = params.private_key.clone();
+
         let inner = runtime
-            .spawn(async move { PandaNodeInner::new().await })
+            .spawn(async move { PandaNodeInner::new(network_id, private_key).await })
             .await??;
 
         Ok(PandaNode {
             inner: Arc::new(inner),
+            runtime,
         })
     }
 }
