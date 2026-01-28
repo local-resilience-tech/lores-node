@@ -102,62 +102,6 @@ impl PandaNodeContainer {
 
         Ok(())
     }
-
-    // async fn start_for(
-    //     &self,
-    //     private_key: PrivateKey,
-    //     network_name: String,
-    //     boostrap_node_id: Option<PublicKey>,
-    //     store_pool: &SqlitePool,
-    // ) -> Result<()> {
-    //     let relay_url: RelayUrl = RELAY_URL.parse().unwrap();
-    //     let temp_blobs_root_dir = tempfile::tempdir().expect("temp dir");
-
-    //     let store = SqliteStore::<LogId, NodeExtensions>::new(store_pool.clone());
-
-    //     let topic_map = TopicMap::new();
-
-    //     println!(
-    //         "Starting node. Network name: {}, Bootstrap ID: {:?}",
-    //         network_name,
-    //         boostrap_node_id.map(|key| key.to_string())
-    //     );
-
-    //     let (node, stream_rx, network_events_rx) = Node::new(
-    //         network_name,
-    //         private_key.clone(),
-    //         boostrap_node_id,
-    //         Some(relay_url),
-    //         store,
-    //         temp_blobs_root_dir.keep(),
-    //         topic_map.clone(),
-    //     )
-    //     .await?;
-
-    //     let mut node_api = NodeApi::new(node, topic_map);
-
-    //     let public_key = private_key.public_key();
-
-    //     node_api
-    //         .add_topic_log(&public_key, TOPIC_NAME, LOG_ID)
-    //         .await?;
-
-    //     // subscribe to main topic
-    //     let result = node_api.subscribe_persisted(TOPIC_NAME).await;
-    //     match result {
-    //         Ok(_) => println!("Subscribed to topic: {}", TOPIC_NAME),
-    //         Err(err) => {
-    //             eprintln!("Failed to subscribe to topic {}: {}", TOPIC_NAME, err);
-    //         }
-    //     }
-
-    //     // put the node in the container
-    //     self.set_node_api(Some(node_api)).await;
-
-    //     self.listen_for_messages(stream_rx, network_events_rx);
-
-    //     Ok(())
-    // }
 }
 
 // // TODO: This should be in p2panda-core, submit a PR

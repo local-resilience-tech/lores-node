@@ -1,7 +1,11 @@
 use p2panda_core::{Hash, PrivateKey, PublicKey};
 use p2panda_net::{
-    address_book::AddressBookError, addrs::NodeInfo, iroh_endpoint::EndpointError, AddressBook,
-    Endpoint,
+    address_book::AddressBookError,
+    addrs::NodeInfo,
+    gossip::GossipError,
+    iroh_endpoint::EndpointError,
+    iroh_mdns::{MdnsDiscoveryError, MdnsDiscoveryMode},
+    AddressBook, Endpoint, Gossip, MdnsDiscovery,
 };
 use thiserror::Error;
 
@@ -17,6 +21,10 @@ pub enum NetworkError {
     AddressBook(#[from] AddressBookError),
     #[error(transparent)]
     Endpoint(#[from] EndpointError),
+    #[error(transparent)]
+    MdnsDiscovery(#[from] MdnsDiscoveryError),
+    #[error(transparent)]
+    Gossip(#[from] GossipError),
 }
 
 #[allow(dead_code)]
@@ -30,6 +38,8 @@ impl Network {
         private_key: PrivateKey,
         bootstrap_node_id: Option<PublicKey>,
     ) -> Result<Self, NetworkError> {
+        println!("Initializing P2Panda Network...");
+
         let address_book = AddressBook::builder().spawn().await?;
         if let Some(bootstrap_info) = bootstrap_node_info(bootstrap_node_id) {
             if let Err(e) = address_book.insert_node_info(bootstrap_info).await {
@@ -41,6 +51,15 @@ impl Network {
             .network_id(network_id.into())
             .private_key(private_key.clone())
             .relay_url(RELAY_URL.clone())
+            .spawn()
+            .await?;
+
+        MdnsDiscovery::builder(address_book.clone(), endpoint.clone())
+            .mode(MdnsDiscoveryMode::Active)
+            .spawn()
+            .await?;
+
+        Gossip::builder(address_book.clone(), endpoint.clone())
             .spawn()
             .await?;
 
