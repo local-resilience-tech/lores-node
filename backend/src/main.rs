@@ -21,6 +21,7 @@ use crate::{
         public_api::realtime::{self, RealtimeState},
     },
     config::{config::LoresNodeConfig, config_state::LoresNodeConfigState},
+    panda_comms::panda_node::PandaNode,
     static_server::frontend_handler,
 };
 
@@ -109,6 +110,9 @@ async fn main() {
     // let (channel_tx, channel_rx): (mpsc::Sender<LoResEvent>, mpsc::Receiver<LoResEvent>) =
     //     mpsc::channel(32);
     // let container = P2PandaContainer::new(channel_tx);
+    let panda_node = PandaNode::new()
+        .await
+        .expect("Failed to initialize PandaNode");
     // start_panda(&config_state, &container, &operations_pool).await;
     // start_panda_event_handler(channel_rx, projections_pool.clone(), realtime_state.clone());
 
