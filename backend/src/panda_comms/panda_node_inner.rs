@@ -3,7 +3,7 @@ use sqlx::SqlitePool;
 use thiserror::Error;
 use tokio::sync::RwLock;
 
-use crate::{api::auth_api::auth_backend::User, panda_comms::operations::LoResMeshExtensions};
+use crate::api::auth_api::auth_backend::User;
 
 use super::{
     event_encoding::encode_lores_event_payload,

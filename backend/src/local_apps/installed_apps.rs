@@ -40,6 +40,7 @@ pub fn find_installed_apps() -> Vec<InstalledAppDetails> {
         .collect()
 }
 
+#[allow(dead_code)]
 pub fn load_local_app_details(app_ref: &AppReference) -> Option<LocalApp> {
     dummy_local_apps()
         .into_iter()

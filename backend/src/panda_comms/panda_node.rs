@@ -5,9 +5,7 @@ use thiserror::Error;
 
 use crate::{
     api::auth_api::auth_backend::User,
-    panda_comms::{
-        lores_events::LoResEventPayload, network, operations, panda_node_inner::PandaPublishError,
-    },
+    panda_comms::{lores_events::LoResEventPayload, network, panda_node_inner::PandaPublishError},
 };
 
 use super::panda_node_inner::PandaNodeInner;
@@ -30,6 +28,7 @@ pub struct RequiredNodeParams {
 
 pub struct PandaNode {
     inner: Arc<PandaNodeInner>,
+    #[allow(dead_code)]
     runtime: OwnedRuntimeOrHandle,
 }
 

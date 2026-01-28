@@ -22,6 +22,7 @@ pub struct NodeParams {
 pub struct PandaNodeContainer {
     params: Arc<Mutex<NodeParams>>,
     node: Arc<Mutex<Option<PandaNode>>>,
+    #[allow(dead_code)]
     events_tx: mpsc::Sender<LoResEvent>,
 }
 

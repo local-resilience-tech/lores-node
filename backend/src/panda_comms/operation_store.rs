@@ -40,10 +40,6 @@ impl OperationStore {
         self.inner.clone()
     }
 
-    pub fn inner(&self) -> &SqliteStore<LogId, LoResMeshExtensions> {
-        &self.inner
-    }
-
     /// Creates, signs and stores new operation in the author's append-only log.
     pub async fn create_operation(
         &self,

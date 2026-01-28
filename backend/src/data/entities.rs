@@ -23,13 +23,6 @@ pub struct NodeDetails {
 }
 
 #[derive(sqlx::FromRow, Serialize, Deserialize, ToSchema)]
-pub struct NodeConfig {
-    pub id: String,
-    pub this_node_id: String,
-    pub name: String,
-}
-
-#[derive(sqlx::FromRow, Serialize, Deserialize, ToSchema)]
 pub struct Region {
     pub network_id: String,
 }

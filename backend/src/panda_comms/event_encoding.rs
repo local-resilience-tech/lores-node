@@ -22,6 +22,7 @@ fn encode_lores_wire_event(wire_event: LoResWirePayload) -> Result<Vec<u8>, Enco
     encode_cbor(&wire_event)
 }
 
+#[allow(dead_code)]
 fn decode_lores_wire_event(encoded_payload: &[u8]) -> Result<LoResWirePayload, DecodeError> {
     let result = decode_cbor(encoded_payload);
 
@@ -38,6 +39,7 @@ fn decode_lores_wire_event(encoded_payload: &[u8]) -> Result<LoResWirePayload, D
     }
 }
 
+#[allow(dead_code)]
 pub fn decode_lores_event_payload(
     encoded_payload: &[u8],
 ) -> Result<LoResEventPayload, anyhow::Error> {
@@ -54,6 +56,7 @@ pub fn decode_lores_event_payload(
     }
 }
 
+#[allow(dead_code)]
 pub fn decode_lores_event(
     header: LoResEventHeader,
     encoded_payload: &[u8],
