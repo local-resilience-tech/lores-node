@@ -1,8 +1,9 @@
 use p2panda_core::{Hash, PrivateKey, PublicKey};
+use sqlx::SqlitePool;
 use std::sync::Arc;
 use thiserror::Error;
 
-use crate::panda_comms::network;
+use crate::panda_comms::{network, operations};
 
 use super::panda_node_inner::PandaNodeInner;
 
@@ -44,7 +45,10 @@ impl std::ops::Deref for OwnedRuntimeOrHandle {
 }
 
 impl PandaNode {
-    pub async fn new(params: &RequiredNodeParams) -> Result<Self, PandaNodeError> {
+    pub async fn new(
+        params: &RequiredNodeParams,
+        operations_pool: &SqlitePool,
+    ) -> Result<Self, PandaNodeError> {
         let runtime = if let Ok(handle) = tokio::runtime::Handle::try_current() {
             OwnedRuntimeOrHandle::Handle(handle)
         } else {
@@ -58,13 +62,14 @@ impl PandaNode {
         let network_id = params.network_id.clone();
         let private_key = params.private_key.clone();
         let bootstrap_node_id = params.bootstrap_node_id.clone();
+        let operations_pool = operations_pool.clone();
 
-        let inner =
-            runtime
-                .spawn(async move {
-                    PandaNodeInner::new(network_id, private_key, bootstrap_node_id).await
-                })
-                .await??;
+        let inner = runtime
+            .spawn(async move {
+                PandaNodeInner::new(network_id, private_key, bootstrap_node_id, &operations_pool)
+                    .await
+            })
+            .await??;
 
         Ok(PandaNode {
             inner: Arc::new(inner),

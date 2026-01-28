@@ -24,7 +24,6 @@ use crate::{
     config::{config::LoresNodeConfig, config_state::LoresNodeConfigState},
     panda_comms::{
         config::ThisP2PandaNodeRepo,
-        panda_node::PandaNode,
         panda_node_container::{build_public_key_from_hex, PandaNodeContainer},
     },
     static_server::frontend_handler,
@@ -116,9 +115,6 @@ async fn main() {
     //     mpsc::channel(32);
     // let container = P2PandaContainer::new(channel_tx);
     let panda_container = PandaNodeContainer::new();
-    // let panda_node = PandaNode::new()
-    //     .await
-    //     .expect("Failed to initialize PandaNode");
     start_panda(&config_state, &panda_container, &operations_pool).await;
     // start_panda_event_handler(channel_rx, projections_pool.clone(), realtime_state.clone());
 

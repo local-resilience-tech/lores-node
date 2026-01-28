@@ -87,7 +87,7 @@ impl PandaNodeContainer {
             bootstrap_node_id: boostrap_node_id,
         };
 
-        let panda_node = PandaNode::new(&required_params).await?;
+        let panda_node = PandaNode::new(&required_params, operations_pool).await?;
 
         {
             let mut node_lock = self.node.lock().await;

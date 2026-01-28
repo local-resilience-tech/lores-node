@@ -5,15 +5,31 @@ use p2panda_net::{
     gossip::GossipError,
     iroh_endpoint::EndpointError,
     iroh_mdns::{MdnsDiscoveryError, MdnsDiscoveryMode},
-    AddressBook, Endpoint, Gossip, MdnsDiscovery,
+    AddressBook, Endpoint, Gossip, MdnsDiscovery, TopicId,
 };
 use thiserror::Error;
+
+use super::{
+    operation_store::{OperationStore, LOG_ID},
+    operations::LoResMeshExtensions,
+    topic::{LoResNodeTopicMap, LogId},
+};
 
 lazy_static! {
     pub static ref RELAY_URL: iroh::RelayUrl = "https://euc1-1.relay.n0.iroh-canary.iroh.link"
         .parse()
         .expect("valid relay URL");
 }
+
+pub const NODE_ADMIN_TOPIC_ID: TopicId = [0u8; 32];
+
+pub type LogSync = p2panda_net::sync::LogSync<
+    p2panda_store::SqliteStore<LogId, LoResMeshExtensions>,
+    LogId,
+    LoResMeshExtensions,
+    LoResNodeTopicMap,
+>;
+pub type LogSyncError = p2panda_net::sync::LogSyncError<LoResMeshExtensions>;
 
 #[derive(Error, Debug)]
 pub enum NetworkError {
@@ -25,11 +41,14 @@ pub enum NetworkError {
     MdnsDiscovery(#[from] MdnsDiscoveryError),
     #[error(transparent)]
     Gossip(#[from] GossipError),
+    #[error(transparent)]
+    LogSync(#[from] LogSyncError),
 }
 
 #[allow(dead_code)]
 pub struct Network {
     endpoint: Endpoint,
+    log_sync: LogSync,
 }
 
 impl Network {
@@ -37,6 +56,7 @@ impl Network {
         network_id: Hash,
         private_key: PrivateKey,
         bootstrap_node_id: Option<PublicKey>,
+        operation_store: &OperationStore,
     ) -> Result<Self, NetworkError> {
         println!("Initializing P2Panda Network...");
 
@@ -59,11 +79,25 @@ impl Network {
             .spawn()
             .await?;
 
-        Gossip::builder(address_book.clone(), endpoint.clone())
+        let gossip = Gossip::builder(address_book.clone(), endpoint.clone())
             .spawn()
             .await?;
 
-        Ok(Network { endpoint })
+        let topic_map = LoResNodeTopicMap::default();
+        topic_map
+            .insert(NODE_ADMIN_TOPIC_ID, private_key.public_key(), LOG_ID)
+            .await;
+
+        let log_sync = LogSync::builder(
+            operation_store.clone_inner(),
+            topic_map,
+            endpoint.clone(),
+            gossip.clone(),
+        )
+        .spawn()
+        .await?;
+
+        Ok(Network { endpoint, log_sync })
     }
 }
 
