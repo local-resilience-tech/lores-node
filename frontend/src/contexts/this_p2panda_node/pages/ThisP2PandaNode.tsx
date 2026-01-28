@@ -58,22 +58,6 @@ export default function ThisP2PandaNode() {
                 <pre>{node.panda_node_id}</pre>
               </Table.Td>
             </Table.Tr>
-            <Table.Tr>
-              <Table.Td>Iroh Node Addr</Table.Td>
-              <Table.Td>
-                <Box maw={"md"}>
-                  <pre>{JSON.stringify(node.iroh_node_addr, null, 2)}</pre>
-                </Box>
-              </Table.Td>
-            </Table.Tr>
-            <Table.Tr>
-              <Table.Td>Peers</Table.Td>
-              <Table.Td>
-                <Box maw={"md"}>
-                  <pre>{JSON.stringify(node.peers, null, 2)}</pre>
-                </Box>
-              </Table.Td>
-            </Table.Tr>
           </Table.Tbody>
         </Table>
       </Stack>
