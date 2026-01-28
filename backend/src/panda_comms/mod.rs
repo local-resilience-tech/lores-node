@@ -1,3 +1,4 @@
+pub mod config;
 pub mod log_access;
 pub mod lores_events;
 mod network;

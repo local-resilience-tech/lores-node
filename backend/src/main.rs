@@ -4,6 +4,7 @@ use axum::{
     Extension,
 };
 use axum_login::AuthManagerLayerBuilder;
+use p2panda_core::PublicKey;
 use sqlx::SqlitePool;
 use time::Duration;
 use tower_http::{cors::CorsLayer, trace::TraceLayer};
@@ -21,7 +22,11 @@ use crate::{
         public_api::realtime::{self, RealtimeState},
     },
     config::{config::LoresNodeConfig, config_state::LoresNodeConfigState},
-    panda_comms::{panda_node::PandaNode, panda_node_container::PandaNodeContainer},
+    panda_comms::{
+        config::ThisP2PandaNodeRepo,
+        panda_node::PandaNode,
+        panda_node_container::{build_public_key_from_hex, PandaNodeContainer},
+    },
     static_server::frontend_handler,
 };
 
@@ -114,7 +119,7 @@ async fn main() {
     // let panda_node = PandaNode::new()
     //     .await
     //     .expect("Failed to initialize PandaNode");
-    // start_panda(&config_state, &container, &operations_pool).await;
+    start_panda(&config_state, &panda_container, &operations_pool).await;
     // start_panda_event_handler(channel_rx, projections_pool.clone(), realtime_state.clone());
 
     // ROUTES
@@ -150,46 +155,46 @@ async fn main() {
     axum::serve(listener, app).await.unwrap();
 }
 
-// async fn start_panda(
-//     config_state: &LoresNodeConfigState,
-//     container: &P2PandaContainer,
-//     operations_pool: &SqlitePool,
-// ) {
-//     let repo = ThisP2PandaNodeRepo::init();
-//     let config = config_state.get().await;
+async fn start_panda(
+    config_state: &LoresNodeConfigState,
+    container: &PandaNodeContainer,
+    operations_pool: &SqlitePool,
+) {
+    let repo = ThisP2PandaNodeRepo::init();
+    let config = config_state.get().await;
 
-//     match config.network_name.clone() {
-//         Some(network_name) => {
-//             println!("Using network name: {:?}", network_name);
-//             container.set_network_name(network_name.clone()).await;
-//         }
-//         None => {
-//             println!("No network name set");
-//         }
-//     }
+    match config.network_name.clone() {
+        Some(network_name) => {
+            println!("Using network name: {:?}", network_name);
+            container.set_network_name(network_name.clone()).await;
+        }
+        None => {
+            println!("No network name set");
+        }
+    }
 
-//     let private_key = match repo.get_or_create_private_key(config_state).await {
-//         Ok(key) => key,
-//         Err(e) => {
-//             println!("Failed to get or create private key: {:?}", e);
-//             return;
-//         }
-//     };
+    let private_key = match repo.get_or_create_private_key(config_state).await {
+        Ok(key) => key,
+        Err(e) => {
+            println!("Failed to get or create private key: {:?}", e);
+            return;
+        }
+    };
 
-//     container.set_private_key(private_key).await;
+    container.set_private_key(private_key).await;
 
-//     let bootstrap_details = repo.get_bootstrap_details(config_state).await;
+    let bootstrap_details = repo.get_bootstrap_details(config_state).await;
 
-//     let bootstrap_node_id: Option<PublicKey> = match &bootstrap_details {
-//         Some(details) => build_public_key_from_hex(details.node_id.clone()),
-//         None => None,
-//     };
-//     container.set_bootstrap_node_id(bootstrap_node_id).await;
+    let bootstrap_node_id: Option<PublicKey> = match &bootstrap_details {
+        Some(details) => build_public_key_from_hex(details.node_id.clone()),
+        None => None,
+    };
+    container.set_bootstrap_node_id(bootstrap_node_id).await;
 
-//     if let Err(e) = container.start(operations_pool).await {
-//         println!("Failed to start P2PandaContainer on liftoff: {:?}", e);
-//     }
-// }
+    if let Err(e) = container.start(operations_pool).await {
+        println!("Failed to start P2PandaContainer on liftoff: {:?}", e);
+    }
+}
 
 // fn start_panda_event_handler(
 //     channel_rx: mpsc::Receiver<LoResEvent>,
