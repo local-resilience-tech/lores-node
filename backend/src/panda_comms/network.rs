@@ -1,14 +1,16 @@
 use futures_util::StreamExt;
+
 use p2panda_core::{Hash, Operation, PrivateKey, PublicKey};
 use p2panda_net::{
     address_book::AddressBookError,
     addrs::NodeInfo,
+    discovery::DiscoveryError,
     gossip::GossipError,
     iroh_endpoint::EndpointError,
     iroh_mdns::{MdnsDiscoveryError, MdnsDiscoveryMode},
     sync::{SyncHandle, SyncHandleError},
     utils::ShortFormat,
-    AddressBook, Endpoint, Gossip, MdnsDiscovery, TopicId,
+    AddressBook, Discovery, Endpoint, Gossip, MdnsDiscovery, TopicId,
 };
 use p2panda_sync::protocols::TopicLogSyncEvent;
 use thiserror::Error;
@@ -43,6 +45,8 @@ pub enum NetworkError {
     Endpoint(#[from] EndpointError),
     #[error(transparent)]
     MdnsDiscovery(#[from] MdnsDiscoveryError),
+    #[error(transparent)]
+    Discovery(#[from] DiscoveryError),
     #[error(transparent)]
     Gossip(#[from] GossipError),
     #[error(transparent)]
@@ -86,6 +90,10 @@ impl Network {
             .spawn()
             .await?;
 
+        let discovery = Discovery::builder(address_book.clone(), endpoint.clone())
+            .spawn()
+            .await?;
+
         let gossip = Gossip::builder(address_book.clone(), endpoint.clone())
             .spawn()
             .await?;
@@ -106,6 +114,16 @@ impl Network {
         )
         .spawn()
         .await?;
+
+        // Subscribe to discovery events
+        let mut discovery_events_rx = discovery.events().await?;
+        {
+            tokio::spawn(async move {
+                while let Ok(event) = discovery_events_rx.recv().await {
+                    println!("Discovery event: {:?}", event);
+                }
+            });
+        }
 
         // Receive and log each (ephemeral) message.
         {
@@ -147,9 +165,16 @@ impl Network {
                                 operation
                             );
                         }
-                        _ => (),
+                        _ => {
+                            println!(
+                                "Unhandled sync event from {}: {:?}",
+                                from_sync.remote.fmt_short(),
+                                from_sync.event
+                            );
+                        }
                     }
                 }
+                println!("Sync stream read loop ended.");
             });
         }
 
