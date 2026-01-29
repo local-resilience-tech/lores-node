@@ -21,6 +21,8 @@ pub enum PandaPublishError {
     EncodeError(#[from] EncodeError),
     #[error("Node not started")]
     NodeNotStarted,
+    #[error("Sync error: {0}")]
+    SyncError(String),
 }
 
 #[allow(dead_code)]
@@ -69,9 +71,17 @@ impl PandaNodeInner {
 
         let encoded_payload = encode_lores_event_payload(event_payload, metadata)?;
 
-        self.operation_store
+        let operation = self
+            .operation_store
             .create_operation(&self.private_key, Some(&encoded_payload))
             .await?;
+
+        // Publish the operation to the network
+        let network = self.network.write().await;
+        network
+            .publish_operation(operation)
+            .await
+            .map_err(|e| PandaPublishError::SyncError(e.to_string()))?;
 
         Ok(())
     }

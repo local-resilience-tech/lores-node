@@ -1,11 +1,12 @@
 use futures_util::StreamExt;
-use p2panda_core::{Hash, PrivateKey, PublicKey};
+use p2panda_core::{Hash, Operation, PrivateKey, PublicKey};
 use p2panda_net::{
     address_book::AddressBookError,
     addrs::NodeInfo,
     gossip::GossipError,
     iroh_endpoint::EndpointError,
     iroh_mdns::{MdnsDiscoveryError, MdnsDiscoveryMode},
+    sync::{SyncHandle, SyncHandleError},
     utils::ShortFormat,
     AddressBook, Endpoint, Gossip, MdnsDiscovery, TopicId,
 };
@@ -54,6 +55,7 @@ pub enum NetworkError {
 pub struct Network {
     endpoint: Endpoint,
     log_sync: LogSync,
+    sync_tx: SyncHandle<Operation<LoResMeshExtensions>, TopicLogSyncEvent<LoResMeshExtensions>>,
 }
 
 impl Network {
@@ -151,7 +153,22 @@ impl Network {
             });
         }
 
-        Ok(Network { endpoint, log_sync })
+        Ok(Network {
+            endpoint,
+            log_sync,
+            sync_tx,
+        })
+    }
+
+    pub async fn publish_operation(
+        &self,
+        operation: Operation<LoResMeshExtensions>,
+    ) -> Result<
+        (),
+        SyncHandleError<Operation<LoResMeshExtensions>, TopicLogSyncEvent<LoResMeshExtensions>>,
+    > {
+        self.sync_tx.publish(operation).await?;
+        Ok(())
     }
 }
 
