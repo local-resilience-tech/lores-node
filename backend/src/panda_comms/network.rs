@@ -167,7 +167,14 @@ impl Network {
         (),
         SyncHandleError<Operation<LoResMeshExtensions>, TopicLogSyncEvent<LoResMeshExtensions>>,
     > {
-        self.sync_tx.publish(operation).await?;
+        println!(
+            "Publishing operation to LogSync: {:?}",
+            operation.hash.to_hex()
+        );
+        self.sync_tx.publish(operation).await.map_err(|e| {
+            println!("Error publishing operation: {:?}", e);
+            e
+        })?;
         Ok(())
     }
 }
