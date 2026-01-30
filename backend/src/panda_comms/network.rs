@@ -83,24 +83,24 @@ impl Network {
         //     }
         // }
 
-        let mut topic_rx = address_book.watch_topic(NODE_ADMIN_TOPIC_ID, false).await?;
+        // let mut topic_rx = address_book.watch_topic(NODE_ADMIN_TOPIC_ID, false).await?;
 
-        // Subscribe to topic updates
-        {
-            tokio::spawn(async move {
-                while let Some(update) = topic_rx.recv().await {
-                    let update_hexes = match &update.difference {
-                        Some(diff) => diff.iter().map(|h| h.to_hex()).collect::<Vec<_>>(),
-                        None => vec![],
-                    };
-                    let value_hexes = update.value.iter().map(|h| h.to_hex()).collect::<Vec<_>>();
-                    println!(
-                        "  AddressBook topic update: diff {:?}, value {:?}",
-                        update_hexes, value_hexes
-                    );
-                }
-            });
-        }
+        // // Subscribe to topic updates
+        // {
+        //     tokio::spawn(async move {
+        //         while let Some(update) = topic_rx.recv().await {
+        //             let update_hexes = match &update.difference {
+        //                 Some(diff) => diff.iter().map(|h| h.to_hex()).collect::<Vec<_>>(),
+        //                 None => vec![],
+        //             };
+        //             let value_hexes = update.value.iter().map(|h| h.to_hex()).collect::<Vec<_>>();
+        //             println!(
+        //                 "  AddressBook topic update: diff {:?}, value {:?}",
+        //                 update_hexes, value_hexes
+        //             );
+        //         }
+        //     });
+        // }
 
         let endpoint = Endpoint::builder(address_book.clone())
             .network_id(network_id.into())
@@ -109,12 +109,12 @@ impl Network {
             .spawn()
             .await?;
 
-        MdnsDiscovery::builder(address_book.clone(), endpoint.clone())
-            .mode(MdnsDiscoveryMode::Active)
+        let discovery = Discovery::builder(address_book.clone(), endpoint.clone())
             .spawn()
             .await?;
 
-        let discovery = Discovery::builder(address_book.clone(), endpoint.clone())
+        MdnsDiscovery::builder(address_book.clone(), endpoint.clone())
+            .mode(MdnsDiscoveryMode::Active)
             .spawn()
             .await?;
 
