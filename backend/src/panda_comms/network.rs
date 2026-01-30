@@ -57,8 +57,13 @@ pub enum NetworkError {
 
 #[allow(dead_code)]
 pub struct Network {
-    // endpoint: Endpoint,
+    address_book: AddressBook,
+    mdns_discovery: MdnsDiscovery,
+    discovery: Discovery,
+    gossip: Gossip,
     log_sync: LogSync,
+    endpoint: Endpoint,
+
     sync_tx: SyncHandle<Operation<LoResMeshExtensions>, TopicLogSyncEvent<LoResMeshExtensions>>,
 }
 
@@ -109,7 +114,7 @@ impl Network {
             .spawn()
             .await?;
 
-        MdnsDiscovery::builder(address_book.clone(), endpoint.clone())
+        let mdns_discovery = MdnsDiscovery::builder(address_book.clone(), endpoint.clone())
             .mode(MdnsDiscoveryMode::Active)
             .spawn()
             .await?;
@@ -127,32 +132,27 @@ impl Network {
             .insert(NODE_ADMIN_TOPIC_ID, private_key.public_key(), LOG_ID)
             .await;
 
-        // Subscribe to discovery events
-        let mut discovery_events_rx = discovery.events().await?;
-        {
-            tokio::spawn(async move {
-                while let Ok(event) = discovery_events_rx.recv().await {
-                    println!("  Discovery event: {:?}", event);
-                }
-            });
-        }
+        // let gossip_tx = gossip.stream(NODE_ADMIN_TOPIC_ID).await?;
+        // let mut gossip_rx = gossip_tx.subscribe();
+        // // Receive and log each (ephemeral) message.
+        // {
+        //     tokio::spawn(async move {
+        //         loop {
+        //             if let Some(Ok(message)) = gossip_rx.next().await {
+        //                 println!("  received gossip message: {:?}", message);
+        //             }
+        //         }
+        //     });
+        // }
 
-        let gossip_tx = gossip.stream(NODE_ADMIN_TOPIC_ID).await?;
-        let mut gossip_rx = gossip_tx.subscribe();
-        // Receive and log each (ephemeral) message.
-        {
-            tokio::spawn(async move {
-                loop {
-                    if let Some(Ok(message)) = gossip_rx.next().await {
-                        println!("  received gossip message: {:?}", message);
-                    }
-                }
-            });
-        }
-
-        let log_sync = LogSync::builder(operation_store.clone_inner(), topic_map, endpoint, gossip)
-            .spawn()
-            .await?;
+        let log_sync = LogSync::builder(
+            operation_store.clone_inner(),
+            topic_map.clone(),
+            endpoint.clone(),
+            gossip.clone(),
+        )
+        .spawn()
+        .await?;
 
         let sync_tx = log_sync.stream(NODE_ADMIN_TOPIC_ID, true).await?;
         let mut sync_rx = sync_tx.subscribe().await.map_err(|e| {
@@ -200,8 +200,12 @@ impl Network {
         }
 
         Ok(Network {
-            // endpoint,
+            address_book,
+            mdns_discovery,
+            discovery,
+            gossip,
             log_sync,
+            endpoint,
             sync_tx,
         })
     }
