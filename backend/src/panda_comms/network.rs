@@ -57,7 +57,7 @@ pub enum NetworkError {
 
 #[allow(dead_code)]
 pub struct Network {
-    endpoint: Endpoint,
+    // endpoint: Endpoint,
     log_sync: LogSync,
     sync_tx: SyncHandle<Operation<LoResMeshExtensions>, TopicLogSyncEvent<LoResMeshExtensions>>,
 }
@@ -72,10 +72,34 @@ impl Network {
         println!("Initializing P2Panda Network (id: {})", network_id.to_hex());
 
         let address_book = AddressBook::builder().spawn().await?;
+
         if let Some(bootstrap_info) = bootstrap_node_info(bootstrap_node_id) {
+            println!(
+                "Inserting bootstrap node info for node: {:?}",
+                bootstrap_info.node_id.to_hex()
+            );
             if let Err(e) = address_book.insert_node_info(bootstrap_info).await {
                 println!("Failed to insert bootstrap node info: {}", e);
             }
+        }
+
+        let mut topic_rx = address_book.watch_topic(NODE_ADMIN_TOPIC_ID, false).await?;
+
+        // Subscribe to topic updates
+        {
+            tokio::spawn(async move {
+                while let Some(update) = topic_rx.recv().await {
+                    let update_hexes = match &update.difference {
+                        Some(diff) => diff.iter().map(|h| h.to_hex()).collect::<Vec<_>>(),
+                        None => vec![],
+                    };
+                    let value_hexes = update.value.iter().map(|h| h.to_hex()).collect::<Vec<_>>();
+                    println!(
+                        "  AddressBook topic update: diff {:?}, value {:?}",
+                        update_hexes, value_hexes
+                    );
+                }
+            });
         }
 
         let endpoint = Endpoint::builder(address_book.clone())
@@ -98,43 +122,37 @@ impl Network {
             .spawn()
             .await?;
 
-        let heartbeat_tx = gossip.stream(NODE_ADMIN_TOPIC_ID).await?;
-        let mut heartbeat_rx = heartbeat_tx.subscribe();
-
         let topic_map = LoResNodeTopicMap::default();
         topic_map
             .insert(NODE_ADMIN_TOPIC_ID, private_key.public_key(), LOG_ID)
             .await;
-
-        let log_sync = LogSync::builder(
-            operation_store.clone_inner(),
-            topic_map,
-            endpoint.clone(),
-            gossip.clone(),
-        )
-        .spawn()
-        .await?;
 
         // Subscribe to discovery events
         let mut discovery_events_rx = discovery.events().await?;
         {
             tokio::spawn(async move {
                 while let Ok(event) = discovery_events_rx.recv().await {
-                    println!("Discovery event: {:?}", event);
+                    println!("  Discovery event: {:?}", event);
                 }
             });
         }
 
+        let gossip_tx = gossip.stream(NODE_ADMIN_TOPIC_ID).await?;
+        let mut gossip_rx = gossip_tx.subscribe();
         // Receive and log each (ephemeral) message.
         {
             tokio::spawn(async move {
                 loop {
-                    if let Some(Ok(message)) = heartbeat_rx.next().await {
-                        println!("received message: {:?}", message);
+                    if let Some(Ok(message)) = gossip_rx.next().await {
+                        println!("  received gossip message: {:?}", message);
                     }
                 }
             });
         }
+
+        let log_sync = LogSync::builder(operation_store.clone_inner(), topic_map, endpoint, gossip)
+            .spawn()
+            .await?;
 
         let sync_tx = log_sync.stream(NODE_ADMIN_TOPIC_ID, true).await?;
         let mut sync_rx = sync_tx.subscribe().await.map_err(|e| {
@@ -144,15 +162,18 @@ impl Network {
         // Receive messages from the sync stream.
         {
             tokio::task::spawn(async move {
-                println!("P2Panda Network initialized, starting sync stream...");
+                println!("  P2Panda Network initialized, starting sync stream...");
                 while let Some(Ok(from_sync)) = sync_rx.next().await {
                     match from_sync.event {
                         TopicLogSyncEvent::SyncStarted(_) => {
-                            println!("started sync session with {}", from_sync.remote.fmt_short());
+                            println!(
+                                "  started sync session with {}",
+                                from_sync.remote.fmt_short()
+                            );
                         }
                         TopicLogSyncEvent::SyncFinished(metrics) => {
                             println!(
-                            "finished sync session with {}, bytes received = {}, bytes sent = {}",
+                            "  finished sync session with {}, bytes received = {}, bytes sent = {}",
                             from_sync.remote.fmt_short(),
                             metrics.total_bytes_remote.unwrap_or_default(),
                             metrics.total_bytes_local.unwrap_or_default()
@@ -160,26 +181,26 @@ impl Network {
                         }
                         TopicLogSyncEvent::Operation(operation) => {
                             println!(
-                                "Received operation from {}: {:?}",
+                                "  Received operation from {}: {:?}",
                                 from_sync.remote.fmt_short(),
                                 operation
                             );
                         }
                         _ => {
                             println!(
-                                "Unhandled sync event from {}: {:?}",
+                                "  Unhandled sync event from {}: {:?}",
                                 from_sync.remote.fmt_short(),
                                 from_sync.event
                             );
                         }
                     }
                 }
-                println!("Sync stream read loop ended.");
+                println!("  Sync stream read loop ended.");
             });
         }
 
         Ok(Network {
-            endpoint,
+            // endpoint,
             log_sync,
             sync_tx,
         })
