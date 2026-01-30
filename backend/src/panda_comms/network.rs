@@ -73,15 +73,15 @@ impl Network {
 
         let address_book = AddressBook::builder().spawn().await?;
 
-        if let Some(bootstrap_info) = bootstrap_node_info(bootstrap_node_id) {
-            println!(
-                "Inserting bootstrap node info for node: {:?}",
-                bootstrap_info.node_id.to_hex()
-            );
-            if let Err(e) = address_book.insert_node_info(bootstrap_info).await {
-                println!("Failed to insert bootstrap node info: {}", e);
-            }
-        }
+        // if let Some(bootstrap_info) = bootstrap_node_info(bootstrap_node_id) {
+        //     println!(
+        //         "Inserting bootstrap node info for node: {:?}",
+        //         bootstrap_info.node_id.to_hex()
+        //     );
+        //     if let Err(e) = address_book.insert_node_info(bootstrap_info).await {
+        //         println!("Failed to insert bootstrap node info: {}", e);
+        //     }
+        // }
 
         let mut topic_rx = address_book.watch_topic(NODE_ADMIN_TOPIC_ID, false).await?;
 
