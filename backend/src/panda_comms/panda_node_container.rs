@@ -1,16 +1,18 @@
 use futures_util::StreamExt;
-use p2panda_core::{identity::PUBLIC_KEY_LEN, Hash, PrivateKey, PublicKey};
-use p2panda_net::{utils::ShortFormat, TopicId};
+use p2panda_core::{identity::PUBLIC_KEY_LEN, Hash, Operation, PrivateKey, PublicKey};
+use p2panda_net::TopicId;
 use p2panda_sync::protocols::TopicLogSyncEvent;
 use sqlx::SqlitePool;
 use std::sync::Arc;
 use thiserror::Error;
 use tokio::sync::{mpsc, Mutex};
 
-use crate::api::auth_api::auth_backend::User;
+use crate::{api::auth_api::auth_backend::User, panda_comms::event_encoding::decode_lores_event};
 
 use super::{
-    lores_events::{LoResEvent, LoResEventPayload},
+    event_encoding::encode_lores_event_payload,
+    lores_events::{LoResEvent, LoResEventHeader, LoResEventMetadataV1, LoResEventPayload},
+    operations::LoResMeshExtensions,
     panda_node::{PandaNode, PandaNodeError},
     panda_node_inner::PandaPublishError,
 };
@@ -131,39 +133,6 @@ impl PandaNodeContainer {
         Ok(())
     }
 
-    async fn start_subscriptions(&self) -> Result<(), PandaNodeContainerError> {
-        let node_lock = self.node.lock().await;
-
-        let node = match node_lock.as_ref() {
-            Some(node) => node,
-            None => return Err(PandaNodeContainerError::PandaSubscribeError()),
-        };
-
-        let mut sync_rx = node.inner.subscribe_to_admin_topic().await?;
-
-        // Receive messages from the sync stream.
-        {
-            tokio::task::spawn(async move {
-                println!("  P2Panda Network initialized, starting sync stream...");
-                while let Some(Ok(from_sync)) = sync_rx.next().await {
-                    match from_sync.event {
-                        TopicLogSyncEvent::Operation(operation) => {
-                            println!(
-                                "  Received operation from {}: {:?}",
-                                from_sync.remote.fmt_short(),
-                                operation
-                            );
-                        }
-                        _ => {}
-                    }
-                }
-                println!("  Sync stream read loop ended.");
-            });
-        }
-
-        Ok(())
-    }
-
     pub async fn is_started(&self) -> bool {
         let node = self.node.lock().await;
         node.is_some()
@@ -177,17 +146,91 @@ impl PandaNodeContainer {
         }
     }
 
+    async fn start_subscriptions(&self) -> Result<(), PandaNodeContainerError> {
+        let node_lock = self.node.lock().await;
+
+        let node = match node_lock.as_ref() {
+            Some(node) => node,
+            None => return Err(PandaNodeContainerError::PandaSubscribeError()),
+        };
+
+        let mut sync_rx = node.inner.subscribe_to_admin_topic().await?;
+        let events_tx = self.events_tx.clone();
+
+        // Receive messages from the sync stream.
+        {
+            tokio::task::spawn(async move {
+                println!("  P2Panda Network initialized, starting sync stream...");
+                while let Some(Ok(from_sync)) = sync_rx.next().await {
+                    match from_sync.event {
+                        TopicLogSyncEvent::Operation(operation) => {
+                            let lores_event =
+                                match Self::decode_operation_to_lores_event(&operation) {
+                                    Ok(event) => event,
+                                    Err(e) => {
+                                        eprintln!(
+                                            "  Failed to decode LoResEvent from operation: {}",
+                                            e
+                                        );
+                                        continue;
+                                    }
+                                };
+
+                            if let Err(e) = events_tx.send(lores_event).await {
+                                eprintln!("  Failed to send LoResEvent: {}", e);
+                            }
+                        }
+                        _ => {}
+                    }
+                }
+                println!("  Sync stream read loop ended.");
+            });
+        }
+
+        Ok(())
+    }
+
     pub async fn publish_persisted(
         &self,
         event_payload: LoResEventPayload,
         current_user: Option<User>,
     ) -> Result<(), PandaPublishError> {
         let node_lock = self.node.lock().await;
+        let node = match node_lock.as_ref() {
+            Some(node) => node,
+            None => return Err(PandaPublishError::NodeNotStarted),
+        };
 
-        match node_lock.as_ref() {
-            Some(node) => node.publish_persisted(event_payload, current_user).await,
-            None => Err(PandaPublishError::NodeNotStarted),
-        }
+        let node_steward_id = match current_user {
+            Some(user) if user.is_node_steward() => Some(user.id.clone()),
+            _ => None,
+        };
+        let metadata = LoResEventMetadataV1 { node_steward_id };
+        let encoded_payload = encode_lores_event_payload(event_payload, metadata)?;
+
+        node.inner.publish_persisted(&encoded_payload).await
+    }
+
+    fn decode_operation_to_lores_event(
+        operation: &Operation<LoResMeshExtensions>,
+    ) -> Result<LoResEvent, anyhow::Error> {
+        let operation_header = &operation.header;
+        let lores_header = LoResEventHeader {
+            author_node_id: operation_header.public_key.to_hex(),
+            timestamp: operation_header.timestamp,
+            operation_id: operation_header.hash(),
+        };
+
+        let body_bytes: Vec<u8> = match &operation.body {
+            Some(body) => body.to_bytes(),
+            None => {
+                return Err(anyhow::anyhow!(
+                    "Operation body is None, cannot decode LoResEvent"
+                ))
+            }
+        };
+
+        decode_lores_event(lores_header, &body_bytes)
     }
 }
 

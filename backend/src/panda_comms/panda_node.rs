@@ -4,12 +4,7 @@ use sqlx::SqlitePool;
 use std::sync::Arc;
 use thiserror::Error;
 
-use crate::{
-    api::auth_api::auth_backend::User,
-    panda_comms::{lores_events::LoResEventPayload, network, panda_node_inner::PandaPublishError},
-};
-
-use super::panda_node_inner::PandaNodeInner;
+use super::{network::NetworkError, panda_node_inner::PandaNodeInner};
 
 #[derive(Debug, Error)]
 pub enum PandaNodeError {
@@ -18,7 +13,7 @@ pub enum PandaNodeError {
     #[error(transparent)]
     RuntimeSpawn(#[from] tokio::task::JoinError),
     #[error(transparent)]
-    NetworkError(#[from] network::NetworkError),
+    NetworkError(#[from] NetworkError),
 }
 
 pub struct RequiredNodeParams {
@@ -88,15 +83,5 @@ impl PandaNode {
             inner: Arc::new(inner),
             runtime,
         })
-    }
-
-    pub async fn publish_persisted(
-        &self,
-        event_payload: LoResEventPayload,
-        current_user: Option<User>,
-    ) -> Result<(), PandaPublishError> {
-        self.inner
-            .publish_persisted(event_payload, current_user)
-            .await
     }
 }

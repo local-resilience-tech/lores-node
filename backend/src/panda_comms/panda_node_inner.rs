@@ -5,16 +5,10 @@ use sqlx::SqlitePool;
 use thiserror::Error;
 use tokio::sync::RwLock;
 
-use crate::{
-    api::auth_api::auth_backend::User,
-    panda_comms::{network::NetworkError, operations::LoResMeshExtensions},
-};
-
 use super::{
-    event_encoding::encode_lores_event_payload,
-    lores_events::{LoResEventMetadataV1, LoResEventPayload},
-    network::Network,
+    network::{Network, NetworkError},
     operation_store::{CreationError, OperationStore},
+    operations::LoResMeshExtensions,
     panda_node::PandaNodeError,
 };
 
@@ -67,20 +61,11 @@ impl PandaNodeInner {
 
     pub async fn publish_persisted(
         &self,
-        event_payload: LoResEventPayload,
-        current_user: Option<User>,
+        encoded_payload: &Vec<u8>,
     ) -> Result<(), PandaPublishError> {
-        let node_steward_id = match current_user {
-            Some(user) if user.is_node_steward() => Some(user.id.clone()),
-            _ => None,
-        };
-        let metadata = LoResEventMetadataV1 { node_steward_id };
-
-        let encoded_payload = encode_lores_event_payload(event_payload, metadata)?;
-
         let operation = self
             .operation_store
-            .create_operation(&self.private_key, Some(&encoded_payload))
+            .create_operation(&self.private_key, Some(encoded_payload))
             .await?;
 
         // Publish the operation to the network
