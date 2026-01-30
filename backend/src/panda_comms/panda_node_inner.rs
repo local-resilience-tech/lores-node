@@ -1,9 +1,12 @@
+use futures_util::StreamExt;
 use p2panda_core::{cbor::EncodeError, Hash, PrivateKey, PublicKey};
+use p2panda_net::utils::ShortFormat;
+use p2panda_sync::protocols::TopicLogSyncEvent;
 use sqlx::SqlitePool;
 use thiserror::Error;
 use tokio::sync::RwLock;
 
-use crate::api::auth_api::auth_backend::User;
+use crate::{api::auth_api::auth_backend::User, panda_comms::network::NetworkError};
 
 use super::{
     event_encoding::encode_lores_event_payload,
@@ -51,6 +54,8 @@ impl PandaNodeInner {
         )
         .await?;
 
+        Self::start_sync_stream_handler(&network).await?;
+
         Ok(PandaNodeInner {
             network: RwLock::new(network),
             operation_store,
@@ -82,6 +87,55 @@ impl PandaNodeInner {
             .publish_operation(operation)
             .await
             .map_err(|e| PandaPublishError::SyncError(e.to_string()))?;
+
+        Ok(())
+    }
+
+    async fn start_sync_stream_handler(network: &Network) -> Result<(), PandaNodeError> {
+        let sync_tx = network.get_sync_handle();
+        let mut sync_rx = sync_tx.subscribe().await.map_err(|e| {
+            NetworkError::SyncHandleError(format!("Failed to subscribe to log sync: {}", e))
+        })?;
+
+        // Receive messages from the sync stream.
+        {
+            tokio::task::spawn(async move {
+                println!("  P2Panda Network initialized, starting sync stream...");
+                while let Some(Ok(from_sync)) = sync_rx.next().await {
+                    match from_sync.event {
+                        TopicLogSyncEvent::SyncStarted(_) => {
+                            println!(
+                                "  started sync session with {}",
+                                from_sync.remote.fmt_short()
+                            );
+                        }
+                        TopicLogSyncEvent::SyncFinished(metrics) => {
+                            println!(
+                            "  finished sync session with {}, bytes received = {}, bytes sent = {}",
+                            from_sync.remote.fmt_short(),
+                            metrics.total_bytes_remote.unwrap_or_default(),
+                            metrics.total_bytes_local.unwrap_or_default()
+                        );
+                        }
+                        TopicLogSyncEvent::Operation(operation) => {
+                            println!(
+                                "  Received operation from {}: {:?}",
+                                from_sync.remote.fmt_short(),
+                                operation
+                            );
+                        }
+                        _ => {
+                            println!(
+                                "  Unhandled sync event from {}: {:?}",
+                                from_sync.remote.fmt_short(),
+                                from_sync.event
+                            );
+                        }
+                    }
+                }
+                println!("  Sync stream read loop ended.");
+            });
+        }
 
         Ok(())
     }

@@ -1,5 +1,3 @@
-use futures_util::StreamExt;
-
 use p2panda_core::{Hash, Operation, PrivateKey, PublicKey};
 use p2panda_net::{
     address_book::AddressBookError,
@@ -9,7 +7,6 @@ use p2panda_net::{
     iroh_endpoint::EndpointError,
     iroh_mdns::{MdnsDiscoveryError, MdnsDiscoveryMode},
     sync::{SyncHandle, SyncHandleError},
-    utils::ShortFormat,
     AddressBook, Discovery, Endpoint, Gossip, MdnsDiscovery, TopicId,
 };
 use p2panda_sync::protocols::TopicLogSyncEvent;
@@ -63,7 +60,6 @@ pub struct Network {
     gossip: Gossip,
     log_sync: LogSync,
     endpoint: Endpoint,
-
     sync_tx: SyncHandle<Operation<LoResMeshExtensions>, TopicLogSyncEvent<LoResMeshExtensions>>,
 }
 
@@ -71,41 +67,41 @@ impl Network {
     pub async fn new(
         network_id: Hash,
         private_key: PrivateKey,
-        bootstrap_node_id: Option<PublicKey>,
+        _bootstrap_node_id: Option<PublicKey>,
         operation_store: &OperationStore,
     ) -> Result<Self, NetworkError> {
         println!("Initializing P2Panda Network (id: {})", network_id.to_hex());
 
         let address_book = AddressBook::builder().spawn().await?;
 
-        if let Some(bootstrap_info) = bootstrap_node_info(bootstrap_node_id) {
-            println!(
-                "Inserting bootstrap node info for node: {:?}",
-                bootstrap_info.node_id.to_hex()
-            );
-            if let Err(e) = address_book.insert_node_info(bootstrap_info).await {
-                println!("Failed to insert bootstrap node info: {}", e);
-            }
-        }
+        // if let Some(bootstrap_info) = bootstrap_node_info(bootstrap_node_id) {
+        //     println!(
+        //         "Inserting bootstrap node info for node: {:?}",
+        //         bootstrap_info.node_id.to_hex()
+        //     );
+        //     if let Err(e) = address_book.insert_node_info(bootstrap_info).await {
+        //         println!("Failed to insert bootstrap node info: {}", e);
+        //     }
+        // }
 
-        let mut topic_rx = address_book.watch_topic(NODE_ADMIN_TOPIC_ID, false).await?;
+        // let mut topic_rx = address_book.watch_topic(NODE_ADMIN_TOPIC_ID, false).await?;
 
-        // Subscribe to topic updates
-        {
-            tokio::spawn(async move {
-                while let Some(update) = topic_rx.recv().await {
-                    let update_hexes = match &update.difference {
-                        Some(diff) => diff.iter().map(|h| h.to_hex()).collect::<Vec<_>>(),
-                        None => vec![],
-                    };
-                    let value_hexes = update.value.iter().map(|h| h.to_hex()).collect::<Vec<_>>();
-                    println!(
-                        "  AddressBook topic update: diff {:?}, value {:?}",
-                        update_hexes, value_hexes
-                    );
-                }
-            });
-        }
+        // // Subscribe to topic updates
+        // {
+        //     tokio::spawn(async move {
+        //         while let Some(update) = topic_rx.recv().await {
+        //             let update_hexes = match &update.difference {
+        //                 Some(diff) => diff.iter().map(|h| h.to_hex()).collect::<Vec<_>>(),
+        //                 None => vec![],
+        //             };
+        //             let value_hexes = update.value.iter().map(|h| h.to_hex()).collect::<Vec<_>>();
+        //             println!(
+        //                 "  AddressBook topic update: diff {:?}, value {:?}",
+        //                 update_hexes, value_hexes
+        //             );
+        //         }
+        //     });
+        // }
 
         let endpoint = Endpoint::builder(address_book.clone())
             .network_id(network_id.into())
@@ -155,49 +151,6 @@ impl Network {
         .await?;
 
         let sync_tx = log_sync.stream(NODE_ADMIN_TOPIC_ID, true).await?;
-        let mut sync_rx = sync_tx.subscribe().await.map_err(|e| {
-            NetworkError::SyncHandleError(format!("Failed to subscribe to log sync: {}", e))
-        })?;
-
-        // Receive messages from the sync stream.
-        {
-            tokio::task::spawn(async move {
-                println!("  P2Panda Network initialized, starting sync stream...");
-                while let Some(Ok(from_sync)) = sync_rx.next().await {
-                    match from_sync.event {
-                        TopicLogSyncEvent::SyncStarted(_) => {
-                            println!(
-                                "  started sync session with {}",
-                                from_sync.remote.fmt_short()
-                            );
-                        }
-                        TopicLogSyncEvent::SyncFinished(metrics) => {
-                            println!(
-                            "  finished sync session with {}, bytes received = {}, bytes sent = {}",
-                            from_sync.remote.fmt_short(),
-                            metrics.total_bytes_remote.unwrap_or_default(),
-                            metrics.total_bytes_local.unwrap_or_default()
-                        );
-                        }
-                        TopicLogSyncEvent::Operation(operation) => {
-                            println!(
-                                "  Received operation from {}: {:?}",
-                                from_sync.remote.fmt_short(),
-                                operation
-                            );
-                        }
-                        _ => {
-                            println!(
-                                "  Unhandled sync event from {}: {:?}",
-                                from_sync.remote.fmt_short(),
-                                from_sync.event
-                            );
-                        }
-                    }
-                }
-                println!("  Sync stream read loop ended.");
-            });
-        }
 
         Ok(Network {
             address_book,
@@ -227,13 +180,19 @@ impl Network {
         })?;
         Ok(())
     }
+
+    pub fn get_sync_handle(
+        &self,
+    ) -> &SyncHandle<Operation<LoResMeshExtensions>, TopicLogSyncEvent<LoResMeshExtensions>> {
+        &self.sync_tx
+    }
 }
 
-fn bootstrap_node_info(bootstrap_node_id: Option<PublicKey>) -> Option<NodeInfo> {
-    bootstrap_node_id.map(|node_id| {
-        let endpoint_addr =
-            iroh::EndpointAddr::new(node_id.to_hex().parse().expect("valid bootstrap node id"))
-                .with_relay_url(RELAY_URL.clone());
-        NodeInfo::from(endpoint_addr).bootstrap()
-    })
-}
+// fn bootstrap_node_info(bootstrap_node_id: Option<PublicKey>) -> Option<NodeInfo> {
+//     bootstrap_node_id.map(|node_id| {
+//         let endpoint_addr =
+//             iroh::EndpointAddr::new(node_id.to_hex().parse().expect("valid bootstrap node id"))
+//                 .with_relay_url(RELAY_URL.clone());
+//         NodeInfo::from(endpoint_addr).bootstrap()
+//     })
+// }
