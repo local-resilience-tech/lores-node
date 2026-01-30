@@ -1,6 +1,10 @@
+use futures_util::StreamExt;
 use p2panda_core::{identity::PUBLIC_KEY_LEN, Hash, PrivateKey, PublicKey};
+use p2panda_net::{utils::ShortFormat, TopicId};
+use p2panda_sync::protocols::TopicLogSyncEvent;
 use sqlx::SqlitePool;
 use std::sync::Arc;
+use thiserror::Error;
 use tokio::sync::{mpsc, Mutex};
 
 use crate::api::auth_api::auth_backend::User;
@@ -11,11 +15,21 @@ use super::{
     panda_node_inner::PandaPublishError,
 };
 
+pub const NODE_ADMIN_TOPIC_ID: TopicId = [0u8; 32];
+
 #[derive(Default, Clone)]
 pub struct NodeParams {
     pub private_key: Option<PrivateKey>,
     pub network_name: Option<String>,
     pub bootstrap_node_id: Option<PublicKey>,
+}
+
+#[derive(Debug, Error)]
+pub enum PandaNodeContainerError {
+    #[error(transparent)]
+    PandaNodeError(#[from] PandaNodeError),
+    #[error("Panda subscribe error")]
+    PandaSubscribeError(),
 }
 
 #[derive(Clone)]
@@ -57,7 +71,7 @@ impl PandaNodeContainer {
         params_lock.bootstrap_node_id = bootstrap_node_id;
     }
 
-    pub async fn start(&self, operations_pool: &SqlitePool) -> Result<(), PandaNodeError> {
+    pub async fn start(&self, operations_pool: &SqlitePool) -> Result<(), PandaNodeContainerError> {
         println!("Starting client");
 
         let params = self.get_params().await;
@@ -80,7 +94,11 @@ impl PandaNodeContainer {
         let network_name = network_name.unwrap();
 
         self.start_for(private_key, network_name, boostrap_node_id, operations_pool)
-            .await
+            .await?;
+
+        self.start_subscriptions().await?;
+
+        Ok(())
     }
 
     async fn start_for(
@@ -93,6 +111,7 @@ impl PandaNodeContainer {
         let required_params = super::panda_node::RequiredNodeParams {
             private_key,
             network_id: Hash::new(network_name.as_bytes()),
+            admin_topic_id: NODE_ADMIN_TOPIC_ID,
             bootstrap_node_id: boostrap_node_id,
         };
 
@@ -108,6 +127,39 @@ impl PandaNodeContainer {
             network_name,
             boostrap_node_id.map(|key| key.to_string())
         );
+
+        Ok(())
+    }
+
+    async fn start_subscriptions(&self) -> Result<(), PandaNodeContainerError> {
+        let node_lock = self.node.lock().await;
+
+        let node = match node_lock.as_ref() {
+            Some(node) => node,
+            None => return Err(PandaNodeContainerError::PandaSubscribeError()),
+        };
+
+        let mut sync_rx = node.inner.subscribe_to_admin_topic().await?;
+
+        // Receive messages from the sync stream.
+        {
+            tokio::task::spawn(async move {
+                println!("  P2Panda Network initialized, starting sync stream...");
+                while let Some(Ok(from_sync)) = sync_rx.next().await {
+                    match from_sync.event {
+                        TopicLogSyncEvent::Operation(operation) => {
+                            println!(
+                                "  Received operation from {}: {:?}",
+                                from_sync.remote.fmt_short(),
+                                operation
+                            );
+                        }
+                        _ => {}
+                    }
+                }
+                println!("  Sync stream read loop ended.");
+            });
+        }
 
         Ok(())
     }

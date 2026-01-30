@@ -1,13 +1,18 @@
 use p2panda_core::{Hash, Operation, PrivateKey, PublicKey};
 use p2panda_net::{
     address_book::AddressBookError,
-    addrs::NodeInfo,
+    // addrs::NodeInfo,
     discovery::DiscoveryError,
     gossip::GossipError,
     iroh_endpoint::EndpointError,
     iroh_mdns::{MdnsDiscoveryError, MdnsDiscoveryMode},
     sync::{SyncHandle, SyncHandleError},
-    AddressBook, Discovery, Endpoint, Gossip, MdnsDiscovery, TopicId,
+    AddressBook,
+    Discovery,
+    Endpoint,
+    Gossip,
+    MdnsDiscovery,
+    TopicId,
 };
 use p2panda_sync::protocols::TopicLogSyncEvent;
 use thiserror::Error;
@@ -23,8 +28,6 @@ lazy_static! {
         .parse()
         .expect("valid relay URL");
 }
-
-pub const NODE_ADMIN_TOPIC_ID: TopicId = [0u8; 32];
 
 pub type LogSync = p2panda_net::sync::LogSync<
     p2panda_store::SqliteStore<LogId, LoResMeshExtensions>,
@@ -67,6 +70,7 @@ impl Network {
     pub async fn new(
         network_id: Hash,
         private_key: PrivateKey,
+        admin_topic_id: TopicId,
         _bootstrap_node_id: Option<PublicKey>,
         operation_store: &OperationStore,
     ) -> Result<Self, NetworkError> {
@@ -125,7 +129,7 @@ impl Network {
 
         let topic_map = LoResNodeTopicMap::default();
         topic_map
-            .insert(NODE_ADMIN_TOPIC_ID, private_key.public_key(), LOG_ID)
+            .insert(admin_topic_id, private_key.public_key(), LOG_ID)
             .await;
 
         // let gossip_tx = gossip.stream(NODE_ADMIN_TOPIC_ID).await?;
@@ -150,7 +154,7 @@ impl Network {
         .spawn()
         .await?;
 
-        let sync_tx = log_sync.stream(NODE_ADMIN_TOPIC_ID, true).await?;
+        let sync_tx = log_sync.stream(admin_topic_id, true).await?;
 
         Ok(Network {
             address_book,
