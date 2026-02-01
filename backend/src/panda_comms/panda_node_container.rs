@@ -1,7 +1,6 @@
 use futures_util::StreamExt;
 use p2panda_core::{identity::PUBLIC_KEY_LEN, Hash, Operation, PrivateKey, PublicKey};
 use p2panda_net::TopicId;
-use p2panda_sync::protocols::TopicLogSyncEvent;
 use sqlx::SqlitePool;
 use std::sync::Arc;
 use thiserror::Error;
@@ -162,14 +161,17 @@ impl PandaNodeContainer {
 
         // Received messages on operation_rx
         {
+            let events_tx = self.events_tx.clone();
+
             tokio::task::spawn(async move {
                 println!("  P2Panda Network initialized, starting sync stream...");
                 let mut operation_rx = ReceiverStream::new(operation_rx);
                 while let Some(operation) = operation_rx.next().await {
                     match Self::decode_operation_to_lores_event(&operation) {
-                        Ok(event) => {
-                            // Process the LoResEvent as needed
-                            println!("  Received LoResEvent from operation: {:?}", event);
+                        Ok(lores_event) => {
+                            if let Err(e) = events_tx.send(lores_event).await {
+                                eprintln!("  Failed to send LoResEvent: {}", e);
+                            }
                         }
                         Err(e) => {
                             eprintln!("  Failed to decode LoResEvent from operation: {}", e);
@@ -182,36 +184,6 @@ impl PandaNodeContainer {
         }
 
         node.inner.subscribe_to_admin_topic(operation_tx).await?;
-
-        // Receive messages from the sync stream.
-        // {
-        //     tokio::task::spawn(async move {
-        //         println!("  P2Panda Network initialized, starting sync stream...");
-        //         while let Some(Ok(from_sync)) = sync_rx.next().await {
-        //             match from_sync.event {
-        //                 TopicLogSyncEvent::Operation(operation) => {
-        //                     let lores_event =
-        //                         match Self::decode_operation_to_lores_event(&operation) {
-        //                             Ok(event) => event,
-        //                             Err(e) => {
-        //                                 eprintln!(
-        //                                     "  Failed to decode LoResEvent from operation: {}",
-        //                                     e
-        //                                 );
-        //                                 continue;
-        //                             }
-        //                         };
-
-        //                     if let Err(e) = events_tx.send(lores_event).await {
-        //                         eprintln!("  Failed to send LoResEvent: {}", e);
-        //                     }
-        //                 }
-        //                 _ => {}
-        //             }
-        //         }
-        //         println!("  Sync stream read loop ended.");
-        //     });
-        // }
 
         Ok(())
     }
