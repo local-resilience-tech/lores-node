@@ -25,6 +25,10 @@ pub enum PandaPublishError {
     NodeNotStarted,
     #[error("Sync error: {0}")]
     SyncError(String),
+    #[error("Operation error: {0}")]
+    OperationError(String),
+    #[error("App error: {0}")]
+    AppError(String),
 }
 
 #[allow(dead_code)]
@@ -65,7 +69,7 @@ impl PandaNodeInner {
     pub async fn publish_persisted(
         &self,
         encoded_payload: &Vec<u8>,
-    ) -> Result<(), PandaPublishError> {
+    ) -> Result<LoresOperation, PandaPublishError> {
         let operation = self
             .operation_store
             .create_operation(&self.private_key, Some(encoded_payload))
@@ -74,11 +78,11 @@ impl PandaNodeInner {
         // Publish the operation to the network
         let network = self.network.write().await;
         network
-            .publish_operation(operation)
+            .publish_operation(operation.clone())
             .await
             .map_err(|e| PandaPublishError::SyncError(e.to_string()))?;
 
-        Ok(())
+        Ok(operation)
     }
 
     pub async fn subscribe_to_admin_topic(
@@ -146,16 +150,6 @@ impl PandaNodeInner {
                 if let Err(e) = operation_tx.send(operation).await {
                     eprintln!("Failed to send operation to channel: {}", e);
                 }
-
-                // // Forward the payload up to the app.
-                // if let Some(body) = operation.body {
-                //     println!(
-                //         "ready to forward operation from sync stream: {:?}",
-                //         operation.header
-                //     );
-                //     // subscribable_topic_clone
-                //     //     .bytes_received(operation.header.public_key, body.to_bytes());
-                // }
             }
         });
 

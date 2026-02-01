@@ -206,7 +206,24 @@ impl PandaNodeContainer {
         let metadata = LoResEventMetadataV1 { node_steward_id };
         let encoded_payload = encode_lores_event_payload(event_payload, metadata)?;
 
-        node.inner.publish_persisted(&encoded_payload).await
+        let operation = node.inner.publish_persisted(&encoded_payload).await?;
+
+        // Since this came from this node, it wont be received via subscription, so we
+        // need to handle it ourselves.
+        let lores_event = Self::decode_operation_to_lores_event(&operation).map_err(|e| {
+            PandaPublishError::OperationError(format!(
+                "Failed to decode LoResEvent from published operation: {}",
+                e
+            ))
+        })?;
+        self.events_tx.send(lores_event).await.map_err(|e| {
+            PandaPublishError::AppError(format!(
+                "Failed to send LoResEvent back to the application: {}",
+                e
+            ))
+        })?;
+
+        Ok(())
     }
 
     fn decode_operation_to_lores_event(

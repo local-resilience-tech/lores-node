@@ -1,18 +1,13 @@
 use p2panda_core::{Hash, Operation, PrivateKey, PublicKey};
 use p2panda_net::{
     address_book::AddressBookError,
-    // addrs::NodeInfo,
+    addrs::NodeInfo,
     discovery::DiscoveryError,
     gossip::GossipError,
     iroh_endpoint::EndpointError,
     iroh_mdns::{MdnsDiscoveryError, MdnsDiscoveryMode},
     sync::{SyncHandle, SyncHandleError},
-    AddressBook,
-    Discovery,
-    Endpoint,
-    Gossip,
-    MdnsDiscovery,
-    TopicId,
+    AddressBook, Discovery, Endpoint, Gossip, MdnsDiscovery, TopicId,
 };
 use p2panda_sync::protocols::TopicLogSyncEvent;
 use thiserror::Error;
@@ -71,41 +66,22 @@ impl Network {
         network_id: Hash,
         private_key: PrivateKey,
         admin_topic_id: TopicId,
-        _bootstrap_node_id: Option<PublicKey>,
+        bootstrap_node_id: Option<PublicKey>,
         operation_store: &OperationStore,
     ) -> Result<Self, NetworkError> {
         println!("Initializing P2Panda Network (id: {})", network_id.to_hex());
 
         let address_book = AddressBook::builder().spawn().await?;
 
-        // if let Some(bootstrap_info) = bootstrap_node_info(bootstrap_node_id) {
-        //     println!(
-        //         "Inserting bootstrap node info for node: {:?}",
-        //         bootstrap_info.node_id.to_hex()
-        //     );
-        //     if let Err(e) = address_book.insert_node_info(bootstrap_info).await {
-        //         println!("Failed to insert bootstrap node info: {}", e);
-        //     }
-        // }
-
-        // let mut topic_rx = address_book.watch_topic(NODE_ADMIN_TOPIC_ID, false).await?;
-
-        // // Subscribe to topic updates
-        // {
-        //     tokio::spawn(async move {
-        //         while let Some(update) = topic_rx.recv().await {
-        //             let update_hexes = match &update.difference {
-        //                 Some(diff) => diff.iter().map(|h| h.to_hex()).collect::<Vec<_>>(),
-        //                 None => vec![],
-        //             };
-        //             let value_hexes = update.value.iter().map(|h| h.to_hex()).collect::<Vec<_>>();
-        //             println!(
-        //                 "  AddressBook topic update: diff {:?}, value {:?}",
-        //                 update_hexes, value_hexes
-        //             );
-        //         }
-        //     });
-        // }
+        if let Some(bootstrap_info) = bootstrap_node_info(bootstrap_node_id) {
+            println!(
+                "Inserting bootstrap node info for node: {:?}",
+                bootstrap_info.node_id.to_hex()
+            );
+            if let Err(e) = address_book.insert_node_info(bootstrap_info).await {
+                println!("Failed to insert bootstrap node info: {}", e);
+            }
+        }
 
         let endpoint = Endpoint::builder(address_book.clone())
             .network_id(network_id.into())
@@ -131,19 +107,6 @@ impl Network {
         topic_map
             .insert(admin_topic_id, private_key.public_key(), LOG_ID)
             .await;
-
-        // let gossip_tx = gossip.stream(NODE_ADMIN_TOPIC_ID).await?;
-        // let mut gossip_rx = gossip_tx.subscribe();
-        // // Receive and log each (ephemeral) message.
-        // {
-        //     tokio::spawn(async move {
-        //         loop {
-        //             if let Some(Ok(message)) = gossip_rx.next().await {
-        //                 println!("  received gossip message: {:?}", message);
-        //             }
-        //         }
-        //     });
-        // }
 
         let log_sync = LogSync::builder(
             operation_store.clone_inner(),
@@ -192,11 +155,11 @@ impl Network {
     }
 }
 
-// fn bootstrap_node_info(bootstrap_node_id: Option<PublicKey>) -> Option<NodeInfo> {
-//     bootstrap_node_id.map(|node_id| {
-//         let endpoint_addr =
-//             iroh::EndpointAddr::new(node_id.to_hex().parse().expect("valid bootstrap node id"))
-//                 .with_relay_url(RELAY_URL.clone());
-//         NodeInfo::from(endpoint_addr).bootstrap()
-//     })
-// }
+fn bootstrap_node_info(bootstrap_node_id: Option<PublicKey>) -> Option<NodeInfo> {
+    bootstrap_node_id.map(|node_id| {
+        let endpoint_addr =
+            iroh::EndpointAddr::new(node_id.to_hex().parse().expect("valid bootstrap node id"))
+                .with_relay_url(RELAY_URL.clone());
+        NodeInfo::from(endpoint_addr).bootstrap()
+    })
+}
