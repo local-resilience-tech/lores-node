@@ -1,7 +1,7 @@
 use axum::{http::StatusCode, response::IntoResponse, Json};
 use utoipa_axum::{router::OpenApiRouter, routes};
 
-use crate::local_apps::installed_apps::AppReference;
+use crate::local_apps::AppReference;
 
 pub fn router() -> OpenApiRouter {
     OpenApiRouter::new().routes(routes!(register_app))
