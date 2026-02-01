@@ -8,14 +8,16 @@ use p2panda_store::{
 use thiserror::Error;
 use tokio::sync::Semaphore;
 
-use super::{operations::LoResMeshExtensions, topic::LogId};
+use super::{
+    operations::LoResMeshExtensions, panda_node_container::NODE_ADMIN_TOPIC_ID, topic::LogId,
+};
 
 pub const LOG_ID: LogId = 1;
 
 #[derive(Debug, Error)]
 pub enum CreationError {
     #[error(transparent)]
-    SytemTime(#[from] SystemTimeError),
+    SystemTime(#[from] SystemTimeError),
     #[error(transparent)]
     Store(#[from] SqliteStoreError),
 }
@@ -67,7 +69,10 @@ impl OperationStore {
             .duration_since(SystemTime::UNIX_EPOCH)?
             .as_secs();
 
-        let extensions = LoResMeshExtensions {};
+        let extensions = LoResMeshExtensions {
+            prune_flag: Default::default(),
+            topic: NODE_ADMIN_TOPIC_ID,
+        };
 
         let mut header = Header {
             version: 1,

@@ -6,13 +6,14 @@ use sqlx::SqlitePool;
 use std::sync::Arc;
 use thiserror::Error;
 use tokio::sync::{mpsc, Mutex};
+use tokio_stream::wrappers::ReceiverStream;
 
 use crate::{api::auth_api::auth_backend::User, panda_comms::event_encoding::decode_lores_event};
 
 use super::{
     event_encoding::encode_lores_event_payload,
     lores_events::{LoResEvent, LoResEventHeader, LoResEventMetadataV1, LoResEventPayload},
-    operations::LoResMeshExtensions,
+    operations::{LoResMeshExtensions, LoresOperation},
     panda_node::{PandaNode, PandaNodeError},
     panda_node_inner::PandaPublishError,
 };
@@ -154,38 +155,63 @@ impl PandaNodeContainer {
             None => return Err(PandaNodeContainerError::PandaSubscribeError()),
         };
 
-        let mut sync_rx = node.inner.subscribe_to_admin_topic().await?;
-        let events_tx = self.events_tx.clone();
+        let (operation_tx, operation_rx): (
+            mpsc::Sender<LoresOperation>,
+            mpsc::Receiver<LoresOperation>,
+        ) = mpsc::channel(32);
 
-        // Receive messages from the sync stream.
+        // Received messages on operation_rx
         {
             tokio::task::spawn(async move {
                 println!("  P2Panda Network initialized, starting sync stream...");
-                while let Some(Ok(from_sync)) = sync_rx.next().await {
-                    match from_sync.event {
-                        TopicLogSyncEvent::Operation(operation) => {
-                            let lores_event =
-                                match Self::decode_operation_to_lores_event(&operation) {
-                                    Ok(event) => event,
-                                    Err(e) => {
-                                        eprintln!(
-                                            "  Failed to decode LoResEvent from operation: {}",
-                                            e
-                                        );
-                                        continue;
-                                    }
-                                };
-
-                            if let Err(e) = events_tx.send(lores_event).await {
-                                eprintln!("  Failed to send LoResEvent: {}", e);
-                            }
+                let mut operation_rx = ReceiverStream::new(operation_rx);
+                while let Some(operation) = operation_rx.next().await {
+                    match Self::decode_operation_to_lores_event(&operation) {
+                        Ok(event) => {
+                            // Process the LoResEvent as needed
+                            println!("  Received LoResEvent from operation: {:?}", event);
                         }
-                        _ => {}
+                        Err(e) => {
+                            eprintln!("  Failed to decode LoResEvent from operation: {}", e);
+                            continue;
+                        }
                     }
                 }
                 println!("  Sync stream read loop ended.");
             });
         }
+
+        node.inner.subscribe_to_admin_topic(operation_tx).await?;
+
+        // Receive messages from the sync stream.
+        // {
+        //     tokio::task::spawn(async move {
+        //         println!("  P2Panda Network initialized, starting sync stream...");
+        //         while let Some(Ok(from_sync)) = sync_rx.next().await {
+        //             match from_sync.event {
+        //                 TopicLogSyncEvent::Operation(operation) => {
+        //                     let lores_event =
+        //                         match Self::decode_operation_to_lores_event(&operation) {
+        //                             Ok(event) => event,
+        //                             Err(e) => {
+        //                                 eprintln!(
+        //                                     "  Failed to decode LoResEvent from operation: {}",
+        //                                     e
+        //                                 );
+        //                                 continue;
+        //                             }
+        //                         };
+
+        //                     if let Err(e) = events_tx.send(lores_event).await {
+        //                         eprintln!("  Failed to send LoResEvent: {}", e);
+        //                     }
+        //                 }
+        //                 _ => {}
+        //             }
+        //         }
+        //         println!("  Sync stream read loop ended.");
+        //     });
+        // }
 
         Ok(())
     }
