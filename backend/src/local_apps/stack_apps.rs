@@ -1,6 +1,12 @@
+use std::collections::HashMap;
+
 use crate::{
     data::entities::{LocalApp, LocalAppInstallStatus, Node, NodeAppUrl},
-    docker::docker_stack::docker_stack_ls,
+    docker::{
+        docker_service::docker_service_inspect,
+        docker_stack::{docker_stack_ls, docker_stack_services, DockerStackServicesResult},
+        DockerStack,
+    },
 };
 
 pub fn find_deployed_local_apps(node: &Node) -> Vec<LocalApp> {
@@ -8,20 +14,66 @@ pub fn find_deployed_local_apps(node: &Node) -> Vec<LocalApp> {
 
     let local_apps = deployed_stacks
         .into_iter()
-        .map(|stack| LocalApp {
-            name: stack.name.clone(),
-            version: "unknown".to_string(),
-            status: LocalAppInstallStatus::StackDeployed,
-            url: Some(NodeAppUrl {
-                internet_url: app_url(&stack.name, node.domain_on_internet.as_deref()),
-                local_network_url: app_url(&stack.name, node.domain_on_local_network.as_deref()),
-            }),
-        })
+        .map(|stack| build_app_details(&stack, node))
         .collect();
 
     local_apps
 }
 
+fn build_app_details(stack: &DockerStack, node: &Node) -> LocalApp {
+    let labels = get_app_service_labels(&stack.name).unwrap_or_default();
+
+    println!("Labels for stack {}: {:?}", stack.name, labels);
+
+    LocalApp {
+        name: get_app_name(stack),
+        version: "unknown".to_string(),
+        status: LocalAppInstallStatus::StackDeployed,
+        url: Some(NodeAppUrl {
+            internet_url: app_url(&stack.name, node.domain_on_internet.as_deref()),
+            local_network_url: app_url(&stack.name, node.domain_on_local_network.as_deref()),
+        }),
+    }
+}
+
+fn get_app_service_labels(stack_name: &str) -> Result<HashMap<String, String>, anyhow::Error> {
+    let services = docker_stack_services(stack_name)?;
+    let service = get_app_service_from_list(&services).ok_or_else(|| {
+        anyhow::anyhow!(
+            "App service not found in stack services for stack: {}",
+            stack_name
+        )
+    })?;
+
+    get_service_lablels(&service.name)
+}
+
+fn get_service_lablels(service_id: &str) -> Result<HashMap<String, String>, anyhow::Error> {
+    let properties = docker_service_inspect(service_id).map_err(|e| {
+        eprintln!("Error inspecting service {}: {:?}", service_id, e);
+        e
+    })?;
+
+    Ok(properties.spec.labels.unwrap_or_default())
+}
+
+fn get_app_service_from_list(
+    services: &Vec<DockerStackServicesResult>,
+) -> Option<&DockerStackServicesResult> {
+    services
+        .iter()
+        .find(|service| service.name.ends_with("_app"))
+}
+
 fn app_url(app_name: &str, domain: Option<&str>) -> Option<String> {
     domain.map(|d| format!("http://{}.{}", app_name, d))
+}
+
+fn get_app_name(stack: &DockerStack) -> String {
+    stack
+        .name
+        .split('_')
+        .next()
+        .unwrap_or(&stack.name)
+        .to_string()
 }
