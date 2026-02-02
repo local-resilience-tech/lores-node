@@ -7,6 +7,7 @@ use crate::{
         docker_stack::{docker_stack_ls, docker_stack_services, DockerStackServicesResult},
         DockerStack,
     },
+    local_apps::coop_cloud::service_labels::CoopCloudServiceLabels,
 };
 
 pub fn find_deployed_local_apps(node: &Node) -> Vec<LocalApp> {
@@ -14,29 +15,27 @@ pub fn find_deployed_local_apps(node: &Node) -> Vec<LocalApp> {
 
     let local_apps = deployed_stacks
         .into_iter()
-        .map(|stack| build_app_details(&stack, node))
+        .filter_map(|stack| build_app_details(&stack, node).ok())
         .collect();
 
     local_apps
 }
 
-fn build_app_details(stack: &DockerStack, node: &Node) -> LocalApp {
-    let labels = get_app_service_labels(&stack.name).unwrap_or_default();
+fn build_app_details(stack: &DockerStack, node: &Node) -> Result<LocalApp, anyhow::Error> {
+    let labels = get_app_service_labels(&stack.name)?;
 
-    println!("Labels for stack {}: {:?}", stack.name, labels);
-
-    LocalApp {
+    Ok(LocalApp {
         name: get_app_name(stack),
-        version: "unknown".to_string(),
+        version: labels.version(),
         status: LocalAppInstallStatus::StackDeployed,
         url: Some(NodeAppUrl {
             internet_url: app_url(&stack.name, node.domain_on_internet.as_deref()),
             local_network_url: app_url(&stack.name, node.domain_on_local_network.as_deref()),
         }),
-    }
+    })
 }
 
-fn get_app_service_labels(stack_name: &str) -> Result<HashMap<String, String>, anyhow::Error> {
+fn get_app_service_labels(stack_name: &str) -> Result<CoopCloudServiceLabels, anyhow::Error> {
     let services = docker_stack_services(stack_name)?;
     let service = get_app_service_from_list(&services).ok_or_else(|| {
         anyhow::anyhow!(
@@ -48,13 +47,16 @@ fn get_app_service_labels(stack_name: &str) -> Result<HashMap<String, String>, a
     get_service_lablels(&service.name)
 }
 
-fn get_service_lablels(service_id: &str) -> Result<HashMap<String, String>, anyhow::Error> {
+fn get_service_lablels(service_id: &str) -> Result<CoopCloudServiceLabels, anyhow::Error> {
     let properties = docker_service_inspect(service_id).map_err(|e| {
         eprintln!("Error inspecting service {}: {:?}", service_id, e);
         e
     })?;
 
-    Ok(properties.spec.labels.unwrap_or_default())
+    let labels: HashMap<String, String> = properties.spec.labels.unwrap_or_default();
+    let service_labels = CoopCloudServiceLabels::new(labels.clone())?;
+
+    Ok(service_labels)
 }
 
 fn get_app_service_from_list(
