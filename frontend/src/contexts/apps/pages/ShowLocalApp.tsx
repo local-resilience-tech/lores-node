@@ -11,7 +11,7 @@ import { IfNodeSteward } from "../../auth/node_steward_auth"
 export default function ShowLocalApp() {
   const { appName } = useParams<{ appName: string }>()
   const app = useAppSelector((state) =>
-    (state.localApps || []).find((a) => a.name === appName)
+    (state.localApps || []).find((a) => a.name === appName),
   )
 
   if (!appName) {
@@ -43,7 +43,7 @@ export default function ShowLocalApp() {
       <Stack gap="lg">
         <Stack gap="xs">
           <Breadcrumbs>
-            <Anchor href="/this_node/`apps">Local Apps</Anchor>
+            <Anchor href="/this_node/apps">Local Apps</Anchor>
             <Text c="dimmed">{app.name}</Text>
           </Breadcrumbs>
           <Title order={1}>

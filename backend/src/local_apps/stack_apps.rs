@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use crate::{
-    data::entities::{LocalApp, Node, NodeAppUrl},
+    data::entities::{LocalApp, NodeAppUrl},
     docker::{
         docker_service::docker_service_inspect,
         docker_stack::{docker_stack_ls, docker_stack_services, DockerStackServicesResult},
@@ -10,26 +10,26 @@ use crate::{
     local_apps::coop_cloud::service_labels::CoopCloudServiceLabels,
 };
 
-pub fn find_deployed_local_apps(node: &Node) -> Vec<LocalApp> {
+pub fn find_deployed_local_apps() -> Vec<LocalApp> {
     let deployed_stacks = docker_stack_ls().unwrap_or_default();
 
     let local_apps = deployed_stacks
         .into_iter()
-        .filter_map(|stack| build_app_details(&stack, node).ok())
+        .filter_map(|stack| build_app_details(&stack).ok())
         .collect();
 
     local_apps
 }
 
-fn build_app_details(stack: &DockerStack, node: &Node) -> Result<LocalApp, anyhow::Error> {
+fn build_app_details(stack: &DockerStack) -> Result<LocalApp, anyhow::Error> {
     let labels = get_app_service_labels(&stack.name)?;
 
     Ok(LocalApp {
         name: get_app_name(stack),
         version: labels.version(),
         url: Some(NodeAppUrl {
-            internet_url: app_url(&stack.name, node.domain_on_internet.as_deref()),
-            local_network_url: app_url(&stack.name, node.domain_on_local_network.as_deref()),
+            internet_url: app_url(labels.host()),
+            local_network_url: None,
         }),
     })
 }
@@ -66,8 +66,8 @@ fn get_app_service_from_list(
         .find(|service| service.name.ends_with("_app"))
 }
 
-fn app_url(app_name: &str, domain: Option<&str>) -> Option<String> {
-    domain.map(|d| format!("http://{}.{}", app_name, d))
+fn app_url(host: Option<String>) -> Option<String> {
+    host.map(|h| format!("https://{}", h))
 }
 
 fn get_app_name(stack: &DockerStack) -> String {
