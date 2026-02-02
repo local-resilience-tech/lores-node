@@ -1,5 +1,4 @@
 import { Table } from "@mantine/core"
-import LocalAppStatusBadge from "./LocalAppStatusBadge"
 import { LocalApp } from "../../../api/Api"
 
 export default function LocalAppDetails({ app }: { app: LocalApp }) {
@@ -13,12 +12,6 @@ export default function LocalAppDetails({ app }: { app: LocalApp }) {
         <Table.Tr>
           <Table.Th>Version</Table.Th>
           <Table.Td>{app.version}</Table.Td>
-        </Table.Tr>
-        <Table.Tr>
-          <Table.Th>Status</Table.Th>
-          <Table.Td>
-            <LocalAppStatusBadge status={app.status} />
-          </Table.Td>
         </Table.Tr>
         <Table.Tr>
           <Table.Th>Internet URL</Table.Th>

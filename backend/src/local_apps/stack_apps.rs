@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use crate::{
-    data::entities::{LocalApp, LocalAppInstallStatus, Node, NodeAppUrl},
+    data::entities::{LocalApp, Node, NodeAppUrl},
     docker::{
         docker_service::docker_service_inspect,
         docker_stack::{docker_stack_ls, docker_stack_services, DockerStackServicesResult},
@@ -27,7 +27,6 @@ fn build_app_details(stack: &DockerStack, node: &Node) -> Result<LocalApp, anyho
     Ok(LocalApp {
         name: get_app_name(stack),
         version: labels.version(),
-        status: LocalAppInstallStatus::StackDeployed,
         url: Some(NodeAppUrl {
             internet_url: app_url(&stack.name, node.domain_on_internet.as_deref()),
             local_network_url: app_url(&stack.name, node.domain_on_local_network.as_deref()),
