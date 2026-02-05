@@ -32,11 +32,6 @@ export enum NodeStewardLoginError {
   InternalServerError = "InternalServerError",
 }
 
-export enum LocalAppInstallStatus {
-  Installed = "Installed",
-  StackDeployed = "StackDeployed",
-}
-
 export enum GetCurrentNodeStewardError {
   InternalServerError = "InternalServerError",
   AdminNotFound = "AdminNotFound",
@@ -95,7 +90,6 @@ export interface DockerStackWithServices {
 
 export interface LocalApp {
   name: string;
-  status: LocalAppInstallStatus;
   url?: null | NodeAppUrl;
   version: string;
 }
@@ -371,7 +365,7 @@ export class HttpClient<SecurityDataType = unknown> {
 
 /**
  * @title lores-node
- * @version 0.14.1
+ * @version 0.15.2
  * @license
  */
 export class Api<

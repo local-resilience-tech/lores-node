@@ -28,12 +28,6 @@ pub struct Region {
 }
 
 #[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
-pub enum LocalAppInstallStatus {
-    Installed,
-    StackDeployed,
-}
-
-#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
 pub struct NodeAppUrl {
     pub internet_url: Option<String>,
     pub local_network_url: Option<String>,
@@ -43,7 +37,6 @@ pub struct NodeAppUrl {
 pub struct LocalApp {
     pub name: String,
     pub version: String,
-    pub status: LocalAppInstallStatus,
     pub url: Option<NodeAppUrl>,
 }
 

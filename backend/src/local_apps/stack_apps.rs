@@ -1,59 +1,80 @@
+use std::collections::HashMap;
+
 use crate::{
-    data::entities::{LocalApp, LocalAppInstallStatus, Node, NodeAppUrl},
-    docker::{docker_stack::docker_stack_ls, DockerStack},
+    data::entities::{LocalApp, NodeAppUrl},
+    docker::{
+        docker_service::docker_service_inspect,
+        docker_stack::{docker_stack_ls, docker_stack_services, DockerStackServicesResult},
+        DockerStack,
+    },
+    local_apps::coop_cloud::service_labels::CoopCloudServiceLabels,
 };
 
-use super::installed_apps::find_installed_apps;
-
-pub fn find_deployed_local_apps(node: &Node) -> Vec<LocalApp> {
-    let apps_details = find_installed_apps();
+pub fn find_deployed_local_apps() -> Vec<LocalApp> {
     let deployed_stacks = docker_stack_ls().unwrap_or_default();
 
-    let local_apps = apps_details
+    let local_apps = deployed_stacks
         .into_iter()
-        .map(|app_details| LocalApp {
-            name: app_details.name.clone(),
-            version: app_details.version,
-            status: LocalAppInstallStatus::Installed,
-            url: None,
-        })
+        .filter_map(|stack| build_app_details(&stack).ok())
         .collect();
 
-    let local_apps = update_app_statuses_from_stacks(&local_apps, node, &deployed_stacks);
     local_apps
 }
 
-fn update_app_statuses_from_stacks(
-    apps: &Vec<LocalApp>,
-    node: &Node,
-    deployed_stacks: &[DockerStack],
-) -> Vec<LocalApp> {
-    apps.iter()
-        .cloned()
-        .map(|app| update_app_status_from_stacks(&app, node, deployed_stacks))
-        .collect()
+fn build_app_details(stack: &DockerStack) -> Result<LocalApp, anyhow::Error> {
+    let labels = get_app_service_labels(&stack.name)?;
+
+    Ok(LocalApp {
+        name: get_app_name(stack),
+        version: labels.version(),
+        url: Some(NodeAppUrl {
+            internet_url: app_url(labels.host()),
+            local_network_url: None,
+        }),
+    })
 }
 
-fn update_app_status_from_stacks(
-    app: &LocalApp,
-    node: &Node,
-    deployed_stacks: &[DockerStack],
-) -> LocalApp {
-    let mut updated_app = app.clone();
-    if app_in_docker_stacks(&app.name, deployed_stacks) {
-        updated_app.status = LocalAppInstallStatus::StackDeployed;
-        updated_app.url = Some(NodeAppUrl {
-            internet_url: app_url(&app.name, node.domain_on_internet.as_deref()),
-            local_network_url: app_url(&app.name, node.domain_on_local_network.as_deref()),
-        });
-    }
-    updated_app
+fn get_app_service_labels(stack_name: &str) -> Result<CoopCloudServiceLabels, anyhow::Error> {
+    let services = docker_stack_services(stack_name)?;
+    let service = get_app_service_from_list(&services).ok_or_else(|| {
+        anyhow::anyhow!(
+            "App service not found in stack services for stack: {}",
+            stack_name
+        )
+    })?;
+
+    get_service_lablels(&service.name)
 }
 
-fn app_url(app_name: &str, domain: Option<&str>) -> Option<String> {
-    domain.map(|d| format!("http://{}.{}", app_name, d))
+fn get_service_lablels(service_id: &str) -> Result<CoopCloudServiceLabels, anyhow::Error> {
+    let properties = docker_service_inspect(service_id).map_err(|e| {
+        eprintln!("Error inspecting service {}: {:?}", service_id, e);
+        e
+    })?;
+
+    let labels: HashMap<String, String> = properties.spec.labels.unwrap_or_default();
+    let service_labels = CoopCloudServiceLabels::new(labels.clone())?;
+
+    Ok(service_labels)
 }
 
-fn app_in_docker_stacks(app_name: &str, deployed_stacks: &[DockerStack]) -> bool {
-    deployed_stacks.iter().any(|stack| stack.name == app_name)
+fn get_app_service_from_list(
+    services: &Vec<DockerStackServicesResult>,
+) -> Option<&DockerStackServicesResult> {
+    services
+        .iter()
+        .find(|service| service.name.ends_with("_app"))
+}
+
+fn app_url(host: Option<String>) -> Option<String> {
+    host.map(|h| format!("https://{}", h))
+}
+
+fn get_app_name(stack: &DockerStack) -> String {
+    stack
+        .name
+        .split('_')
+        .next()
+        .unwrap_or(&stack.name)
+        .to_string()
 }

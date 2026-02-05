@@ -1,7 +1,9 @@
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
+pub mod docker_service;
 pub mod docker_stack;
+mod helpers;
 
 #[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
 pub struct DockerStack {

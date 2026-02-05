@@ -1,14 +1,17 @@
 use std::process::Command;
 
+use crate::docker::helpers::parse_docker_json;
+
 use super::{DockerService, DockerStack};
 
 #[derive(Debug, Clone, serde::Deserialize)]
+#[allow(dead_code)]
 struct DockerStackLsResult {
     #[serde(rename = "Name")]
-    name: String,
+    pub name: String,
 
     #[serde(rename = "Services")]
-    services: String,
+    pub services: String,
 }
 
 pub fn docker_stack_ls() -> Result<Vec<DockerStack>, anyhow::Error> {
@@ -20,14 +23,7 @@ pub fn docker_stack_ls() -> Result<Vec<DockerStack>, anyhow::Error> {
         .output()
         .map_err(|e| anyhow::anyhow!("Failed to execute command: {}", e))?;
 
-    let stdout_string = String::from_utf8(output.stdout)
-        .map_err(|e| anyhow::anyhow!("Failed to convert output to string: {}", e))?;
-    let stdout_string = json_object_lines_to_array(&stdout_string);
-
-    println!("Docker stack ls output: {}", stdout_string);
-
-    let results = serde_json::from_str::<Vec<DockerStackLsResult>>(&stdout_string)
-        .map_err(|e| anyhow::anyhow!("Failed to parse JSON: {}", e))?;
+    let results = parse_docker_json::<Vec<DockerStackLsResult>>(output)?;
 
     let stacks: Vec<DockerStack> = results
         .into_iter()
@@ -42,30 +38,66 @@ pub fn docker_stack_ls() -> Result<Vec<DockerStack>, anyhow::Error> {
 
 #[derive(Debug, Clone, serde::Deserialize)]
 #[allow(dead_code)]
-struct DockerStackPsResult {
+pub struct DockerStackServicesResult {
     #[serde(rename = "ID")]
-    id: String,
-
-    #[serde(rename = "Name")]
-    name: String,
+    pub id: String,
 
     #[serde(rename = "Image")]
-    image: String,
+    pub image: String,
 
-    #[serde(rename = "Node")]
-    node: String,
+    #[serde(rename = "Mode")]
+    pub mode: String,
 
-    #[serde(rename = "DesiredState")]
-    desired_state: String,
-
-    #[serde(rename = "CurrentState")]
-    current_state: String,
-
-    #[serde(rename = "Error")]
-    error: Option<String>,
+    #[serde(rename = "Name")]
+    pub name: String,
 
     #[serde(rename = "Ports")]
-    ports: String,
+    pub ports: String,
+}
+
+pub fn docker_stack_services(
+    stack_name: &str,
+) -> Result<Vec<DockerStackServicesResult>, anyhow::Error> {
+    let output = Command::new("docker")
+        .arg("stack")
+        .arg("services")
+        .arg(stack_name)
+        .arg("--format")
+        .arg("json")
+        .output()
+        .map_err(|e| anyhow::anyhow!("Failed to execute command: {}", e))?;
+
+    let services = parse_docker_json::<Vec<DockerStackServicesResult>>(output)?;
+
+    Ok(services)
+}
+
+#[derive(Debug, Clone, serde::Deserialize)]
+#[allow(dead_code)]
+pub struct DockerStackPsResult {
+    #[serde(rename = "ID")]
+    pub id: String,
+
+    #[serde(rename = "Name")]
+    pub name: String,
+
+    #[serde(rename = "Image")]
+    pub image: String,
+
+    #[serde(rename = "Node")]
+    pub node: String,
+
+    #[serde(rename = "DesiredState")]
+    pub desired_state: String,
+
+    #[serde(rename = "CurrentState")]
+    pub current_state: String,
+
+    #[serde(rename = "Error")]
+    pub error: Option<String>,
+
+    #[serde(rename = "Ports")]
+    pub ports: String,
 }
 
 pub fn docker_stack_ps(stack_name: &str) -> Result<Vec<DockerService>, anyhow::Error> {
@@ -80,14 +112,7 @@ pub fn docker_stack_ps(stack_name: &str) -> Result<Vec<DockerService>, anyhow::E
         .output()
         .map_err(|e| anyhow::anyhow!("Failed to execute command: {}", e))?;
 
-    let stdout_string = String::from_utf8(output.stdout)
-        .map_err(|e| anyhow::anyhow!("Failed to convert output to string: {}", e))?;
-    let stdout_string = json_object_lines_to_array(&stdout_string);
-
-    println!("Docker stack ps output: {}", stdout_string);
-
-    let services = serde_json::from_str::<Vec<DockerStackPsResult>>(&stdout_string)
-        .map_err(|e| anyhow::anyhow!("Failed to parse JSON: {}", e))?;
+    let services = parse_docker_json::<Vec<DockerStackPsResult>>(output)?;
 
     let services: Vec<DockerService> = services
         .into_iter()
@@ -114,60 +139,5 @@ fn split_state_and_duration(state: &str) -> (String, String) {
         (parts[0].to_string(), parts[1].to_string())
     } else {
         (state.to_string(), String::new())
-    }
-}
-
-fn json_object_lines_to_array(input: &str) -> String {
-    let mut lines = input.lines().map(str::trim).filter(|line| !line.is_empty());
-    let first_line = lines.next().unwrap_or("");
-    let mut result = String::from("[");
-    result.push_str(first_line);
-
-    for line in lines {
-        result.push_str(",");
-        result.push_str(line);
-    }
-
-    result.push(']');
-    result
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_json_object_lines_to_array_empty() {
-        let input = "";
-        let expected = "[]";
-        let result = json_object_lines_to_array(input);
-        assert_eq!(result, expected);
-    }
-
-    #[test]
-    fn test_json_object_lines_to_array_single_line() {
-        let input = r#"{"Name":"stack1","Services":"2"}"#;
-        let expected = r#"[{"Name":"stack1","Services":"2"}]"#;
-        let result = json_object_lines_to_array(input);
-        assert_eq!(result, expected);
-    }
-
-    #[test]
-    fn test_json_object_lines_to_array_multiple_lines() {
-        let input = r#"{"Name":"stack1","Services":"2"}
-{"Name":"stack2","Services":"3"}"#;
-        let expected = r#"[{"Name":"stack1","Services":"2"},{"Name":"stack2","Services":"3"}]"#;
-        let result = json_object_lines_to_array(input);
-        assert_eq!(result, expected);
-    }
-
-    #[test]
-    fn test_json_object_lines_to_array_trailing_newline() {
-        let input = r#"{"Name":"stack1","Services":"2"}
-{"Name":"stack2","Services":"3"}
-"#;
-        let expected = r#"[{"Name":"stack1","Services":"2"},{"Name":"stack2","Services":"3"}]"#;
-        let result = json_object_lines_to_array(input);
-        assert_eq!(result, expected);
     }
 }
