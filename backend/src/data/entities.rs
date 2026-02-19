@@ -57,3 +57,8 @@ pub struct AppInstallation {
     pub node_id: String,
     pub version: String,
 }
+
+#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
+pub struct Network {
+    pub id: String,
+}
