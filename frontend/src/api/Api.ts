@@ -64,7 +64,7 @@ export interface BootstrapNodeData {
 
 export type ClientEvent =
   | {
-      NodeUpdated: NodeDetails;
+      NodeUpdated: RegionNodeDetails;
     }
   | {
       RegionAppUpdated: RegionAppWithInstallations;
@@ -103,16 +103,6 @@ export interface LogCount {
 export interface NodeAppUrl {
   internet_url?: string | null;
   local_network_url?: string | null;
-}
-
-export interface NodeDetails {
-  domain_on_internet?: string | null;
-  domain_on_local_network?: string | null;
-  id: string;
-  name: string;
-  public_ipv4?: string | null;
-  state?: string | null;
-  status_text?: string | null;
 }
 
 export interface NodeStatusData {
@@ -175,6 +165,16 @@ export interface RegionNode {
   id: string;
   name: string;
   public_ipv4?: string | null;
+}
+
+export interface RegionNodeDetails {
+  domain_on_internet?: string | null;
+  domain_on_local_network?: string | null;
+  id: string;
+  name: string;
+  public_ipv4?: string | null;
+  state?: string | null;
+  status_text?: string | null;
 }
 
 export interface UpdateNodeDetails {
@@ -687,7 +687,7 @@ export class Api<
      * @request GET:/public_api/nodes
      */
     listNodes: (params: RequestParams = {}) =>
-      this.request<NodeDetails[], any>({
+      this.request<RegionNodeDetails[], any>({
         path: `/public_api/nodes`,
         method: "GET",
         format: "json",

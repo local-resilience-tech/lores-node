@@ -2,7 +2,7 @@ use axum::{http::StatusCode, response::IntoResponse, Extension, Json};
 use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::{
-    data::{entities::NodeDetails, projections_read::nodes::NodesReadRepo},
+    data::{entities::RegionNodeDetails, projections_read::nodes::NodesReadRepo},
     DatabaseState,
 };
 
@@ -11,7 +11,7 @@ pub fn router() -> OpenApiRouter {
 }
 
 #[utoipa::path(get, path = "/", responses(
-    (status = 200, body = Vec<NodeDetails>),
+    (status = 200, body = Vec<RegionNodeDetails>),
     (status = INTERNAL_SERVER_ERROR, body = ()),
 ),)]
 async fn list_nodes(Extension(db): Extension<DatabaseState>) -> impl IntoResponse {

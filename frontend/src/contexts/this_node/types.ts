@@ -1,6 +1,6 @@
-import { NodeDetails } from "../../api/Api"
+import { RegionNodeDetails } from "../../api/Api"
 
-export type NodeDetailsWithStatus = NodeDetails & {
+export type RegionNodeDetailsWithStatus = RegionNodeDetails & {
   status_text?: string | null
   state?: string | null
 }

@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit"
-import type { RegionNode, NodeDetails } from "../api/Api"
+import type { RegionNode, RegionNodeDetails } from "../api/Api"
 
 export type ThisNodeState = RegionNode | null
 
@@ -14,7 +14,7 @@ const thisNodeSlice = createSlice({
   extraReducers: (builder) => {
     builder.addMatcher(
       (action) => action.type === "nodes/nodeUpdated",
-      (state, { payload }: PayloadAction<NodeDetails>) => {
+      (state, { payload }: PayloadAction<RegionNodeDetails>) => {
         if (state && state.id === payload.id) {
           return { ...state, ...payload }
         }

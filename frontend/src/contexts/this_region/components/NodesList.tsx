@@ -1,5 +1,5 @@
 import { Stack, Card, Text, Box, Table, useMantineTheme } from "@mantine/core"
-import { NodeDetailsWithStatus } from "../../this_node"
+import { RegionNodeDetailsWithStatus } from "../../this_node"
 import { Anchor } from "../../../components"
 
 const IpLink = ({ ip }: { ip: string | undefined | null }) => {
@@ -15,7 +15,7 @@ const IpLink = ({ ip }: { ip: string | undefined | null }) => {
 export default function NodesList({
   nodes: nodes,
 }: {
-  nodes: NodeDetailsWithStatus[]
+  nodes: RegionNodeDetailsWithStatus[]
 }) {
   const theme = useMantineTheme()
 

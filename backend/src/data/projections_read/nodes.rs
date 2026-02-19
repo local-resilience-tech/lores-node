@@ -1,6 +1,6 @@
 use sqlx::SqlitePool;
 
-use super::super::entities::{NodeDetails, RegionNode};
+use super::super::entities::{RegionNode, RegionNodeDetails};
 
 pub struct NodesReadRepo {}
 
@@ -34,9 +34,9 @@ impl NodesReadRepo {
         &self,
         pool: &SqlitePool,
         node_id: String,
-    ) -> Result<Option<NodeDetails>, sqlx::Error> {
+    ) -> Result<Option<RegionNodeDetails>, sqlx::Error> {
         let node = sqlx::query_as!(
-            NodeDetails,
+            RegionNodeDetails,
             "
             SELECT id, name, public_ipv4, domain_on_local_network, domain_on_internet, s.text as status_text, s.state as state
             FROM nodes
@@ -52,9 +52,9 @@ impl NodesReadRepo {
         return Ok(node);
     }
 
-    pub async fn all(&self, pool: &SqlitePool) -> Result<Vec<NodeDetails>, sqlx::Error> {
+    pub async fn all(&self, pool: &SqlitePool) -> Result<Vec<RegionNodeDetails>, sqlx::Error> {
         let nodes = sqlx::query_as!(
-            NodeDetails,
+            RegionNodeDetails,
             "
             SELECT id, name, public_ipv4, domain_on_local_network, domain_on_internet, s.text as status_text, s.state as state
             FROM nodes

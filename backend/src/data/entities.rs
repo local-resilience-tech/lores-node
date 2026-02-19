@@ -12,7 +12,7 @@ pub struct RegionNode {
 }
 
 #[derive(sqlx::FromRow, Serialize, Deserialize, ToSchema, Debug, Clone)]
-pub struct NodeDetails {
+pub struct RegionNodeDetails {
     pub id: String,
     pub name: String,
     pub public_ipv4: Option<String>,
