@@ -1,5 +1,6 @@
 import { useDispatch, useSelector, useStore } from "react-redux"
 import { configureStore } from "@reduxjs/toolkit"
+import networkReducer from "./network"
 import regionReducer from "./region"
 import nodesReducer, { nodeUpdated } from "./nodes"
 import localAppsReducer from "./local_apps"
@@ -11,6 +12,7 @@ import { ClientEvent } from "../api/Api"
 const store = configureStore({
   reducer: {
     me: meReducer,
+    network: networkReducer,
     region: regionReducer,
     nodes: nodesReducer,
     localApps: localAppsReducer,

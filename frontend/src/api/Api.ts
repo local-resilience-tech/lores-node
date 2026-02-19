@@ -100,6 +100,10 @@ export interface LogCount {
   total: number;
 }
 
+export interface Network {
+  id: string;
+}
+
 export interface NodeAppUrl {
   internet_url?: string | null;
   local_network_url?: string | null;
@@ -726,6 +730,20 @@ export class Api<
     listStacks: (params: RequestParams = {}) =>
       this.request<DockerStackWithServices[], any>({
         path: `/public_api/stacks`,
+        method: "GET",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @name ShowThisNetwork
+     * @request GET:/public_api/this_network
+     */
+    showThisNetwork: (params: RequestParams = {}) =>
+      this.request<Network, string>({
+        path: `/public_api/this_network`,
         method: "GET",
         format: "json",
         ...params,

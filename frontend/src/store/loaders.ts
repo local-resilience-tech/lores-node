@@ -8,6 +8,7 @@ import { thisRegionNodeLoaded } from "./this_region_node"
 import { meLoaded } from "./me"
 import { redirect } from "react-router-dom"
 import { GetCurrentNodeStewardError } from "../api/Api"
+import { networkLoaded } from "./network"
 
 export async function loadInitialData(store: AppStore) {
   const state = store.getState()
@@ -34,6 +35,7 @@ export async function loadInitialData(store: AppStore) {
     }
   }
 
+  if (state.network === null) loadNetwork(store)
   if (state.region === null) loadRegion(store)
   if (state.nodes === null) loadNodes(store)
   if (state.localApps === null) loadLocalApps(store)
@@ -52,6 +54,12 @@ async function loadUser(store: AppStore) {
       console.error("Error fetching current user:", error)
       return Promise.reject(redirect("/login"))
     })
+}
+
+async function loadNetwork(store: AppStore) {
+  const result = await fetchApiData(() => getApi().publicApi.showThisNetwork())
+  console.log("EFFECT: fetchNetwork", result)
+  if (result) store.dispatch(networkLoaded(result))
 }
 
 async function loadRegion(store: AppStore) {
