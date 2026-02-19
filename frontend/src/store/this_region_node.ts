@@ -1,13 +1,13 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit"
 import type { RegionNode, RegionNodeDetails } from "../api/Api"
 
-export type ThisNodeState = RegionNode | null
+export type ThisRegionNodeState = RegionNode | null
 
-const thisNodeSlice = createSlice({
-  name: "this_node",
-  initialState: null as ThisNodeState,
+const thisRegionNodeSlice = createSlice({
+  name: "this_region_node",
+  initialState: null as ThisRegionNodeState,
   reducers: {
-    thisNodeLoaded: (state, action) => {
+    thisRegionNodeLoaded: (state, action) => {
       return action.payload as RegionNode
     },
   },
@@ -24,5 +24,5 @@ const thisNodeSlice = createSlice({
   },
 })
 
-export const { thisNodeLoaded } = thisNodeSlice.actions
-export default thisNodeSlice.reducer
+export const { thisRegionNodeLoaded } = thisRegionNodeSlice.actions
+export default thisRegionNodeSlice.reducer

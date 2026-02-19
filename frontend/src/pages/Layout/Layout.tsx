@@ -35,12 +35,12 @@ export default function Layout() {
   const iconSize = 20
 
   const region = useAppSelector((state) => state.region)
-  const node = useAppSelector((state) => state.thisNode)
+  const regionNode = useAppSelector((state) => state.thisRegionNode)
   const nodesCount = useAppSelector((state) => state.nodes?.length)
   const localAppsCount = useAppSelector((state) => state.localApps?.length)
   const me = useAppSelector((state) => state.me)
 
-  const readyForApps = region && node
+  const readyForApps = region && regionNode
   const pandaRunning = region
 
   const {} = useWebSocket(getSocketUrl(), {
@@ -71,7 +71,7 @@ export default function Layout() {
           <Anchor href="/">LoRes Mesh</Anchor>
           <Breadcrumbs>
             {region && <Text>{region.network_id}</Text>}
-            {node && <Text>{node.name}</Text>}
+            {regionNode && <Text>{regionNode.name}</Text>}
           </Breadcrumbs>
         </Group>
       </AppShell.Header>
@@ -97,12 +97,12 @@ export default function Layout() {
         </AppShell.Section>
         <AppShell.Section className={classes.menu_section}>
           <Text className={classes.section_title}>
-            {node?.name ? (
+            {regionNode?.name ? (
               <>
                 <Text span c="dimmed">
                   Node:{" "}
                 </Text>
-                <Text span>{node.name}</Text>
+                <Text span>{regionNode.name}</Text>
               </>
             ) : (
               "This Node"
@@ -111,8 +111,8 @@ export default function Layout() {
 
           <NavLink
             label="This node"
-            href="/this_node"
-            key={node ? node.id : "this_node"}
+            href="/this_region_node"
+            key={regionNode ? regionNode.id : "this_region_node"}
             leftSection={<IconHome size={iconSize} />}
             onClick={toggle}
           />
@@ -120,7 +120,7 @@ export default function Layout() {
             <>
               <NavLink
                 label="Local apps"
-                href="/this_node/apps"
+                href="/this_region_node/apps"
                 leftSection={<IconApps size={iconSize} />}
                 onClick={toggle}
                 rightSection={

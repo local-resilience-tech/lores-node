@@ -8,14 +8,14 @@ use crate::{
 };
 
 pub fn router() -> OpenApiRouter {
-    OpenApiRouter::new().routes(routes!(show_this_node))
+    OpenApiRouter::new().routes(routes!(show_this_region_node))
 }
 
 #[utoipa::path(get, path = "/", responses(
     (status = 200, body = Option<RegionNode>),
     (status = INTERNAL_SERVER_ERROR, body = String, description = "Internal Server Error"),
 ))]
-pub async fn show_this_node(
+pub async fn show_this_region_node(
     Extension(db): Extension<DatabaseState>,
     Extension(config_state): Extension<LoresNodeConfigState>,
 ) -> impl IntoResponse {

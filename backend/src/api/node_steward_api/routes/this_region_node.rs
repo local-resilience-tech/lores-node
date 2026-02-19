@@ -16,9 +16,9 @@ use crate::{
 
 pub fn router() -> OpenApiRouter {
     OpenApiRouter::new()
-        .routes(routes!(create_this_node))
-        .routes(routes!(update_this_node))
-        .routes(routes!(post_node_status))
+        .routes(routes!(create_this_region_node))
+        .routes(routes!(update_this_region_node))
+        .routes(routes!(post_region_node_status))
 }
 
 #[derive(Deserialize, ToSchema, Debug)]
@@ -35,7 +35,7 @@ struct CreateNodeDetails {
     ),
     request_body(content = CreateNodeDetails, content_type = "application/json"),
 )]
-async fn create_this_node(
+async fn create_this_region_node(
     Extension(panda_container): Extension<PandaNodeContainer>,
     auth_session: AuthSession,
     axum::extract::Json(data): axum::extract::Json<CreateNodeDetails>,
@@ -84,7 +84,7 @@ struct UpdateNodeDetails {
     ),
     request_body(content = UpdateNodeDetails, content_type = "application/json"),
 )]
-async fn update_this_node(
+async fn update_this_region_node(
     Extension(panda_container): Extension<PandaNodeContainer>,
     auth_session: AuthSession,
     axum::extract::Json(data): axum::extract::Json<UpdateNodeDetails>,
@@ -122,7 +122,7 @@ async fn update_this_node(
 }
 
 #[derive(Deserialize, ToSchema, Debug)]
-struct NodeStatusData {
+struct RegionNodeStatusData {
     pub text: Option<String>,
     pub state: Option<String>,
 }
@@ -134,12 +134,12 @@ struct NodeStatusData {
         (status = OK, body = ()),
         (status = INTERNAL_SERVER_ERROR, body = String),
     ),
-    request_body(content = NodeStatusData, content_type = "application/json"),
+    request_body(content = RegionNodeStatusData, content_type = "application/json"),
 )]
-async fn post_node_status(
+async fn post_region_node_status(
     Extension(panda_container): Extension<PandaNodeContainer>,
     auth_session: AuthSession,
-    axum::extract::Json(data): axum::extract::Json<NodeStatusData>,
+    axum::extract::Json(data): axum::extract::Json<RegionNodeStatusData>,
 ) -> impl IntoResponse {
     println!("post status: {:?}", data);
 

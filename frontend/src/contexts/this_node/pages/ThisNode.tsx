@@ -17,9 +17,9 @@ import { IfNodeSteward } from "../../auth/node_steward_auth"
 
 export default function ThisNode() {
   const navigate = useNavigate()
-  const node = useAppSelector((state) => state.thisNode)
+  const node = useAppSelector((state) => state.thisRegionNode)
   const nodeDetails = useAppSelector((state) =>
-    getNodeById(state.nodes, node?.id)
+    getNodeById(state.nodes, node?.id),
   )
 
   if (!node) return null

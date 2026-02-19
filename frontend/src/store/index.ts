@@ -5,7 +5,7 @@ import nodesReducer, { nodeUpdated } from "./nodes"
 import localAppsReducer from "./local_apps"
 import regionAppsReducer, { regionAppUpdated } from "./region_apps"
 import meReducer from "./me"
-import thisNodeReducer from "./this_node"
+import thisRegionNodeReducer from "./this_region_node"
 import { ClientEvent } from "../api/Api"
 
 const store = configureStore({
@@ -15,7 +15,7 @@ const store = configureStore({
     nodes: nodesReducer,
     localApps: localAppsReducer,
     regionApps: regionAppsReducer,
-    thisNode: thisNodeReducer,
+    thisRegionNode: thisRegionNodeReducer,
   },
 })
 

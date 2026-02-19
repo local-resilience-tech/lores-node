@@ -105,11 +105,6 @@ export interface NodeAppUrl {
   local_network_url?: string | null;
 }
 
-export interface NodeStatusData {
-  state?: string | null;
-  text?: string | null;
-}
-
 export interface NodeSteward {
   created_at: string;
   id: string;
@@ -175,6 +170,11 @@ export interface RegionNodeDetails {
   public_ipv4?: string | null;
   state?: string | null;
   status_text?: string | null;
+}
+
+export interface RegionNodeStatusData {
+  state?: string | null;
+  text?: string | null;
 }
 
 export interface UpdateNodeDetails {
@@ -576,54 +576,6 @@ export class Api<
     /**
      * No description
      *
-     * @name UpdateThisNode
-     * @request PUT:/node_steward_api/this_node
-     */
-    updateThisNode: (data: UpdateNodeDetails, params: RequestParams = {}) =>
-      this.request<RegionNode, string>({
-        path: `/node_steward_api/this_node`,
-        method: "PUT",
-        body: data,
-        type: ContentType.Json,
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @name CreateThisNode
-     * @request POST:/node_steward_api/this_node
-     */
-    createThisNode: (data: CreateNodeDetails, params: RequestParams = {}) =>
-      this.request<RegionNode, string>({
-        path: `/node_steward_api/this_node`,
-        method: "POST",
-        body: data,
-        type: ContentType.Json,
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @name PostNodeStatus
-     * @request POST:/node_steward_api/this_node/status
-     */
-    postNodeStatus: (data: NodeStatusData, params: RequestParams = {}) =>
-      this.request<any, string>({
-        path: `/node_steward_api/this_node/status`,
-        method: "POST",
-        body: data,
-        type: ContentType.Json,
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
      * @name ShowRegion
      * @request GET:/node_steward_api/this_region
      */
@@ -644,6 +596,63 @@ export class Api<
     bootstrap: (data: BootstrapNodeData, params: RequestParams = {}) =>
       this.request<any, string>({
         path: `/node_steward_api/this_region/bootstrap`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @name UpdateThisRegionNode
+     * @request PUT:/node_steward_api/this_region_node
+     */
+    updateThisRegionNode: (
+      data: UpdateNodeDetails,
+      params: RequestParams = {},
+    ) =>
+      this.request<RegionNode, string>({
+        path: `/node_steward_api/this_region_node`,
+        method: "PUT",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @name CreateThisRegionNode
+     * @request POST:/node_steward_api/this_region_node
+     */
+    createThisRegionNode: (
+      data: CreateNodeDetails,
+      params: RequestParams = {},
+    ) =>
+      this.request<RegionNode, string>({
+        path: `/node_steward_api/this_region_node`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @name PostRegionNodeStatus
+     * @request POST:/node_steward_api/this_region_node/status
+     */
+    postRegionNodeStatus: (
+      data: RegionNodeStatusData,
+      params: RequestParams = {},
+    ) =>
+      this.request<any, string>({
+        path: `/node_steward_api/this_region_node/status`,
         method: "POST",
         body: data,
         type: ContentType.Json,
@@ -725,20 +734,6 @@ export class Api<
     /**
      * No description
      *
-     * @name ShowThisNode
-     * @request GET:/public_api/this_node
-     */
-    showThisNode: (params: RequestParams = {}) =>
-      this.request<null | RegionNode, string>({
-        path: `/public_api/this_node`,
-        method: "GET",
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
      * @name ShowThisPandaNode
      * @request GET:/public_api/this_p2panda_node
      */
@@ -773,6 +768,20 @@ export class Api<
     showRegion: (params: RequestParams = {}) =>
       this.request<null | Region, any>({
         path: `/public_api/this_region`,
+        method: "GET",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @name ShowThisRegionNode
+     * @request GET:/public_api/this_region_node
+     */
+    showThisRegionNode: (params: RequestParams = {}) =>
+      this.request<null | RegionNode, string>({
+        path: `/public_api/this_region_node`,
         method: "GET",
         format: "json",
         ...params,

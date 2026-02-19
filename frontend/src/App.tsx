@@ -36,7 +36,7 @@ import "@mantine/notifications/styles.css"
 
 function withStore(
   func: (store: AppStore) => any,
-  store: AppStore
+  store: AppStore,
 ): LoaderFunction<any> {
   const wrappedFunc: LoaderFunction<any> = async () => {
     return func(store)
@@ -91,9 +91,9 @@ const router = createBrowserRouter([
         path: "",
         element: <EnsureRegion />,
         children: [
-          { path: "", element: <Navigate to="/this_node" replace /> },
+          { path: "", element: <Navigate to="/this_region_node" replace /> },
           {
-            path: "this_node",
+            path: "this_region_node",
             element: <EnsureNode />,
             children: [
               { path: "", element: <ThisNode /> },

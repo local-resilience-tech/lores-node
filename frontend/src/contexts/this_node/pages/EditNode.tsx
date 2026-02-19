@@ -7,16 +7,16 @@ import { actionFailure, ActionPromiseResult, Anchor } from "../../../components"
 import { useNavigate } from "react-router-dom"
 
 export default function EditNode() {
-  const node = useAppSelector((state) => state.thisNode)
+  const node = useAppSelector((state) => state.thisRegionNode)
   const navigate = useNavigate()
 
   if (!node) return null
 
   const updateNode = async (
-    data: UpdateNodeDetails
+    data: UpdateNodeDetails,
   ): Promise<ActionPromiseResult> => {
     return getApi()
-      .nodeStewardApi.updateThisNode(data)
+      .nodeStewardApi.updateThisRegionNode(data)
       .then(() => {
         navigate("..")
       })

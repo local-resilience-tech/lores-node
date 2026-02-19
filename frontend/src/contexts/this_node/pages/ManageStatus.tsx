@@ -1,24 +1,24 @@
 import { Breadcrumbs, Stack, Text, Title } from "@mantine/core"
 import PostStatus from "../components/PostStatus"
 import { getApi } from "../../../api"
-import type { NodeStatusData } from "../../../api/Api"
+import type { RegionNodeStatusData } from "../../../api/Api"
 import { actionFailure, ActionPromiseResult, Anchor } from "../../../components"
 import { useAppSelector } from "../../../store"
 import { useNavigate } from "react-router-dom"
 
 export default function ManageStatus() {
-  const node = useAppSelector((state) => state.thisNode)
+  const node = useAppSelector((state) => state.thisRegionNode)
   const navigate = useNavigate()
 
   if (!node) return null
 
   const postStatus = async (
-    data: NodeStatusData
+    data: RegionNodeStatusData,
   ): Promise<ActionPromiseResult> => {
     return getApi()
-      .nodeStewardApi.postNodeStatus(data)
+      .nodeStewardApi.postRegionNodeStatus(data)
       .then((_) => {
-        navigate("/this_node")
+        navigate("/this_region_node")
       })
       .catch(actionFailure)
   }
@@ -27,7 +27,7 @@ export default function ManageStatus() {
     <Stack gap="lg">
       <Stack gap="xs">
         <Breadcrumbs>
-          <Anchor href="/this_node">{node.name}</Anchor>
+          <Anchor href="/this_region_node">{node.name}</Anchor>
           <Text c="dimmed">status update</Text>
         </Breadcrumbs>
         <Title order={1}>Status update</Title>
