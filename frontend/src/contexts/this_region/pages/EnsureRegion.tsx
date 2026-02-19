@@ -20,17 +20,17 @@ export default function EnsureRegion({
   const dispatch = useAppDispatch()
 
   const onSubmit = async (
-    data: BootstrapNodeData
+    data: BootstrapNodeData,
   ): Promise<ActionPromiseResult> =>
     getApi()
       .nodeStewardApi.bootstrap(data)
       .then((result) => {
         if (result.status === 200) {
           console.log("Successfully bootstrapped", result)
-          const newRegion: Region = {
-            network_id: data.network_name,
-          }
-          dispatch(regionLoaded(newRegion))
+          // const newRegion: Region = {
+          //   network_id: data.network_name,
+          // }
+          // dispatch(regionLoaded(newRegion))
           return actionSuccess()
         }
       })

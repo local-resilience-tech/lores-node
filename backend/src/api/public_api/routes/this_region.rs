@@ -14,17 +14,23 @@ pub fn router() -> OpenApiRouter {
 async fn show_region(
     Extension(config_state): Extension<LoresNodeConfigState>,
 ) -> impl IntoResponse {
-    let config = config_state.get().await;
+    // match config.network_name {
+    //     Some(network_id) => {
+    //         println!("got network id {}", network_id);
+    //         (StatusCode::OK, Json(Some(Region { network_id })))
+    //     }
+    //     None => {
+    //         println!("no network id");
+    //         (StatusCode::OK, Json(None))
+    //     }
+    // }
+    // .into_response()
 
-    match config.network_name {
-        Some(network_id) => {
-            println!("got network id {}", network_id);
-            (StatusCode::OK, Json(Some(Region { network_id })))
-        }
-        None => {
-            println!("no network id");
-            (StatusCode::OK, Json(None))
-        }
-    }
-    .into_response()
+    (
+        StatusCode::OK,
+        Json(Some(Region {
+            network_id: "lores_mesh".to_string(),
+        })),
+    )
+        .into_response()
 }

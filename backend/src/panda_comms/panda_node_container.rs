@@ -22,7 +22,7 @@ pub const NODE_ADMIN_TOPIC_ID: TopicId = [0u8; 32];
 #[derive(Default, Clone)]
 pub struct NodeParams {
     pub private_key: Option<PrivateKey>,
-    pub region_name: Option<String>,
+    pub network_name: String,
     pub bootstrap_node_id: Option<PublicKey>,
 }
 
@@ -43,8 +43,11 @@ pub struct PandaNodeContainer {
 }
 
 impl PandaNodeContainer {
-    pub fn new(events_tx: mpsc::Sender<LoResEvent>) -> Self {
-        let params = Arc::new(Mutex::new(NodeParams::default()));
+    pub fn new(events_tx: mpsc::Sender<LoResEvent>, network_name: String) -> Self {
+        let params = Arc::new(Mutex::new(NodeParams {
+            network_name,
+            ..Default::default()
+        }));
 
         PandaNodeContainer {
             params,
@@ -56,11 +59,6 @@ impl PandaNodeContainer {
     pub async fn get_params(&self) -> NodeParams {
         let params_lock = self.params.lock().await;
         params_lock.clone()
-    }
-
-    pub async fn set_region_name(&self, region_name: String) {
-        let mut params_lock = self.params.lock().await;
-        params_lock.region_name = Some(region_name);
     }
 
     pub async fn set_private_key(&self, private_key: PrivateKey) {
@@ -79,21 +77,14 @@ impl PandaNodeContainer {
         let params = self.get_params().await;
 
         let private_key: Option<PrivateKey> = params.private_key;
-        let network_name: Option<String> = params.region_name;
-        let boostrap_node_id: Option<PublicKey> = params.bootstrap_node_id;
-
         if private_key.is_none() {
             println!("P2Panda: No private key found, not starting network");
             return Ok(());
         }
-
-        if network_name.is_none() {
-            println!("P2Panda: No network name found, not starting network");
-            return Ok(());
-        }
-
         let private_key = private_key.unwrap();
-        let network_name = network_name.unwrap();
+
+        let network_name: String = params.network_name;
+        let boostrap_node_id: Option<PublicKey> = params.bootstrap_node_id;
 
         self.start_for(private_key, network_name, boostrap_node_id, operations_pool)
             .await?;

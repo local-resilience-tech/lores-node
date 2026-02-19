@@ -8,7 +8,7 @@ import {
 } from "../../../components"
 
 export type SubmitBootstrapNodeFunc = (
-  data: BootstrapNodeData
+  data: BootstrapNodeData,
 ) => Promise<ActionPromiseResult>
 
 export default function BootstrapNodeForm({
@@ -22,17 +22,17 @@ export default function BootstrapNodeForm({
   const form = useForm<BootstrapNodeData>({
     mode: "controlled",
     initialValues: {
-      network_name: "",
+      // network_name: "",
       node_id: "",
     },
     validate: {
-      network_name: (value) => {
-        if (!value) return "This is required"
-        if (value.length > 50) return "Must be less than 50 characters"
-        if (!/^[a-z]+(-[a-z]+)*$/.test(value))
-          return "Lowercase letters only, no spaces, hyphens allowed"
-        return null
-      },
+      // network_name: (value) => {
+      //   if (!value) return "This is required"
+      //   if (value.length > 50) return "Must be less than 50 characters"
+      //   if (!/^[a-z]+(-[a-z]+)*$/.test(value))
+      //     return "Lowercase letters only, no spaces, hyphens allowed"
+      //   return null
+      // },
       node_id: (value) => {
         if (!value) return "This is required"
         if (value.length > 64) return "Must be no more than 64 characters"
@@ -49,13 +49,13 @@ export default function BootstrapNodeForm({
           correct details here, please type carefully.
         </Text>
         <Stack>
-          <TextInput
+          {/* <TextInput
             label="Network Name"
             placeholder="Enter network name"
             description="A unique string that defines this region"
             key="network_name"
             {...form.getInputProps("network_name")}
-          />
+          /> */}
           <TextInput
             label="Node ID"
             placeholder="Enter node ID"

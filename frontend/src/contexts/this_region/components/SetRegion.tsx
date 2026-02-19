@@ -1,5 +1,5 @@
 import { Stack, Title, Text, Tabs, Box } from "@mantine/core"
-import NewRegionForm from "./NewRegionForm"
+// import NewRegionForm from "./NewRegionForm"
 
 import { IconMapPinPlus, IconMapPlus } from "@tabler/icons-react"
 import { BootstrapNodeData } from "../../../api/Api"
@@ -57,7 +57,8 @@ export default function SetRegion({ onSubmit }: SetRegionProps) {
             <BootstrapNodeForm onSubmit={onSubmit} />
           </Tabs.Panel>
           <Tabs.Panel value="new" pt="md">
-            <NewRegionForm onSubmit={onSubmit} />
+            Not implemented yet.
+            {/* <NewRegionForm onSubmit={onSubmit} /> */}
           </Tabs.Panel>
         </Tabs>
       )}

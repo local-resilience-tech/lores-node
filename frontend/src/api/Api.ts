@@ -58,7 +58,6 @@ export interface AppReference {
 }
 
 export interface BootstrapNodeData {
-  network_name: string;
   node_id?: string | null;
 }
 
@@ -365,7 +364,7 @@ export class HttpClient<SecurityDataType = unknown> {
 
 /**
  * @title lores-node
- * @version 0.15.2
+ * @version 0.15.4
  * @license
  */
 export class Api<
@@ -617,20 +616,6 @@ export class Api<
         method: "POST",
         body: data,
         type: ContentType.Json,
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @name ShowRegion
-     * @request GET:/node_steward_api/this_region
-     */
-    showRegion: (params: RequestParams = {}) =>
-      this.request<null | Region, any>({
-        path: `/node_steward_api/this_region`,
-        method: "GET",
         format: "json",
         ...params,
       }),

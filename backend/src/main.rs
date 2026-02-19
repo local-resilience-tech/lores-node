@@ -62,6 +62,7 @@ async fn main() {
     // CONFIG PARAMS
     let base_url =
         std::env::var("BASE_URL").unwrap_or_else(|_| "http://lores.localhost:5173".to_string());
+    let region_name = std::env::var("REGION_NAME").unwrap_or_else(|_| "lores_mesh".to_string());
 
     // LOGGING AND TRACING
     tracing_subscriber::fmt()
@@ -116,7 +117,7 @@ async fn main() {
     // P2PANDA
     let (channel_tx, channel_rx): (mpsc::Sender<LoResEvent>, mpsc::Receiver<LoResEvent>) =
         mpsc::channel(32);
-    let panda_container = PandaNodeContainer::new(channel_tx);
+    let panda_container = PandaNodeContainer::new(channel_tx, region_name.clone());
     start_panda(&config_state, &panda_container, &operations_pool).await;
     start_panda_event_handler(channel_rx, projections_pool.clone(), realtime_state.clone());
 
@@ -159,17 +160,6 @@ async fn start_panda(
     operations_pool: &SqlitePool,
 ) {
     let repo = ThisP2PandaNodeRepo::init();
-    let config = config_state.get().await;
-
-    match config.network_name.clone() {
-        Some(network_name) => {
-            println!("Using network name: {:?}", network_name);
-            container.set_region_name(network_name.clone()).await;
-        }
-        None => {
-            println!("No network name set");
-        }
-    }
 
     let private_key = match repo.get_or_create_private_key(config_state).await {
         Ok(key) => key,

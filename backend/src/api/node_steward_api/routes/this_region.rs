@@ -16,35 +16,34 @@ use crate::{
 
 pub fn router() -> OpenApiRouter {
     OpenApiRouter::new()
-        .routes(routes!(show_region))
+        // .routes(routes!(show_region))
         .routes(routes!(bootstrap))
 }
 
-#[utoipa::path(get, path = "/", responses(
-    (status = 200, body = Option<Region>, description = "Returns the current region's network ID if available"),
-    (status = INTERNAL_SERVER_ERROR, body = ()),
-),)]
-async fn show_region(
-    Extension(config_state): Extension<LoresNodeConfigState>,
-) -> impl IntoResponse {
-    let config = config_state.get().await;
+// #[utoipa::path(get, path = "/", responses(
+//     (status = 200, body = Option<Region>, description = "Returns the current region's network ID if available"),
+//     (status = INTERNAL_SERVER_ERROR, body = ()),
+// ),)]
+// async fn show_region(
+//     Extension(config_state): Extension<LoresNodeConfigState>,
+// ) -> impl IntoResponse {
+//     let config = config_state.get().await;
 
-    match config.network_name {
-        Some(network_id) => {
-            println!("got network id {}", network_id);
-            (StatusCode::OK, Json(Some(Region { network_id })))
-        }
-        None => {
-            println!("no network id");
-            (StatusCode::OK, Json(None))
-        }
-    }
-    .into_response()
-}
+//     match config.network_name {
+//         Some(network_id) => {
+//             println!("got network id {}", network_id);
+//             (StatusCode::OK, Json(Some(Region { network_id })))
+//         }
+//         None => {
+//             println!("no network id");
+//             (StatusCode::OK, Json(None))
+//         }
+//     }
+//     .into_response()
+// }
 
 #[derive(Deserialize, ToSchema, Debug)]
 pub struct BootstrapNodeData {
-    pub network_name: String,
     pub node_id: Option<String>,
 }
 
@@ -72,11 +71,7 @@ async fn bootstrap(
         });
 
     let set_config_result = repo
-        .set_network_config(
-            &config_state,
-            data.network_name.clone(),
-            peer_address.clone(),
-        )
+        .set_network_config(&config_state, peer_address.clone())
         .await;
     if let Err(e) = set_config_result {
         eprintln!("Failed to set network config: {:?}", e);
@@ -86,10 +81,6 @@ async fn bootstrap(
         )
             .into_response();
     }
-
-    panda_container
-        .set_region_name(data.network_name.clone())
-        .await;
 
     let bootstrap_node_id: Option<PublicKey> = match peer_address.clone() {
         Some(bootstrap) => build_public_key_from_hex(bootstrap.node_id.clone()),
