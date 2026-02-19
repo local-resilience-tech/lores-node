@@ -6,7 +6,7 @@ import { useAppSelector } from "../../../store"
 import { actionFailure, ActionPromiseResult, Anchor } from "../../../components"
 import { useNavigate } from "react-router-dom"
 
-export default function EditNode() {
+export default function EditRegionNode() {
   const node = useAppSelector((state) => state.thisRegionNode)
   const navigate = useNavigate()
 
@@ -27,7 +27,7 @@ export default function EditNode() {
     <Stack gap="lg">
       <Stack gap="xs">
         <Breadcrumbs>
-          <Anchor href="/this_node">{node.name}</Anchor>
+          <Anchor href="/this_region_node">{node.name}</Anchor>
           <Text c="dimmed">edit</Text>
         </Breadcrumbs>
         <Title order={1}>Edit this node</Title>

@@ -6,11 +6,11 @@ import {
 } from "react-router-dom"
 import { Layout } from "./pages"
 import {
-  EditNode,
-  EnsureNode,
+  EditRegionNode,
+  EnsureRegionNode,
   ManageStatus,
-  ThisNode,
-} from "./contexts/this_node"
+  ThisRegionNode,
+} from "./contexts/this_region_node"
 import { EventLog, ThisP2PandaNode } from "./contexts/this_p2panda_node"
 import { ShowLocalApp, LocalApps, RegionApps } from "./contexts/apps"
 import { EnsureRegion, Nodes } from "./contexts/this_region"
@@ -94,14 +94,14 @@ const router = createBrowserRouter([
           { path: "", element: <Navigate to="/this_region_node" replace /> },
           {
             path: "this_region_node",
-            element: <EnsureNode />,
+            element: <EnsureRegionNode />,
             children: [
-              { path: "", element: <ThisNode /> },
+              { path: "", element: <ThisRegionNode /> },
               {
                 path: "edit",
                 element: (
                   <RequireNodeSteward>
-                    <EditNode />
+                    <EditRegionNode />
                   </RequireNodeSteward>
                 ),
               },

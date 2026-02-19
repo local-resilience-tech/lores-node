@@ -1,5 +1,5 @@
 import { Stack, Card, Text, Box, Table, useMantineTheme } from "@mantine/core"
-import { RegionNodeDetailsWithStatus } from "../../this_node"
+import { RegionNodeDetailsWithStatus } from "../../this_region_node"
 import { Anchor } from "../../../components"
 
 const IpLink = ({ ip }: { ip: string | undefined | null }) => {

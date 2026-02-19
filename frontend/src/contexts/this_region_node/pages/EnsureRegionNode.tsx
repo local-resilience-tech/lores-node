@@ -24,7 +24,7 @@ const getNode = async (): Promise<RegionNode | null> => {
   return result.data
 }
 
-export default function EnsureNode() {
+export default function EnsureRegionNode() {
   const node = useAppSelector((state) => state.thisRegionNode)
   const dispatch = useAppDispatch()
   const [loading, withLoading] = useLoading(false)

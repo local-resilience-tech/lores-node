@@ -15,7 +15,7 @@ import DisplayStatus from "../components/DisplayStatus"
 import { getNodeById } from "../../../store/nodes"
 import { IfNodeSteward } from "../../auth/node_steward_auth"
 
-export default function ThisNode() {
+export default function ThisRegionNode() {
   const navigate = useNavigate()
   const node = useAppSelector((state) => state.thisRegionNode)
   const nodeDetails = useAppSelector((state) =>
