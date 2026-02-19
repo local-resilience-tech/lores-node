@@ -585,20 +585,6 @@ export class Api<
     /**
      * No description
      *
-     * @name ShowRegion
-     * @request GET:/node_steward_api/region
-     */
-    showRegion: (params: RequestParams = {}) =>
-      this.request<null | Region, any>({
-        path: `/node_steward_api/region`,
-        method: "GET",
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
      * @name Bootstrap
      * @request POST:/node_steward_api/region/bootstrap
      */
