@@ -14,7 +14,7 @@ export default function Nodes() {
     <Container>
       <Stack>
         <Title order={1}>Nodes</Title>
-        <Title order={2}>{region.network_id}</Title>
+        <Title order={2}>{region.name}</Title>
 
         {nodes && <NodesList nodes={nodes} />}
       </Stack>

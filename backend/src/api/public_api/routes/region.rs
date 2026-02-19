@@ -8,7 +8,7 @@ pub fn router() -> OpenApiRouter {
 }
 
 #[utoipa::path(get, path = "/", responses(
-    (status = 200, body = Option<Region>, description = "Returns the current region's network ID if available"),
+    (status = 200, body = Option<Region>, description = "Returns the current region if available"),
     (status = INTERNAL_SERVER_ERROR, body = ()),
 ),)]
 async fn show_region(
@@ -16,13 +16,13 @@ async fn show_region(
 ) -> impl IntoResponse {
     let config = config_state.get().await;
 
-    match config.network_name {
-        Some(network_id) => {
-            println!("got network id {}", network_id);
-            (StatusCode::OK, Json(Some(Region { network_id })))
+    match config.region_name {
+        Some(region_name) => {
+            println!("got region name {}", region_name);
+            (StatusCode::OK, Json(Some(Region { name: region_name })))
         }
         None => {
-            println!("no network id");
+            println!("no region name found in config");
             (StatusCode::OK, Json(None))
         }
     }

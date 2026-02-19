@@ -155,7 +155,7 @@ export interface P2PandaNodeDetails {
 }
 
 export interface Region {
-  network_id: string;
+  name: string;
 }
 
 export interface RegionAppWithInstallations {

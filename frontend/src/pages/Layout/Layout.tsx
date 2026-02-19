@@ -42,7 +42,7 @@ export default function Layout() {
   const me = useAppSelector((state) => state.me)
 
   const readyForApps = region && regionNode
-  const pandaRunning = region
+  const pandaRunning = !!network
 
   const {} = useWebSocket(getSocketUrl(), {
     share: true,
@@ -71,7 +71,7 @@ export default function Layout() {
           <Burger opened={opened} onClick={toggle} hiddenFrom="sm" size="sm" />
           <Anchor href="/">LoRes Mesh</Anchor>
           <Breadcrumbs>
-            {region && <Text>{region.network_id}</Text>}
+            {region && <Text>{region.name}</Text>}
             {regionNode && <Text>{regionNode.name}</Text>}
           </Breadcrumbs>
         </Group>
@@ -137,12 +137,12 @@ export default function Layout() {
         {region && (
           <AppShell.Section className={classes.menu_section}>
             <Text className={classes.section_title}>
-              {region?.network_id ? (
+              {region?.name ? (
                 <>
                   <Text span c="dimmed">
                     Region:{" "}
                   </Text>
-                  <Text span>{region.network_id}</Text>
+                  <Text span>{region.name}</Text>
                 </>
               ) : (
                 "This Region"
