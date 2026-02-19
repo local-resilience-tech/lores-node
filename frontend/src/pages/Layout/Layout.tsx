@@ -34,6 +34,7 @@ export default function Layout() {
   const [opened, { toggle }] = useDisclosure()
   const iconSize = 20
 
+  const network = useAppSelector((state) => state.network)
   const region = useAppSelector((state) => state.region)
   const regionNode = useAppSelector((state) => state.thisRegionNode)
   const nodesCount = useAppSelector((state) => state.nodes?.length)
@@ -167,6 +168,17 @@ export default function Layout() {
               leftSection={<IconApps size={iconSize} />}
               onClick={toggle}
             />
+          </AppShell.Section>
+        )}
+
+        {network && (
+          <AppShell.Section className={classes.menu_section}>
+            <Text className={classes.section_title}>
+              <Text span c="dimmed">
+                Network:{" "}
+              </Text>
+              <Text span>{network.id}</Text>
+            </Text>
           </AppShell.Section>
         )}
 
