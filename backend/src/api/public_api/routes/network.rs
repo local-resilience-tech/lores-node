@@ -27,7 +27,7 @@ async fn show_network(
 
     let params = panda_container.get_params().await;
 
-    let network_id = match params.network_name {
+    let network_name = match params.network_name {
         Some(name) => name,
         None => {
             return (
@@ -44,7 +44,7 @@ async fn show_network(
         id: public_key.to_hex(),
     };
     let result = Network {
-        id: network_id,
+        name: network_name,
         node,
     };
 

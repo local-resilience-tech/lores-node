@@ -101,7 +101,7 @@ export interface LogCount {
 }
 
 export interface Network {
-  id: string;
+  name: string;
   node: NetworkNode;
 }
 

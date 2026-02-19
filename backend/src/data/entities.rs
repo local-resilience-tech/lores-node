@@ -65,6 +65,6 @@ pub struct NetworkNode {
 
 #[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
 pub struct Network {
-    pub id: String,
+    pub name: String,
     pub node: NetworkNode,
 }

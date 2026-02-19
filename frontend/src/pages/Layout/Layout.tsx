@@ -177,7 +177,7 @@ export default function Layout() {
               <Text span c="dimmed">
                 Network:{" "}
               </Text>
-              <Text span>{network.id}</Text>
+              <Text span>{network.name}</Text>
             </Text>
             <NavLink
               label="P2Panda node"
