@@ -1,5 +1,5 @@
 import { useForm } from "@mantine/form"
-import type { Node, UpdateNodeDetails } from "../../../api/Api"
+import type { RegionNode, UpdateNodeDetails } from "../../../api/Api"
 import { Button, Stack, TextInput } from "@mantine/core"
 import {
   ActionPromiseResult,
@@ -10,7 +10,7 @@ import isValidHostname from "is-valid-hostname"
 import { isIPv4 } from "@chainsafe/is-ip"
 
 interface EditNodeFormProps {
-  node: Node
+  node: RegionNode
   onSubmit: (data: UpdateNodeDetails) => Promise<ActionPromiseResult>
 }
 

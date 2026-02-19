@@ -3,7 +3,7 @@ use sqlx;
 use utoipa::ToSchema;
 
 #[derive(sqlx::FromRow, Serialize, Deserialize, ToSchema)]
-pub struct Node {
+pub struct RegionNode {
     pub id: String,
     pub name: String,
     pub public_ipv4: Option<String>,

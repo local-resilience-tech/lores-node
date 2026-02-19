@@ -8,7 +8,7 @@ import {
 } from "@mantine/core"
 import { Outlet, useNavigate } from "react-router"
 import { getApi } from "../../../api"
-import type { Node } from "../../../api/Api"
+import type { RegionNode } from "../../../api/Api"
 import { useEffect, useState } from "react"
 import { useDisclosure } from "@mantine/hooks"
 import { Anchor, NavLink } from "../../../components"
@@ -20,7 +20,7 @@ const iconSize = 20
 
 export default function AdminLayout() {
   const navigate = useNavigate()
-  const [node, setNode] = useState<Node | null>(null)
+  const [node, setNode] = useState<RegionNode | null>(null)
   const [opened, { toggle }] = useDisclosure()
 
   const loadNode = () => {

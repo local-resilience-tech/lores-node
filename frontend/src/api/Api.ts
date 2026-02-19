@@ -100,14 +100,6 @@ export interface LogCount {
   total: number;
 }
 
-export interface Node {
-  domain_on_internet?: string | null;
-  domain_on_local_network?: string | null;
-  id: string;
-  name: string;
-  public_ipv4?: string | null;
-}
-
 export interface NodeAppUrl {
   internet_url?: string | null;
   local_network_url?: string | null;
@@ -175,6 +167,14 @@ export interface Region {
 export interface RegionAppWithInstallations {
   installations: AppInstallation[];
   name: string;
+}
+
+export interface RegionNode {
+  domain_on_internet?: string | null;
+  domain_on_local_network?: string | null;
+  id: string;
+  name: string;
+  public_ipv4?: string | null;
 }
 
 export interface UpdateNodeDetails {
@@ -365,7 +365,7 @@ export class HttpClient<SecurityDataType = unknown> {
 
 /**
  * @title lores-node
- * @version 0.15.2
+ * @version 0.15.4
  * @license
  */
 export class Api<
@@ -379,7 +379,7 @@ export class Api<
      * @request GET:/admin_api/node
      */
     showThisNode: (params: RequestParams = {}) =>
-      this.request<null | Node, string>({
+      this.request<null | RegionNode, string>({
         path: `/admin_api/node`,
         method: "GET",
         format: "json",
@@ -580,7 +580,7 @@ export class Api<
      * @request PUT:/node_steward_api/this_node
      */
     updateThisNode: (data: UpdateNodeDetails, params: RequestParams = {}) =>
-      this.request<Node, string>({
+      this.request<RegionNode, string>({
         path: `/node_steward_api/this_node`,
         method: "PUT",
         body: data,
@@ -596,7 +596,7 @@ export class Api<
      * @request POST:/node_steward_api/this_node
      */
     createThisNode: (data: CreateNodeDetails, params: RequestParams = {}) =>
-      this.request<Node, string>({
+      this.request<RegionNode, string>({
         path: `/node_steward_api/this_node`,
         method: "POST",
         body: data,
@@ -729,7 +729,7 @@ export class Api<
      * @request GET:/public_api/this_node
      */
     showThisNode: (params: RequestParams = {}) =>
-      this.request<null | Node, string>({
+      this.request<null | RegionNode, string>({
         path: `/public_api/this_node`,
         method: "GET",
         format: "json",

@@ -1,6 +1,6 @@
 use sqlx::SqlitePool;
 
-use super::super::entities::Node;
+use super::super::entities::RegionNode;
 
 pub struct NodesWriteRepo {}
 
@@ -26,7 +26,7 @@ impl NodesWriteRepo {
         Ok(())
     }
 
-    pub async fn upsert(&self, pool: &SqlitePool, node: &Node) -> Result<(), sqlx::Error> {
+    pub async fn upsert(&self, pool: &SqlitePool, node: &RegionNode) -> Result<(), sqlx::Error> {
         let _node = sqlx::query!(
             "INSERT INTO nodes (id, name, public_ipv4, domain_on_local_network, domain_on_internet) VALUES (?, ?, ?, ?, ?) ON CONFLICT(id) DO UPDATE SET name = excluded.name, public_ipv4 = excluded.public_ipv4, domain_on_local_network = excluded.domain_on_local_network, domain_on_internet = excluded.domain_on_internet",
             node.id,
@@ -41,7 +41,7 @@ impl NodesWriteRepo {
         Ok(())
     }
 
-    pub async fn update(&self, pool: &SqlitePool, node: &Node) -> Result<(), sqlx::Error> {
+    pub async fn update(&self, pool: &SqlitePool, node: &RegionNode) -> Result<(), sqlx::Error> {
         let _node = sqlx::query!(
             "UPDATE nodes SET name = ?, public_ipv4 = ?, domain_on_local_network = ?, domain_on_internet = ? WHERE id = ?",
             node.name,

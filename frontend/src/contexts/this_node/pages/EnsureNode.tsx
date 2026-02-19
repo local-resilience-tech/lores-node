@@ -3,7 +3,7 @@ import { useEffect } from "react"
 import NewNode, { NewNodeData } from "../components/NewNode"
 import { Loading, useLoading } from "../../shared"
 import { getApi } from "../../../api"
-import type { Node } from "../../../api/Api"
+import type { RegionNode } from "../../../api/Api"
 import { useAppDispatch, useAppSelector } from "../../../store"
 import { thisNodeLoaded } from "../../../store/this_node"
 import { Outlet } from "react-router"
@@ -13,7 +13,7 @@ import {
   actionSuccess,
 } from "../../../components"
 
-const getNode = async (): Promise<Node | null> => {
+const getNode = async (): Promise<RegionNode | null> => {
   const result = await getApi().publicApi.showThisNode()
 
   if (result.status !== 200) {
@@ -29,7 +29,7 @@ export default function EnsureNode() {
   const dispatch = useAppDispatch()
   const [loading, withLoading] = useLoading(false)
 
-  const updateNode = (newNode: Node | null) => {
+  const updateNode = (newNode: RegionNode | null) => {
     console.log("Updating node", newNode)
     dispatch(thisNodeLoaded(newNode))
   }

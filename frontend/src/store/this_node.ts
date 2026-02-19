@@ -1,14 +1,14 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit"
-import type { Node, NodeDetails } from "../api/Api"
+import type { RegionNode, NodeDetails } from "../api/Api"
 
-export type ThisNodeState = Node | null
+export type ThisNodeState = RegionNode | null
 
 const thisNodeSlice = createSlice({
   name: "this_node",
   initialState: null as ThisNodeState,
   reducers: {
     thisNodeLoaded: (state, action) => {
-      return action.payload as Node
+      return action.payload as RegionNode
     },
   },
   extraReducers: (builder) => {
@@ -19,7 +19,7 @@ const thisNodeSlice = createSlice({
           return { ...state, ...payload }
         }
         return state
-      }
+      },
     )
   },
 })

@@ -5,7 +5,7 @@ use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::{
     api::auth_api::auth_backend::AuthSession,
-    data::entities::Node,
+    data::entities::RegionNode,
     panda_comms::{
         lores_events::{
             LoResEventPayload, NodeAnnouncedDataV1, NodeStatusPostedDataV1, NodeUpdatedDataV1,
@@ -30,7 +30,7 @@ struct CreateNodeDetails {
     post,
     path = "/",
     responses(
-        (status = CREATED, body = Node),
+        (status = CREATED, body = RegionNode),
         (status = INTERNAL_SERVER_ERROR, body = String, description = "Internal Server Error"),
     ),
     request_body(content = CreateNodeDetails, content_type = "application/json"),
@@ -51,7 +51,7 @@ async fn create_this_node(
 
     match result {
         Ok(_) => {
-            let node = Node {
+            let node = RegionNode {
                 id: "1".to_string(),
                 name: data.name.clone(),
                 public_ipv4: None,
@@ -79,7 +79,7 @@ struct UpdateNodeDetails {
     put,
     path = "/",
     responses(
-        (status = OK, body = Node),
+        (status = OK, body = RegionNode),
         (status = INTERNAL_SERVER_ERROR, body = String, description = "Internal Server Error"),
     ),
     request_body(content = UpdateNodeDetails, content_type = "application/json"),
@@ -105,7 +105,7 @@ async fn update_this_node(
 
     match result {
         Ok(_) => {
-            let node = Node {
+            let node = RegionNode {
                 id: "1".to_string(),
                 name: data.name.clone(),
                 public_ipv4: Some(data.public_ipv4.clone()),
