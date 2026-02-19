@@ -4,7 +4,7 @@ use utoipa_axum::{router::OpenApiRouter, routes};
 use self::{
     client_events::ClientEvent,
     routes::{
-        local_apps, network, nodes, region_apps, stacks, this_p2panda_node, this_region,
+        local_apps, network, nodes, region, region_apps, stacks, this_p2panda_node,
         this_region_node,
     },
 };
@@ -16,7 +16,7 @@ mod routes;
 pub fn public_api_router() -> OpenApiRouter {
     OpenApiRouter::new()
         .nest("/network", network::router())
-        .nest("/this_region", this_region::router())
+        .nest("/region", region::router())
         .nest("/this_p2panda_node", this_p2panda_node::router())
         .nest("/this_region_node", this_region_node::router())
         .nest("/nodes", nodes::router())
