@@ -22,7 +22,7 @@ pub const NODE_ADMIN_TOPIC_ID: TopicId = [0u8; 32];
 #[derive(Default, Clone)]
 pub struct NodeParams {
     pub private_key: Option<PrivateKey>,
-    pub network_name: Option<String>,
+    pub region_name: Option<String>,
     pub bootstrap_node_id: Option<PublicKey>,
 }
 
@@ -58,9 +58,9 @@ impl PandaNodeContainer {
         params_lock.clone()
     }
 
-    pub async fn set_network_name(&self, network_name: String) {
+    pub async fn set_region_name(&self, region_name: String) {
         let mut params_lock = self.params.lock().await;
-        params_lock.network_name = Some(network_name);
+        params_lock.region_name = Some(region_name);
     }
 
     pub async fn set_private_key(&self, private_key: PrivateKey) {
@@ -79,7 +79,7 @@ impl PandaNodeContainer {
         let params = self.get_params().await;
 
         let private_key: Option<PrivateKey> = params.private_key;
-        let network_name: Option<String> = params.network_name;
+        let network_name: Option<String> = params.region_name;
         let boostrap_node_id: Option<PublicKey> = params.bootstrap_node_id;
 
         if private_key.is_none() {

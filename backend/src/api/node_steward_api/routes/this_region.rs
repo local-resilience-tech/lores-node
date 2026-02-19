@@ -88,7 +88,7 @@ async fn bootstrap(
     }
 
     panda_container
-        .set_network_name(data.network_name.clone())
+        .set_region_name(data.network_name.clone())
         .await;
 
     let bootstrap_node_id: Option<PublicKey> = match peer_address.clone() {

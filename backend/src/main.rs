@@ -164,7 +164,7 @@ async fn start_panda(
     match config.network_name.clone() {
         Some(network_name) => {
             println!("Using network name: {:?}", network_name);
-            container.set_network_name(network_name.clone()).await;
+            container.set_region_name(network_name.clone()).await;
         }
         None => {
             println!("No network name set");
