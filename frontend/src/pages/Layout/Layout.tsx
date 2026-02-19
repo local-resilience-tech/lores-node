@@ -179,20 +179,20 @@ export default function Layout() {
               </Text>
               <Text span>{network.id}</Text>
             </Text>
+            <NavLink
+              label="P2Panda node"
+              href="/network/node"
+              leftSection={
+                <img src={pangaLogoUrl} alt="P2Panda Icon" width={iconSize} />
+              }
+              onClick={toggle}
+            />
           </AppShell.Section>
         )}
 
         {pandaRunning && (
           <AppShell.Section className={classes.footer_section}>
             <Text className={classes.section_title}>Debug</Text>
-            <NavLink
-              label="P2Panda node"
-              href="/debug/p2panda_node"
-              leftSection={
-                <img src={pangaLogoUrl} alt="P2Panda Icon" width={iconSize} />
-              }
-              onClick={toggle}
-            />
             <NavLink
               label="Event log"
               href="/debug/event_log"

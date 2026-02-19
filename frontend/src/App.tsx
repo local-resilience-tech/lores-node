@@ -11,7 +11,7 @@ import {
   ManageStatus,
   ThisRegionNode,
 } from "./contexts/this_region_node"
-import { EventLog, ThisP2PandaNode } from "./contexts/this_p2panda_node"
+import { EventLog } from "./contexts/this_p2panda_node"
 import { ShowLocalApp, LocalApps, RegionApps } from "./contexts/apps"
 import { EnsureRegion, Nodes } from "./contexts/this_region"
 import { MantineProvider } from "@mantine/core"
@@ -33,6 +33,7 @@ import {
 // All packages except `@mantine/hooks` require styles imports
 import "@mantine/core/styles.css"
 import "@mantine/notifications/styles.css"
+import { P2PandaNode } from "./contexts/network"
 
 function withStore(
   func: (store: AppStore) => any,
@@ -123,6 +124,10 @@ const router = createBrowserRouter([
             ],
           },
           {
+            path: "network",
+            children: [{ path: "node", element: <P2PandaNode /> }],
+          },
+          {
             path: "this_region",
             children: [
               { path: "", element: <Navigate to="nodes" replace /> },
@@ -133,7 +138,6 @@ const router = createBrowserRouter([
           {
             path: "debug",
             children: [
-              { path: "p2panda_node", element: <ThisP2PandaNode /> },
               { path: "event_log", element: <EventLog /> },
               { path: "stacks", element: <Stacks /> },
             ],

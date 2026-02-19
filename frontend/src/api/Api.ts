@@ -102,6 +102,11 @@ export interface LogCount {
 
 export interface Network {
   id: string;
+  node: NetworkNode;
+}
+
+export interface NetworkNode {
+  id: string;
 }
 
 export interface NodeAppUrl {
@@ -696,6 +701,20 @@ export class Api<
     /**
      * No description
      *
+     * @name ShowNetwork
+     * @request GET:/public_api/network
+     */
+    showNetwork: (params: RequestParams = {}) =>
+      this.request<Network, string>({
+        path: `/public_api/network`,
+        method: "GET",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
      * @name ListNodes
      * @request GET:/public_api/nodes
      */
@@ -730,20 +749,6 @@ export class Api<
     listStacks: (params: RequestParams = {}) =>
       this.request<DockerStackWithServices[], any>({
         path: `/public_api/stacks`,
-        method: "GET",
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @name ShowThisNetwork
-     * @request GET:/public_api/this_network
-     */
-    showThisNetwork: (params: RequestParams = {}) =>
-      this.request<Network, string>({
-        path: `/public_api/this_network`,
         method: "GET",
         format: "json",
         ...params,

@@ -57,7 +57,7 @@ async function loadUser(store: AppStore) {
 }
 
 async function loadNetwork(store: AppStore) {
-  const result = await fetchApiData(() => getApi().publicApi.showThisNetwork())
+  const result = await fetchApiData(() => getApi().publicApi.showNetwork())
   console.log("EFFECT: fetchNetwork", result)
   if (result) store.dispatch(networkLoaded(result))
 }

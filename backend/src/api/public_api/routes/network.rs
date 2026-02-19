@@ -1,10 +1,13 @@
 use axum::{http::StatusCode, response::IntoResponse, Extension, Json};
 use utoipa_axum::{router::OpenApiRouter, routes};
 
-use crate::{data::entities::Network, panda_comms::panda_node_container::PandaNodeContainer};
+use crate::{
+    data::entities::{Network, NetworkNode},
+    panda_comms::panda_node_container::PandaNodeContainer,
+};
 
 pub fn router() -> OpenApiRouter {
-    OpenApiRouter::new().routes(routes!(show_this_network))
+    OpenApiRouter::new().routes(routes!(show_network))
 }
 
 #[utoipa::path(
@@ -15,7 +18,7 @@ pub fn router() -> OpenApiRouter {
         (status = 500, body = String),
     )
 )]
-async fn show_this_network(
+async fn show_network(
     Extension(panda_container): Extension<PandaNodeContainer>,
 ) -> impl IntoResponse {
     if !panda_container.is_started().await {
@@ -35,7 +38,15 @@ async fn show_this_network(
         }
     };
 
-    let result = Network { id: network_id };
+    let public_key = panda_container.get_public_key().await.unwrap();
+
+    let node = NetworkNode {
+        id: public_key.to_hex(),
+    };
+    let result = Network {
+        id: network_id,
+        node,
+    };
 
     (StatusCode::OK, Json(result)).into_response()
 }
