@@ -7,7 +7,7 @@ import {
 } from "../../../components"
 import { useAppDispatch } from "../../../store"
 import { regionLoaded } from "../../../store/region"
-import JoinRegionForm from "./CreateRegionForm"
+import JoinRegionForm from "./JoinRegionForm"
 
 export default function JoinRegion() {
   const dispatch = useAppDispatch()

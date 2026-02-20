@@ -586,11 +586,11 @@ export class Api<
      * No description
      *
      * @name Bootstrap
-     * @request POST:/node_steward_api/region/bootstrap
+     * @request POST:/node_steward_api/regions/bootstrap
      */
     bootstrap: (data: BootstrapNodeData, params: RequestParams = {}) =>
       this.request<any, string>({
-        path: `/node_steward_api/region/bootstrap`,
+        path: `/node_steward_api/regions/bootstrap`,
         method: "POST",
         body: data,
         type: ContentType.Json,
@@ -715,12 +715,12 @@ export class Api<
     /**
      * No description
      *
-     * @name ShowRegion
-     * @request GET:/public_api/region
+     * @name ListRegionApps
+     * @request GET:/public_api/region_apps
      */
-    showRegion: (params: RequestParams = {}) =>
-      this.request<null | Region, any>({
-        path: `/public_api/region`,
+    listRegionApps: (params: RequestParams = {}) =>
+      this.request<RegionAppWithInstallations[], any>({
+        path: `/public_api/region_apps`,
         method: "GET",
         format: "json",
         ...params,
@@ -729,12 +729,12 @@ export class Api<
     /**
      * No description
      *
-     * @name ListRegionApps
-     * @request GET:/public_api/region_apps
+     * @name ShowRegion
+     * @request GET:/public_api/regions
      */
-    listRegionApps: (params: RequestParams = {}) =>
-      this.request<RegionAppWithInstallations[], any>({
-        path: `/public_api/region_apps`,
+    showRegion: (params: RequestParams = {}) =>
+      this.request<null | Region, any>({
+        path: `/public_api/regions`,
         method: "GET",
         format: "json",
         ...params,
