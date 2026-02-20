@@ -74,6 +74,13 @@ export interface CreateNodeDetails {
   name: string;
 }
 
+export interface CreateRegionData {
+  name: string;
+  organisation_name?: string | null;
+  slug: string;
+  url?: string | null;
+}
+
 export interface DockerService {
   current_state: string;
   current_state_duration: string;
@@ -591,6 +598,22 @@ export class Api<
     bootstrap: (data: BootstrapNodeData, params: RequestParams = {}) =>
       this.request<any, string>({
         path: `/node_steward_api/regions/bootstrap`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @name CreateRegion
+     * @request POST:/node_steward_api/regions/create
+     */
+    createRegion: (data: CreateRegionData, params: RequestParams = {}) =>
+      this.request<any, string>({
+        path: `/node_steward_api/regions/create`,
         method: "POST",
         body: data,
         type: ContentType.Json,

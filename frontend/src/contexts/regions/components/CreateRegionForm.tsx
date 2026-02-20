@@ -11,7 +11,7 @@ export interface CreateRegionData {
   slug: string
   name: string
   organisation_name?: string
-  region_url?: string
+  url?: string
 }
 
 interface NewRegionFormProps {
@@ -28,14 +28,14 @@ export default function CreateRegionForm({ onSubmit }: NewRegionFormProps) {
       slug: "",
       name: "",
       organisation_name: "",
-      region_url: "",
+      url: "",
     },
     validate: {
       slug: (value) => {
         if (!value) return "This is required"
         if (value.length > 50) return "Must be less than 50 characters"
-        if (!/^[a-z]+(-[a-z]+)*$/.test(value))
-          return "Lowercase letters only, no spaces, hyphens allowed"
+        if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(value))
+          return "Lowercase letters and numbers only, no spaces, hyphens allowed"
         return null
       },
       name: (value) => {
@@ -49,7 +49,7 @@ export default function CreateRegionForm({ onSubmit }: NewRegionFormProps) {
         }
         return null
       },
-      region_url: (value) => {
+      url: (value) => {
         if (value !== undefined) {
           if (value.length > 200) return "Must be less than 200 characters"
           if (value && !/^https?:\/\/\S+$/.test(value))
@@ -98,11 +98,11 @@ export default function CreateRegionForm({ onSubmit }: NewRegionFormProps) {
           />
 
           <TextInput
-            label="Region URL"
+            label="URL"
             description="The URL for your region (optional)"
             placeholder="eg https://merri-crk.coop"
-            key="region_url"
-            {...form.getInputProps("region_url")}
+            key="url"
+            {...form.getInputProps("url")}
           />
         </Stack>
 
