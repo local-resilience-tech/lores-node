@@ -53,7 +53,7 @@ export default function SetupRegion() {
                 Join Region
               </Tabs.Tab>
               <Tabs.Tab value="new" leftSection={<IconMapPlus />}>
-                New Region
+                Create New Region
               </Tabs.Tab>
             </Tabs.List>
             <Tabs.Panel value="join" pt="md">

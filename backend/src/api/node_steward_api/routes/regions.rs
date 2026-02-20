@@ -14,7 +14,9 @@ use crate::{
 };
 
 pub fn router() -> OpenApiRouter {
-    OpenApiRouter::new().routes(routes!(bootstrap))
+    OpenApiRouter::new()
+        .routes(routes!(bootstrap))
+        .routes(routes!(create_region))
 }
 
 #[derive(Deserialize, ToSchema, Debug)]
@@ -85,4 +87,26 @@ async fn bootstrap(
     }
 
     (StatusCode::OK, ()).into_response()
+}
+
+#[derive(Deserialize, ToSchema, Debug)]
+pub struct CreateRegionData {
+    pub region_name: String,
+}
+
+#[utoipa::path(
+    post,
+    path = "/",
+    request_body(content = CreateRegionData, content_type = "application/json"),
+    responses(
+        (status = 200, body = ()),
+        (status = INTERNAL_SERVER_ERROR, body = String),
+    )
+)]
+async fn create_region() -> impl IntoResponse {
+    return (
+        StatusCode::INTERNAL_SERVER_ERROR,
+        Json("Not implemented".to_string()),
+    )
+        .into_response();
 }

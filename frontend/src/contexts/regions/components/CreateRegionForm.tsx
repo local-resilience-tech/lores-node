@@ -7,56 +7,102 @@ import {
   useOnSubmitWithResult,
 } from "../../../components"
 
-export interface JoinRegionData {
+export interface CreateRegionData {
+  slug: string
   name: string
+  organisation_name?: string
+  region_url?: string
 }
 
 interface NewRegionFormProps {
-  onSubmit: (data: BootstrapNodeData) => Promise<ActionPromiseResult>
+  onSubmit: (data: CreateRegionData) => Promise<ActionPromiseResult>
 }
 
-export default function JoinRegionForm({ onSubmit }: NewRegionFormProps) {
+export default function CreateRegionForm({ onSubmit }: NewRegionFormProps) {
   const [actionResult, onSubmitWithResult] =
-    useOnSubmitWithResult<BootstrapNodeData>(onSubmit)
+    useOnSubmitWithResult<CreateRegionData>(onSubmit)
 
-  const form = useForm<JoinRegionData>({
+  const form = useForm<CreateRegionData>({
     mode: "controlled",
     initialValues: {
+      slug: "",
       name: "",
+      organisation_name: "",
+      region_url: "",
     },
     validate: {
-      name: (value) => {
+      slug: (value) => {
         if (!value) return "This is required"
         if (value.length > 50) return "Must be less than 50 characters"
         if (!/^[a-z]+(-[a-z]+)*$/.test(value))
           return "Lowercase letters only, no spaces, hyphens allowed"
         return null
       },
+      name: (value) => {
+        if (!value) return "This is required"
+        if (value.length > 100) return "Must be less than 100 characters"
+        return null
+      },
+      organisation_name: (value) => {
+        if (value !== undefined) {
+          if (value.length > 100) return "Must be less than 100 characters"
+        }
+        return null
+      },
+      region_url: (value) => {
+        if (value !== undefined) {
+          if (value.length > 200) return "Must be less than 200 characters"
+          if (value && !/^https?:\/\/\S+$/.test(value))
+            return "Must be a valid URL starting with http:// or https://"
+        }
+        return null
+      },
     },
   })
 
-  const handleSubmit = (
-    values: JoinRegionData,
-  ): Promise<ActionPromiseResult> => {
-    const data: BootstrapNodeData = {
-      network_name: values.name,
-      node_id: null,
-    }
-    return onSubmitWithResult(data)
-  }
+  const handleSubmit = (values: CreateRegionData) => onSubmitWithResult(values)
 
   return (
     <form onSubmit={form.onSubmit(handleSubmit)}>
       <Stack gap="lg">
-        <Text>To join a region, you will need to provide its name.</Text>
+        <Text>
+          When you create a new region, it will get a unique id, but you can
+          choose some details to describe it.
+        </Text>
 
         <Stack>
           <TextInput
+            label="Slug"
+            description="A machine friendly name for your region - use lowercase letters and no spaces"
+            placeholder="eg merri-crk"
+            key="slug"
+            withAsterisk
+            {...form.getInputProps("slug")}
+          />
+
+          <TextInput
             label="Region Name"
-            placeholder="Enter region name"
-            description="A name to identify your Region - use lowercase letters and no spaces"
+            description="A name to identify your Region"
+            placeholder="eg Merri Creek Catchment"
             key="name"
+            withAsterisk
             {...form.getInputProps("name")}
+          />
+
+          <TextInput
+            label="Organisation Name"
+            description="A name for the organisation that manages this region (optional)"
+            placeholder="eg Merri Creek Tech Co-op"
+            key="organisation_name"
+            {...form.getInputProps("organisation_name")}
+          />
+
+          <TextInput
+            label="Region URL"
+            description="The URL for your region (optional)"
+            placeholder="eg https://merri-crk.coop"
+            key="region_url"
+            {...form.getInputProps("region_url")}
           />
         </Stack>
 
@@ -64,7 +110,7 @@ export default function JoinRegionForm({ onSubmit }: NewRegionFormProps) {
 
         <Stack>
           <Button loading={form.submitting} type="submit">
-            Join Region
+            Create New Region
           </Button>
         </Stack>
       </Stack>
