@@ -43,7 +43,7 @@ export default function ShowLocalApp() {
       <Stack gap="lg">
         <Stack gap="xs">
           <Breadcrumbs>
-            <Anchor href="/this_node/apps">Local Apps</Anchor>
+            <Anchor href="/node/apps">Local Apps</Anchor>
             <Text c="dimmed">{app.name}</Text>
           </Breadcrumbs>
           <Title order={1}>

@@ -111,6 +111,11 @@ const router = createBrowserRouter([
               </RequireNodeSteward>
             ),
           },
+        ],
+      },
+      {
+        path: "node",
+        children: [
           {
             path: "apps",
             children: [

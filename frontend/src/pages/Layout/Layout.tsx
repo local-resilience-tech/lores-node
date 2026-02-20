@@ -44,7 +44,7 @@ export default function Layout() {
   const localAppsCount = useAppSelector((state) => state.localApps?.length)
   const me = useAppSelector((state) => state.me)
 
-  const readyForApps = region && regionNode
+  const readyForApps = true
   const pandaRunning = !!network
 
   const {} = useWebSocket(getSocketUrl(), {
@@ -120,21 +120,18 @@ export default function Layout() {
             leftSection={<IconHome size={iconSize} />}
             onClick={toggle}
           />
-          {readyForApps && (
-            <>
-              <NavLink
-                label="Local apps"
-                href="/this_region_node/apps"
-                leftSection={<IconApps size={iconSize} />}
-                onClick={toggle}
-                rightSection={
-                  localAppsCount !== undefined && (
-                    <Badge circle>{localAppsCount}</Badge>
-                  )
-                }
-              />
-            </>
-          )}
+
+          <NavLink
+            label="Local apps"
+            href="/node/apps"
+            leftSection={<IconApps size={iconSize} />}
+            onClick={toggle}
+            rightSection={
+              localAppsCount !== undefined && (
+                <Badge circle>{localAppsCount}</Badge>
+              )
+            }
+          />
         </AppShell.Section>
 
         {!region && (
@@ -208,14 +205,13 @@ export default function Layout() {
               leftSection={<IconTimelineEventText size={iconSize} />}
               onClick={toggle}
             />
-            {readyForApps && (
-              <NavLink
-                label="Docker stacks"
-                href="/debug/stacks"
-                leftSection={<IconBrandDocker size={iconSize} />}
-                onClick={toggle}
-              />
-            )}
+            <NavLink
+              label="Docker stacks"
+              href="/debug/stacks"
+              leftSection={<IconBrandDocker size={iconSize} />}
+              onClick={toggle}
+            />
+
             <NavLink
               c="dimmed"
               label={"v" + packageJson.version}
