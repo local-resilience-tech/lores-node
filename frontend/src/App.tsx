@@ -34,6 +34,7 @@ import {
 import "@mantine/core/styles.css"
 import "@mantine/notifications/styles.css"
 import { P2PandaNode } from "./contexts/network"
+import { SetupRegion } from "./contexts/regions"
 
 function withStore(
   func: (store: AppStore) => any,
@@ -88,60 +89,58 @@ const router = createBrowserRouter([
     element: <Layout />,
     loader: withStore(loadInitialData, store),
     children: [
+      { path: "", element: <Navigate to="/this_region_node" replace /> },
       {
-        path: "",
-        element: <EnsureRegion />,
+        path: "this_region_node",
+        element: <EnsureRegionNode />,
         children: [
-          { path: "", element: <Navigate to="/this_region_node" replace /> },
+          { path: "", element: <ThisRegionNode /> },
           {
-            path: "this_region_node",
-            element: <EnsureRegionNode />,
+            path: "edit",
+            element: (
+              <RequireNodeSteward>
+                <EditRegionNode />
+              </RequireNodeSteward>
+            ),
+          },
+          {
+            path: "status",
+            element: (
+              <RequireNodeSteward>
+                <ManageStatus />
+              </RequireNodeSteward>
+            ),
+          },
+          {
+            path: "apps",
             children: [
-              { path: "", element: <ThisRegionNode /> },
-              {
-                path: "edit",
-                element: (
-                  <RequireNodeSteward>
-                    <EditRegionNode />
-                  </RequireNodeSteward>
-                ),
-              },
-              {
-                path: "status",
-                element: (
-                  <RequireNodeSteward>
-                    <ManageStatus />
-                  </RequireNodeSteward>
-                ),
-              },
-              {
-                path: "apps",
-                children: [
-                  { path: "", element: <LocalApps /> },
-                  { path: "app/:appName", element: <ShowLocalApp /> },
-                ],
-              },
+              { path: "", element: <LocalApps /> },
+              { path: "app/:appName", element: <ShowLocalApp /> },
             ],
           },
-          {
-            path: "network",
-            children: [{ path: "node", element: <P2PandaNode /> }],
-          },
-          {
-            path: "this_region",
-            children: [
-              { path: "", element: <Navigate to="nodes" replace /> },
-              { path: "nodes", element: <Nodes /> },
-              { path: "apps", element: <RegionApps /> },
-            ],
-          },
-          {
-            path: "debug",
-            children: [
-              { path: "event_log", element: <EventLog /> },
-              { path: "stacks", element: <Stacks /> },
-            ],
-          },
+        ],
+      },
+      {
+        path: "regions",
+        children: [{ path: "setup", element: <SetupRegion /> }],
+      },
+      {
+        path: "network",
+        children: [{ path: "node", element: <P2PandaNode /> }],
+      },
+      {
+        path: "this_region",
+        children: [
+          { path: "", element: <Navigate to="nodes" replace /> },
+          { path: "nodes", element: <Nodes /> },
+          { path: "apps", element: <RegionApps /> },
+        ],
+      },
+      {
+        path: "debug",
+        children: [
+          { path: "event_log", element: <EventLog /> },
+          { path: "stacks", element: <Stacks /> },
         ],
       },
     ],

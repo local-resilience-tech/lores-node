@@ -19,6 +19,9 @@ import {
   IconBrandGithub,
   IconGhost,
   IconHome,
+  IconMapPlus,
+  IconPlus,
+  IconSquarePlus,
   IconTimelineEventText,
   IconUser,
 } from "@tabler/icons-react"
@@ -134,19 +137,26 @@ export default function Layout() {
           )}
         </AppShell.Section>
 
+        {!region && (
+          <AppShell.Section className={classes.section_to_setup}>
+            <NavLink
+              label="Setup region"
+              href="/regions/setup"
+              className={classes.navlink_to_setup}
+              onClick={toggle}
+              fz={1}
+              rightSection={<IconSquarePlus size={iconSize + 4} />}
+            />
+          </AppShell.Section>
+        )}
+
         {region && (
           <AppShell.Section className={classes.menu_section}>
             <Text className={classes.section_title}>
-              {region?.name ? (
-                <>
-                  <Text span c="dimmed">
-                    Region:{" "}
-                  </Text>
-                  <Text span>{region.name}</Text>
-                </>
-              ) : (
-                "This Region"
-              )}
+              <Text span c="dimmed">
+                Region:{" "}
+              </Text>
+              <Text span>{region?.name ?? "Unknown"}</Text>
             </Text>
             <NavLink
               label="Nodes"
@@ -189,7 +199,6 @@ export default function Layout() {
             />
           </AppShell.Section>
         )}
-
         {pandaRunning && (
           <AppShell.Section className={classes.footer_section}>
             <Text className={classes.section_title}>Debug</Text>
