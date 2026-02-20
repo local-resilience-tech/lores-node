@@ -101,7 +101,7 @@ export interface LogCount {
 }
 
 export interface Network {
-  id: string;
+  name: string;
   node: NetworkNode;
 }
 
@@ -155,7 +155,7 @@ export interface P2PandaNodeDetails {
 }
 
 export interface Region {
-  network_id: string;
+  name: string;
 }
 
 export interface RegionAppWithInstallations {
@@ -585,26 +585,12 @@ export class Api<
     /**
      * No description
      *
-     * @name ShowRegion
-     * @request GET:/node_steward_api/this_region
-     */
-    showRegion: (params: RequestParams = {}) =>
-      this.request<null | Region, any>({
-        path: `/node_steward_api/this_region`,
-        method: "GET",
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
      * @name Bootstrap
-     * @request POST:/node_steward_api/this_region/bootstrap
+     * @request POST:/node_steward_api/region/bootstrap
      */
     bootstrap: (data: BootstrapNodeData, params: RequestParams = {}) =>
       this.request<any, string>({
-        path: `/node_steward_api/this_region/bootstrap`,
+        path: `/node_steward_api/region/bootstrap`,
         method: "POST",
         body: data,
         type: ContentType.Json,
@@ -729,6 +715,20 @@ export class Api<
     /**
      * No description
      *
+     * @name ShowRegion
+     * @request GET:/public_api/region
+     */
+    showRegion: (params: RequestParams = {}) =>
+      this.request<null | Region, any>({
+        path: `/public_api/region`,
+        method: "GET",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
      * @name ListRegionApps
      * @request GET:/public_api/region_apps
      */
@@ -777,20 +777,6 @@ export class Api<
     p2PandaLogCounts: (params: RequestParams = {}) =>
       this.request<P2PandaLogCounts, any>({
         path: `/public_api/this_p2panda_node/event_log`,
-        method: "GET",
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @name ShowRegion
-     * @request GET:/public_api/this_region
-     */
-    showRegion: (params: RequestParams = {}) =>
-      this.request<null | Region, any>({
-        path: `/public_api/this_region`,
         method: "GET",
         format: "json",
         ...params,
