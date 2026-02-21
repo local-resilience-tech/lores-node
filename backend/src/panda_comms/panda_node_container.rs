@@ -183,7 +183,9 @@ impl PandaNodeContainer {
             });
         }
 
-        node.inner.subscribe_to_admin_topic(operation_tx).await?;
+        node.inner
+            .subscribe_to_topic(NODE_ADMIN_TOPIC_ID, operation_tx)
+            .await?;
 
         Ok(())
     }

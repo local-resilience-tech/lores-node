@@ -12,7 +12,6 @@ use super::{
     operation_store::{CreationError, OperationStore},
     operations::{LoResMeshExtensions, LoresOperation},
     panda_node::PandaNodeError,
-    panda_node_container::NODE_ADMIN_TOPIC_ID,
 };
 
 #[derive(Error, Debug)]
@@ -85,8 +84,9 @@ impl PandaNodeInner {
         Ok(operation)
     }
 
-    pub async fn subscribe_to_admin_topic(
+    pub async fn subscribe_to_topic(
         &self,
+        topic_id: TopicId,
         operation_tx: mpsc::Sender<LoresOperation>,
     ) -> Result<(), PandaNodeError> {
         let network = self.network.write().await;
@@ -112,10 +112,7 @@ impl PandaNodeInner {
                 };
                 match event.event() {
                     TopicLogSyncEvent::Operation(operation) => {
-                        match validate_and_unpack(
-                            operation.as_ref().to_owned(),
-                            NODE_ADMIN_TOPIC_ID,
-                        ) {
+                        match validate_and_unpack(operation.as_ref().to_owned(), topic_id) {
                             Ok(data) => {
                                 persistent_tx.send(data).await.unwrap();
                             }
