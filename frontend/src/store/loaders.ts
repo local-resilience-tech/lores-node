@@ -36,7 +36,7 @@ export async function loadInitialData(store: AppStore) {
   }
 
   if (state.network === null) loadNetwork(store)
-  if (state.regions === null) loadRegions(store)
+  if (state.regions.all === null) loadRegions(store)
   if (state.nodes === null) loadNodes(store)
   if (state.localApps === null) loadLocalApps(store)
   if (state.thisRegionNode === null) loadThisRegionNode(store)

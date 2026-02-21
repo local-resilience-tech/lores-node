@@ -32,21 +32,25 @@ import packageJson from "../../../package.json"
 import pangaLogoUrl from "../../assets/deepsea-panda.svg"
 
 import classes from "./Layout.module.css"
-import { handleClientEvent, useAppSelector } from "../../store"
+import { handleClientEvent, useAppDispatch, useAppSelector } from "../../store"
 import useWebSocket from "react-use-websocket"
 import { getSocketUrl } from "../../api"
 import { IfNodeSteward } from "../../contexts/auth/node_steward_auth"
+import { RegionSelector } from "./RegionSelector"
+import { activeRegion, activeRegionChanged } from "../../store/regions"
 
 export default function Layout() {
   const [opened, { toggle }] = useDisclosure()
   const iconSize = 20
 
   const network = useAppSelector((state) => state.network)
-  const regions = useAppSelector((state) => state.regions ?? [])
+  const allRegions = useAppSelector((state) => state.regions.all ?? [])
+  const region = useAppSelector((state) => activeRegion(state.regions))
   const regionNode = useAppSelector((state) => state.thisRegionNode)
   const nodesCount = useAppSelector((state) => state.nodes?.length)
   const localAppsCount = useAppSelector((state) => state.localApps?.length)
   const me = useAppSelector((state) => state.me)
+  const dispatch = useAppDispatch()
 
   const readyForApps = true
   const pandaRunning = !!network
@@ -138,7 +142,7 @@ export default function Layout() {
           />
         </AppShell.Section>
 
-        {regions.length === 0 && (
+        {!region && (
           <IfNodeSteward>
             <AppShell.Section className={classes.section_to_setup}>
               <NavLink
@@ -153,7 +157,7 @@ export default function Layout() {
           </IfNodeSteward>
         )}
 
-        {regions.map((region) => (
+        {region && (
           <AppShell.Section className={classes.menu_section} key={region.id}>
             <Group justify="center" gap={0} className={classes.section_title}>
               <Text span c="dimmed">
@@ -161,9 +165,13 @@ export default function Layout() {
               </Text>
               <Group justify="flex-start" gap={4}>
                 <Text span>{region?.name ?? "Unknown"}</Text>
-                <ActionIcon variant="transparent">
-                  <IconChevronDown size={iconSize} />
-                </ActionIcon>
+                <RegionSelector
+                  regions={allRegions}
+                  selected={region}
+                  onChange={(region) => {
+                    if (region) dispatch(activeRegionChanged(region.id))
+                  }}
+                />
               </Group>
             </Group>
             <NavLink
@@ -187,7 +195,7 @@ export default function Layout() {
               onClick={toggle}
             />
           </AppShell.Section>
-        ))}
+        )}
 
         {network && (
           <AppShell.Section className={classes.menu_section}>
