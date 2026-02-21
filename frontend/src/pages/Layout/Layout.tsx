@@ -32,13 +32,14 @@ import classes from "./Layout.module.css"
 import { handleClientEvent, useAppSelector } from "../../store"
 import useWebSocket from "react-use-websocket"
 import { getSocketUrl } from "../../api"
+import { IfNodeSteward } from "../../contexts/auth/node_steward_auth"
 
 export default function Layout() {
   const [opened, { toggle }] = useDisclosure()
   const iconSize = 20
 
   const network = useAppSelector((state) => state.network)
-  const region = useAppSelector((state) => state.region)
+  const regions = useAppSelector((state) => state.regions)
   const regionNode = useAppSelector((state) => state.thisRegionNode)
   const nodesCount = useAppSelector((state) => state.nodes?.length)
   const localAppsCount = useAppSelector((state) => state.localApps?.length)
@@ -74,7 +75,7 @@ export default function Layout() {
           <Burger opened={opened} onClick={toggle} hiddenFrom="sm" size="sm" />
           <Anchor href="/">LoRes Mesh</Anchor>
           <Breadcrumbs>
-            {region && <Text>{region.name}</Text>}
+            {/* {region && <Text>{region.name}</Text>} */}
             {regionNode && <Text>{regionNode.name}</Text>}
           </Breadcrumbs>
         </Group>
@@ -134,21 +135,23 @@ export default function Layout() {
           />
         </AppShell.Section>
 
-        {!region && (
-          <AppShell.Section className={classes.section_to_setup}>
-            <NavLink
-              label="Setup region"
-              href="/regions/setup"
-              className={classes.navlink_to_setup}
-              onClick={toggle}
-              fz={1}
-              rightSection={<IconSquarePlus size={iconSize + 4} />}
-            />
-          </AppShell.Section>
+        {regions.length === 0 && (
+          <IfNodeSteward>
+            <AppShell.Section className={classes.section_to_setup}>
+              <NavLink
+                label="Setup region"
+                href="/regions/setup"
+                className={classes.navlink_to_setup}
+                onClick={toggle}
+                fz={1}
+                rightSection={<IconSquarePlus size={iconSize + 4} />}
+              />
+            </AppShell.Section>
+          </IfNodeSteward>
         )}
 
-        {region && (
-          <AppShell.Section className={classes.menu_section}>
+        {regions.map((region) => (
+          <AppShell.Section className={classes.menu_section} key={region.id}>
             <Text className={classes.section_title}>
               <Text span c="dimmed">
                 Region:{" "}
@@ -176,7 +179,7 @@ export default function Layout() {
               onClick={toggle}
             />
           </AppShell.Section>
-        )}
+        ))}
 
         {network && (
           <AppShell.Section className={classes.menu_section}>

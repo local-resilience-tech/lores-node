@@ -44,164 +44,165 @@ export enum AdminLoginError {
 }
 
 export interface AdminCredentials {
-  password: string;
+  password: string
 }
 
 export interface AppInstallation {
-  app_name: string;
-  node_id: string;
-  version: string;
+  app_name: string
+  node_id: string
+  version: string
 }
 
 export interface AppReference {
-  app_name: string;
+  app_name: string
 }
 
 export interface BootstrapNodeData {
-  network_name: string;
-  node_id?: string | null;
+  network_name: string
+  node_id?: string | null
 }
 
 export type ClientEvent =
   | {
-      NodeUpdated: RegionNodeDetails;
+      NodeUpdated: RegionNodeDetails
     }
   | {
-      RegionAppUpdated: RegionAppWithInstallations;
-    };
+      RegionAppUpdated: RegionAppWithInstallations
+    }
 
 export interface CreateNodeDetails {
-  name: string;
+  name: string
 }
 
 export interface CreateRegionData {
-  name: string;
-  organisation_name?: string | null;
-  slug: string;
-  url?: string | null;
+  name: string
+  organisation_name?: string | null
+  slug: string
+  url?: string | null
 }
 
 export interface DockerService {
-  current_state: string;
-  current_state_duration: string;
-  id: string;
-  image: string;
-  name: string;
-  node_name: string;
+  current_state: string
+  current_state_duration: string
+  id: string
+  image: string
+  name: string
+  node_name: string
 }
 
 export interface DockerStackWithServices {
-  name: string;
-  services: DockerService[];
+  name: string
+  services: DockerService[]
 }
 
 export interface LocalApp {
-  name: string;
-  url?: null | NodeAppUrl;
-  version: string;
+  name: string
+  url?: null | NodeAppUrl
+  version: string
 }
 
 export interface LogCount {
-  node_id: string;
+  node_id: string
   /** @format int64 */
-  total: number;
+  total: number
 }
 
 export interface Network {
-  name: string;
-  node: NetworkNode;
+  name: string
+  node: NetworkNode
 }
 
 export interface NetworkNode {
-  id: string;
+  id: string
 }
 
 export interface NodeAppUrl {
-  internet_url?: string | null;
-  local_network_url?: string | null;
+  internet_url?: string | null
+  local_network_url?: string | null
 }
 
 export interface NodeSteward {
-  created_at: string;
-  id: string;
-  name: string;
-  status: NodeStewardStatus;
+  created_at: string
+  id: string
+  name: string
+  status: NodeStewardStatus
 }
 
 export interface NodeStewardCreationData {
-  name: string;
+  name: string
 }
 
 export interface NodeStewardCreationResult {
-  node_steward: NodeSteward;
-  password_reset_token: string;
+  node_steward: NodeSteward
+  password_reset_token: string
 }
 
 export interface NodeStewardCredentials {
-  id: string;
-  password: string;
+  id: string
+  password: string
 }
 
 export interface NodeStewardSetPasswordRequest {
-  id: string;
-  new_password: string;
-  token: string;
+  id: string
+  new_password: string
+  token: string
 }
 
 export interface NodeStewardUser {
-  id: string;
-  name: string;
+  id: string
+  name: string
 }
 
 export interface P2PandaLogCounts {
-  counts: LogCount[];
+  counts: LogCount[]
 }
 
 export interface P2PandaNodeDetails {
-  panda_node_id: string;
+  panda_node_id: string
 }
 
 export interface Region {
-  name: string;
+  id: string
+  name: string
 }
 
 export interface RegionAppWithInstallations {
-  installations: AppInstallation[];
-  name: string;
+  installations: AppInstallation[]
+  name: string
 }
 
 export interface RegionNode {
-  domain_on_internet?: string | null;
-  domain_on_local_network?: string | null;
-  id: string;
-  name: string;
-  public_ipv4?: string | null;
+  domain_on_internet?: string | null
+  domain_on_local_network?: string | null
+  id: string
+  name: string
+  public_ipv4?: string | null
 }
 
 export interface RegionNodeDetails {
-  domain_on_internet?: string | null;
-  domain_on_local_network?: string | null;
-  id: string;
-  name: string;
-  public_ipv4?: string | null;
-  state?: string | null;
-  status_text?: string | null;
+  domain_on_internet?: string | null
+  domain_on_local_network?: string | null
+  id: string
+  name: string
+  public_ipv4?: string | null
+  state?: string | null
+  status_text?: string | null
 }
 
 export interface RegionNodeStatusData {
-  state?: string | null;
-  text?: string | null;
+  state?: string | null
+  text?: string | null
 }
 
 export interface UpdateNodeDetails {
-  domain_on_internet?: string | null;
-  domain_on_local_network?: string | null;
-  name: string;
-  public_ipv4: string;
+  domain_on_internet?: string | null
+  domain_on_local_network?: string | null
+  name: string
+  public_ipv4: string
 }
 
 export interface UserRef {
-  user_id: string;
+  user_id: string
 }
 
 import type {
@@ -210,39 +211,43 @@ import type {
   AxiosResponse,
   HeadersDefaults,
   ResponseType,
-} from "axios";
-import axios from "axios";
+} from "axios"
+import axios from "axios"
 
-export type QueryParamsType = Record<string | number, any>;
+export type QueryParamsType = Record<string | number, any>
 
-export interface FullRequestParams
-  extends Omit<AxiosRequestConfig, "data" | "params" | "url" | "responseType"> {
+export interface FullRequestParams extends Omit<
+  AxiosRequestConfig,
+  "data" | "params" | "url" | "responseType"
+> {
   /** set parameter to `true` for call `securityWorker` for this request */
-  secure?: boolean;
+  secure?: boolean
   /** request path */
-  path: string;
+  path: string
   /** content type of request body */
-  type?: ContentType;
+  type?: ContentType
   /** query params */
-  query?: QueryParamsType;
+  query?: QueryParamsType
   /** format of response (i.e. response.json() -> format: "json") */
-  format?: ResponseType;
+  format?: ResponseType
   /** request body */
-  body?: unknown;
+  body?: unknown
 }
 
 export type RequestParams = Omit<
   FullRequestParams,
   "body" | "method" | "query" | "path"
->;
+>
 
-export interface ApiConfig<SecurityDataType = unknown>
-  extends Omit<AxiosRequestConfig, "data" | "cancelToken"> {
+export interface ApiConfig<SecurityDataType = unknown> extends Omit<
+  AxiosRequestConfig,
+  "data" | "cancelToken"
+> {
   securityWorker?: (
     securityData: SecurityDataType | null,
-  ) => Promise<AxiosRequestConfig | void> | AxiosRequestConfig | void;
-  secure?: boolean;
-  format?: ResponseType;
+  ) => Promise<AxiosRequestConfig | void> | AxiosRequestConfig | void
+  secure?: boolean
+  format?: ResponseType
 }
 
 export enum ContentType {
@@ -254,11 +259,11 @@ export enum ContentType {
 }
 
 export class HttpClient<SecurityDataType = unknown> {
-  public instance: AxiosInstance;
-  private securityData: SecurityDataType | null = null;
-  private securityWorker?: ApiConfig<SecurityDataType>["securityWorker"];
-  private secure?: boolean;
-  private format?: ResponseType;
+  public instance: AxiosInstance
+  private securityData: SecurityDataType | null = null
+  private securityWorker?: ApiConfig<SecurityDataType>["securityWorker"]
+  private secure?: boolean
+  private format?: ResponseType
 
   constructor({
     securityWorker,
@@ -269,21 +274,21 @@ export class HttpClient<SecurityDataType = unknown> {
     this.instance = axios.create({
       ...axiosConfig,
       baseURL: axiosConfig.baseURL || "",
-    });
-    this.secure = secure;
-    this.format = format;
-    this.securityWorker = securityWorker;
+    })
+    this.secure = secure
+    this.format = format
+    this.securityWorker = securityWorker
   }
 
   public setSecurityData = (data: SecurityDataType | null) => {
-    this.securityData = data;
-  };
+    this.securityData = data
+  }
 
   protected mergeRequestParams(
     params1: AxiosRequestConfig,
     params2?: AxiosRequestConfig,
   ): AxiosRequestConfig {
-    const method = params1.method || (params2 && params2.method);
+    const method = params1.method || (params2 && params2.method)
 
     return {
       ...this.instance.defaults,
@@ -298,36 +303,36 @@ export class HttpClient<SecurityDataType = unknown> {
         ...(params1.headers || {}),
         ...((params2 && params2.headers) || {}),
       },
-    };
+    }
   }
 
   protected stringifyFormItem(formItem: unknown) {
     if (typeof formItem === "object" && formItem !== null) {
-      return JSON.stringify(formItem);
+      return JSON.stringify(formItem)
     } else {
-      return `${formItem}`;
+      return `${formItem}`
     }
   }
 
   protected createFormData(input: Record<string, unknown>): FormData {
     if (input instanceof FormData) {
-      return input;
+      return input
     }
     return Object.keys(input || {}).reduce((formData, key) => {
-      const property = input[key];
+      const property = input[key]
       const propertyContent: any[] =
-        property instanceof Array ? property : [property];
+        property instanceof Array ? property : [property]
 
       for (const formItem of propertyContent) {
-        const isFileType = formItem instanceof Blob || formItem instanceof File;
+        const isFileType = formItem instanceof Blob || formItem instanceof File
         formData.append(
           key,
           isFileType ? formItem : this.stringifyFormItem(formItem),
-        );
+        )
       }
 
-      return formData;
-    }, new FormData());
+      return formData
+    }, new FormData())
   }
 
   public request = async <T = any, _E = any>({
@@ -343,9 +348,9 @@ export class HttpClient<SecurityDataType = unknown> {
       ((typeof secure === "boolean" ? secure : this.secure) &&
         this.securityWorker &&
         (await this.securityWorker(this.securityData))) ||
-      {};
-    const requestParams = this.mergeRequestParams(params, secureParams);
-    const responseFormat = format || this.format || undefined;
+      {}
+    const requestParams = this.mergeRequestParams(params, secureParams)
+    const responseFormat = format || this.format || undefined
 
     if (
       type === ContentType.FormData &&
@@ -353,7 +358,7 @@ export class HttpClient<SecurityDataType = unknown> {
       body !== null &&
       typeof body === "object"
     ) {
-      body = this.createFormData(body as Record<string, unknown>);
+      body = this.createFormData(body as Record<string, unknown>)
     }
 
     if (
@@ -362,7 +367,7 @@ export class HttpClient<SecurityDataType = unknown> {
       body !== null &&
       typeof body !== "string"
     ) {
-      body = JSON.stringify(body);
+      body = JSON.stringify(body)
     }
 
     return this.instance.request({
@@ -375,8 +380,8 @@ export class HttpClient<SecurityDataType = unknown> {
       responseType: responseFormat,
       data: body,
       url: path,
-    });
-  };
+    })
+  }
 }
 
 /**
@@ -476,7 +481,7 @@ export class Api<
         format: "json",
         ...params,
       }),
-  };
+  }
   authApi = {
     /**
      * No description
@@ -571,7 +576,7 @@ export class Api<
         format: "json",
         ...params,
       }),
-  };
+  }
   nodeStewardApi = {
     /**
      * No description
@@ -677,7 +682,7 @@ export class Api<
         format: "json",
         ...params,
       }),
-  };
+  }
   publicApi = {
     /**
      * No description
@@ -752,11 +757,11 @@ export class Api<
     /**
      * No description
      *
-     * @name ShowRegion
+     * @name ListRegions
      * @request GET:/public_api/regions
      */
-    showRegion: (params: RequestParams = {}) =>
-      this.request<null | Region, any>({
+    listRegions: (params: RequestParams = {}) =>
+      this.request<Region[], any>({
         path: `/public_api/regions`,
         method: "GET",
         format: "json",
@@ -818,5 +823,5 @@ export class Api<
         format: "json",
         ...params,
       }),
-  };
+  }
 }

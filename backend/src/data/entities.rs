@@ -22,8 +22,9 @@ pub struct RegionNodeDetails {
     pub state: Option<String>,
 }
 
-#[derive(sqlx::FromRow, Serialize, Deserialize, ToSchema)]
+#[derive(Serialize, Deserialize, ToSchema)]
 pub struct Region {
+    pub id: String,
     pub name: String,
 }
 

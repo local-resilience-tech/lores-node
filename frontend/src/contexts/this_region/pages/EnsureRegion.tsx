@@ -3,7 +3,7 @@ import SetRegion from "../components/SetRegion"
 import { Outlet } from "react-router-dom"
 import { getApi } from "../../../api"
 import { BootstrapNodeData, Region } from "../../../api/Api"
-import { regionLoaded } from "../../../store/region"
+import { regionsLoaded } from "../../../store/regions"
 import { useAppDispatch, useAppSelector } from "../../../store"
 import {
   actionFailure,
@@ -16,7 +16,9 @@ export default function EnsureRegion({
 }: {
   children?: React.ReactNode
 }) {
-  const region = useAppSelector((state) => state.region)
+  const region = useAppSelector((state) =>
+    state.regions ? state.regions[0] : null,
+  )
   const dispatch = useAppDispatch()
 
   const onSubmit = async (
@@ -28,9 +30,10 @@ export default function EnsureRegion({
         if (result.status === 200) {
           console.log("Successfully bootstrapped", result)
           const newRegion: Region = {
+            id: "unknown",
             name: data.network_name,
           }
-          dispatch(regionLoaded(newRegion))
+          dispatch(regionsLoaded([newRegion]))
           return actionSuccess()
         }
       })

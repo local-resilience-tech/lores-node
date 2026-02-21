@@ -142,11 +142,7 @@ async fn create_region(
 
     println!("Created new region with ID: {}", region_id);
 
-    return (
-        StatusCode::INTERNAL_SERVER_ERROR,
-        Json("Not implemented".to_string()),
-    )
-        .into_response();
+    return (StatusCode::OK, ()).into_response();
 }
 
 fn new_region_id() -> String {

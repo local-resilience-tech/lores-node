@@ -3,7 +3,10 @@ import NodesList from "../components/NodesList"
 import { useAppSelector } from "../../../store"
 
 export default function Nodes() {
-  const region = useAppSelector((state) => state.region)
+  const region = useAppSelector((state) =>
+    state.regions ? state.regions[0] : null,
+  )
+
   const nodes = useAppSelector((state) => state.nodes)
 
   if (!region) {

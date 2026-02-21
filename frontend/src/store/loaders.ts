@@ -2,7 +2,7 @@ import { AppStore } from "."
 import { getApi } from "../api"
 import { localAppsLoaded } from "./local_apps"
 import { nodesLoaded } from "./nodes"
-import { regionLoaded } from "./region"
+import { regionsLoaded } from "./regions"
 import { regionAppsLoaded } from "./region_apps"
 import { thisRegionNodeLoaded } from "./this_region_node"
 import { meLoaded } from "./me"
@@ -36,7 +36,7 @@ export async function loadInitialData(store: AppStore) {
   }
 
   if (state.network === null) loadNetwork(store)
-  if (state.region === null) loadRegion(store)
+  if (state.regions === null) loadRegions(store)
   if (state.nodes === null) loadNodes(store)
   if (state.localApps === null) loadLocalApps(store)
   if (state.thisRegionNode === null) loadThisRegionNode(store)
@@ -62,10 +62,10 @@ async function loadNetwork(store: AppStore) {
   if (result) store.dispatch(networkLoaded(result))
 }
 
-async function loadRegion(store: AppStore) {
-  const result = await fetchApiData(() => getApi().publicApi.showRegion())
-  console.log("EFFECT: fetchRegion", result)
-  if (result) store.dispatch(regionLoaded(result))
+async function loadRegions(store: AppStore) {
+  const result = await fetchApiData(() => getApi().publicApi.listRegions())
+  console.log("EFFECT: fetchRegions", result)
+  if (result) store.dispatch(regionsLoaded(result))
 }
 
 async function loadNodes(store: AppStore) {

@@ -127,7 +127,16 @@ const router = createBrowserRouter([
       },
       {
         path: "regions",
-        children: [{ path: "setup", element: <SetupRegion /> }],
+        children: [
+          {
+            path: "setup",
+            element: (
+              <RequireNodeSteward>
+                <SetupRegion />
+              </RequireNodeSteward>
+            ),
+          },
+        ],
       },
       {
         path: "network",
