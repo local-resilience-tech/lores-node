@@ -1,12 +1,12 @@
 import { Table } from "@mantine/core"
-import { Node, NodeDetails } from "../../../api/Api"
+import { RegionNode, RegionNodeDetails } from "../../../api/Api"
 
 export default function ThisNodeDetails({
   node,
   nodeDetails,
 }: {
-  node: Node
-  nodeDetails: NodeDetails | null
+  node: RegionNode
+  nodeDetails: RegionNodeDetails | null
 }) {
   return (
     <Table>

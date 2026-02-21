@@ -2,12 +2,13 @@ import { AppStore } from "."
 import { getApi } from "../api"
 import { localAppsLoaded } from "./local_apps"
 import { nodesLoaded } from "./nodes"
-import { regionLoaded } from "./region"
+import { regionsLoaded } from "./regions"
 import { regionAppsLoaded } from "./region_apps"
-import { thisNodeLoaded } from "./this_node"
+import { thisRegionNodeLoaded } from "./this_region_node"
 import { meLoaded } from "./me"
 import { redirect } from "react-router-dom"
 import { GetCurrentNodeStewardError } from "../api/Api"
+import { networkLoaded } from "./network"
 
 export async function loadInitialData(store: AppStore) {
   const state = store.getState()
@@ -34,10 +35,11 @@ export async function loadInitialData(store: AppStore) {
     }
   }
 
-  if (state.region === null) loadRegion(store)
+  if (state.network === null) loadNetwork(store)
+  if (state.regions.all === null) loadRegions(store)
   if (state.nodes === null) loadNodes(store)
   if (state.localApps === null) loadLocalApps(store)
-  if (state.thisNode === null) loadThisNode(store)
+  if (state.thisRegionNode === null) loadThisRegionNode(store)
   if (state.regionApps === null) loadRegionApps(store)
 }
 
@@ -54,10 +56,16 @@ async function loadUser(store: AppStore) {
     })
 }
 
-async function loadRegion(store: AppStore) {
-  const result = await fetchApiData(() => getApi().publicApi.showRegion())
-  console.log("EFFECT: fetchRegion", result)
-  if (result) store.dispatch(regionLoaded(result))
+async function loadNetwork(store: AppStore) {
+  const result = await fetchApiData(() => getApi().publicApi.showNetwork())
+  console.log("EFFECT: fetchNetwork", result)
+  if (result) store.dispatch(networkLoaded(result))
+}
+
+async function loadRegions(store: AppStore) {
+  const result = await fetchApiData(() => getApi().publicApi.listRegions())
+  console.log("EFFECT: fetchRegions", result)
+  if (result) store.dispatch(regionsLoaded(result))
 }
 
 async function loadNodes(store: AppStore) {
@@ -78,14 +86,16 @@ async function loadRegionApps(store: AppStore) {
   if (result) store.dispatch(regionAppsLoaded(result))
 }
 
-async function loadThisNode(store: AppStore) {
-  const result = await fetchApiData(() => getApi().publicApi.showThisNode())
-  console.log("EFFECT: fetchThisNode", result)
-  if (result) store.dispatch(thisNodeLoaded(result))
+async function loadThisRegionNode(store: AppStore) {
+  const result = await fetchApiData(() =>
+    getApi().publicApi.showThisRegionNode(),
+  )
+  console.log("EFFECT: fetchThisRegionNode", result)
+  if (result) store.dispatch(thisRegionNodeLoaded(result))
 }
 
 const fetchApiData = async <T>(
-  apiCall: () => Promise<{ status: number; data: T }>
+  apiCall: () => Promise<{ status: number; data: T }>,
 ): Promise<T | null> => {
   const result = await apiCall()
   if (result.status >= 200 && result.status < 300) return result.data

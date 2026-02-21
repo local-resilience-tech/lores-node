@@ -12,6 +12,7 @@
   "scripts": {
     "dev": "vite --host",
     "build": "tsc && vite build",
+    "ts:watch": "tsc --watch --noEmit",
     "lint": "ESLINT_USE_FLAT_CONFIG=false eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
     "swagger": "npx swagger-typescript-api generate --path http://localhost:8200/api-docs/openapi.json --output src/api --http-client fetch --clean"

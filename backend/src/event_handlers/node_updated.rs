@@ -1,7 +1,7 @@
 use sqlx::{Sqlite, SqlitePool};
 
 use crate::{
-    data::{entities::Node, projections_write::nodes::NodesWriteRepo},
+    data::{entities::RegionNode, projections_write::nodes::NodesWriteRepo},
     event_handlers::handler_utilities::{
         handle_db_write_error, read_node_updated_event, HandlerResult,
     },
@@ -38,7 +38,7 @@ impl NodeUpdatedHandler {
         println!("Node updated: {:?}", payload);
 
         // Upsert the node for now. This wouldn't be needed if we had a preserved message log.
-        let node = Node {
+        let node = RegionNode {
             id: header.author_node_id.clone(),
             name: payload.name.clone(),
             public_ipv4: Some(payload.public_ipv4.clone()),

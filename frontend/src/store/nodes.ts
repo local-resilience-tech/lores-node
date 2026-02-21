@@ -1,23 +1,23 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit"
-import type { NodeDetails } from "../api/Api"
+import type { RegionNodeDetails } from "../api/Api"
 
-export type NodesState = NodeDetails[] | null
+export type NodesState = RegionNodeDetails[] | null
 
-export type NodesMap = Map<string, NodeDetails>
+export type NodesMap = Map<string, RegionNodeDetails>
 
-export function hashById(nodes: NodeDetails[] | null): NodesMap {
-  if (!nodes) return new Map<string, NodeDetails>()
+export function hashById(nodes: RegionNodeDetails[] | null): NodesMap {
+  if (!nodes) return new Map<string, RegionNodeDetails>()
 
   return nodes.reduce((acc, node) => {
     acc.set(node.id, node)
     return acc
-  }, new Map<string, NodeDetails>())
+  }, new Map<string, RegionNodeDetails>())
 }
 
 export function getNodeById(
-  nodes: NodeDetails[] | null,
-  id: string | null | undefined
-): NodeDetails | null {
+  nodes: RegionNodeDetails[] | null,
+  id: string | null | undefined,
+): RegionNodeDetails | null {
   if (!nodes || !id) return null
 
   return nodes.find((node) => node.id === id) || null
@@ -30,7 +30,10 @@ export const nodesSlice = createSlice({
     nodesLoaded: (state, action) => {
       return action.payload as NodesState
     },
-    nodeUpdated: (state: NodesState, action: PayloadAction<NodeDetails>) => {
+    nodeUpdated: (
+      state: NodesState,
+      action: PayloadAction<RegionNodeDetails>,
+    ) => {
       const updatedNode = action.payload
 
       if (state) {

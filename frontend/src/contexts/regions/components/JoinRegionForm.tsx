@@ -1,4 +1,4 @@
-import { TextInput, Button, Stack } from "@mantine/core"
+import { TextInput, Button, Stack, Text } from "@mantine/core"
 import { useForm } from "@mantine/form"
 import { BootstrapNodeData } from "../../../api/Api"
 import {
@@ -7,7 +7,7 @@ import {
   useOnSubmitWithResult,
 } from "../../../components"
 
-export interface NewRegionData {
+export interface JoinRegionData {
   name: string
 }
 
@@ -15,11 +15,11 @@ interface NewRegionFormProps {
   onSubmit: (data: BootstrapNodeData) => Promise<ActionPromiseResult>
 }
 
-export default function NewRegionForm({ onSubmit }: NewRegionFormProps) {
+export default function JoinRegionForm({ onSubmit }: NewRegionFormProps) {
   const [actionResult, onSubmitWithResult] =
     useOnSubmitWithResult<BootstrapNodeData>(onSubmit)
 
-  const form = useForm<NewRegionData>({
+  const form = useForm<JoinRegionData>({
     mode: "controlled",
     initialValues: {
       name: "",
@@ -36,7 +36,7 @@ export default function NewRegionForm({ onSubmit }: NewRegionFormProps) {
   })
 
   const handleSubmit = (
-    values: NewRegionData,
+    values: JoinRegionData,
   ): Promise<ActionPromiseResult> => {
     const data: BootstrapNodeData = {
       network_name: values.name,
@@ -48,6 +48,12 @@ export default function NewRegionForm({ onSubmit }: NewRegionFormProps) {
   return (
     <form onSubmit={form.onSubmit(handleSubmit)}>
       <Stack gap="lg">
+        <Text>
+          To join a region, you need to know the name of the region. This is a
+          unique identifier, so be sure to get the correct spelling and
+          punctuation.
+        </Text>
+
         <Stack>
           <TextInput
             label="Region Name"
@@ -62,7 +68,7 @@ export default function NewRegionForm({ onSubmit }: NewRegionFormProps) {
 
         <Stack>
           <Button loading={form.submitting} type="submit">
-            Create Region
+            Join Region
           </Button>
         </Stack>
       </Stack>

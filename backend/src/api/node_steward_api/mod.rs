@@ -4,7 +4,7 @@ mod routes;
 
 pub fn node_steward_api_router() -> OpenApiRouter {
     OpenApiRouter::new()
-        .nest("/this_node", routes::this_node::router())
+        .nest("/this_region_node", routes::this_region_node::router())
         .nest("/local_apps", routes::local_apps::router())
-        .nest("/this_region", routes::this_region::router())
+        .nest("/regions", routes::regions::router())
 }

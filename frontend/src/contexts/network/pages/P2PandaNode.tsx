@@ -2,30 +2,10 @@ import { Stack, Title, Container, Table, Box } from "@mantine/core"
 import { useEffect, useState } from "react"
 import { getApi } from "../../../api"
 import type { P2PandaNodeDetails } from "../../../api/Api"
+import { useAppSelector } from "../../../store"
 
-const getNode = async (): Promise<P2PandaNodeDetails | null> => {
-  const result = await getApi().publicApi.showThisPandaNode()
-
-  if (result.status !== 200) {
-    console.warn("Network not started", result)
-    return null
-  }
-
-  return result.data
-}
-
-export default function ThisP2PandaNode() {
-  const [node, setNode] = useState<P2PandaNodeDetails | null>(null)
-
-  const fetchNode = async () => {
-    const node = await getNode()
-    console.log("fetched node", node)
-    setNode(node)
-  }
-
-  useEffect(() => {
-    fetchNode()
-  }, [])
+export default function P2PandaNode() {
+  const node = useAppSelector((state) => state.network?.node)
 
   if (!node) {
     return <></>
@@ -55,7 +35,7 @@ export default function ThisP2PandaNode() {
             <Table.Tr>
               <Table.Td>Panda Node Id</Table.Td>
               <Table.Td>
-                <pre>{node.panda_node_id}</pre>
+                <pre>{node.id}</pre>
               </Table.Td>
             </Table.Tr>
           </Table.Tbody>

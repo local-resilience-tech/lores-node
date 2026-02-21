@@ -3,7 +3,10 @@ import NodesList from "../components/NodesList"
 import { useAppSelector } from "../../../store"
 
 export default function Nodes() {
-  const region = useAppSelector((state) => state.region)
+  const region = useAppSelector((state) =>
+    state.regions ? state.regions[0] : null,
+  )
+
   const nodes = useAppSelector((state) => state.nodes)
 
   if (!region) {
@@ -14,7 +17,7 @@ export default function Nodes() {
     <Container>
       <Stack>
         <Title order={1}>Nodes</Title>
-        <Title order={2}>{region.network_id}</Title>
+        <Title order={2}>{region.name}</Title>
 
         {nodes && <NodesList nodes={nodes} />}
       </Stack>

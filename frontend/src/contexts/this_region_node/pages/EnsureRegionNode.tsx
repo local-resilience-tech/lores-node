@@ -3,9 +3,9 @@ import { useEffect } from "react"
 import NewNode, { NewNodeData } from "../components/NewNode"
 import { Loading, useLoading } from "../../shared"
 import { getApi } from "../../../api"
-import type { Node } from "../../../api/Api"
+import type { RegionNode } from "../../../api/Api"
 import { useAppDispatch, useAppSelector } from "../../../store"
-import { thisNodeLoaded } from "../../../store/this_node"
+import { thisRegionNodeLoaded } from "../../../store/this_region_node"
 import { Outlet } from "react-router"
 import {
   actionFailure,
@@ -13,8 +13,8 @@ import {
   actionSuccess,
 } from "../../../components"
 
-const getNode = async (): Promise<Node | null> => {
-  const result = await getApi().publicApi.showThisNode()
+const getNode = async (): Promise<RegionNode | null> => {
+  const result = await getApi().publicApi.showThisRegionNode()
 
   if (result.status !== 200) {
     console.error("Failed to fetch node identity", result)
@@ -24,14 +24,14 @@ const getNode = async (): Promise<Node | null> => {
   return result.data
 }
 
-export default function EnsureNode() {
-  const node = useAppSelector((state) => state.thisNode)
+export default function EnsureRegionNode() {
+  const node = useAppSelector((state) => state.thisRegionNode)
   const dispatch = useAppDispatch()
   const [loading, withLoading] = useLoading(false)
 
-  const updateNode = (newNode: Node | null) => {
+  const updateNode = (newNode: RegionNode | null) => {
     console.log("Updating node", newNode)
-    dispatch(thisNodeLoaded(newNode))
+    dispatch(thisRegionNodeLoaded(newNode))
   }
 
   const fetchNode = async () => {
@@ -48,7 +48,7 @@ export default function EnsureNode() {
 
   const onSubmitNewNode = (data: NewNodeData): Promise<ActionPromiseResult> =>
     getApi()
-      .nodeStewardApi.createThisNode({ name: data.name })
+      .nodeStewardApi.createThisRegionNode({ name: data.name })
       .then((result) => {
         updateNode(result.data)
         return actionSuccess()

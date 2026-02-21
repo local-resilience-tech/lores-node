@@ -3,7 +3,7 @@ use sqlx;
 use utoipa::ToSchema;
 
 #[derive(sqlx::FromRow, Serialize, Deserialize, ToSchema)]
-pub struct Node {
+pub struct RegionNode {
     pub id: String,
     pub name: String,
     pub public_ipv4: Option<String>,
@@ -12,7 +12,7 @@ pub struct Node {
 }
 
 #[derive(sqlx::FromRow, Serialize, Deserialize, ToSchema, Debug, Clone)]
-pub struct NodeDetails {
+pub struct RegionNodeDetails {
     pub id: String,
     pub name: String,
     pub public_ipv4: Option<String>,
@@ -22,9 +22,19 @@ pub struct NodeDetails {
     pub state: Option<String>,
 }
 
-#[derive(sqlx::FromRow, Serialize, Deserialize, ToSchema)]
+#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
 pub struct Region {
-    pub network_id: String,
+    pub id: String,
+    pub name: String,
+}
+
+impl Region {
+    pub fn unnamed(id: String) -> Self {
+        Self {
+            id: id.clone(),
+            name: id,
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
@@ -56,4 +66,15 @@ pub struct AppInstallation {
     pub app_name: String,
     pub node_id: String,
     pub version: String,
+}
+
+#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
+pub struct NetworkNode {
+    pub id: String,
+}
+
+#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
+pub struct Network {
+    pub name: String,
+    pub node: NetworkNode,
 }
