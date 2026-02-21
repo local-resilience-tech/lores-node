@@ -4,8 +4,12 @@
 
 .menu_section {
   border-top: 1px solid var(--mantine-color-dark-4);
-  padding-top: var(--mantine-spacing-md);
+  padding-top: 0;
   padding-bottom: var(--mantine-spacing-md);
+}
+
+.menu_section a:first-of-type {
+  margin-top: var(--mantine-spacing-md);
 }
 
 .section_to_setup {
@@ -24,10 +28,16 @@ a.navlink_to_setup span {
   padding-top: var(--mantine-spacing-md);
 }
 
+.section_header {
+  padding: 5px var(--mantine-spacing-md);
+  margin: 0;
+  background-color: var(--mantine-color-dark-6);
+}
+
 .section_title {
   font-weight: bold;
   font-size: var(--mantine-font-size-lg);
-  padding: 0 var(--mantine-spacing-md);
+  padding: 0;
   text-align: center;
 }
 
