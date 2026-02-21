@@ -39,7 +39,7 @@ export default function Layout() {
   const iconSize = 20
 
   const network = useAppSelector((state) => state.network)
-  const regions = useAppSelector((state) => state.regions)
+  const regions = useAppSelector((state) => state.regions ?? [])
   const regionNode = useAppSelector((state) => state.thisRegionNode)
   const nodesCount = useAppSelector((state) => state.nodes?.length)
   const localAppsCount = useAppSelector((state) => state.localApps?.length)

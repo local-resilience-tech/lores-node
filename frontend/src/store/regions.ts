@@ -1,17 +1,25 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit"
 import type { Region } from "../api/Api"
 
-export type RegionState = Region[]
+export type RegionState = Region[] | null
 
 const regionsSlice = createSlice({
   name: "regions",
-  initialState: [] as RegionState,
+  initialState: null as RegionState,
   reducers: {
-    regionLoaded: (_state, action: PayloadAction<Region[]>) => {
+    regionsLoaded: (_state, action: PayloadAction<Region[]>) => {
       return action.payload as RegionState
+    },
+    joinedRegion: (state, action: PayloadAction<Region>) => {
+      const region = action.payload
+      const existingRegion = state?.find((r) => r.id === region.id)
+
+      if (!existingRegion && state !== null) state.push(region)
+
+      return state
     },
   },
 })
 
-export const { regionLoaded: regionsLoaded } = regionsSlice.actions
+export const { regionsLoaded, joinedRegion } = regionsSlice.actions
 export default regionsSlice.reducer

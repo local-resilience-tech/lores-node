@@ -6,7 +6,9 @@ use utoipa::ToSchema;
 use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::{
+    api::public_api::{client_events::ClientEvent, realtime::RealtimeState},
     config::config_state::LoresNodeConfigState,
+    data::entities::Region,
     panda_comms::{
         config::{SimplifiedNodeAddress, ThisP2PandaNodeRepo},
         panda_node_container::{build_public_key_from_hex, PandaNodeContainer},
@@ -109,6 +111,7 @@ pub struct CreateRegionData {
     )
 )]
 async fn create_region(
+    Extension(realtime_state): Extension<RealtimeState>,
     Extension(config_state): Extension<LoresNodeConfigState>,
     axum::extract::Json(data): axum::extract::Json<CreateRegionData>,
 ) -> impl IntoResponse {
@@ -141,6 +144,13 @@ async fn create_region(
     };
 
     println!("Created new region with ID: {}", region_id);
+
+    realtime_state
+        .broadcast_app_event(ClientEvent::JoinedRegion(Region {
+            id: region_id.clone(),
+            name: "Unnamed region".to_string(),
+        }))
+        .await;
 
     return (StatusCode::OK, ()).into_response();
 }

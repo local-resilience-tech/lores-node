@@ -22,7 +22,7 @@ pub struct RegionNodeDetails {
     pub state: Option<String>,
 }
 
-#[derive(Serialize, Deserialize, ToSchema)]
+#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
 pub struct Region {
     pub id: String,
     pub name: String,
