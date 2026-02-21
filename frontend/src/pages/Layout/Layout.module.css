@@ -24,7 +24,7 @@ a.navlink_to_setup span {
   padding-top: var(--mantine-spacing-md);
 }
 
-p.section_title {
+.section_title {
   font-weight: bold;
   font-size: var(--mantine-font-size-lg);
   padding: 0 var(--mantine-spacing-md);

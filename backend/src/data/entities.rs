@@ -28,6 +28,15 @@ pub struct Region {
     pub name: String,
 }
 
+impl Region {
+    pub fn unnamed(id: String) -> Self {
+        Self {
+            id: id.clone(),
+            name: id,
+        }
+    }
+}
+
 #[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
 pub struct NodeAppUrl {
     pub internet_url: Option<String>,

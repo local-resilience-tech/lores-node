@@ -146,10 +146,9 @@ async fn create_region(
     println!("Created new region with ID: {}", region_id);
 
     realtime_state
-        .broadcast_app_event(ClientEvent::JoinedRegion(Region {
-            id: region_id.clone(),
-            name: "Unnamed region".to_string(),
-        }))
+        .broadcast_app_event(ClientEvent::JoinedRegion(Region::unnamed(
+            region_id.clone(),
+        )))
         .await;
 
     return (StatusCode::OK, ()).into_response();

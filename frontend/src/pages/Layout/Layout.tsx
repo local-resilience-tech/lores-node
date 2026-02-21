@@ -1,4 +1,5 @@
 import {
+  ActionIcon,
   AppShell,
   Avatar,
   Badge,
@@ -17,6 +18,8 @@ import {
   IconBrandDocker,
   IconBrandGit,
   IconBrandGithub,
+  IconChevronDown,
+  IconExternalLink,
   IconGhost,
   IconHome,
   IconMapPlus,
@@ -152,12 +155,17 @@ export default function Layout() {
 
         {regions.map((region) => (
           <AppShell.Section className={classes.menu_section} key={region.id}>
-            <Text className={classes.section_title}>
+            <Group justify="center" gap={0} className={classes.section_title}>
               <Text span c="dimmed">
                 Region:{" "}
               </Text>
-              <Text span>{region?.name ?? "Unknown"}</Text>
-            </Text>
+              <Group justify="flex-start" gap={4}>
+                <Text span>{region?.name ?? "Unknown"}</Text>
+                <ActionIcon variant="transparent">
+                  <IconChevronDown size={iconSize} />
+                </ActionIcon>
+              </Group>
+            </Group>
             <NavLink
               label="Nodes"
               href="/this_region/nodes"

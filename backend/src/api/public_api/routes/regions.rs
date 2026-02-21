@@ -20,13 +20,7 @@ async fn list_regions(
         Some(region_ids) => {
             println!("got region ids {:?}", region_ids);
 
-            let regions: Vec<Region> = region_ids
-                .into_iter()
-                .map(|id| Region {
-                    id: id.clone(),
-                    name: "unknown".to_string(),
-                })
-                .collect();
+            let regions: Vec<Region> = region_ids.into_iter().map(Region::unnamed).collect();
             (StatusCode::OK, Json(regions))
         }
         None => {
