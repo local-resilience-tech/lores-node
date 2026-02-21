@@ -2,15 +2,14 @@ use std::sync::Arc;
 use std::time::{SystemTime, SystemTimeError};
 
 use p2panda_core::{Body, Header, Operation, PrivateKey};
+use p2panda_net::TopicId;
 use p2panda_store::{
     LogStore, OperationStore as TraitOperationStore, SqliteStore, SqliteStoreError,
 };
 use thiserror::Error;
 use tokio::sync::Semaphore;
 
-use super::{
-    operations::LoResMeshExtensions, panda_node_container::NODE_ADMIN_TOPIC_ID, topic::LogId,
-};
+use super::{operations::LoResMeshExtensions, topic::LogId};
 
 pub const LOG_ID: LogId = 1;
 
@@ -45,6 +44,7 @@ impl OperationStore {
     /// Creates, signs and stores new operation in the author's append-only log.
     pub async fn create_operation(
         &self,
+        topic_id: TopicId,
         private_key: &PrivateKey,
         body: Option<&[u8]>,
     ) -> Result<Operation<LoResMeshExtensions>, CreationError> {
@@ -71,7 +71,7 @@ impl OperationStore {
 
         let extensions = LoResMeshExtensions {
             prune_flag: Default::default(),
-            topic: NODE_ADMIN_TOPIC_ID,
+            topic: topic_id,
         };
 
         let mut header = Header {

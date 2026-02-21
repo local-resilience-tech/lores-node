@@ -22,7 +22,7 @@ use crate::{
         auth_api::auth_backend::AppAuthBackend,
         public_api::realtime::{self, RealtimeState},
     },
-    config::{config::LoresNodeConfig, config_state::LoresNodeConfigState},
+    config::{config::LoresNodeConfig, config_state::LoresNodeConfigState, NODE_ADMIN_TOPIC_ID},
     event_handlers::handle_event,
     panda_comms::{
         config::ThisP2PandaNodeRepo,
@@ -189,9 +189,14 @@ async fn start_panda(
     };
     container.set_bootstrap_node_id(bootstrap_node_id).await;
 
-    if let Err(e) = container.start(operations_pool).await {
+    if let Err(e) = container.start(operations_pool, NODE_ADMIN_TOPIC_ID).await {
         println!("Failed to start P2PandaContainer on liftoff: {:?}", e);
     }
+
+    container
+        .subscribe(NODE_ADMIN_TOPIC_ID)
+        .await
+        .expect("Failed to start operation receiver");
 }
 
 fn start_panda_event_handler(

@@ -7,7 +7,7 @@ use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::{
     api::public_api::{client_events::ClientEvent, realtime::RealtimeState},
-    config::config_state::LoresNodeConfigState,
+    config::{config_state::LoresNodeConfigState, NODE_ADMIN_TOPIC_ID},
     data::entities::Region,
     panda_comms::{
         config::{SimplifiedNodeAddress, ThisP2PandaNodeRepo},
@@ -80,7 +80,10 @@ async fn bootstrap(
         .await;
 
     // start the container
-    if let Err(e) = panda_container.start(&db.operations_pool).await {
+    if let Err(e) = panda_container
+        .start(&db.operations_pool, NODE_ADMIN_TOPIC_ID)
+        .await
+    {
         eprintln!("Failed to start P2PandaContainer: {:?}", e);
         return (
             StatusCode::INTERNAL_SERVER_ERROR,
@@ -93,6 +96,7 @@ async fn bootstrap(
 }
 
 #[derive(Deserialize, ToSchema, Debug)]
+#[allow(dead_code)]
 pub struct CreateRegionData {
     pub slug: String,
     pub name: String,

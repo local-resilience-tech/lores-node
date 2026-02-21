@@ -7,17 +7,15 @@ use thiserror::Error;
 use tokio::sync::{mpsc, Mutex};
 use tokio_stream::wrappers::ReceiverStream;
 
-use crate::{api::auth_api::auth_backend::User, panda_comms::event_encoding::decode_lores_event};
+use crate::api::auth_api::auth_backend::User;
 
 use super::{
-    event_encoding::encode_lores_event_payload,
+    event_encoding::{decode_lores_event, encode_lores_event_payload},
     lores_events::{LoResEvent, LoResEventHeader, LoResEventMetadataV1, LoResEventPayload},
     operations::{LoResMeshExtensions, LoresOperation},
     panda_node::{PandaNode, PandaNodeError},
     panda_node_inner::PandaPublishError,
 };
-
-pub const NODE_ADMIN_TOPIC_ID: TopicId = [0u8; 32];
 
 #[derive(Default, Clone)]
 pub struct NodeParams {
@@ -39,7 +37,8 @@ pub struct PandaNodeContainer {
     params: Arc<Mutex<NodeParams>>,
     node: Arc<Mutex<Option<PandaNode>>>,
     #[allow(dead_code)]
-    events_tx: mpsc::Sender<LoResEvent>,
+    lores_events_tx: mpsc::Sender<LoResEvent>,
+    operation_tx: Arc<Mutex<Option<mpsc::Sender<LoresOperation>>>>,
 }
 
 impl PandaNodeContainer {
@@ -49,7 +48,8 @@ impl PandaNodeContainer {
         PandaNodeContainer {
             params,
             node: Arc::new(Mutex::new(None)),
-            events_tx,
+            lores_events_tx: events_tx,
+            operation_tx: Arc::new(Mutex::new(None)),
         }
     }
 
@@ -73,7 +73,11 @@ impl PandaNodeContainer {
         params_lock.bootstrap_node_id = bootstrap_node_id;
     }
 
-    pub async fn start(&self, operations_pool: &SqlitePool) -> Result<(), PandaNodeContainerError> {
+    pub async fn start(
+        &self,
+        operations_pool: &SqlitePool,
+        admin_topic_id: TopicId,
+    ) -> Result<(), PandaNodeContainerError> {
         println!("Starting client");
 
         let params = self.get_params().await;
@@ -95,10 +99,16 @@ impl PandaNodeContainer {
         let private_key = private_key.unwrap();
         let network_name = network_name.unwrap();
 
-        self.start_for(private_key, network_name, boostrap_node_id, operations_pool)
-            .await?;
+        self.start_for(
+            private_key,
+            network_name,
+            admin_topic_id,
+            boostrap_node_id,
+            operations_pool,
+        )
+        .await?;
 
-        self.start_subscriptions().await?;
+        self.start_operation_receiver().await?;
 
         Ok(())
     }
@@ -107,13 +117,14 @@ impl PandaNodeContainer {
         &self,
         private_key: PrivateKey,
         network_name: String,
+        admin_topic_id: TopicId,
         boostrap_node_id: Option<PublicKey>,
         operations_pool: &SqlitePool,
     ) -> Result<(), PandaNodeError> {
         let required_params = super::panda_node::RequiredNodeParams {
             private_key,
             network_id: Hash::new(network_name.as_bytes()),
-            admin_topic_id: NODE_ADMIN_TOPIC_ID,
+            admin_topic_id: admin_topic_id,
             bootstrap_node_id: boostrap_node_id,
         };
 
@@ -146,7 +157,12 @@ impl PandaNodeContainer {
         }
     }
 
-    async fn start_subscriptions(&self) -> Result<(), PandaNodeContainerError> {
+    pub async fn subscribe(&self, topic_id: TopicId) -> Result<(), PandaNodeContainerError> {
+        let operation_tx = match self.operation_tx.lock().await.as_ref() {
+            Some(tx) => tx.clone(),
+            None => return Err(PandaNodeContainerError::PandaSubscribeError()),
+        };
+
         let node_lock = self.node.lock().await;
 
         let node = match node_lock.as_ref() {
@@ -154,14 +170,66 @@ impl PandaNodeContainer {
             None => return Err(PandaNodeContainerError::PandaSubscribeError()),
         };
 
+        node.inner
+            .subscribe_to_topic(topic_id, operation_tx)
+            .await?;
+
+        Ok(())
+    }
+
+    pub async fn publish_persisted(
+        &self,
+        topic_id: TopicId,
+        event_payload: LoResEventPayload,
+        current_user: Option<User>,
+    ) -> Result<(), PandaPublishError> {
+        let node_lock = self.node.lock().await;
+        let node = match node_lock.as_ref() {
+            Some(node) => node,
+            None => return Err(PandaPublishError::NodeNotStarted),
+        };
+
+        let node_steward_id = match current_user {
+            Some(user) if user.is_node_steward() => Some(user.id.clone()),
+            _ => None,
+        };
+        let metadata = LoResEventMetadataV1 { node_steward_id };
+        let encoded_payload = encode_lores_event_payload(event_payload, metadata)?;
+
+        let operation = node
+            .inner
+            .publish_persisted(topic_id, &encoded_payload)
+            .await?;
+
+        // Since this came from this node, it wont be received via subscription, so we
+        // need to handle it ourselves.
+        let lores_event = Self::decode_operation_to_lores_event(&operation).map_err(|e| {
+            PandaPublishError::OperationError(format!(
+                "Failed to decode LoResEvent from published operation: {}",
+                e
+            ))
+        })?;
+        self.lores_events_tx.send(lores_event).await.map_err(|e| {
+            PandaPublishError::AppError(format!(
+                "Failed to send LoResEvent back to the application: {}",
+                e
+            ))
+        })?;
+
+        Ok(())
+    }
+
+    async fn start_operation_receiver(&self) -> Result<(), PandaNodeContainerError> {
         let (operation_tx, operation_rx): (
             mpsc::Sender<LoresOperation>,
             mpsc::Receiver<LoresOperation>,
         ) = mpsc::channel(32);
 
+        *self.operation_tx.lock().await = Some(operation_tx);
+
         // Received messages on operation_rx
         {
-            let events_tx = self.events_tx.clone();
+            let events_tx = self.lores_events_tx.clone();
 
             tokio::task::spawn(async move {
                 println!("  P2Panda Network initialized, starting sync stream...");
@@ -182,48 +250,6 @@ impl PandaNodeContainer {
                 println!("  Sync stream read loop ended.");
             });
         }
-
-        node.inner
-            .subscribe_to_topic(NODE_ADMIN_TOPIC_ID, operation_tx)
-            .await?;
-
-        Ok(())
-    }
-
-    pub async fn publish_persisted(
-        &self,
-        event_payload: LoResEventPayload,
-        current_user: Option<User>,
-    ) -> Result<(), PandaPublishError> {
-        let node_lock = self.node.lock().await;
-        let node = match node_lock.as_ref() {
-            Some(node) => node,
-            None => return Err(PandaPublishError::NodeNotStarted),
-        };
-
-        let node_steward_id = match current_user {
-            Some(user) if user.is_node_steward() => Some(user.id.clone()),
-            _ => None,
-        };
-        let metadata = LoResEventMetadataV1 { node_steward_id };
-        let encoded_payload = encode_lores_event_payload(event_payload, metadata)?;
-
-        let operation = node.inner.publish_persisted(&encoded_payload).await?;
-
-        // Since this came from this node, it wont be received via subscription, so we
-        // need to handle it ourselves.
-        let lores_event = Self::decode_operation_to_lores_event(&operation).map_err(|e| {
-            PandaPublishError::OperationError(format!(
-                "Failed to decode LoResEvent from published operation: {}",
-                e
-            ))
-        })?;
-        self.events_tx.send(lores_event).await.map_err(|e| {
-            PandaPublishError::AppError(format!(
-                "Failed to send LoResEvent back to the application: {}",
-                e
-            ))
-        })?;
 
         Ok(())
     }

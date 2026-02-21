@@ -67,11 +67,12 @@ impl PandaNodeInner {
 
     pub async fn publish_persisted(
         &self,
+        topic_id: TopicId,
         encoded_payload: &Vec<u8>,
     ) -> Result<LoresOperation, PandaPublishError> {
         let operation = self
             .operation_store
-            .create_operation(&self.private_key, Some(encoded_payload))
+            .create_operation(topic_id, &self.private_key, Some(encoded_payload))
             .await?;
 
         // Publish the operation to the network
