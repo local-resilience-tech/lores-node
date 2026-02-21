@@ -1,16 +1,6 @@
-import { ActionIcon, Box, Combobox, Text, useCombobox } from "@mantine/core"
+import { ActionIcon, Combobox, Group, Text, useCombobox } from "@mantine/core"
 import { IconChevronDown } from "@tabler/icons-react"
-import { useState } from "react"
 import { Region } from "../../api/Api"
-
-const groceries = [
-  "🍎 Apples",
-  "🍌 Bananas",
-  "🥦 Broccoli",
-  "🥕 Carrots",
-  "🍫 Chocolate",
-  "🍇 Grapes",
-]
 
 interface RegionSelectorProps {
   regions: Region[]
@@ -41,41 +31,32 @@ export function RegionSelector({
   }
 
   return (
-    <>
-      <Combobox
-        store={combobox}
-        width={250}
-        position="bottom-start"
-        withArrow
-        withinPortal={false}
-        onOptionSubmit={(val) => {
-          onIdChange(val)
-          combobox.closeDropdown()
-        }}
-      >
-        <Combobox.Target>
+    <Combobox
+      store={combobox}
+      width={250}
+      position="bottom-start"
+      withArrow
+      withinPortal={false}
+      onOptionSubmit={(val) => {
+        onIdChange(val)
+        combobox.closeDropdown()
+      }}
+    >
+      <Combobox.Target>
+        <Group justify="flex-start" gap={4}>
+          <Text span>{selected?.name ?? "Unknown"}</Text>
           <ActionIcon
             onClick={() => combobox.toggleDropdown()}
             variant="transparent"
           >
             <IconChevronDown size={iconSize} />
           </ActionIcon>
-        </Combobox.Target>
+        </Group>
+      </Combobox.Target>
 
-        <Combobox.Dropdown>
-          <Combobox.Options>{options}</Combobox.Options>
-        </Combobox.Dropdown>
-      </Combobox>
-
-      <Box mt="xs">
-        <Text span size="sm" c="dimmed">
-          Selected item:{" "}
-        </Text>
-
-        <Text span size="sm">
-          {selected ? selected.name : "Nothing selected"}
-        </Text>
-      </Box>
-    </>
+      <Combobox.Dropdown>
+        <Combobox.Options>{options}</Combobox.Options>
+      </Combobox.Dropdown>
+    </Combobox>
   )
 }

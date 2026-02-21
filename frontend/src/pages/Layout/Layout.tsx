@@ -82,7 +82,7 @@ export default function Layout() {
           <Burger opened={opened} onClick={toggle} hiddenFrom="sm" size="sm" />
           <Anchor href="/">LoRes Mesh</Anchor>
           <Breadcrumbs>
-            {/* {region && <Text>{region.name}</Text>} */}
+            {region && <Text>{region.name}</Text>}
             {regionNode && <Text>{regionNode.name}</Text>}
           </Breadcrumbs>
         </Group>
@@ -163,8 +163,7 @@ export default function Layout() {
               <Text span c="dimmed">
                 Region:{" "}
               </Text>
-              <Group justify="flex-start" gap={4}>
-                <Text span>{region?.name ?? "Unknown"}</Text>
+              {allRegions.length > 1 ? (
                 <RegionSelector
                   regions={allRegions}
                   selected={region}
@@ -172,7 +171,9 @@ export default function Layout() {
                     if (region) dispatch(activeRegionChanged(region.id))
                   }}
                 />
-              </Group>
+              ) : (
+                <Text span>{region?.name ?? "Unknown"}</Text>
+              )}
             </Group>
             <NavLink
               label="Nodes"
