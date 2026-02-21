@@ -8,12 +8,23 @@
   padding-bottom: var(--mantine-spacing-md);
 }
 
+.section_to_setup {
+  border-top: 1px solid var(--mantine-color-dark-4);
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+a.navlink_to_setup span {
+  font-size: var(--mantine-font-size-lg);
+  color: var(--mantine-color-orange-6);
+}
+
 .footer_section {
   border-top: 1px solid var(--mantine-color-dark-4);
   padding-top: var(--mantine-spacing-md);
 }
 
-p.section_title {
+.section_title {
   font-weight: bold;
   font-size: var(--mantine-font-size-lg);
   padding: 0 var(--mantine-spacing-md);

@@ -1,4 +1,5 @@
 import {
+  ActionIcon,
   AppShell,
   Avatar,
   Badge,
@@ -17,8 +18,13 @@ import {
   IconBrandDocker,
   IconBrandGit,
   IconBrandGithub,
+  IconChevronDown,
+  IconExternalLink,
   IconGhost,
   IconHome,
+  IconMapPlus,
+  IconPlus,
+  IconSquarePlus,
   IconTimelineEventText,
   IconUser,
 } from "@tabler/icons-react"
@@ -26,22 +32,27 @@ import packageJson from "../../../package.json"
 import pangaLogoUrl from "../../assets/deepsea-panda.svg"
 
 import classes from "./Layout.module.css"
-import { handleClientEvent, useAppSelector } from "../../store"
+import { handleClientEvent, useAppDispatch, useAppSelector } from "../../store"
 import useWebSocket from "react-use-websocket"
 import { getSocketUrl } from "../../api"
+import { IfNodeSteward } from "../../contexts/auth/node_steward_auth"
+import { RegionSelector } from "./RegionSelector"
+import { activeRegion, activeRegionChanged } from "../../store/regions"
 
 export default function Layout() {
   const [opened, { toggle }] = useDisclosure()
   const iconSize = 20
 
   const network = useAppSelector((state) => state.network)
-  const region = useAppSelector((state) => state.region)
+  const allRegions = useAppSelector((state) => state.regions.all ?? [])
+  const region = useAppSelector((state) => activeRegion(state.regions))
   const regionNode = useAppSelector((state) => state.thisRegionNode)
   const nodesCount = useAppSelector((state) => state.nodes?.length)
   const localAppsCount = useAppSelector((state) => state.localApps?.length)
   const me = useAppSelector((state) => state.me)
+  const dispatch = useAppDispatch()
 
-  const readyForApps = region && regionNode
+  const readyForApps = true
   const pandaRunning = !!network
 
   const {} = useWebSocket(getSocketUrl(), {
@@ -117,37 +128,53 @@ export default function Layout() {
             leftSection={<IconHome size={iconSize} />}
             onClick={toggle}
           />
-          {readyForApps && (
-            <>
-              <NavLink
-                label="Local apps"
-                href="/this_region_node/apps"
-                leftSection={<IconApps size={iconSize} />}
-                onClick={toggle}
-                rightSection={
-                  localAppsCount !== undefined && (
-                    <Badge circle>{localAppsCount}</Badge>
-                  )
-                }
-              />
-            </>
-          )}
+
+          <NavLink
+            label="Local apps"
+            href="/node/apps"
+            leftSection={<IconApps size={iconSize} />}
+            onClick={toggle}
+            rightSection={
+              localAppsCount !== undefined && (
+                <Badge circle>{localAppsCount}</Badge>
+              )
+            }
+          />
         </AppShell.Section>
 
+        {!region && (
+          <IfNodeSteward>
+            <AppShell.Section className={classes.section_to_setup}>
+              <NavLink
+                label="Setup region"
+                href="/regions/setup"
+                className={classes.navlink_to_setup}
+                onClick={toggle}
+                fz={1}
+                rightSection={<IconSquarePlus size={iconSize + 4} />}
+              />
+            </AppShell.Section>
+          </IfNodeSteward>
+        )}
+
         {region && (
-          <AppShell.Section className={classes.menu_section}>
-            <Text className={classes.section_title}>
-              {region?.name ? (
-                <>
-                  <Text span c="dimmed">
-                    Region:{" "}
-                  </Text>
-                  <Text span>{region.name}</Text>
-                </>
+          <AppShell.Section className={classes.menu_section} key={region.id}>
+            <Group justify="center" gap={0} className={classes.section_title}>
+              <Text span c="dimmed">
+                Region:{" "}
+              </Text>
+              {allRegions.length > 1 ? (
+                <RegionSelector
+                  regions={allRegions}
+                  selected={region}
+                  onChange={(region) => {
+                    if (region) dispatch(activeRegionChanged(region.id))
+                  }}
+                />
               ) : (
-                "This Region"
+                <Text span>{region?.name ?? "Unknown"}</Text>
               )}
-            </Text>
+            </Group>
             <NavLink
               label="Nodes"
               href="/this_region/nodes"
@@ -189,7 +216,6 @@ export default function Layout() {
             />
           </AppShell.Section>
         )}
-
         {pandaRunning && (
           <AppShell.Section className={classes.footer_section}>
             <Text className={classes.section_title}>Debug</Text>
@@ -199,14 +225,13 @@ export default function Layout() {
               leftSection={<IconTimelineEventText size={iconSize} />}
               onClick={toggle}
             />
-            {readyForApps && (
-              <NavLink
-                label="Docker stacks"
-                href="/debug/stacks"
-                leftSection={<IconBrandDocker size={iconSize} />}
-                onClick={toggle}
-              />
-            )}
+            <NavLink
+              label="Docker stacks"
+              href="/debug/stacks"
+              leftSection={<IconBrandDocker size={iconSize} />}
+              onClick={toggle}
+            />
+
             <NavLink
               c="dimmed"
               label={"v" + packageJson.version}

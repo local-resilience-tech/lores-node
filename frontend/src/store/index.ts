@@ -1,7 +1,7 @@
 import { useDispatch, useSelector, useStore } from "react-redux"
 import { configureStore } from "@reduxjs/toolkit"
 import networkReducer from "./network"
-import regionReducer from "./region"
+import regionsReducer, { joinedRegion } from "./regions"
 import nodesReducer, { nodeUpdated } from "./nodes"
 import localAppsReducer from "./local_apps"
 import regionAppsReducer, { regionAppUpdated } from "./region_apps"
@@ -13,7 +13,7 @@ const store = configureStore({
   reducer: {
     me: meReducer,
     network: networkReducer,
-    region: regionReducer,
+    regions: regionsReducer,
     nodes: nodesReducer,
     localApps: localAppsReducer,
     regionApps: regionAppsReducer,
@@ -40,6 +40,8 @@ export async function handleClientEvent(event: ClientEvent) {
     store.dispatch(nodeUpdated(event.NodeUpdated))
   } else if ("RegionAppUpdated" in event) {
     store.dispatch(regionAppUpdated(event.RegionAppUpdated))
+  } else if ("JoinedRegion" in event) {
+    store.dispatch(joinedRegion(event.JoinedRegion))
   } else {
     console.warn("Unhandled event type:", event)
   }

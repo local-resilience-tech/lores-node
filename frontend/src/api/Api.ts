@@ -64,6 +64,9 @@ export interface BootstrapNodeData {
 
 export type ClientEvent =
   | {
+      JoinedRegion: Region;
+    }
+  | {
       NodeUpdated: RegionNodeDetails;
     }
   | {
@@ -72,6 +75,13 @@ export type ClientEvent =
 
 export interface CreateNodeDetails {
   name: string;
+}
+
+export interface CreateRegionData {
+  name: string;
+  organisation_name?: string | null;
+  slug: string;
+  url?: string | null;
 }
 
 export interface DockerService {
@@ -155,6 +165,7 @@ export interface P2PandaNodeDetails {
 }
 
 export interface Region {
+  id: string;
   name: string;
 }
 
@@ -586,11 +597,27 @@ export class Api<
      * No description
      *
      * @name Bootstrap
-     * @request POST:/node_steward_api/region/bootstrap
+     * @request POST:/node_steward_api/regions/bootstrap
      */
     bootstrap: (data: BootstrapNodeData, params: RequestParams = {}) =>
       this.request<any, string>({
-        path: `/node_steward_api/region/bootstrap`,
+        path: `/node_steward_api/regions/bootstrap`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @name CreateRegion
+     * @request POST:/node_steward_api/regions/create
+     */
+    createRegion: (data: CreateRegionData, params: RequestParams = {}) =>
+      this.request<any, string>({
+        path: `/node_steward_api/regions/create`,
         method: "POST",
         body: data,
         type: ContentType.Json,
@@ -715,12 +742,12 @@ export class Api<
     /**
      * No description
      *
-     * @name ShowRegion
-     * @request GET:/public_api/region
+     * @name ListRegionApps
+     * @request GET:/public_api/region_apps
      */
-    showRegion: (params: RequestParams = {}) =>
-      this.request<null | Region, any>({
-        path: `/public_api/region`,
+    listRegionApps: (params: RequestParams = {}) =>
+      this.request<RegionAppWithInstallations[], any>({
+        path: `/public_api/region_apps`,
         method: "GET",
         format: "json",
         ...params,
@@ -729,12 +756,12 @@ export class Api<
     /**
      * No description
      *
-     * @name ListRegionApps
-     * @request GET:/public_api/region_apps
+     * @name ListRegions
+     * @request GET:/public_api/regions
      */
-    listRegionApps: (params: RequestParams = {}) =>
-      this.request<RegionAppWithInstallations[], any>({
-        path: `/public_api/region_apps`,
+    listRegions: (params: RequestParams = {}) =>
+      this.request<Region[], any>({
+        path: `/public_api/regions`,
         method: "GET",
         format: "json",
         ...params,

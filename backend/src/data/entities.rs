@@ -22,9 +22,19 @@ pub struct RegionNodeDetails {
     pub state: Option<String>,
 }
 
-#[derive(sqlx::FromRow, Serialize, Deserialize, ToSchema)]
+#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
 pub struct Region {
+    pub id: String,
     pub name: String,
+}
+
+impl Region {
+    pub fn unnamed(id: String) -> Self {
+        Self {
+            id: id.clone(),
+            name: id,
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
