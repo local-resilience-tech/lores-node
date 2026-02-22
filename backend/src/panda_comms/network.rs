@@ -1,4 +1,4 @@
-use p2panda_core::{Hash, Operation, PrivateKey, PublicKey};
+use p2panda_core::{Hash, PrivateKey, PublicKey};
 use p2panda_net::{
     address_book::AddressBookError,
     addrs::NodeInfo,
@@ -6,10 +6,8 @@ use p2panda_net::{
     gossip::GossipError,
     iroh_endpoint::EndpointError,
     iroh_mdns::{MdnsDiscoveryError, MdnsDiscoveryMode},
-    sync::SyncHandle,
     AddressBook, Discovery, Endpoint, Gossip, MdnsDiscovery, TopicId,
 };
-use p2panda_sync::protocols::TopicLogSyncEvent;
 use thiserror::Error;
 
 use super::{
@@ -56,7 +54,6 @@ pub struct Network {
     gossip: Gossip,
     log_sync: LogSync,
     endpoint: Endpoint,
-    sync_tx: SyncHandle<Operation<LoResMeshExtensions>, TopicLogSyncEvent<LoResMeshExtensions>>,
 }
 
 impl Network {
@@ -115,8 +112,6 @@ impl Network {
         .spawn()
         .await?;
 
-        let sync_tx = log_sync.stream(admin_topic_id, true).await?;
-
         Ok(Network {
             address_book,
             mdns_discovery,
@@ -124,7 +119,6 @@ impl Network {
             gossip,
             log_sync,
             endpoint,
-            sync_tx,
         })
     }
 
