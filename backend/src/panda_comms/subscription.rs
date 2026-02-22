@@ -48,6 +48,11 @@ impl Subscription {
         topic_map: &LoResNodeTopicMap,
         operation_tx: &mpsc::Sender<LoresOperation>,
     ) -> Result<Self, SubscriptionError> {
+        println!(
+            "Starting subscription for topic_id: {:?}",
+            hex::encode(topic_id)
+        );
+
         let sync_tx = log_sync.stream(topic_id, true).await?;
 
         let mut topic_rx = sync_tx.subscribe().await?;
