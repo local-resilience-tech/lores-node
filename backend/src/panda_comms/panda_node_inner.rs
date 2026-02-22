@@ -1,18 +1,16 @@
-use p2panda_core::{cbor::EncodeError, Body, Hash, Header, PrivateKey, PublicKey};
+use p2panda_core::{cbor::EncodeError, Hash, PrivateKey, PublicKey};
 use p2panda_net::TopicId;
-use p2panda_stream::IngestExt;
-use p2panda_sync::protocols::TopicLogSyncEvent;
+
 use sqlx::SqlitePool;
 use thiserror::Error;
 use tokio::sync::{mpsc, RwLock};
-use tokio_stream::{wrappers::ReceiverStream, StreamExt};
 
 use super::{
-    network::{Network, NetworkError},
+    network::Network,
     operation_store::{CreationError, OperationStore},
-    operations::{LoResMeshExtensions, LoresOperation},
+    operations::LoresOperation,
     panda_node::PandaNodeError,
-    subscription::Subscription,
+    subscription::{Subscription, SubscriptionPublishError},
 };
 
 #[derive(Error, Debug)]
@@ -24,11 +22,13 @@ pub enum PandaPublishError {
     #[error("Node not started")]
     NodeNotStarted,
     #[error("Sync error: {0}")]
-    SyncError(String),
-    #[error("Operation error: {0}")]
     OperationError(String),
     #[error("App error: {0}")]
     AppError(String),
+    #[error(transparent)]
+    SubscriptionPublishError(#[from] SubscriptionPublishError),
+    #[error("No subscription found for topic_id: {0:?}")]
+    NoSubscriptionFound(TopicId),
 }
 
 #[allow(dead_code)]
@@ -78,12 +78,15 @@ impl PandaNodeInner {
             .create_operation(topic_id, &self.private_key, Some(encoded_payload))
             .await?;
 
-        // Publish the operation to the network
-        let network = self.network.write().await;
-        network
-            .publish_operation(operation.clone())
-            .await
-            .map_err(|e| PandaPublishError::SyncError(e.to_string()))?;
+        let subscriptions = self.subscriptions.blocking_read();
+        let subscription = subscriptions.iter().find(|s| s.has_topic_id(&topic_id));
+
+        if let Some(subscription) = subscription {
+            subscription.publish_operation(operation.clone()).await?;
+        } else {
+            println!("No subscription found for topic_id: {:?}", topic_id);
+            return Err(PandaPublishError::NoSubscriptionFound(topic_id));
+        }
 
         Ok(operation)
     }

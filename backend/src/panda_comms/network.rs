@@ -6,7 +6,7 @@ use p2panda_net::{
     gossip::GossipError,
     iroh_endpoint::EndpointError,
     iroh_mdns::{MdnsDiscoveryError, MdnsDiscoveryMode},
-    sync::{SyncHandle, SyncHandleError},
+    sync::SyncHandle,
     AddressBook, Discovery, Endpoint, Gossip, MdnsDiscovery, TopicId,
 };
 use p2panda_sync::protocols::TopicLogSyncEvent;
@@ -46,8 +46,6 @@ pub enum NetworkError {
     Gossip(#[from] GossipError),
     #[error(transparent)]
     LogSync(#[from] LogSyncError),
-    #[error("LogSync stream error: {0}")]
-    SyncHandleError(String),
 }
 
 #[allow(dead_code)]
@@ -128,24 +126,6 @@ impl Network {
             endpoint,
             sync_tx,
         })
-    }
-
-    pub async fn publish_operation(
-        &self,
-        operation: Operation<LoResMeshExtensions>,
-    ) -> Result<
-        (),
-        SyncHandleError<Operation<LoResMeshExtensions>, TopicLogSyncEvent<LoResMeshExtensions>>,
-    > {
-        println!(
-            "Publishing operation to LogSync: {:?}",
-            operation.hash.to_hex()
-        );
-        self.sync_tx.publish(operation).await.map_err(|e| {
-            println!("Error publishing operation: {:?}", e);
-            e
-        })?;
-        Ok(())
     }
 
     pub fn get_log_sync(&self) -> &LogSync {

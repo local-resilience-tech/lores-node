@@ -27,6 +27,12 @@ pub enum SubscriptionError {
     SyncHandleError(#[from] LoResSyncHandleError),
 }
 
+#[derive(Error, Debug)]
+pub enum SubscriptionPublishError {
+    #[error(transparent)]
+    SyncHandleError(#[from] LoResSyncHandleError),
+}
+
 pub struct Subscription {
     topic_id: TopicId,
     sync_tx: SyncHandle<Operation<LoResMeshExtensions>, TopicLogSyncEvent<LoResMeshExtensions>>,
@@ -100,6 +106,24 @@ impl Subscription {
         });
 
         Ok(Subscription { topic_id, sync_tx })
+    }
+
+    pub fn has_topic_id(&self, topic_id: &TopicId) -> bool {
+        &self.topic_id == topic_id
+    }
+
+    pub async fn publish_operation(
+        &self,
+        operation: Operation<LoResMeshExtensions>,
+    ) -> Result<(), SubscriptionPublishError> {
+        println!(
+            "Publishing operation to LogSync: {:?}",
+            operation.hash.to_hex()
+        );
+
+        self.sync_tx.publish(operation).await?;
+
+        Ok(())
     }
 }
 
