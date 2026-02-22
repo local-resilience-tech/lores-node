@@ -12,6 +12,7 @@ use super::{
     operation_store::{CreationError, OperationStore},
     operations::{LoResMeshExtensions, LoresOperation},
     panda_node::PandaNodeError,
+    subscription::Subscription,
 };
 
 #[derive(Error, Debug)]
@@ -35,6 +36,7 @@ pub struct PandaNodeInner {
     network: RwLock<Network>,
     pub operation_store: OperationStore,
     private_key: PrivateKey,
+    subscriptions: RwLock<Vec<Subscription>>,
 }
 
 impl PandaNodeInner {
@@ -62,6 +64,7 @@ impl PandaNodeInner {
             network: RwLock::new(network),
             operation_store,
             private_key,
+            subscriptions: RwLock::new(Vec::new()),
         })
     }
 
@@ -150,6 +153,10 @@ impl PandaNodeInner {
                 }
             }
         });
+
+        let log_sync = network.get_log_sync();
+        let subscription = Subscription::new(topic_id, &log_sync).await?;
+        self.subscriptions.write().await.push(subscription);
 
         Ok(())
     }

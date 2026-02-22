@@ -148,6 +148,10 @@ impl Network {
         Ok(())
     }
 
+    pub fn get_log_sync(&self) -> &LogSync {
+        &self.log_sync
+    }
+
     pub fn get_sync_handle(
         &self,
     ) -> &SyncHandle<Operation<LoResMeshExtensions>, TopicLogSyncEvent<LoResMeshExtensions>> {

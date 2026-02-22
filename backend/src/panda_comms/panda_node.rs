@@ -4,7 +4,9 @@ use sqlx::SqlitePool;
 use std::sync::Arc;
 use thiserror::Error;
 
-use super::{network::NetworkError, panda_node_inner::PandaNodeInner};
+use super::{
+    network::NetworkError, panda_node_inner::PandaNodeInner, subscription::SubscriptionError,
+};
 
 #[derive(Debug, Error)]
 pub enum PandaNodeError {
@@ -14,6 +16,8 @@ pub enum PandaNodeError {
     RuntimeSpawn(#[from] tokio::task::JoinError),
     #[error(transparent)]
     NetworkError(#[from] NetworkError),
+    #[error(transparent)]
+    SubscriptionError(#[from] SubscriptionError),
 }
 
 pub struct RequiredNodeParams {
