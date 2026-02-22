@@ -1,7 +1,7 @@
 use p2panda_core::{Body, Header, Operation};
 use p2panda_net::{
     sync::{SyncHandle, SyncHandleError},
-    TopicId,
+    NodeId, TopicId,
 };
 use p2panda_store::SqliteStore;
 use p2panda_stream::IngestExt;
@@ -12,8 +12,9 @@ use tokio_stream::{wrappers::ReceiverStream, StreamExt};
 
 use super::{
     network::{LogSync, LogSyncError},
+    operation_store::LOG_ID,
     operations::{LoResMeshExtensions, LoresOperation},
-    topic::LogId,
+    topic::{LoResNodeTopicMap, LogId},
 };
 
 pub type LoResSyncHandleError =
@@ -41,13 +42,17 @@ pub struct Subscription {
 impl Subscription {
     pub async fn new(
         topic_id: TopicId,
+        this_node_id: NodeId,
         log_sync: &LogSync,
         inner_operation_store: SqliteStore<LogId, LoResMeshExtensions>,
+        topic_map: &LoResNodeTopicMap,
         operation_tx: &mpsc::Sender<LoresOperation>,
     ) -> Result<Self, SubscriptionError> {
         let sync_tx = log_sync.stream(topic_id, true).await?;
 
         let mut topic_rx = sync_tx.subscribe().await?;
+
+        topic_map.insert(topic_id, this_node_id, LOG_ID).await;
 
         let (persistent_tx, persistent_rx) =
             mpsc::channel::<(Header<LoResMeshExtensions>, Option<Body>, Vec<u8>)>(128);

@@ -102,8 +102,10 @@ impl PandaNodeInner {
 
         let subscription = Subscription::new(
             topic_id,
+            self.private_key.public_key(),
             &log_sync,
             self.operation_store.clone_inner(),
+            &network.topic_map,
             &operation_tx,
         )
         .await?;

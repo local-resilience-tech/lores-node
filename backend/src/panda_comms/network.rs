@@ -54,6 +54,7 @@ pub struct Network {
     gossip: Gossip,
     log_sync: LogSync,
     endpoint: Endpoint,
+    pub topic_map: LoResNodeTopicMap,
 }
 
 impl Network {
@@ -119,6 +120,7 @@ impl Network {
             gossip,
             log_sync,
             endpoint,
+            topic_map,
         })
     }
 
