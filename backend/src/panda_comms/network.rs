@@ -151,12 +151,6 @@ impl Network {
     pub fn get_log_sync(&self) -> &LogSync {
         &self.log_sync
     }
-
-    pub fn get_sync_handle(
-        &self,
-    ) -> &SyncHandle<Operation<LoResMeshExtensions>, TopicLogSyncEvent<LoResMeshExtensions>> {
-        &self.sync_tx
-    }
 }
 
 fn bootstrap_node_info(bootstrap_node_id: Option<PublicKey>) -> Option<NodeInfo> {
