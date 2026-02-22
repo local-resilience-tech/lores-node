@@ -1,5 +1,4 @@
 use p2panda_core::{Hash, PrivateKey, PublicKey};
-use p2panda_net::TopicId;
 use sqlx::SqlitePool;
 use std::sync::Arc;
 use thiserror::Error;
@@ -51,7 +50,6 @@ impl std::ops::Deref for OwnedRuntimeOrHandle {
 impl PandaNode {
     pub async fn new(
         params: &RequiredNodeParams,
-        admin_topic_id: TopicId,
         operations_pool: &SqlitePool,
     ) -> Result<Self, PandaNodeError> {
         let runtime = if let Ok(handle) = tokio::runtime::Handle::try_current() {
@@ -71,14 +69,8 @@ impl PandaNode {
 
         let inner = runtime
             .spawn(async move {
-                PandaNodeInner::new(
-                    network_id,
-                    private_key,
-                    admin_topic_id,
-                    bootstrap_node_id,
-                    &operations_pool,
-                )
-                .await
+                PandaNodeInner::new(network_id, private_key, bootstrap_node_id, &operations_pool)
+                    .await
             })
             .await??;
 

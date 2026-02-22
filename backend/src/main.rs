@@ -189,7 +189,7 @@ async fn start_panda(
     };
     container.set_bootstrap_node_id(bootstrap_node_id).await;
 
-    if let Err(e) = container.start(operations_pool, NODE_ADMIN_TOPIC_ID).await {
+    if let Err(e) = container.start(operations_pool).await {
         println!("Failed to start P2PandaContainer on liftoff: {:?}", e);
     }
 

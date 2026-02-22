@@ -43,7 +43,6 @@ impl PandaNodeInner {
     pub async fn new(
         network_id: Hash,
         private_key: PrivateKey,
-        admin_topic_id: TopicId,
         bootstrap_node_id: Option<PublicKey>,
         operations_pool: &SqlitePool,
     ) -> Result<Self, PandaNodeError> {
@@ -54,7 +53,6 @@ impl PandaNodeInner {
         let network = Network::new(
             network_id,
             private_key.clone(),
-            admin_topic_id,
             bootstrap_node_id,
             &operation_store,
         )

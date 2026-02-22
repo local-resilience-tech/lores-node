@@ -6,12 +6,12 @@ use p2panda_net::{
     gossip::GossipError,
     iroh_endpoint::EndpointError,
     iroh_mdns::{MdnsDiscoveryError, MdnsDiscoveryMode},
-    AddressBook, Discovery, Endpoint, Gossip, MdnsDiscovery, TopicId,
+    AddressBook, Discovery, Endpoint, Gossip, MdnsDiscovery,
 };
 use thiserror::Error;
 
 use super::{
-    operation_store::{OperationStore, LOG_ID},
+    operation_store::OperationStore,
     operations::LoResMeshExtensions,
     topic::{LoResNodeTopicMap, LogId},
 };
@@ -61,7 +61,6 @@ impl Network {
     pub async fn new(
         network_id: Hash,
         private_key: PrivateKey,
-        admin_topic_id: TopicId,
         bootstrap_node_id: Option<PublicKey>,
         operation_store: &OperationStore,
     ) -> Result<Self, NetworkError> {
@@ -100,9 +99,6 @@ impl Network {
             .await?;
 
         let topic_map = LoResNodeTopicMap::default();
-        topic_map
-            .insert(admin_topic_id, private_key.public_key(), LOG_ID)
-            .await;
 
         let log_sync = LogSync::builder(
             operation_store.clone_inner(),

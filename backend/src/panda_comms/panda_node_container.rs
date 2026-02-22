@@ -73,11 +73,7 @@ impl PandaNodeContainer {
         params_lock.bootstrap_node_id = bootstrap_node_id;
     }
 
-    pub async fn start(
-        &self,
-        operations_pool: &SqlitePool,
-        admin_topic_id: TopicId,
-    ) -> Result<(), PandaNodeContainerError> {
+    pub async fn start(&self, operations_pool: &SqlitePool) -> Result<(), PandaNodeContainerError> {
         println!("Starting client");
 
         let params = self.get_params().await;
@@ -99,14 +95,8 @@ impl PandaNodeContainer {
         let private_key = private_key.unwrap();
         let network_name = network_name.unwrap();
 
-        self.start_for(
-            private_key,
-            network_name,
-            admin_topic_id,
-            boostrap_node_id,
-            operations_pool,
-        )
-        .await?;
+        self.start_for(private_key, network_name, boostrap_node_id, operations_pool)
+            .await?;
 
         self.start_operation_receiver().await?;
 
@@ -117,7 +107,6 @@ impl PandaNodeContainer {
         &self,
         private_key: PrivateKey,
         network_name: String,
-        admin_topic_id: TopicId,
         boostrap_node_id: Option<PublicKey>,
         operations_pool: &SqlitePool,
     ) -> Result<(), PandaNodeError> {
@@ -127,7 +116,7 @@ impl PandaNodeContainer {
             bootstrap_node_id: boostrap_node_id,
         };
 
-        let panda_node = PandaNode::new(&required_params, admin_topic_id, operations_pool).await?;
+        let panda_node = PandaNode::new(&required_params, operations_pool).await?;
 
         {
             let mut node_lock = self.node.lock().await;
