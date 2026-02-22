@@ -124,11 +124,10 @@ impl PandaNodeContainer {
         let required_params = super::panda_node::RequiredNodeParams {
             private_key,
             network_id: Hash::new(network_name.as_bytes()),
-            admin_topic_id: admin_topic_id,
             bootstrap_node_id: boostrap_node_id,
         };
 
-        let panda_node = PandaNode::new(&required_params, operations_pool).await?;
+        let panda_node = PandaNode::new(&required_params, admin_topic_id, operations_pool).await?;
 
         {
             let mut node_lock = self.node.lock().await;
