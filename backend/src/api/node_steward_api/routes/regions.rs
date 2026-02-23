@@ -9,7 +9,7 @@ use crate::{
     api::public_api::{client_events::ClientEvent, realtime::RealtimeState},
     config::config_state::LoresNodeConfigState,
     data::entities::Region,
-    panda_comms::{
+    panda_node::{
         config::{SimplifiedNodeAddress, ThisP2PandaNodeRepo},
         panda_node_container::{build_public_key_from_hex, PandaNodeContainer},
     },

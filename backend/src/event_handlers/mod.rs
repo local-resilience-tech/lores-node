@@ -7,7 +7,7 @@ use crate::{
         app_registered::AppRegisteredHandler, handler_utilities::HandlerResult,
         node_status_posted::NodeStatusPostedHandler, node_updated::NodeUpdatedHandler,
     },
-    panda_comms::lores_events::{LoResEvent, LoResEventPayload},
+    panda_node::lores_events::{LoResEvent, LoResEventPayload},
 };
 
 mod app_registered;

@@ -3,7 +3,7 @@ use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::{
     data::entities::{Network, NetworkNode},
-    panda_comms::panda_node_container::PandaNodeContainer,
+    panda_node::panda_node_container::PandaNodeContainer,
 };
 
 pub fn router() -> OpenApiRouter {
