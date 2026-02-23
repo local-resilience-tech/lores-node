@@ -9,7 +9,7 @@ use crate::{
     api::public_api::{client_events::ClientEvent, realtime::RealtimeState},
     config::config_state::LoresNodeConfigState,
     data::entities::Region,
-    panda_comms::panda_node_container::{build_public_key_from_hex, PandaNodeContainer},
+    panda_comms::panda_container::{build_public_key_from_hex, PandaContainer},
     panda_node::config::{SimplifiedNodeAddress, ThisP2PandaNodeRepo},
     DatabaseState,
 };
@@ -37,7 +37,7 @@ pub struct BootstrapNodeData {
 )]
 async fn bootstrap(
     Extension(config_state): Extension<LoresNodeConfigState>,
-    Extension(panda_container): Extension<PandaNodeContainer>,
+    Extension(panda_container): Extension<PandaContainer>,
     Extension(db): Extension<DatabaseState>,
     axum::extract::Json(data): axum::extract::Json<BootstrapNodeData>,
 ) -> impl IntoResponse {

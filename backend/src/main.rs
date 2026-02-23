@@ -24,7 +24,7 @@ use crate::{
     },
     config::{config::LoresNodeConfig, config_state::LoresNodeConfigState, NODE_ADMIN_TOPIC_ID},
     event_handlers::handle_event,
-    panda_comms::panda_node_container::{build_public_key_from_hex, PandaNodeContainer},
+    panda_comms::panda_container::{build_public_key_from_hex, PandaContainer},
     panda_node::{config::ThisP2PandaNodeRepo, lores_events::LoResEvent},
     static_server::frontend_handler,
 };
@@ -114,7 +114,7 @@ async fn main() {
     // P2PANDA
     let (channel_tx, channel_rx): (mpsc::Sender<LoResEvent>, mpsc::Receiver<LoResEvent>) =
         mpsc::channel(32);
-    let panda_container = PandaNodeContainer::new(channel_tx);
+    let panda_container = PandaContainer::new(channel_tx);
     start_panda_event_handler(channel_rx, projections_pool.clone(), realtime_state.clone());
     start_panda(&config_state, &panda_container, &operations_pool).await;
 
@@ -153,7 +153,7 @@ async fn main() {
 
 async fn start_panda(
     config_state: &LoresNodeConfigState,
-    container: &PandaNodeContainer,
+    container: &PandaContainer,
     operations_pool: &SqlitePool,
 ) {
     let repo = ThisP2PandaNodeRepo::init();
