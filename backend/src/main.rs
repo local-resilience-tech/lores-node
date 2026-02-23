@@ -24,8 +24,8 @@ use crate::{
     },
     config::{config::LoresNodeConfig, config_state::LoresNodeConfigState, NODE_ADMIN_TOPIC_ID},
     event_handlers::handle_event,
-    panda_comms::{build_public_key_from_hex, PandaContainer},
-    panda_node::{config::ThisP2PandaNodeRepo, lores_events::LoResEvent},
+    panda_comms::{build_public_key_from_hex, PandaContainer, ThisP2PandaNodeRepo},
+    panda_node::lores_events::LoResEvent,
     static_server::frontend_handler,
 };
 
