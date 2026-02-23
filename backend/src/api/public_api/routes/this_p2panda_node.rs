@@ -4,10 +4,8 @@ use utoipa::ToSchema;
 use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::{
-    panda_comms::{
-        log_access::{find_log_count, LogCount},
-        panda_node_container::PandaNodeContainer,
-    },
+    panda_comms::PandaContainer,
+    panda_node::log_access::{find_log_count, LogCount},
     DatabaseState,
 };
 
@@ -27,7 +25,7 @@ pub struct P2PandaNodeDetails {
     (status = 503, description = "Network not started", body = String),
 ),)]
 async fn show_this_panda_node(
-    Extension(panda_container): Extension<PandaNodeContainer>,
+    Extension(panda_container): Extension<PandaContainer>,
 ) -> impl IntoResponse {
     if !panda_container.is_started().await {
         return (StatusCode::SERVICE_UNAVAILABLE, Json("Network not started")).into_response();

@@ -3,7 +3,7 @@ use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::{
     data::entities::{Network, NetworkNode},
-    panda_comms::panda_node_container::PandaNodeContainer,
+    panda_comms::PandaContainer,
 };
 
 pub fn router() -> OpenApiRouter {
@@ -18,9 +18,7 @@ pub fn router() -> OpenApiRouter {
         (status = 500, body = String),
     )
 )]
-async fn show_network(
-    Extension(panda_container): Extension<PandaNodeContainer>,
-) -> impl IntoResponse {
+async fn show_network(Extension(panda_container): Extension<PandaContainer>) -> impl IntoResponse {
     if !panda_container.is_started().await {
         return (StatusCode::SERVICE_UNAVAILABLE, Json("Network not started")).into_response();
     }

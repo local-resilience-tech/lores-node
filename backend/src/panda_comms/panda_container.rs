@@ -9,12 +9,12 @@ use tokio_stream::wrappers::ReceiverStream;
 
 use crate::api::auth_api::auth_backend::User;
 
-use super::{
+use crate::panda_node::{
     event_encoding::{decode_lores_event, encode_lores_event_payload},
     lores_events::{LoResEvent, LoResEventHeader, LoResEventMetadataV1, LoResEventPayload},
     operations::{LoResMeshExtensions, LoresOperation},
-    panda_node::{PandaNode, PandaNodeError},
-    panda_node_inner::PandaPublishError,
+    panda_node::{PandaNode, RequiredNodeParams},
+    PandaNodeError, PandaPublishError,
 };
 
 #[derive(Default, Clone)]
@@ -25,7 +25,7 @@ pub struct NodeParams {
 }
 
 #[derive(Debug, Error)]
-pub enum PandaNodeContainerError {
+pub enum PandaContainerError {
     #[error(transparent)]
     PandaNodeError(#[from] PandaNodeError),
     #[error("Panda subscribe error")]
@@ -33,7 +33,7 @@ pub enum PandaNodeContainerError {
 }
 
 #[derive(Clone)]
-pub struct PandaNodeContainer {
+pub struct PandaContainer {
     params: Arc<Mutex<NodeParams>>,
     node: Arc<Mutex<Option<PandaNode>>>,
     #[allow(dead_code)]
@@ -41,11 +41,11 @@ pub struct PandaNodeContainer {
     operation_tx: Arc<Mutex<Option<mpsc::Sender<LoresOperation>>>>,
 }
 
-impl PandaNodeContainer {
+impl PandaContainer {
     pub fn new(events_tx: mpsc::Sender<LoResEvent>) -> Self {
         let params = Arc::new(Mutex::new(NodeParams::default()));
 
-        PandaNodeContainer {
+        PandaContainer {
             params,
             node: Arc::new(Mutex::new(None)),
             lores_events_tx: events_tx,
@@ -73,7 +73,7 @@ impl PandaNodeContainer {
         params_lock.bootstrap_node_id = bootstrap_node_id;
     }
 
-    pub async fn start(&self, operations_pool: &SqlitePool) -> Result<(), PandaNodeContainerError> {
+    pub async fn start(&self, operations_pool: &SqlitePool) -> Result<(), PandaContainerError> {
         println!("Starting client");
 
         let params = self.get_params().await;
@@ -110,7 +110,7 @@ impl PandaNodeContainer {
         boostrap_node_id: Option<PublicKey>,
         operations_pool: &SqlitePool,
     ) -> Result<(), PandaNodeError> {
-        let required_params = super::panda_node::RequiredNodeParams {
+        let required_params = RequiredNodeParams {
             private_key,
             network_id: Hash::new(network_name.as_bytes()),
             bootstrap_node_id: boostrap_node_id,
@@ -145,17 +145,17 @@ impl PandaNodeContainer {
         }
     }
 
-    pub async fn subscribe(&self, topic_id: TopicId) -> Result<(), PandaNodeContainerError> {
+    pub async fn subscribe(&self, topic_id: TopicId) -> Result<(), PandaContainerError> {
         let operation_tx = match self.operation_tx.lock().await.as_ref() {
             Some(tx) => tx.clone(),
-            None => return Err(PandaNodeContainerError::PandaSubscribeError()),
+            None => return Err(PandaContainerError::PandaSubscribeError()),
         };
 
         let node_lock = self.node.lock().await;
 
         let node = match node_lock.as_ref() {
             Some(node) => node,
-            None => return Err(PandaNodeContainerError::PandaSubscribeError()),
+            None => return Err(PandaContainerError::PandaSubscribeError()),
         };
 
         node.inner
@@ -207,7 +207,7 @@ impl PandaNodeContainer {
         Ok(())
     }
 
-    async fn start_operation_receiver(&self) -> Result<(), PandaNodeContainerError> {
+    async fn start_operation_receiver(&self) -> Result<(), PandaContainerError> {
         let (operation_tx, operation_rx): (
             mpsc::Sender<LoresOperation>,
             mpsc::Receiver<LoresOperation>,

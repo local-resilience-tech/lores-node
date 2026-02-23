@@ -2,7 +2,7 @@ use p2panda_core::{Extension, Header, Operation, PruneFlag};
 use p2panda_net::TopicId;
 use serde::{Deserialize, Serialize};
 
-use crate::panda_comms::{operation_store::LOG_ID, topic::LogId};
+use super::{operation_store::LOG_ID, topic::LogId};
 
 /// Custom extensions for p2panda header.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Default)]
