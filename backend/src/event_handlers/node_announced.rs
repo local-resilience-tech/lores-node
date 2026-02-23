@@ -5,7 +5,7 @@ use crate::{
     event_handlers::handler_utilities::{
         handle_db_write_error, read_node_updated_event, HandlerResult,
     },
-    panda_node::lores_events::{LoResEventHeader, NodeAnnouncedDataV1},
+    panda_comms::lores_events::{LoResEventHeader, NodeAnnouncedDataV1},
 };
 
 pub struct NodeAnnouncedHandler {}

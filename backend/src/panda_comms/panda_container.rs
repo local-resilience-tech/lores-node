@@ -10,11 +10,14 @@ use tokio_stream::wrappers::ReceiverStream;
 use crate::api::auth_api::auth_backend::User;
 
 use crate::panda_node::{
-    event_encoding::{decode_lores_event, encode_lores_event_payload},
-    lores_events::{LoResEvent, LoResEventHeader, LoResEventMetadataV1, LoResEventPayload},
     operations::{LoResMeshExtensions, LoresOperation},
     panda_node::{PandaNode, RequiredNodeParams},
     PandaNodeError, PandaPublishError,
+};
+
+use super::{
+    event_encoding::{decode_lores_event, encode_lores_event_payload},
+    lores_events::{LoResEvent, LoResEventHeader, LoResEventMetadataV1, LoResEventPayload},
 };
 
 #[derive(Default, Clone)]

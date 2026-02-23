@@ -74,7 +74,7 @@ pub fn decode_lores_event(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::panda_node::lores_events::{LoResEventPayload, NodeAnnouncedDataV1};
+    use crate::panda_comms::lores_events::{LoResEventPayload, NodeAnnouncedDataV1};
 
     #[test]
     fn test_encode_decode_lores_event_payload() {
