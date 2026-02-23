@@ -8,4 +8,5 @@ mod operations;
 pub mod panda_node;
 pub mod panda_node_container;
 mod panda_node_inner;
+mod subscription;
 mod topic;

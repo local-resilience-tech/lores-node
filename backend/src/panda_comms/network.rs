@@ -1,4 +1,4 @@
-use p2panda_core::{Hash, Operation, PrivateKey, PublicKey};
+use p2panda_core::{Hash, PrivateKey, PublicKey};
 use p2panda_net::{
     address_book::AddressBookError,
     addrs::NodeInfo,
@@ -6,14 +6,12 @@ use p2panda_net::{
     gossip::GossipError,
     iroh_endpoint::EndpointError,
     iroh_mdns::{MdnsDiscoveryError, MdnsDiscoveryMode},
-    sync::{SyncHandle, SyncHandleError},
-    AddressBook, Discovery, Endpoint, Gossip, MdnsDiscovery, TopicId,
+    AddressBook, Discovery, Endpoint, Gossip, MdnsDiscovery,
 };
-use p2panda_sync::protocols::TopicLogSyncEvent;
 use thiserror::Error;
 
 use super::{
-    operation_store::{OperationStore, LOG_ID},
+    operation_store::OperationStore,
     operations::LoResMeshExtensions,
     topic::{LoResNodeTopicMap, LogId},
 };
@@ -46,8 +44,6 @@ pub enum NetworkError {
     Gossip(#[from] GossipError),
     #[error(transparent)]
     LogSync(#[from] LogSyncError),
-    #[error("LogSync stream error: {0}")]
-    SyncHandleError(String),
 }
 
 #[allow(dead_code)]
@@ -58,14 +54,13 @@ pub struct Network {
     gossip: Gossip,
     log_sync: LogSync,
     endpoint: Endpoint,
-    sync_tx: SyncHandle<Operation<LoResMeshExtensions>, TopicLogSyncEvent<LoResMeshExtensions>>,
+    pub topic_map: LoResNodeTopicMap,
 }
 
 impl Network {
     pub async fn new(
         network_id: Hash,
         private_key: PrivateKey,
-        admin_topic_id: TopicId,
         bootstrap_node_id: Option<PublicKey>,
         operation_store: &OperationStore,
     ) -> Result<Self, NetworkError> {
@@ -104,9 +99,6 @@ impl Network {
             .await?;
 
         let topic_map = LoResNodeTopicMap::default();
-        topic_map
-            .insert(admin_topic_id, private_key.public_key(), LOG_ID)
-            .await;
 
         let log_sync = LogSync::builder(
             operation_store.clone_inner(),
@@ -117,8 +109,6 @@ impl Network {
         .spawn()
         .await?;
 
-        let sync_tx = log_sync.stream(admin_topic_id, true).await?;
-
         Ok(Network {
             address_book,
             mdns_discovery,
@@ -126,32 +116,12 @@ impl Network {
             gossip,
             log_sync,
             endpoint,
-            sync_tx,
+            topic_map,
         })
     }
 
-    pub async fn publish_operation(
-        &self,
-        operation: Operation<LoResMeshExtensions>,
-    ) -> Result<
-        (),
-        SyncHandleError<Operation<LoResMeshExtensions>, TopicLogSyncEvent<LoResMeshExtensions>>,
-    > {
-        println!(
-            "Publishing operation to LogSync: {:?}",
-            operation.hash.to_hex()
-        );
-        self.sync_tx.publish(operation).await.map_err(|e| {
-            println!("Error publishing operation: {:?}", e);
-            e
-        })?;
-        Ok(())
-    }
-
-    pub fn get_sync_handle(
-        &self,
-    ) -> &SyncHandle<Operation<LoResMeshExtensions>, TopicLogSyncEvent<LoResMeshExtensions>> {
-        &self.sync_tx
+    pub fn get_log_sync(&self) -> &LogSync {
+        &self.log_sync
     }
 }
 

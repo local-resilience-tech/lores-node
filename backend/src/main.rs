@@ -22,7 +22,7 @@ use crate::{
         auth_api::auth_backend::AppAuthBackend,
         public_api::realtime::{self, RealtimeState},
     },
-    config::{config::LoresNodeConfig, config_state::LoresNodeConfigState},
+    config::{config::LoresNodeConfig, config_state::LoresNodeConfigState, NODE_ADMIN_TOPIC_ID},
     event_handlers::handle_event,
     panda_comms::{
         config::ThisP2PandaNodeRepo,
@@ -117,8 +117,8 @@ async fn main() {
     let (channel_tx, channel_rx): (mpsc::Sender<LoResEvent>, mpsc::Receiver<LoResEvent>) =
         mpsc::channel(32);
     let panda_container = PandaNodeContainer::new(channel_tx);
-    start_panda(&config_state, &panda_container, &operations_pool).await;
     start_panda_event_handler(channel_rx, projections_pool.clone(), realtime_state.clone());
+    start_panda(&config_state, &panda_container, &operations_pool).await;
 
     // ROUTES
     let (router, api) = OpenApiRouter::with_openapi(ApiDoc::openapi())
@@ -192,6 +192,11 @@ async fn start_panda(
     if let Err(e) = container.start(operations_pool).await {
         println!("Failed to start P2PandaContainer on liftoff: {:?}", e);
     }
+
+    container
+        .subscribe(NODE_ADMIN_TOPIC_ID)
+        .await
+        .expect("Failed to start operation receiver");
 }
 
 fn start_panda_event_handler(

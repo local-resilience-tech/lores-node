@@ -3,6 +3,7 @@ import {
   AppShell,
   Avatar,
   Badge,
+  Box,
   Breadcrumbs,
   Burger,
   Container,
@@ -108,18 +109,20 @@ export default function Layout() {
           )}
         </AppShell.Section>
         <AppShell.Section className={classes.menu_section}>
-          <Text className={classes.section_title}>
-            {regionNode?.name ? (
-              <>
-                <Text span c="dimmed">
-                  Node:{" "}
-                </Text>
-                <Text span>{regionNode.name}</Text>
-              </>
-            ) : (
-              "This Node"
-            )}
-          </Text>
+          <Box className={classes.section_header}>
+            <Text className={classes.section_title}>
+              {regionNode?.name ? (
+                <>
+                  <Text span c="dimmed">
+                    Node:{" "}
+                  </Text>
+                  <Text span>{regionNode.name}</Text>
+                </>
+              ) : (
+                "This Node"
+              )}
+            </Text>
+          </Box>
 
           <NavLink
             label="This node"
@@ -159,22 +162,24 @@ export default function Layout() {
 
         {region && (
           <AppShell.Section className={classes.menu_section} key={region.id}>
-            <Group justify="center" gap={0} className={classes.section_title}>
-              <Text span c="dimmed">
-                Region:{" "}
-              </Text>
-              {allRegions.length > 1 ? (
-                <RegionSelector
-                  regions={allRegions}
-                  selected={region}
-                  onChange={(region) => {
-                    if (region) dispatch(activeRegionChanged(region.id))
-                  }}
-                />
-              ) : (
-                <Text span>{region?.name ?? "Unknown"}</Text>
-              )}
-            </Group>
+            <Box className={classes.section_header}>
+              <Group justify="center" gap={4} className={classes.section_title}>
+                <Text span c="dimmed">
+                  Region:
+                </Text>
+                {allRegions.length > 1 ? (
+                  <RegionSelector
+                    regions={allRegions}
+                    selected={region}
+                    onChange={(region) => {
+                      if (region) dispatch(activeRegionChanged(region.id))
+                    }}
+                  />
+                ) : (
+                  <Text span>{region?.name ?? "Unknown"}</Text>
+                )}
+              </Group>
+            </Box>
             <NavLink
               label="Nodes"
               href="/this_region/nodes"
@@ -200,12 +205,14 @@ export default function Layout() {
 
         {network && (
           <AppShell.Section className={classes.menu_section}>
-            <Text className={classes.section_title}>
-              <Text span c="dimmed">
-                Network:{" "}
+            <Box className={classes.section_header}>
+              <Text className={classes.section_title}>
+                <Text span c="dimmed" fw="normal">
+                  Network:{" "}
+                </Text>
+                <Text span>{network.name}</Text>
               </Text>
-              <Text span>{network.name}</Text>
-            </Text>
+            </Box>
             <NavLink
               label="P2Panda node"
               href="/network/node"
@@ -218,7 +225,9 @@ export default function Layout() {
         )}
         {pandaRunning && (
           <AppShell.Section className={classes.footer_section}>
-            <Text className={classes.section_title}>Debug</Text>
+            <Text className={classes.section_title} c="dimmed">
+              Debug
+            </Text>
             <NavLink
               label="Event log"
               href="/debug/event_log"

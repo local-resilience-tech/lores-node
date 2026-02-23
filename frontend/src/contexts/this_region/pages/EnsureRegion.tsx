@@ -3,7 +3,7 @@ import SetRegion from "../components/SetRegion"
 import { Outlet } from "react-router-dom"
 import { getApi } from "../../../api"
 import { BootstrapNodeData, Region } from "../../../api/Api"
-import { regionsLoaded } from "../../../store/regions"
+import { activeRegion, regionsLoaded } from "../../../store/regions"
 import { useAppDispatch, useAppSelector } from "../../../store"
 import {
   actionFailure,
@@ -16,9 +16,7 @@ export default function EnsureRegion({
 }: {
   children?: React.ReactNode
 }) {
-  const region = useAppSelector((state) =>
-    state.regions ? state.regions[0] : null,
-  )
+  const region = useAppSelector((state) => activeRegion(state.regions))
   const dispatch = useAppDispatch()
 
   const onSubmit = async (

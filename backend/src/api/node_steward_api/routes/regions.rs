@@ -93,6 +93,7 @@ async fn bootstrap(
 }
 
 #[derive(Deserialize, ToSchema, Debug)]
+#[allow(dead_code)]
 pub struct CreateRegionData {
     pub slug: String,
     pub name: String,

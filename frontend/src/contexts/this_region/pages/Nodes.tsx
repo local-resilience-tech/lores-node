@@ -1,12 +1,10 @@
 import { Container, Stack, Title } from "@mantine/core"
 import NodesList from "../components/NodesList"
 import { useAppSelector } from "../../../store"
+import { activeRegion } from "../../../store/regions"
 
 export default function Nodes() {
-  const region = useAppSelector((state) =>
-    state.regions ? state.regions[0] : null,
-  )
-
+  const region = useAppSelector((state) => activeRegion(state.regions))
   const nodes = useAppSelector((state) => state.nodes)
 
   if (!region) {

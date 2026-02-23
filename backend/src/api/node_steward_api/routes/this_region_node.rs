@@ -5,6 +5,7 @@ use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::{
     api::auth_api::auth_backend::AuthSession,
+    config::NODE_ADMIN_TOPIC_ID,
     data::entities::RegionNode,
     panda_comms::{
         lores_events::{
@@ -46,7 +47,7 @@ async fn create_this_region_node(
     println!("Created event payload: {:?}", event_payload);
 
     let result = panda_container
-        .publish_persisted(event_payload, auth_session.user)
+        .publish_persisted(NODE_ADMIN_TOPIC_ID, event_payload, auth_session.user)
         .await;
 
     match result {
@@ -100,7 +101,7 @@ async fn update_this_region_node(
     println!("Prepared event payload: {:?}", event_payload);
 
     let result = panda_container
-        .publish_persisted(event_payload, auth_session.user)
+        .publish_persisted(NODE_ADMIN_TOPIC_ID, event_payload, auth_session.user)
         .await;
 
     match result {
@@ -150,7 +151,7 @@ async fn post_region_node_status(
     println!("Created event payload: {:?}", event_payload);
 
     let result = panda_container
-        .publish_persisted(event_payload, auth_session.user)
+        .publish_persisted(NODE_ADMIN_TOPIC_ID, event_payload, auth_session.user)
         .await;
 
     match result {

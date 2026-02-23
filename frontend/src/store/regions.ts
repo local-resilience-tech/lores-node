@@ -27,7 +27,10 @@ const regionsSlice = createSlice({
       const region = action.payload
       const existingRegion = state?.all?.find((r) => r.id === region.id)
 
-      if (!existingRegion && state !== null) state.all?.push(region)
+      if (!existingRegion && state !== null) {
+        state.all?.push(region)
+        if (!state.activeRegionId) state.activeRegionId = region.id
+      }
 
       return state
     },

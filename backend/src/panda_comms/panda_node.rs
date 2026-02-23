@@ -1,10 +1,11 @@
 use p2panda_core::{Hash, PrivateKey, PublicKey};
-use p2panda_net::TopicId;
 use sqlx::SqlitePool;
 use std::sync::Arc;
 use thiserror::Error;
 
-use super::{network::NetworkError, panda_node_inner::PandaNodeInner};
+use super::{
+    network::NetworkError, panda_node_inner::PandaNodeInner, subscription::SubscriptionError,
+};
 
 #[derive(Debug, Error)]
 pub enum PandaNodeError {
@@ -14,12 +15,13 @@ pub enum PandaNodeError {
     RuntimeSpawn(#[from] tokio::task::JoinError),
     #[error(transparent)]
     NetworkError(#[from] NetworkError),
+    #[error(transparent)]
+    SubscriptionError(#[from] SubscriptionError),
 }
 
 pub struct RequiredNodeParams {
     pub private_key: PrivateKey,
     pub network_id: Hash,
-    pub admin_topic_id: TopicId,
     pub bootstrap_node_id: Option<PublicKey>,
 }
 
@@ -62,20 +64,13 @@ impl PandaNode {
 
         let network_id = params.network_id.clone();
         let private_key = params.private_key.clone();
-        let admin_topic_id = params.admin_topic_id.clone();
         let bootstrap_node_id = params.bootstrap_node_id.clone();
         let operations_pool = operations_pool.clone();
 
         let inner = runtime
             .spawn(async move {
-                PandaNodeInner::new(
-                    network_id,
-                    private_key,
-                    admin_topic_id,
-                    bootstrap_node_id,
-                    &operations_pool,
-                )
-                .await
+                PandaNodeInner::new(network_id, private_key, bootstrap_node_id, &operations_pool)
+                    .await
             })
             .await??;
 
