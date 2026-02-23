@@ -1,13 +1,10 @@
 use axum::{http::StatusCode, response::IntoResponse, Extension, Json};
+use lores_p2panda::log_access::find_log_count;
 use serde::Serialize;
 use utoipa::ToSchema;
 use utoipa_axum::{router::OpenApiRouter, routes};
 
-use crate::{
-    panda_comms::PandaContainer,
-    panda_node::log_access::{find_log_count, LogCount},
-    DatabaseState,
-};
+use crate::{panda_comms::PandaContainer, DatabaseState};
 
 pub fn router() -> OpenApiRouter {
     OpenApiRouter::new()
@@ -42,8 +39,14 @@ async fn show_this_panda_node(
 }
 
 #[derive(Serialize, ToSchema)]
+pub struct P2PandaLogCount {
+    pub node_id: String,
+    pub total: i64,
+}
+
+#[derive(Serialize, ToSchema)]
 struct P2PandaLogCounts {
-    pub counts: Vec<LogCount>,
+    pub counts: Vec<P2PandaLogCount>,
 }
 
 #[utoipa::path(get, path = "/event_log", responses(
@@ -58,6 +61,14 @@ async fn p2panda_log_counts(
         eprint!("Error finding log count: {}", e);
         vec![]
     });
+
+    let counts = counts
+        .into_iter()
+        .map(|count| P2PandaLogCount {
+            node_id: count.node_id,
+            total: count.total,
+        })
+        .collect();
 
     (StatusCode::OK, Json(P2PandaLogCounts { counts })).into_response()
 }

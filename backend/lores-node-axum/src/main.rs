@@ -37,7 +37,6 @@ mod docker;
 mod event_handlers;
 mod local_apps;
 mod panda_comms;
-mod panda_node;
 mod static_server;
 
 #[macro_use]

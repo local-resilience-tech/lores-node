@@ -7,13 +7,13 @@ use thiserror::Error;
 use tokio::sync::{mpsc, Mutex};
 use tokio_stream::wrappers::ReceiverStream;
 
-use crate::api::auth_api::auth_backend::User;
-
-use crate::panda_node::{
+use lores_p2panda::{
     operations::{LoResMeshExtensions, LoresOperation},
     panda_node::{PandaNode, RequiredNodeParams},
     PandaNodeError, PandaPublishError,
 };
+
+use crate::api::auth_api::auth_backend::User;
 
 use super::{
     event_encoding::{decode_lores_event, encode_lores_event_payload},

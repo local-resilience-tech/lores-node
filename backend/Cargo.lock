@@ -2698,7 +2698,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "lores-node"
+name = "lores-node-axum"
 version = "0.15.4"
 dependencies = [
  "anyhow",
@@ -2711,9 +2711,9 @@ dependencies = [
  "futures-util",
  "git2",
  "hex",
- "iroh",
  "jsonschema",
  "lazy_static",
+ "lores-p2panda",
  "openssl",
  "p2panda-core",
  "p2panda-discovery",
@@ -2743,6 +2743,26 @@ dependencies = [
  "utoipa-axum",
  "utoipa-swagger-ui",
  "uuid",
+]
+
+[[package]]
+name = "lores-p2panda"
+version = "0.15.4"
+dependencies = [
+ "hex",
+ "iroh",
+ "lazy_static",
+ "p2panda-core",
+ "p2panda-discovery",
+ "p2panda-net",
+ "p2panda-store",
+ "p2panda-stream",
+ "p2panda-sync",
+ "serde",
+ "sqlx",
+ "thiserror 2.0.18",
+ "tokio",
+ "tokio-stream",
 ]
 
 [[package]]

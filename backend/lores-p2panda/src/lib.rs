@@ -9,3 +9,6 @@ mod topic;
 
 pub use panda_node::PandaNodeError;
 pub use panda_node_inner::PandaPublishError;
+
+#[macro_use]
+extern crate lazy_static;
