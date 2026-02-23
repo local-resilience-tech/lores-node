@@ -17,12 +17,6 @@ git2 = { version = "0.20.2", features = ["vendored-openssl"] }
 jsonschema = "0.33.0"
 lazy_static = "1.5.0"
 openssl = { version = "0.10.73", features = ["vendored"] }
-p2panda-net = "0.5.1"
-p2panda-core = "0.5.1"
-p2panda-store = { version = "0.5.1", features = ["sqlite"] }
-p2panda-discovery = "0.5.1"
-p2panda-sync = "0.5.1"
-p2panda-stream = "0.5.1"
 password-auth = "1.0.0"
 pwgen2 = "0.7.3"
 semver = "1.0.27"

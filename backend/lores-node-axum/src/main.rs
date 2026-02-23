@@ -4,7 +4,7 @@ use axum::{
     Extension,
 };
 use axum_login::AuthManagerLayerBuilder;
-use p2panda_core::PublicKey;
+use lores_p2panda::p2panda_core::PublicKey;
 use sqlx::SqlitePool;
 use time::Duration;
 use tokio::sync::mpsc;

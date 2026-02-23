@@ -1,6 +1,4 @@
 use futures_util::StreamExt;
-use p2panda_core::{identity::PUBLIC_KEY_LEN, Hash, Operation, PrivateKey, PublicKey};
-use p2panda_net::TopicId;
 use sqlx::SqlitePool;
 use std::sync::Arc;
 use thiserror::Error;
@@ -9,8 +7,9 @@ use tokio_stream::wrappers::ReceiverStream;
 
 use lores_p2panda::{
     operations::{LoResMeshExtensions, LoresOperation},
+    p2panda_core::{identity::PUBLIC_KEY_LEN, Hash, Operation, PrivateKey, PublicKey},
     panda_node::{PandaNode, RequiredNodeParams},
-    PandaNodeError, PandaPublishError,
+    PandaNodeError, PandaPublishError, TopicId,
 };
 
 use crate::api::auth_api::auth_backend::User;
