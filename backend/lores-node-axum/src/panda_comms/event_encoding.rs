@@ -1,5 +1,5 @@
 use anyhow::Result;
-use p2panda_core::cbor::{decode_cbor, encode_cbor, DecodeError, EncodeError};
+use lores_p2panda::p2panda_core::cbor::{decode_cbor, encode_cbor, DecodeError, EncodeError};
 
 use super::lores_events::{
     LoResEvent, LoResEventHeader, LoResEventMetadataV1, LoResEventPayload,

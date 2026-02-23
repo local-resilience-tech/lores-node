@@ -1,9 +1,5 @@
-use serde::Serialize;
 use sqlx::{Row, SqlitePool};
-// use sqlx::{Row, SqlitePool};
-use utoipa::ToSchema;
 
-#[derive(Serialize, ToSchema)]
 pub struct LogCount {
     pub node_id: String,
     pub total: i64,

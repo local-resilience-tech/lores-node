@@ -1,5 +1,5 @@
 use axum::{http::StatusCode, response::IntoResponse, Extension, Json};
-use p2panda_core::PublicKey;
+use lores_p2panda::p2panda_core::PublicKey;
 use serde::Deserialize;
 use short_uuid::ShortUuid;
 use utoipa::ToSchema;

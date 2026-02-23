@@ -1,6 +1,6 @@
 use crate::config::config_state::LoresNodeConfigState;
 use hex;
-use p2panda_core::{identity::PRIVATE_KEY_LEN, PrivateKey};
+use lores_p2panda::p2panda_core::{identity::PRIVATE_KEY_LEN, PrivateKey};
 
 #[derive(Clone)]
 pub struct SimplifiedNodeAddress {

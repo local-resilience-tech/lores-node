@@ -1,5 +1,5 @@
 use anyhow::Result;
-use p2panda_store::sqlite::store::run_pending_migrations;
+use lores_p2panda::run_pending_migrations;
 use sqlx::{migrate::Migrator, sqlite::SqliteConnectOptions, Pool, Sqlite, SqlitePool};
 use std::env;
 

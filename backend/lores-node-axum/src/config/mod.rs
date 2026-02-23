@@ -1,4 +1,4 @@
-use p2panda_net::TopicId;
+use lores_p2panda::TopicId;
 
 pub mod config;
 pub mod config_state;

@@ -1,4 +1,4 @@
-use p2panda_core::hash::Hash;
+use lores_p2panda::p2panda_core::hash::Hash;
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize, Clone, PartialEq, Debug)]
