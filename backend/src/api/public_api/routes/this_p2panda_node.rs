@@ -4,10 +4,8 @@ use utoipa::ToSchema;
 use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::{
-    panda_node::{
-        log_access::{find_log_count, LogCount},
-        panda_node_container::PandaNodeContainer,
-    },
+    panda_comms::panda_node_container::PandaNodeContainer,
+    panda_node::log_access::{find_log_count, LogCount},
     DatabaseState,
 };
 

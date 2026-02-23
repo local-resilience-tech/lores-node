@@ -7,11 +7,9 @@ use crate::{
     api::auth_api::auth_backend::AuthSession,
     config::NODE_ADMIN_TOPIC_ID,
     data::entities::RegionNode,
-    panda_node::{
-        lores_events::{
-            LoResEventPayload, NodeAnnouncedDataV1, NodeStatusPostedDataV1, NodeUpdatedDataV1,
-        },
-        panda_node_container::PandaNodeContainer,
+    panda_comms::panda_node_container::PandaNodeContainer,
+    panda_node::lores_events::{
+        LoResEventPayload, NodeAnnouncedDataV1, NodeStatusPostedDataV1, NodeUpdatedDataV1,
     },
 };
 

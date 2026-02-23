@@ -9,12 +9,12 @@ use tokio_stream::wrappers::ReceiverStream;
 
 use crate::api::auth_api::auth_backend::User;
 
-use super::{
+use crate::panda_node::{
     event_encoding::{decode_lores_event, encode_lores_event_payload},
     lores_events::{LoResEvent, LoResEventHeader, LoResEventMetadataV1, LoResEventPayload},
     operations::{LoResMeshExtensions, LoresOperation},
-    panda_node::{PandaNode, PandaNodeError},
-    panda_node_inner::PandaPublishError,
+    panda_node::{PandaNode, RequiredNodeParams},
+    PandaNodeError, PandaPublishError,
 };
 
 #[derive(Default, Clone)]
@@ -110,7 +110,7 @@ impl PandaNodeContainer {
         boostrap_node_id: Option<PublicKey>,
         operations_pool: &SqlitePool,
     ) -> Result<(), PandaNodeError> {
-        let required_params = super::panda_node::RequiredNodeParams {
+        let required_params = RequiredNodeParams {
             private_key,
             network_id: Hash::new(network_name.as_bytes()),
             bootstrap_node_id: boostrap_node_id,
