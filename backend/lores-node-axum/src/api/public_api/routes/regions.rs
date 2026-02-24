@@ -3,8 +3,9 @@ use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::{
     config::config_state::LoresNodeConfigState,
-    data::entities::Region,
+    data::{entities::Region, projections_read::regions::RegionsReadRepo},
     panda_comms::{PandaContainer, RegionId},
+    DatabaseState,
 };
 
 pub fn router() -> OpenApiRouter {
@@ -18,6 +19,7 @@ pub fn router() -> OpenApiRouter {
 async fn list_regions(
     Extension(panda_container): Extension<PandaContainer>,
     Extension(config_state): Extension<LoresNodeConfigState>,
+    Extension(db): Extension<DatabaseState>,
 ) -> impl IntoResponse {
     let config = config_state.get().await;
 
@@ -34,11 +36,12 @@ async fn list_regions(
         }
     };
 
-    match config.region_ids {
+    // Get region_ids from config
+    let region_ids: Vec<RegionId> = match config.region_ids {
         Some(region_ids) => {
             println!("got region ids {:?}", region_ids);
 
-            let regions: Vec<Region> = region_ids
+            region_ids
                 .into_iter()
                 .map(|id| {
                     let region_id = match RegionId::from_hex(&id) {
@@ -46,15 +49,38 @@ async fn list_regions(
                         Err(_) => panic!("Invalid region ID in config: {}", id),
                     };
 
-                    Region::unnamed(region_id, node_id.clone())
+                    region_id
                 })
-                .collect();
-            (StatusCode::OK, Json(regions))
+                .collect()
         }
         None => {
             println!("no region ids found in config");
-            (StatusCode::OK, Json(Vec::new()))
+            return (StatusCode::OK, Json(Vec::<Region>::new())).into_response();
         }
+    };
+
+    // Get regions from database
+    let repo = RegionsReadRepo::init();
+    let mut regions: Vec<Region> = Vec::with_capacity(region_ids.len());
+    for id in region_ids {
+        let db_region = match repo.find(&db.projections_pool, id.to_string()).await {
+            Ok(region) => region,
+            Err(e) => {
+                eprintln!("Failed to query region {}: {:?}", id, e);
+                None
+            }
+        };
+
+        let region = match db_region {
+            Some(region) => region,
+            None => {
+                eprintln!("Region {} not found in database", id);
+                Region::unnamed(id, node_id)
+            }
+        };
+
+        regions.push(region);
     }
-    .into_response()
+
+    (StatusCode::OK, Json(regions)).into_response()
 }
