@@ -28,21 +28,21 @@ impl ThisP2PandaNodeRepo {
             })
     }
 
-    pub async fn set_network_config(
-        &self,
-        config_state: &LoresNodeConfigState,
-        network_name: String,
-        peer_address: Option<SimplifiedNodeAddress>,
-    ) -> Result<(), anyhow::Error> {
-        config_state
-            .update(|config| {
-                let mut result = config.clone();
-                result.bootstrap_node_id = peer_address.as_ref().map(|peer| peer.node_id.clone());
-                result.network_name = Some(network_name.clone());
-                result
-            })
-            .await
-    }
+    // pub async fn set_network_config(
+    //     &self,
+    //     config_state: &LoresNodeConfigState,
+    //     network_name: String,
+    //     peer_address: Option<SimplifiedNodeAddress>,
+    // ) -> Result<(), anyhow::Error> {
+    //     config_state
+    //         .update(|config| {
+    //             let mut result = config.clone();
+    //             result.bootstrap_node_id = peer_address.as_ref().map(|peer| peer.node_id.clone());
+    //             result.network_name = Some(network_name.clone());
+    //             result
+    //         })
+    //         .await
+    // }
 
     pub async fn get_or_create_private_key(
         &self,

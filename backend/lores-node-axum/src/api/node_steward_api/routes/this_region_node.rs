@@ -5,13 +5,12 @@ use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::{
     api::auth_api::auth_backend::AuthSession,
-    config::NODE_ADMIN_TOPIC_ID,
     data::entities::RegionNode,
     panda_comms::{
         lores_events::{
             LoResEventPayload, NodeAnnouncedDataV1, NodeStatusPostedDataV1, NodeUpdatedDataV1,
         },
-        PandaContainer,
+        PandaContainer, NODE_ADMIN_TOPIC_ID,
     },
 };
 
