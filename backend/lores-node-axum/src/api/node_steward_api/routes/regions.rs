@@ -194,36 +194,36 @@ async fn create_region(
 async fn store_new_region_id(
     config_state: &LoresNodeConfigState,
 ) -> Result<RegionId, anyhow::Error> {
-    let mut region_id: Option<RegionId> = None;
+    let mut region_id_string: Option<String> = None;
     config_state
         .update(|config| {
             let mut result = config.clone();
-            let mut region_ids: Vec<RegionId> = result
-                .region_ids
-                .unwrap_or_else(|| vec![])
-                .into_iter()
-                .map(RegionId::new)
-                .collect();
+            let mut region_ids: Vec<String> = result.region_ids.unwrap_or_else(|| vec![]);
 
-            while region_id.is_none() || region_ids.contains(&region_id.clone().unwrap()) {
-                let new_id = RegionId::generate();
-                println!("Trying new region id {}", new_id);
-                if !region_ids.contains(&new_id) {
-                    region_id = Some(new_id.clone());
+            while region_id_string.is_none()
+                || region_ids.contains(&region_id_string.clone().unwrap())
+            {
+                let new_id_string = RegionId::generate().to_hex();
+                println!("Trying new region id {}", new_id_string);
+                if !region_ids.contains(&new_id_string) {
+                    region_id_string = Some(new_id_string.clone());
                 }
             }
 
-            region_ids.push(region_id.clone().unwrap());
+            region_ids.push(region_id_string.clone().unwrap());
 
             println!("Setting region_ids to {:?}", region_ids);
 
-            result.region_ids = Some(region_ids.into_iter().map(|id| id.to_hex()).collect());
+            result.region_ids = Some(region_ids);
             result
         })
         .await?;
 
-    match region_id {
-        Some(id) => Ok(id),
+    match region_id_string {
+        Some(id_string) => match RegionId::from_hex(&id_string) {
+            Ok(id) => Ok(id),
+            Err(e) => Err(anyhow::anyhow!("Failed to parse new region ID: {:?}", e)),
+        },
         None => Err(anyhow::anyhow!("Failed to store new region ID")),
     }
 }

@@ -1,6 +1,5 @@
 import { TextInput, Button, Stack, Text } from "@mantine/core"
 import { useForm } from "@mantine/form"
-import { BootstrapNodeData } from "../../../api/Api"
 import {
   ActionPromiseResult,
   DisplayActionResult,
@@ -14,11 +13,11 @@ export interface CreateRegionData {
   url?: string
 }
 
-interface NewRegionFormProps {
+interface CreateRegionFormProps {
   onSubmit: (data: CreateRegionData) => Promise<ActionPromiseResult>
 }
 
-export default function CreateRegionForm({ onSubmit }: NewRegionFormProps) {
+export default function CreateRegionForm({ onSubmit }: CreateRegionFormProps) {
   const [actionResult, onSubmitWithResult] =
     useOnSubmitWithResult<CreateRegionData>(onSubmit)
 

@@ -57,11 +57,6 @@ export interface AppReference {
   app_name: string;
 }
 
-export interface BootstrapNodeData {
-  network_name: string;
-  node_id?: string | null;
-}
-
 export type ClientEvent =
   | {
       JoinedRegion: Region;
@@ -102,12 +97,6 @@ export interface LocalApp {
   name: string;
   url?: null | NodeAppUrl;
   version: string;
-}
-
-export interface LogCount {
-  node_id: string;
-  /** @format int64 */
-  total: number;
 }
 
 export interface Network {
@@ -156,8 +145,14 @@ export interface NodeStewardUser {
   name: string;
 }
 
+export interface P2PandaLogCount {
+  node_id: string;
+  /** @format int64 */
+  total: number;
+}
+
 export interface P2PandaLogCounts {
-  counts: LogCount[];
+  counts: P2PandaLogCount[];
 }
 
 export interface P2PandaNodeDetails {
@@ -384,7 +379,7 @@ export class HttpClient<SecurityDataType = unknown> {
 }
 
 /**
- * @title lores-node
+ * @title lores-node-axum
  * @version 0.15.4
  * @license
  */
@@ -586,22 +581,6 @@ export class Api<
     registerApp: (data: AppReference, params: RequestParams = {}) =>
       this.request<any, any>({
         path: `/node_steward_api/local_apps/register`,
-        method: "POST",
-        body: data,
-        type: ContentType.Json,
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @name Bootstrap
-     * @request POST:/node_steward_api/regions/bootstrap
-     */
-    bootstrap: (data: BootstrapNodeData, params: RequestParams = {}) =>
-      this.request<any, string>({
-        path: `/node_steward_api/regions/bootstrap`,
         method: "POST",
         body: data,
         type: ContentType.Json,

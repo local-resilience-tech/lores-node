@@ -1,6 +1,5 @@
 import { TextInput, Button, Stack, Text } from "@mantine/core"
 import { useForm } from "@mantine/form"
-import { BootstrapNodeData } from "../../../api/Api"
 import {
   ActionPromiseResult,
   DisplayActionResult,
@@ -11,13 +10,13 @@ export interface JoinRegionData {
   name: string
 }
 
-interface NewRegionFormProps {
-  onSubmit: (data: BootstrapNodeData) => Promise<ActionPromiseResult>
+interface JoinRegionFormProps {
+  onSubmit: (data: JoinRegionData) => Promise<ActionPromiseResult>
 }
 
-export default function JoinRegionForm({ onSubmit }: NewRegionFormProps) {
+export default function JoinRegionForm({ onSubmit }: JoinRegionFormProps) {
   const [actionResult, onSubmitWithResult] =
-    useOnSubmitWithResult<BootstrapNodeData>(onSubmit)
+    useOnSubmitWithResult<JoinRegionData>(onSubmit)
 
   const form = useForm<JoinRegionData>({
     mode: "controlled",
@@ -38,11 +37,7 @@ export default function JoinRegionForm({ onSubmit }: NewRegionFormProps) {
   const handleSubmit = (
     values: JoinRegionData,
   ): Promise<ActionPromiseResult> => {
-    const data: BootstrapNodeData = {
-      network_name: values.name,
-      node_id: null,
-    }
-    return onSubmitWithResult(data)
+    return onSubmitWithResult(values)
   }
 
   return (

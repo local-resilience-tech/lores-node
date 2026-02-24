@@ -5,10 +5,10 @@ mod panda_container;
 use std::fmt::Display;
 
 pub use config::ThisP2PandaNodeRepo;
+use hex::FromHexError;
 use lores_events::LoResEvent;
 use lores_p2panda::{p2panda_core::PublicKey, TopicId};
 pub use panda_container::{build_public_key_from_hex, PandaContainer};
-use short_uuid::ShortUuid;
 use sqlx::SqlitePool;
 use tokio::sync::mpsc;
 
@@ -61,12 +61,20 @@ pub async fn start_panda(
     match config.region_ids {
         Some(region_ids) => {
             for id_string in region_ids {
-                let region_id = RegionId::new(id_string);
-
-                if let Err(e) = container.join_region(region_id.clone()).await {
-                    println!("Failed to join region {:?}: {:?}", region_id, e);
-                } else {
-                    println!("Successfully joined region {:?}", region_id);
+                match RegionId::from_hex(&id_string) {
+                    Ok(region_id) => {
+                        if let Err(e) = container.join_region(region_id.clone()).await {
+                            println!("Failed to join region {:?}: {:?}", region_id, e);
+                        } else {
+                            println!("Successfully joined region {:?}", region_id);
+                        }
+                    }
+                    Err(e) => {
+                        println!(
+                            "Invalid region id in config: {:?}, error: {:?}",
+                            id_string, e
+                        );
+                    }
                 }
             }
         }
@@ -93,25 +101,42 @@ pub fn start_panda_event_handler(
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct RegionId {
-    hex_string: String,
+    bytes: [u8; 32],
+}
+
+impl From<RegionId> for [u8; 32] {
+    fn from(id: RegionId) -> Self {
+        id.bytes
+    }
+}
+
+impl From<[u8; 32]> for RegionId {
+    fn from(bytes: [u8; 32]) -> Self {
+        Self { bytes }
+    }
 }
 
 impl Display for RegionId {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.hex_string)
+        f.write_str(&self.to_hex())
     }
 }
 
 impl RegionId {
-    pub fn new(value: String) -> Self {
-        RegionId { hex_string: value }
+    pub fn from_hex(value: &str) -> Result<RegionId, FromHexError> {
+        let mut bytes = [0u8; 32];
+        hex::decode_to_slice(value, &mut bytes as &mut [u8])?;
+
+        Ok(RegionId { bytes })
     }
 
     pub fn generate() -> Self {
-        RegionId::new(ShortUuid::generate().to_string())
+        let mut arr = [0u8; 32];
+        rand::fill(&mut arr[..]);
+        RegionId { bytes: arr }
     }
 
     pub fn to_hex(&self) -> String {
-        self.hex_string.clone()
+        hex::encode(&self.bytes)
     }
 }
