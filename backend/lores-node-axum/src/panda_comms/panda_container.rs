@@ -18,6 +18,7 @@ use crate::api::auth_api::auth_backend::User;
 use super::{
     event_encoding::{decode_lores_event, encode_lores_event_payload},
     lores_events::{LoResEvent, LoResEventHeader, LoResEventMetadataV1, LoResEventPayload},
+    RegionId,
 };
 
 #[derive(Default, Clone)]
@@ -148,8 +149,8 @@ impl PandaContainer {
         }
     }
 
-    pub async fn join_region(&self, region_id: String) -> Result<TopicId, PandaContainerError> {
-        let hash = lores_p2panda::p2panda_core::Hash::new(region_id.as_bytes());
+    pub async fn join_region(&self, region_id: RegionId) -> Result<TopicId, PandaContainerError> {
+        let hash = lores_p2panda::p2panda_core::Hash::new(region_id.to_hex().as_bytes());
         let topic_id: TopicId = (&hash).into();
 
         self.subscribe(topic_id).await?;

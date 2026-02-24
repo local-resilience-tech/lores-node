@@ -2,10 +2,13 @@ mod config;
 mod event_encoding;
 pub mod lores_events;
 mod panda_container;
+use std::fmt::Display;
+
 pub use config::ThisP2PandaNodeRepo;
 use lores_events::LoResEvent;
 use lores_p2panda::{p2panda_core::PublicKey, TopicId};
 pub use panda_container::{build_public_key_from_hex, PandaContainer};
+use short_uuid::ShortUuid;
 use sqlx::SqlitePool;
 use tokio::sync::mpsc;
 
@@ -57,11 +60,13 @@ pub async fn start_panda(
 
     match config.region_ids {
         Some(region_ids) => {
-            for id in region_ids {
-                if let Err(e) = container.join_region(id.clone()).await {
-                    println!("Failed to join region {}: {:?}", id, e);
+            for id_string in region_ids {
+                let region_id = RegionId::new(id_string);
+
+                if let Err(e) = container.join_region(region_id.clone()).await {
+                    println!("Failed to join region {:?}: {:?}", region_id, e);
                 } else {
-                    println!("Successfully joined region {}", id);
+                    println!("Successfully joined region {:?}", region_id);
                 }
             }
         }
@@ -84,4 +89,29 @@ pub fn start_panda_event_handler(
             handle_event(event, &pool, &realtime_state).await;
         }
     });
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct RegionId {
+    hex_string: String,
+}
+
+impl Display for RegionId {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.hex_string)
+    }
+}
+
+impl RegionId {
+    pub fn new(value: String) -> Self {
+        RegionId { hex_string: value }
+    }
+
+    pub fn generate() -> Self {
+        RegionId::new(ShortUuid::generate().to_string())
+    }
+
+    pub fn to_hex(&self) -> String {
+        self.hex_string.clone()
+    }
 }

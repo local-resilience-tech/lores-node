@@ -1,6 +1,5 @@
 use axum::{http::StatusCode, response::IntoResponse, Extension, Json};
 use serde::Deserialize;
-use short_uuid::ShortUuid;
 use utoipa::ToSchema;
 use utoipa_axum::{router::OpenApiRouter, routes};
 
@@ -13,7 +12,7 @@ use crate::{
     data::entities::Region,
     panda_comms::{
         lores_events::{LoResEventPayload, RegionCreatedDataV1},
-        PandaContainer,
+        PandaContainer, RegionId,
     },
 };
 
@@ -181,30 +180,33 @@ async fn create_region(
             .into_response();
     }
 
-    println!("Created new region with ID: {}", region_id);
+    println!("Created new region with ID: {:?}", region_id);
 
     realtime_state
         .broadcast_app_event(ClientEvent::JoinedRegion(Region::unnamed(
-            region_id.clone(),
+            region_id.to_string(),
         )))
         .await;
 
     return (StatusCode::OK, ()).into_response();
 }
 
-fn new_region_id() -> String {
-    ShortUuid::generate().to_string()
-}
-
-async fn store_new_region_id(config_state: &LoresNodeConfigState) -> Result<String, anyhow::Error> {
-    let mut region_id = None;
+async fn store_new_region_id(
+    config_state: &LoresNodeConfigState,
+) -> Result<RegionId, anyhow::Error> {
+    let mut region_id: Option<RegionId> = None;
     config_state
         .update(|config| {
             let mut result = config.clone();
-            let mut region_ids = result.region_ids.unwrap_or_else(|| vec![]);
+            let mut region_ids: Vec<RegionId> = result
+                .region_ids
+                .unwrap_or_else(|| vec![])
+                .into_iter()
+                .map(RegionId::new)
+                .collect();
 
             while region_id.is_none() || region_ids.contains(&region_id.clone().unwrap()) {
-                let new_id = new_region_id();
+                let new_id = RegionId::generate();
                 println!("Trying new region id {}", new_id);
                 if !region_ids.contains(&new_id) {
                     region_id = Some(new_id.clone());
@@ -215,7 +217,7 @@ async fn store_new_region_id(config_state: &LoresNodeConfigState) -> Result<Stri
 
             println!("Setting region_ids to {:?}", region_ids);
 
-            result.region_ids = Some(region_ids);
+            result.region_ids = Some(region_ids.into_iter().map(|id| id.to_hex()).collect());
             result
         })
         .await?;
