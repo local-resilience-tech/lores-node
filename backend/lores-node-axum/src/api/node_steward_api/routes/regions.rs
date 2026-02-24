@@ -4,12 +4,8 @@ use utoipa::ToSchema;
 use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::{
-    api::{
-        auth_api::auth_backend::AuthSession,
-        public_api::{client_events::ClientEvent, realtime::RealtimeState},
-    },
+    api::auth_api::auth_backend::AuthSession,
     config::config_state::LoresNodeConfigState,
-    data::entities::Region,
     panda_comms::{
         lores_events::{LoResEventPayload, RegionCreatedDataV1},
         PandaContainer, RegionId,
@@ -114,7 +110,6 @@ pub struct CreateRegionData {
 async fn create_region(
     Extension(panda_container): Extension<PandaContainer>,
     auth_session: AuthSession,
-    Extension(realtime_state): Extension<RealtimeState>,
     Extension(config_state): Extension<LoresNodeConfigState>,
     axum::extract::Json(data): axum::extract::Json<CreateRegionData>,
 ) -> impl IntoResponse {
@@ -135,7 +130,10 @@ async fn create_region(
 
     // Generate a region ID and store it in the config
     let region_id = match store_new_region_id(&config_state).await {
-        Ok(id) => id,
+        Ok(id) => {
+            println!("Generated new region ID: {}", id);
+            id
+        }
         Err(e) => {
             eprintln!("Failed to store new region ID: {:?}", e);
             return (
@@ -161,6 +159,7 @@ async fn create_region(
 
     // Publish the RegionCreated event
     let event_payload = LoResEventPayload::RegionCreated(RegionCreatedDataV1 {
+        id: region_id.to_hex(),
         slug: data.slug.clone(),
         name: data.name.clone(),
         organisation_name: data.organisation_name.clone(),
@@ -181,12 +180,6 @@ async fn create_region(
     }
 
     println!("Created new region with ID: {:?}", region_id);
-
-    realtime_state
-        .broadcast_app_event(ClientEvent::JoinedRegion(Region::unnamed(
-            region_id.to_string(),
-        )))
-        .await;
 
     return (StatusCode::OK, ()).into_response();
 }

@@ -1,8 +1,11 @@
 use lores_p2panda::p2panda_core::hash::Hash;
 use serde::{Deserialize, Serialize};
 
+use super::RegionId;
+
 #[derive(Deserialize, Serialize, Clone, PartialEq, Debug)]
 pub struct RegionCreatedDataV1 {
+    pub id: String,
     pub slug: String,
     pub name: String,
     pub organisation_name: Option<String>,
@@ -66,6 +69,7 @@ pub struct LoResWirePayload {
 #[derive(Debug, Clone)]
 pub struct LoResEventHeader {
     pub author_node_id: String,
+    pub region_id: Option<RegionId>,
 
     // Time in milliseconds since the Unix epoch
     pub timestamp: u64,

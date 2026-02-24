@@ -6,6 +6,7 @@ use crate::{
     event_handlers::{
         app_registered::AppRegisteredHandler, handler_utilities::HandlerResult,
         node_status_posted::NodeStatusPostedHandler, node_updated::NodeUpdatedHandler,
+        region_created::RegionCreatedHandler,
     },
     panda_comms::lores_events::{LoResEvent, LoResEventPayload},
 };
@@ -15,17 +16,15 @@ mod handler_utilities;
 mod node_announced;
 mod node_status_posted;
 mod node_updated;
+mod region_created;
 
 pub async fn handle_event(event: LoResEvent, pool: &SqlitePool, realtime_state: &RealtimeState) {
     let header = event.header.clone();
     let payload = event.payload.clone();
 
     let result: HandlerResult = match payload {
-        LoResEventPayload::RegionCreated(_) => {
-            // For now, we don't have any specific handling for RegionCreated events.
-            // We can log it and return an empty HandlerResult.
-            println!("Received RegionCreated event: {:?}", payload);
-            HandlerResult::default()
+        LoResEventPayload::RegionCreated(payload) => {
+            RegionCreatedHandler::handle(header, payload, pool).await
         }
         LoResEventPayload::NodeAnnounced(payload) => {
             NodeAnnouncedHandler::handle(header, payload, pool).await

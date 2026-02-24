@@ -64,9 +64,9 @@ pub async fn start_panda(
                 match RegionId::from_hex(&id_string) {
                     Ok(region_id) => {
                         if let Err(e) = container.join_region(region_id.clone()).await {
-                            println!("Failed to join region {:?}: {:?}", region_id, e);
+                            println!("Failed to join region {}: {:?}", region_id, e);
                         } else {
-                            println!("Successfully joined region {:?}", region_id);
+                            println!("Successfully joined region {}", region_id);
                         }
                     }
                     Err(e) => {

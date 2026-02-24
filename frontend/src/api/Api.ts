@@ -160,8 +160,12 @@ export interface P2PandaNodeDetails {
 }
 
 export interface Region {
+  creator_node_id: string;
   id: string;
   name: string;
+  organisation_name?: string | null;
+  slug: string;
+  url?: string | null;
 }
 
 export interface RegionAppWithInstallations {
