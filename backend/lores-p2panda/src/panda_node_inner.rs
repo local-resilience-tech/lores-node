@@ -76,7 +76,7 @@ impl PandaNodeInner {
             .create_operation(topic_id, &self.private_key, Some(encoded_payload))
             .await?;
 
-        let subscriptions = self.subscriptions.blocking_read();
+        let subscriptions = self.subscriptions.read().await;
         let subscription = subscriptions.iter().find(|s| s.has_topic_id(&topic_id));
 
         if let Some(subscription) = subscription {

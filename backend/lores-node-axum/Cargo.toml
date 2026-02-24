@@ -45,3 +45,4 @@ utoipa-swagger-ui = { version = "9.0.2", features = ["axum", "vendored"] }
 uuid = "1.18.1"
 hex = "0.4.3"
 lores-p2panda = { path = "../lores-p2panda" }
+rand = "0.10.0"

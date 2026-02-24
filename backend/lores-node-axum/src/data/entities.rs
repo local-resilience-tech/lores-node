@@ -32,7 +32,7 @@ impl Region {
     pub fn unnamed(id: String) -> Self {
         Self {
             id: id.clone(),
-            name: id,
+            name: id.chars().take(12).collect(),
         }
     }
 }

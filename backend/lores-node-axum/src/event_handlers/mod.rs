@@ -21,6 +21,12 @@ pub async fn handle_event(event: LoResEvent, pool: &SqlitePool, realtime_state: 
     let payload = event.payload.clone();
 
     let result: HandlerResult = match payload {
+        LoResEventPayload::RegionCreated(_) => {
+            // For now, we don't have any specific handling for RegionCreated events.
+            // We can log it and return an empty HandlerResult.
+            println!("Received RegionCreated event: {:?}", payload);
+            HandlerResult::default()
+        }
         LoResEventPayload::NodeAnnounced(payload) => {
             NodeAnnouncedHandler::handle(header, payload, pool).await
         }
