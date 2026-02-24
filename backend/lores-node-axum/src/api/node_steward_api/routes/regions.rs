@@ -5,9 +5,16 @@ use utoipa::ToSchema;
 use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::{
-    api::public_api::{client_events::ClientEvent, realtime::RealtimeState},
+    api::{
+        auth_api::auth_backend::AuthSession,
+        public_api::{client_events::ClientEvent, realtime::RealtimeState},
+    },
     config::config_state::LoresNodeConfigState,
     data::entities::Region,
+    panda_comms::{
+        lores_events::{LoResEventPayload, RegionCreatedDataV1},
+        PandaContainer,
+    },
 };
 
 pub fn router() -> OpenApiRouter {
@@ -106,6 +113,8 @@ pub struct CreateRegionData {
     )
 )]
 async fn create_region(
+    Extension(panda_container): Extension<PandaContainer>,
+    auth_session: AuthSession,
     Extension(realtime_state): Extension<RealtimeState>,
     Extension(config_state): Extension<LoresNodeConfigState>,
     axum::extract::Json(data): axum::extract::Json<CreateRegionData>,
@@ -137,6 +146,40 @@ async fn create_region(
                 .into_response();
         }
     };
+
+    // Subscribe to the new region
+    let topic_id = match panda_container.join_region(region_id.clone()).await {
+        Ok(topic_id) => topic_id,
+        Err(e) => {
+            eprintln!("Failed to join region: {:?}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json("Failed to join region".to_string()),
+            )
+                .into_response();
+        }
+    };
+
+    // Publish the RegionCreated event
+    let event_payload = LoResEventPayload::RegionCreated(RegionCreatedDataV1 {
+        slug: data.slug.clone(),
+        name: data.name.clone(),
+        organisation_name: data.organisation_name.clone(),
+        url: data.url.clone(),
+    });
+    println!("Prepared event payload: {:?}", event_payload);
+
+    if let Err(e) = panda_container
+        .publish_persisted(topic_id, event_payload, auth_session.user)
+        .await
+    {
+        eprintln!("Failed to publish RegionCreated event: {:?}", e);
+        return (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json("Failed to publish RegionCreated event".to_string()),
+        )
+            .into_response();
+    }
 
     println!("Created new region with ID: {}", region_id);
 

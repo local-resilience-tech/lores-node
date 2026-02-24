@@ -1,4 +1,5 @@
 use futures_util::StreamExt;
+
 use sqlx::SqlitePool;
 use std::sync::Arc;
 use thiserror::Error;
@@ -145,6 +146,14 @@ impl PandaContainer {
             Some(ref key) => Ok(key.public_key()),
             None => Err("Private key not set".into()),
         }
+    }
+
+    pub async fn join_region(&self, region_id: String) -> Result<TopicId, PandaContainerError> {
+        let hash = lores_p2panda::p2panda_core::Hash::new(region_id.as_bytes());
+        let topic_id: TopicId = (&hash).into();
+
+        self.subscribe(topic_id).await?;
+        Ok(topic_id)
     }
 
     pub async fn subscribe(&self, topic_id: TopicId) -> Result<(), PandaContainerError> {

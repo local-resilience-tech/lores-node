@@ -45,7 +45,6 @@ pub async fn start_panda(
     container.set_private_key(private_key).await;
 
     let bootstrap_details = repo.get_bootstrap_details(config_state).await;
-
     let bootstrap_node_id: Option<PublicKey> = match &bootstrap_details {
         Some(details) => build_public_key_from_hex(details.node_id.clone()),
         None => None,
@@ -56,10 +55,20 @@ pub async fn start_panda(
         println!("Failed to start P2PandaContainer on liftoff: {:?}", e);
     }
 
-    container
-        .subscribe(NODE_ADMIN_TOPIC_ID)
-        .await
-        .expect("Failed to start operation receiver");
+    match config.region_ids {
+        Some(region_ids) => {
+            for id in region_ids {
+                if let Err(e) = container.join_region(id.clone()).await {
+                    println!("Failed to join region {}: {:?}", id, e);
+                } else {
+                    println!("Successfully joined region {}", id);
+                }
+            }
+        }
+        None => {
+            println!("No region ids set");
+        }
+    }
 }
 
 pub fn start_panda_event_handler(

@@ -2,6 +2,14 @@ use lores_p2panda::p2panda_core::hash::Hash;
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize, Clone, PartialEq, Debug)]
+pub struct RegionCreatedDataV1 {
+    pub slug: String,
+    pub name: String,
+    pub organisation_name: Option<String>,
+    pub url: Option<String>,
+}
+
+#[derive(Deserialize, Serialize, Clone, PartialEq, Debug)]
 pub struct NodeAnnouncedDataV1 {
     pub name: String,
 }
@@ -28,6 +36,7 @@ pub struct AppRegisteredDataV1 {
 
 #[derive(Deserialize, Serialize, Clone, PartialEq, Debug)]
 pub enum LoResEventPayload {
+    RegionCreated(RegionCreatedDataV1),
     NodeAnnounced(NodeAnnouncedDataV1),
     NodeUpdated(NodeUpdatedDataV1),
     NodeStatusPosted(NodeStatusPostedDataV1),
