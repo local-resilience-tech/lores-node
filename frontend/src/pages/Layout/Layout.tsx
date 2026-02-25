@@ -11,7 +11,7 @@ import {
   Text,
 } from "@mantine/core"
 import { Anchor, NavLink } from "../../components"
-import { Outlet } from "react-router-dom"
+import { Link, Outlet } from "react-router-dom"
 import { useDisclosure } from "@mantine/hooks"
 import {
   IconAffiliate,
@@ -163,21 +163,23 @@ export default function Layout() {
         {region && (
           <AppShell.Section className={classes.menu_section} key={region.id}>
             <Box className={classes.section_header}>
-              <Group justify="center" gap={4} className={classes.section_title}>
+              <Group
+                justify="center"
+                gap={4}
+                className={classes.section_title}
+                align="center"
+              >
                 <Text span c="dimmed">
                   Region:
                 </Text>
-                {allRegions.length > 1 ? (
-                  <RegionSelector
-                    regions={allRegions}
-                    selected={region}
-                    onChange={(region) => {
-                      if (region) dispatch(activeRegionChanged(region.id))
-                    }}
-                  />
-                ) : (
-                  <Text span>{region?.name ?? "Unknown"}</Text>
-                )}
+                <RegionSelector
+                  regions={allRegions}
+                  selected={region}
+                  onChange={(region) => {
+                    if (region) dispatch(activeRegionChanged(region.id))
+                  }}
+                  addNewPath="/regions/setup"
+                />
               </Group>
             </Box>
             <NavLink
