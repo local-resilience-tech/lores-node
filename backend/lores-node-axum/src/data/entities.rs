@@ -32,7 +32,10 @@ pub struct Region {
     pub slug: String,
     pub name: String,
     pub organisation_name: Option<String>,
-    pub url: Option<String>,
+    pub organisation_url: Option<String>,
+    pub node_steward_conduct_url: Option<String>,
+    pub user_conduct_url: Option<String>,
+    pub user_privacy_url: Option<String>,
 }
 
 impl Region {
@@ -45,7 +48,10 @@ impl Region {
             slug: hex_id.chars().take(12).collect(),
             name: hex_id.chars().take(12).collect(),
             organisation_name: None,
-            url: None,
+            organisation_url: None,
+            node_steward_conduct_url: None,
+            user_conduct_url: None,
+            user_privacy_url: None,
         }
     }
 }

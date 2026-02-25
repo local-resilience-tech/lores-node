@@ -5,13 +5,7 @@ import {
   DisplayActionResult,
   useOnSubmitWithResult,
 } from "../../../components"
-
-export interface CreateRegionData {
-  slug: string
-  name: string
-  organisation_name?: string
-  url?: string
-}
+import { CreateRegionData } from "../../../api/Api"
 
 interface CreateRegionFormProps {
   onSubmit: (data: CreateRegionData) => Promise<ActionPromiseResult>
@@ -27,7 +21,10 @@ export default function CreateRegionForm({ onSubmit }: CreateRegionFormProps) {
       slug: "",
       name: "",
       organisation_name: "",
-      url: "",
+      organisation_url: "",
+      node_steward_conduct_url: "",
+      user_conduct_url: "",
+      user_privacy_url: "",
     },
     validate: {
       slug: (value) => {
@@ -43,14 +40,34 @@ export default function CreateRegionForm({ onSubmit }: CreateRegionFormProps) {
         return null
       },
       organisation_name: (value) => {
-        if (value !== undefined) {
+        if (value) {
           if (value.length > 100) return "Must be less than 100 characters"
         }
         return null
       },
-      url: (value) => {
-        if (value !== undefined) {
-          if (value.length > 200) return "Must be less than 200 characters"
+      organisation_url: (value) => {
+        if (value) {
+          if (value && !/^https?:\/\/\S+$/.test(value))
+            return "Must be a valid URL starting with http:// or https://"
+        }
+        return null
+      },
+      node_steward_conduct_url: (value) => {
+        if (value) {
+          if (value && !/^https?:\/\/\S+$/.test(value))
+            return "Must be a valid URL starting with http:// or https://"
+        }
+        return null
+      },
+      user_conduct_url: (value) => {
+        if (value) {
+          if (value && !/^https?:\/\/\S+$/.test(value))
+            return "Must be a valid URL starting with http:// or https://"
+        }
+        return null
+      },
+      user_privacy_url: (value) => {
+        if (value) {
           if (value && !/^https?:\/\/\S+$/.test(value))
             return "Must be a valid URL starting with http:// or https://"
         }
@@ -97,11 +114,35 @@ export default function CreateRegionForm({ onSubmit }: CreateRegionFormProps) {
           />
 
           <TextInput
-            label="URL"
-            description="The URL for your region (optional)"
+            label="Organisation URL"
+            description="The URL for your regional organisation or project (optional)"
             placeholder="eg https://merri-crk.coop"
-            key="url"
-            {...form.getInputProps("url")}
+            key="organisation_url"
+            {...form.getInputProps("organisation_url")}
+          />
+
+          <TextInput
+            label="Node Steward Conduct URL"
+            description="A URL describing the agreements for conduct of node stewards in this region (optional)"
+            placeholder="eg https://merri-crk.coop/node-steward-conduct"
+            key="node_steward_conduct_url"
+            {...form.getInputProps("node_steward_conduct_url")}
+          />
+
+          <TextInput
+            label="User Conduct URL"
+            description="A URL describing the agreements for conduct of users in this region (optional)"
+            placeholder="eg https://merri-crk.coop/user-conduct"
+            key="user_conduct_url"
+            {...form.getInputProps("user_conduct_url")}
+          />
+
+          <TextInput
+            label="User Privacy URL"
+            description="A URL describing how user data is handled in this region (optional)"
+            placeholder="eg https://merri-crk.coop/user-privacy"
+            key="user_privacy_url"
+            {...form.getInputProps("user_privacy_url")}
           />
         </Stack>
 

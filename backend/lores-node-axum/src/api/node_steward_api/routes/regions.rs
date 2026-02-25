@@ -94,7 +94,10 @@ pub struct CreateRegionData {
     pub slug: String,
     pub name: String,
     pub organisation_name: Option<String>,
-    pub url: Option<String>,
+    pub organisation_url: Option<String>,
+    pub node_steward_conduct_url: Option<String>,
+    pub user_conduct_url: Option<String>,
+    pub user_privacy_url: Option<String>,
 }
 
 #[utoipa::path(
@@ -163,7 +166,10 @@ async fn create_region(
         slug: data.slug.clone(),
         name: data.name.clone(),
         organisation_name: data.organisation_name.clone(),
-        url: data.url.clone(),
+        organisation_url: data.organisation_url.clone(),
+        node_steward_conduct_url: data.node_steward_conduct_url.clone(),
+        user_conduct_url: data.user_conduct_url.clone(),
+        user_privacy_url: data.user_privacy_url.clone(),
     });
     println!("Prepared event payload: {:?}", event_payload);
 

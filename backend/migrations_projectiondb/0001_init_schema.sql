@@ -1,11 +1,15 @@
 -- Add migration script here
+
 CREATE TABLE regions (
     id VARCHAR(36) PRIMARY KEY NOT NULL,
     creator_node_id VARCHAR(36) NOT NULL,
     slug TEXT NOT NULL,
     name TEXT NOT NULL,
-    organisation_name TEXT NOT NULL,
-    url TEXT NOT NULL
+    organisation_name TEXT NULL,
+    organisation_url TEXT NULL,
+    node_steward_conduct_url TEXT NULL,
+    user_conduct_url TEXT NULL,
+    user_privacy_url TEXT NULL
 );
 
 CREATE TABLE nodes (

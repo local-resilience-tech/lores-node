@@ -48,7 +48,10 @@ impl RegionCreatedHandler {
             slug: payload.slug,
             name: payload.name,
             organisation_name: payload.organisation_name,
-            url: payload.url,
+            organisation_url: payload.organisation_url,
+            node_steward_conduct_url: payload.node_steward_conduct_url,
+            user_conduct_url: payload.user_conduct_url,
+            user_privacy_url: payload.user_privacy_url,
         };
 
         repo.insert(pool, &region).await?;

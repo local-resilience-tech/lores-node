@@ -9,7 +9,10 @@ pub struct RegionCreatedDataV1 {
     pub slug: String,
     pub name: String,
     pub organisation_name: Option<String>,
-    pub url: Option<String>,
+    pub organisation_url: Option<String>,
+    pub node_steward_conduct_url: Option<String>,
+    pub user_conduct_url: Option<String>,
+    pub user_privacy_url: Option<String>,
 }
 
 #[derive(Deserialize, Serialize, Clone, PartialEq, Debug)]

@@ -1,11 +1,12 @@
 import { getApi } from "../../../api"
+import { CreateRegionData } from "../../../api/Api"
 import {
   actionFailure,
   ActionPromiseResult,
   actionSuccess,
 } from "../../../components"
 
-import CreateRegionForm, { CreateRegionData } from "./CreateRegionForm"
+import CreateRegionForm from "./CreateRegionForm"
 
 export default function CreateRegion() {
   const onSubmit = async (

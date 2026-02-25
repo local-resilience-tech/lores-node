@@ -17,7 +17,8 @@ impl RegionsReadRepo {
         let region = sqlx::query_as!(
             Region,
             "
-            SELECT id, creator_node_id, slug, name, organisation_name, url
+            SELECT
+                id, creator_node_id, slug, name, organisation_name, organisation_url, node_steward_conduct_url, user_conduct_url, user_privacy_url
             FROM regions
             WHERE regions.id = ?
             LIMIT 1
