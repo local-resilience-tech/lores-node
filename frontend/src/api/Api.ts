@@ -74,9 +74,12 @@ export interface CreateNodeDetails {
 
 export interface CreateRegionData {
   name: string;
+  node_steward_conduct_url?: string | null;
   organisation_name?: string | null;
+  organisation_url?: string | null;
   slug: string;
-  url?: string | null;
+  user_conduct_url?: string | null;
+  user_privacy_url?: string | null;
 }
 
 export interface DockerService {
@@ -160,8 +163,15 @@ export interface P2PandaNodeDetails {
 }
 
 export interface Region {
+  creator_node_id: string;
   id: string;
   name: string;
+  node_steward_conduct_url?: string | null;
+  organisation_name?: string | null;
+  organisation_url?: string | null;
+  slug: string;
+  user_conduct_url?: string | null;
+  user_privacy_url?: string | null;
 }
 
 export interface RegionAppWithInstallations {

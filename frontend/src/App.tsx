@@ -136,19 +136,19 @@ const router = createBrowserRouter([
               </RequireNodeSteward>
             ),
           },
+          {
+            path: ":regionSlug",
+            children: [
+              { path: "", element: <Navigate to="nodes" replace /> },
+              { path: "nodes", element: <Nodes /> },
+              { path: "apps", element: <RegionApps /> },
+            ],
+          },
         ],
       },
       {
         path: "network",
         children: [{ path: "node", element: <P2PandaNode /> }],
-      },
-      {
-        path: "this_region",
-        children: [
-          { path: "", element: <Navigate to="nodes" replace /> },
-          { path: "nodes", element: <Nodes /> },
-          { path: "apps", element: <RegionApps /> },
-        ],
       },
       {
         path: "debug",

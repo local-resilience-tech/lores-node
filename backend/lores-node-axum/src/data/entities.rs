@@ -1,6 +1,9 @@
+use lores_p2panda::p2panda_core::PublicKey;
 use serde::{Deserialize, Serialize};
 use sqlx;
 use utoipa::ToSchema;
+
+use crate::panda_comms::RegionId;
 
 #[derive(sqlx::FromRow, Serialize, Deserialize, ToSchema)]
 pub struct RegionNode {
@@ -25,14 +28,30 @@ pub struct RegionNodeDetails {
 #[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
 pub struct Region {
     pub id: String,
+    pub creator_node_id: String,
+    pub slug: String,
     pub name: String,
+    pub organisation_name: Option<String>,
+    pub organisation_url: Option<String>,
+    pub node_steward_conduct_url: Option<String>,
+    pub user_conduct_url: Option<String>,
+    pub user_privacy_url: Option<String>,
 }
 
 impl Region {
-    pub fn unnamed(id: String) -> Self {
+    pub fn unnamed(id: RegionId, creator_node_id: PublicKey) -> Self {
+        let hex_id = id.to_hex();
+
         Self {
-            id: id.clone(),
-            name: id.chars().take(12).collect(),
+            id: hex_id.clone(),
+            creator_node_id: creator_node_id.to_string(),
+            slug: hex_id.chars().take(12).collect(),
+            name: hex_id.chars().take(12).collect(),
+            organisation_name: None,
+            organisation_url: None,
+            node_steward_conduct_url: None,
+            user_conduct_url: None,
+            user_privacy_url: None,
         }
     }
 }

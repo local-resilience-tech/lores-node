@@ -3,3 +3,4 @@ pub mod apps;
 pub mod current_node_statuses;
 pub mod node_statuses;
 pub mod nodes;
+pub mod regions;

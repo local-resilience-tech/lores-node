@@ -1,18 +1,25 @@
 import { ActionIcon, Combobox, Group, Text, useCombobox } from "@mantine/core"
 import { IconChevronDown } from "@tabler/icons-react"
 import { Region } from "../../api/Api"
+import { useNavigate } from "react-router-dom"
 
 interface RegionSelectorProps {
   regions: Region[]
   selected: Region | null
   onChange: (region: Region | undefined) => void
+  addNewPath?: string
 }
+
+const ADD_NEW_VALUE = "__add_new__"
 
 export function RegionSelector({
   regions,
   selected,
   onChange,
+  addNewPath,
 }: RegionSelectorProps) {
+  const navigate = useNavigate()
+
   const combobox = useCombobox({
     onDropdownClose: () => combobox.resetSelectedOption(),
   })
@@ -25,9 +32,21 @@ export function RegionSelector({
     </Combobox.Option>
   ))
 
+  if (addNewPath) {
+    options.push(
+      <Combobox.Option value={ADD_NEW_VALUE} key={ADD_NEW_VALUE}>
+        <Text c="dimmed">Join another region</Text>
+      </Combobox.Option>,
+    )
+  }
+
   const onIdChange = (id: string) => {
-    const region = regions.find((r) => r.id === id)
-    onChange(region)
+    if (addNewPath !== undefined && id === ADD_NEW_VALUE) {
+      navigate(addNewPath)
+    } else {
+      const region = regions.find((r) => r.id === id)
+      onChange(region)
+    }
   }
 
   return (

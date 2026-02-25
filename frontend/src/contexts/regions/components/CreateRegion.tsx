@@ -1,13 +1,17 @@
+import { useNavigate } from "react-router-dom"
 import { getApi } from "../../../api"
+import { CreateRegionData } from "../../../api/Api"
 import {
   actionFailure,
   ActionPromiseResult,
   actionSuccess,
 } from "../../../components"
 
-import CreateRegionForm, { CreateRegionData } from "./CreateRegionForm"
+import CreateRegionForm from "./CreateRegionForm"
 
 export default function CreateRegion() {
+  const navigate = useNavigate()
+
   const onSubmit = async (
     data: CreateRegionData,
   ): Promise<ActionPromiseResult> => {
@@ -15,6 +19,7 @@ export default function CreateRegion() {
     getApi()
       .nodeStewardApi.createRegion(data)
       .then((_result) => {
+        navigate(`/regions/${data.slug}`)
         return actionSuccess()
       })
       .catch(actionFailure)

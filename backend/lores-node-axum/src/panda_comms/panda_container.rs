@@ -150,8 +150,7 @@ impl PandaContainer {
     }
 
     pub async fn join_region(&self, region_id: RegionId) -> Result<TopicId, PandaContainerError> {
-        let hash = lores_p2panda::p2panda_core::Hash::new(region_id.to_hex().as_bytes());
-        let topic_id: TopicId = (&hash).into();
+        let topic_id: TopicId = region_id.into();
 
         self.subscribe(topic_id).await?;
         Ok(topic_id)
@@ -209,6 +208,7 @@ impl PandaContainer {
                 e
             ))
         })?;
+
         self.lores_events_tx.send(lores_event).await.map_err(|e| {
             PandaPublishError::AppError(format!(
                 "Failed to send LoResEvent back to the application: {}",
@@ -258,8 +258,11 @@ impl PandaContainer {
         operation: &Operation<LoResMeshExtensions>,
     ) -> Result<LoResEvent, anyhow::Error> {
         let operation_header = &operation.header;
+        let topic_id: TopicId = operation.header.extensions.topic;
+
         let lores_header = LoResEventHeader {
             author_node_id: operation_header.public_key.to_hex(),
+            region_id: Some(topic_id.into()),
             timestamp: operation_header.timestamp,
             operation_id: operation_header.hash(),
         };
