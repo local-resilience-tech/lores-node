@@ -7,7 +7,7 @@ import {
 } from "../../../components"
 
 export interface JoinRegionData {
-  name: string
+  id: string
 }
 
 interface JoinRegionFormProps {
@@ -21,14 +21,11 @@ export default function JoinRegionForm({ onSubmit }: JoinRegionFormProps) {
   const form = useForm<JoinRegionData>({
     mode: "controlled",
     initialValues: {
-      name: "",
+      id: "",
     },
     validate: {
-      name: (value) => {
+      id: (value) => {
         if (!value) return "This is required"
-        if (value.length > 50) return "Must be less than 50 characters"
-        if (!/^[a-z]+(-[a-z]+)*$/.test(value))
-          return "Lowercase letters only, no spaces, hyphens allowed"
         return null
       },
     },
@@ -44,18 +41,17 @@ export default function JoinRegionForm({ onSubmit }: JoinRegionFormProps) {
     <form onSubmit={form.onSubmit(handleSubmit)}>
       <Stack gap="lg">
         <Text>
-          To join a region, you need to know the name of the region. This is a
-          unique identifier, so be sure to get the correct spelling and
-          punctuation.
+          To join a region, you need to know the ID of the region. This will be
+          a fairly long string (64 characters) that is generated when the region
+          is created. You can ask the creator of the region for this ID.
         </Text>
 
         <Stack>
           <TextInput
-            label="Region Name"
-            placeholder="Enter region name"
-            description="A name to identify your Region - use lowercase letters and no spaces"
-            key="name"
-            {...form.getInputProps("name")}
+            label="Region ID"
+            placeholder="Enter region ID"
+            key="id"
+            {...form.getInputProps("id")}
           />
         </Stack>
 
