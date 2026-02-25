@@ -11,7 +11,7 @@ import {
   Text,
 } from "@mantine/core"
 import { Anchor, NavLink } from "../../components"
-import { Link, Outlet } from "react-router-dom"
+import { Link, Outlet, useNavigate } from "react-router-dom"
 import { useDisclosure } from "@mantine/hooks"
 import {
   IconAffiliate,
@@ -52,6 +52,7 @@ export default function Layout() {
   const localAppsCount = useAppSelector((state) => state.localApps?.length)
   const me = useAppSelector((state) => state.me)
   const dispatch = useAppDispatch()
+  const navigate = useNavigate()
 
   const readyForApps = true
   const pandaRunning = !!network
@@ -176,7 +177,10 @@ export default function Layout() {
                   regions={allRegions}
                   selected={region}
                   onChange={(region) => {
-                    if (region) dispatch(activeRegionChanged(region.id))
+                    if (region) {
+                      dispatch(activeRegionChanged(region.id))
+                      navigate(`/regions/${region.slug}`)
+                    }
                   }}
                   addNewPath="/regions/setup"
                 />
@@ -184,7 +188,7 @@ export default function Layout() {
             </Box>
             <NavLink
               label="Nodes"
-              href="/this_region/nodes"
+              href={`/regions/${region.slug}/nodes`}
               leftSection={<IconAffiliate size={iconSize} />}
               rightSection={
                 nodesCount !== undefined &&
@@ -198,7 +202,7 @@ export default function Layout() {
             />
             <NavLink
               label="All apps"
-              href="/this_region/apps"
+              href={`/regions/${region.slug}/apps`}
               leftSection={<IconApps size={iconSize} />}
               onClick={toggle}
             />
