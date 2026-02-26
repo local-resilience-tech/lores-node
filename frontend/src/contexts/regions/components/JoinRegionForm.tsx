@@ -5,13 +5,7 @@ import {
   DisplayActionResult,
   useOnSubmitWithResult,
 } from "../../../components"
-
-export interface JoinRegionRequestData {
-  id: string
-  about_your_node: string
-  about_your_stewards: string
-  node_steward_conduct_url?: string
-}
+import { JoinRegionRequestData } from "../../../api/Api"
 
 interface JoinRegionFormProps {
   onSubmit: (data: JoinRegionRequestData) => Promise<ActionPromiseResult>
@@ -27,10 +21,28 @@ export default function JoinRegionForm({ onSubmit }: JoinRegionFormProps) {
       id: "",
       about_your_node: "",
       about_your_stewards: "",
+      node_steward_conduct_url: "",
     },
     validate: {
       id: (value) => {
         if (!value) return "This is required"
+        return null
+      },
+      about_your_node: (value) => {
+        if (!value) return "This is required"
+        if (value.length > 1000) return "Must be less than 1000 characters"
+        return null
+      },
+      about_your_stewards: (value) => {
+        if (!value) return "This is required"
+        if (value.length > 1000) return "Must be less than 1000 characters"
+        return null
+      },
+      node_steward_conduct_url: (value) => {
+        if (value) {
+          if (value && !/^https?:\/\/\S+$/.test(value))
+            return "Must be a valid URL starting with http:// or https://"
+        }
         return null
       },
     },
@@ -39,7 +51,14 @@ export default function JoinRegionForm({ onSubmit }: JoinRegionFormProps) {
   const handleSubmit = (
     values: JoinRegionRequestData,
   ): Promise<ActionPromiseResult> => {
-    return onSubmitWithResult(values)
+    let result = {
+      ...values,
+    }
+    if (result.node_steward_conduct_url === "") {
+      result.node_steward_conduct_url = undefined
+    }
+
+    return onSubmitWithResult(result)
   }
 
   return (
@@ -57,6 +76,7 @@ export default function JoinRegionForm({ onSubmit }: JoinRegionFormProps) {
             label="Region ID"
             placeholder="Enter region ID"
             key="id"
+            withAsterisk
             {...form.getInputProps("id")}
           />
 
@@ -67,6 +87,7 @@ export default function JoinRegionForm({ onSubmit }: JoinRegionFormProps) {
             placeholder="Tell us about your node"
             key="about_your_node"
             rows={4}
+            withAsterisk
             {...form.getInputProps("about_your_node")}
           />
 
@@ -76,6 +97,7 @@ export default function JoinRegionForm({ onSubmit }: JoinRegionFormProps) {
             placeholder="Tell us about your stewards"
             key="about_your_stewards"
             rows={4}
+            withAsterisk
             {...form.getInputProps("about_your_stewards")}
           />
 

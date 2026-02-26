@@ -96,6 +96,13 @@ export interface DockerStackWithServices {
   services: DockerService[];
 }
 
+export interface JoinRegionRequestData {
+  about_your_node: string;
+  about_your_stewards: string;
+  id: string;
+  node_steward_conduct_url?: string | null;
+}
+
 export interface LocalApp {
   name: string;
   url?: null | NodeAppUrl;
@@ -607,6 +614,22 @@ export class Api<
     createRegion: (data: CreateRegionData, params: RequestParams = {}) =>
       this.request<any, string>({
         path: `/node_steward_api/regions/create`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @name JoinRegion
+     * @request POST:/node_steward_api/regions/join
+     */
+    joinRegion: (data: JoinRegionRequestData, params: RequestParams = {}) =>
+      this.request<any, string>({
+        path: `/node_steward_api/regions/join`,
         method: "POST",
         body: data,
         type: ContentType.Json,
