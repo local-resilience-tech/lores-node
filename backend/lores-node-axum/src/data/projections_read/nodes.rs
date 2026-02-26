@@ -18,8 +18,8 @@ impl NodesReadRepo {
             RegionNode,
             "
             SELECT id, name, public_ipv4, domain_on_local_network, domain_on_internet
-            FROM nodes
-            WHERE nodes.id = ?
+            FROM region_nodes
+            WHERE region_nodes.id = ?
             LIMIT 1
             ",
             node_id
@@ -39,9 +39,9 @@ impl NodesReadRepo {
             RegionNodeDetails,
             "
             SELECT id, name, public_ipv4, domain_on_local_network, domain_on_internet, s.text as status_text, s.state as state
-            FROM nodes
-            LEFT JOIN current_node_statuses AS s ON nodes.id = s.node_id
-            WHERE nodes.id = ?
+            FROM region_nodes
+            LEFT JOIN current_node_statuses AS s ON region_nodes.id = s.node_id
+            WHERE region_nodes.id = ?
             LIMIT 1
             ",
             node_id
@@ -57,8 +57,8 @@ impl NodesReadRepo {
             RegionNodeDetails,
             "
             SELECT id, name, public_ipv4, domain_on_local_network, domain_on_internet, s.text as status_text, s.state as state
-            FROM nodes
-            LEFT JOIN current_node_statuses AS s ON nodes.id = s.node_id"
+            FROM region_nodes
+            LEFT JOIN current_node_statuses AS s ON region_nodes.id = s.node_id"
         )
         .fetch_all(pool)
         .await?;

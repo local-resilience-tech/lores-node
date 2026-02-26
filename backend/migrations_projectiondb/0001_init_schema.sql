@@ -12,7 +12,7 @@ CREATE TABLE regions (
     user_privacy_url TEXT NULL
 );
 
-CREATE TABLE nodes (
+CREATE TABLE region_nodes (
     id VARCHAR(36) PRIMARY KEY NOT NULL,
     name VARCHAR(50) NOT NULL,
     public_ipv4 VARCHAR(15) DEFAULT NULL,
@@ -45,6 +45,6 @@ CREATE TABLE app_installations (
   node_id TEXT NOT NULL,
   version TEXT NOT NULL,
   FOREIGN KEY (app_name) REFERENCES apps(name),
-  FOREIGN KEY (node_id) REFERENCES nodes(id),
+  FOREIGN KEY (node_id) REFERENCES region_nodes(id),
   PRIMARY KEY (app_name, node_id)
 );
