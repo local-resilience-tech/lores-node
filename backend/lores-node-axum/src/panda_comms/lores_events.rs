@@ -5,7 +5,7 @@ use super::RegionId;
 
 #[derive(Deserialize, Serialize, Clone, PartialEq, Debug)]
 pub struct RegionCreatedDataV1 {
-    pub id: String,
+    pub region_id: String,
     pub slug: String,
     pub name: String,
     pub organisation_name: Option<String>,
@@ -13,6 +13,14 @@ pub struct RegionCreatedDataV1 {
     pub node_steward_conduct_url: Option<String>,
     pub user_conduct_url: Option<String>,
     pub user_privacy_url: Option<String>,
+}
+
+#[derive(Deserialize, Serialize, Clone, PartialEq, Debug)]
+pub struct RegionJoinRequestedDataV1 {
+    pub region_id: String,
+    pub about_your_node: String,
+    pub about_your_stewards: String,
+    pub agreed_node_steward_conduct_url: Option<String>,
 }
 
 #[derive(Deserialize, Serialize, Clone, PartialEq, Debug)]
@@ -43,6 +51,7 @@ pub struct AppRegisteredDataV1 {
 #[derive(Deserialize, Serialize, Clone, PartialEq, Debug)]
 pub enum LoResEventPayload {
     RegionCreated(RegionCreatedDataV1),
+    RegionJoinRequested(RegionJoinRequestedDataV1),
     NodeAnnounced(NodeAnnouncedDataV1),
     NodeUpdated(NodeUpdatedDataV1),
     NodeStatusPosted(NodeStatusPostedDataV1),

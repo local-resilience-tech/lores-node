@@ -99,8 +99,8 @@ export interface DockerStackWithServices {
 export interface JoinRegionRequestData {
   about_your_node: string;
   about_your_stewards: string;
-  id: string;
-  node_steward_conduct_url?: string | null;
+  agreed_node_steward_conduct_url?: string | null;
+  region_id: string;
 }
 
 export interface LocalApp {

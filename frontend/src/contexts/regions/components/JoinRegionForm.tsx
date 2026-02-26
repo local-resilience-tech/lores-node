@@ -18,13 +18,13 @@ export default function JoinRegionForm({ onSubmit }: JoinRegionFormProps) {
   const form = useForm<JoinRegionRequestData>({
     mode: "controlled",
     initialValues: {
-      id: "",
+      region_id: "",
       about_your_node: "",
       about_your_stewards: "",
-      node_steward_conduct_url: "",
+      agreed_node_steward_conduct_url: "",
     },
     validate: {
-      id: (value) => {
+      region_id: (value) => {
         if (!value) return "This is required"
         return null
       },
@@ -38,7 +38,7 @@ export default function JoinRegionForm({ onSubmit }: JoinRegionFormProps) {
         if (value.length > 1000) return "Must be less than 1000 characters"
         return null
       },
-      node_steward_conduct_url: (value) => {
+      agreed_node_steward_conduct_url: (value) => {
         if (value) {
           if (value && !/^https?:\/\/\S+$/.test(value))
             return "Must be a valid URL starting with http:// or https://"
@@ -54,8 +54,8 @@ export default function JoinRegionForm({ onSubmit }: JoinRegionFormProps) {
     let result = {
       ...values,
     }
-    if (result.node_steward_conduct_url === "") {
-      result.node_steward_conduct_url = undefined
+    if (result.agreed_node_steward_conduct_url === "") {
+      result.agreed_node_steward_conduct_url = undefined
     }
 
     return onSubmitWithResult(result)
@@ -75,9 +75,9 @@ export default function JoinRegionForm({ onSubmit }: JoinRegionFormProps) {
           <TextInput
             label="Region ID"
             placeholder="Enter region ID"
-            key="id"
+            key="region_id"
             withAsterisk
-            {...form.getInputProps("id")}
+            {...form.getInputProps("region_id")}
           />
 
           <Textarea

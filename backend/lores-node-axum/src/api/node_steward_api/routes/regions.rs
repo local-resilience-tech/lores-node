@@ -92,7 +92,7 @@ async fn create_region(
 
     // Publish the RegionCreated event
     let event_payload = LoResEventPayload::RegionCreated(RegionCreatedDataV1 {
-        id: region_id.to_hex(),
+        region_id: region_id.to_hex(),
         slug: data.slug.clone(),
         name: data.name.clone(),
         organisation_name: data.organisation_name.clone(),
@@ -123,10 +123,10 @@ async fn create_region(
 #[derive(Deserialize, ToSchema, Debug)]
 #[allow(dead_code)]
 pub struct JoinRegionRequestData {
-    pub id: String,
+    pub region_id: String,
     pub about_your_node: String,
     pub about_your_stewards: String,
-    pub node_steward_conduct_url: Option<String>,
+    pub agreed_node_steward_conduct_url: Option<String>,
 }
 
 #[utoipa::path(
