@@ -52,7 +52,7 @@ async fn create_this_region_node(
     match result {
         Ok(_) => {
             let node = RegionNode {
-                id: "1".to_string(),
+                node_id: "1".to_string(),
                 name: data.name.clone(),
                 public_ipv4: None,
                 domain_on_local_network: None,
@@ -106,7 +106,7 @@ async fn update_this_region_node(
     match result {
         Ok(_) => {
             let node = RegionNode {
-                id: "1".to_string(),
+                node_id: "1".to_string(),
                 name: data.name.clone(),
                 public_ipv4: Some(data.public_ipv4.clone()),
                 domain_on_local_network: data.domain_on_local_network.clone(),

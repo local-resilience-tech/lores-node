@@ -17,9 +17,9 @@ impl NodesReadRepo {
         let node = sqlx::query_as!(
             RegionNode,
             "
-            SELECT id, name, public_ipv4, domain_on_local_network, domain_on_internet
+            SELECT node_id, name, public_ipv4, domain_on_local_network, domain_on_internet
             FROM region_nodes
-            WHERE region_nodes.id = ?
+            WHERE region_nodes.node_id = ?
             LIMIT 1
             ",
             node_id
@@ -38,10 +38,10 @@ impl NodesReadRepo {
         let node = sqlx::query_as!(
             RegionNodeDetails,
             "
-            SELECT id, name, public_ipv4, domain_on_local_network, domain_on_internet, s.text as status_text, s.state as state
+            SELECT region_nodes.node_id as node_id, name, public_ipv4, domain_on_local_network, domain_on_internet, s.text as status_text, s.state as state
             FROM region_nodes
-            LEFT JOIN current_node_statuses AS s ON region_nodes.id = s.node_id
-            WHERE region_nodes.id = ?
+            LEFT JOIN current_node_statuses AS s ON region_nodes.node_id = s.node_id
+            WHERE region_nodes.node_id = ?
             LIMIT 1
             ",
             node_id
@@ -56,9 +56,9 @@ impl NodesReadRepo {
         let nodes = sqlx::query_as!(
             RegionNodeDetails,
             "
-            SELECT id, name, public_ipv4, domain_on_local_network, domain_on_internet, s.text as status_text, s.state as state
+            SELECT region_nodes.node_id as node_id, name, public_ipv4, domain_on_local_network, domain_on_internet, s.text as status_text, s.state as state
             FROM region_nodes
-            LEFT JOIN current_node_statuses AS s ON region_nodes.id = s.node_id"
+            LEFT JOIN current_node_statuses AS s ON region_nodes.node_id = s.node_id"
         )
         .fetch_all(pool)
         .await?;

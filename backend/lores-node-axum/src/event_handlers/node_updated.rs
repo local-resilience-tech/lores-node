@@ -39,7 +39,7 @@ impl NodeUpdatedHandler {
 
         // Upsert the node for now. This wouldn't be needed if we had a preserved message log.
         let node = RegionNode {
-            id: header.author_node_id.clone(),
+            node_id: header.author_node_id.clone(),
             name: payload.name.clone(),
             public_ipv4: Some(payload.public_ipv4.clone()),
             domain_on_local_network: payload.domain_on_local_network.clone(),

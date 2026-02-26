@@ -12,12 +12,12 @@ impl NodesWriteRepo {
     pub async fn upsert_name(
         &self,
         pool: &SqlitePool,
-        id: &String,
+        node_id: &String,
         name: &String,
     ) -> Result<(), sqlx::Error> {
         let _node = sqlx::query!(
-            "INSERT INTO region_nodes (id, name) VALUES (?, ?) ON CONFLICT(id) DO UPDATE SET name = excluded.name",
-            id,
+            "INSERT INTO region_nodes (node_id, name) VALUES (?, ?) ON CONFLICT(node_id) DO UPDATE SET name = excluded.name",
+            node_id,
             name
         )
         .execute(pool)
@@ -28,8 +28,8 @@ impl NodesWriteRepo {
 
     pub async fn upsert(&self, pool: &SqlitePool, node: &RegionNode) -> Result<(), sqlx::Error> {
         let _node = sqlx::query!(
-            "INSERT INTO region_nodes (id, name, public_ipv4, domain_on_local_network, domain_on_internet) VALUES (?, ?, ?, ?, ?) ON CONFLICT(id) DO UPDATE SET name = excluded.name, public_ipv4 = excluded.public_ipv4, domain_on_local_network = excluded.domain_on_local_network, domain_on_internet = excluded.domain_on_internet",
-            node.id,
+            "INSERT INTO region_nodes (node_id, name, public_ipv4, domain_on_local_network, domain_on_internet) VALUES (?, ?, ?, ?, ?) ON CONFLICT(node_id) DO UPDATE SET name = excluded.name, public_ipv4 = excluded.public_ipv4, domain_on_local_network = excluded.domain_on_local_network, domain_on_internet = excluded.domain_on_internet",
+            node.node_id,
             node.name,
             node.public_ipv4,
             node.domain_on_local_network,
@@ -43,12 +43,14 @@ impl NodesWriteRepo {
 
     pub async fn update(&self, pool: &SqlitePool, node: &RegionNode) -> Result<(), sqlx::Error> {
         let _node = sqlx::query!(
-            "UPDATE region_nodes SET name = ?, public_ipv4 = ?, domain_on_local_network = ?, domain_on_internet = ? WHERE id = ?",
+            "UPDATE region_nodes
+            SET name = ?, public_ipv4 = ?, domain_on_local_network = ?, domain_on_internet = ?
+            WHERE node_id = ?",
             node.name,
             node.public_ipv4,
             node.domain_on_local_network,
             node.domain_on_internet,
-            node.id
+            node.node_id
         )
         .execute(pool)
         .await?;

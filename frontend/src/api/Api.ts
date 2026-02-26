@@ -189,16 +189,16 @@ export interface RegionAppWithInstallations {
 export interface RegionNode {
   domain_on_internet?: string | null;
   domain_on_local_network?: string | null;
-  id: string;
   name: string;
+  node_id: string;
   public_ipv4?: string | null;
 }
 
 export interface RegionNodeDetails {
   domain_on_internet?: string | null;
   domain_on_local_network?: string | null;
-  id: string;
   name: string;
+  node_id: string;
   public_ipv4?: string | null;
   state?: string | null;
   status_text?: string | null;

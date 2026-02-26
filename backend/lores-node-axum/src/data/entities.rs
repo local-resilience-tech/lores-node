@@ -7,7 +7,7 @@ use crate::panda_comms::RegionId;
 
 #[derive(sqlx::FromRow, Serialize, Deserialize, ToSchema)]
 pub struct RegionNode {
-    pub id: String,
+    pub node_id: String,
     pub name: String,
     pub public_ipv4: Option<String>,
     pub domain_on_local_network: Option<String>,
@@ -16,7 +16,7 @@ pub struct RegionNode {
 
 #[derive(sqlx::FromRow, Serialize, Deserialize, ToSchema, Debug, Clone)]
 pub struct RegionNodeDetails {
-    pub id: String,
+    pub node_id: String,
     pub name: String,
     pub public_ipv4: Option<String>,
     pub domain_on_local_network: Option<String>,

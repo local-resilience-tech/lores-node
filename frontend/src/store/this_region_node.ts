@@ -15,7 +15,7 @@ const thisRegionNodeSlice = createSlice({
     builder.addMatcher(
       (action) => action.type === "nodes/nodeUpdated",
       (state, { payload }: PayloadAction<RegionNodeDetails>) => {
-        if (state && state.id === payload.id) {
+        if (state && state.id === payload.node_id) {
           return { ...state, ...payload }
         }
         return state
