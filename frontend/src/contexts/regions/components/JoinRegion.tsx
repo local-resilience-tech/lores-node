@@ -16,14 +16,13 @@ export default function JoinRegion() {
     data: JoinRegionRequestData,
   ): Promise<ActionPromiseResult> => {
     console.log("Submitting join region form with data:", data)
-    getApi()
+    return getApi()
       .nodeStewardApi.joinRegion(data)
       .then((_result) => {
         navigate(`/regions`)
         return actionSuccess()
       })
       .catch(actionFailure)
-    return actionSuccess()
   }
 
   return <JoinRegionForm onSubmit={onSubmit} />
