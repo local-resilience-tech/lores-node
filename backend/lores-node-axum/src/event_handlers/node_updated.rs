@@ -1,7 +1,7 @@
 use sqlx::{Sqlite, SqlitePool};
 
 use crate::{
-    data::{entities::RegionNode, projections_write::nodes::NodesWriteRepo},
+    data::{entities::RegionNode, projections_write::region_nodes::RegionNodesWriteRepo},
     event_handlers::handler_utilities::{
         handle_db_write_error, read_node_updated_event, HandlerResult,
     },
@@ -33,21 +33,21 @@ impl NodeUpdatedHandler {
         payload: NodeUpdatedDataV1,
         pool: &SqlitePool,
     ) -> Result<(), sqlx::Error> {
-        let repo = NodesWriteRepo::init();
+        let repo = RegionNodesWriteRepo::init();
 
         println!("Node updated: {:?}", payload);
 
         // Upsert the node for now. This wouldn't be needed if we had a preserved message log.
-        let node = RegionNode {
-            node_id: header.author_node_id.clone(),
-            name: payload.name.clone(),
-            public_ipv4: Some(payload.public_ipv4.clone()),
-            domain_on_local_network: payload.domain_on_local_network.clone(),
-            domain_on_internet: payload.domain_on_internet.clone(),
-        };
-        repo.upsert(pool, &node).await?;
+        // let node = RegionNode {
+        //     node_id: header.author_node_id.clone(),
+        //     name: payload.name.clone(),
+        //     public_ipv4: Some(payload.public_ipv4.clone()),
+        //     domain_on_local_network: payload.domain_on_local_network.clone(),
+        //     domain_on_internet: payload.domain_on_internet.clone(),
+        // };
+        // repo.upsert(pool, &node).await?;
 
-        repo.update(pool, &node).await?;
+        // repo.update(pool, &node).await?;
 
         Ok(())
     }

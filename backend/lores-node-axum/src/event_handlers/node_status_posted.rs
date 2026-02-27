@@ -61,23 +61,23 @@ impl NodeStatusPostedHandler {
 
         let repo = CurrentNodeStatusesWriteRepo::init();
 
-        let result = repo
-            .upsert(
-                pool,
-                CurrentNodeStatusRow {
-                    author_node_id: header.author_node_id.clone(),
-                    posted_timestamp: header.timestamp,
-                    text: payload.text.clone(),
-                    state: payload.state.clone(),
-                },
-            )
-            .await;
+        // let result = repo
+        //     .upsert(
+        //         pool,
+        //         CurrentNodeStatusRow {
+        //             author_node_id: header.author_node_id.clone(),
+        //             posted_timestamp: header.timestamp,
+        //             text: payload.text.clone(),
+        //             state: payload.state.clone(),
+        //         },
+        //     )
+        //     .await;
 
-        if let Err(e) = result {
-            println!("Error posting current node status: {}", e);
-        } else {
-            println!("Current node status posted successfully");
-        }
+        // if let Err(e) = result {
+        //     println!("Error posting current node status: {}", e);
+        // } else {
+        //     println!("Current node status posted successfully");
+        // }
 
         Ok(())
     }

@@ -16,11 +16,11 @@ impl AppInstallationsWriteRepo {
     ) -> Result<(), sqlx::Error> {
         sqlx::query!(
             "
-            INSERT INTO app_installations (app_name, node_id, version)
+            INSERT INTO app_installations (app_name, region_node_id, version)
             VALUES (?,?,?)
-            ON CONFLICT(app_name, node_id) DO UPDATE SET version = excluded.version",
+            ON CONFLICT(app_name, region_node_id) DO UPDATE SET version = excluded.version",
             installation.app_name,
-            installation.node_id,
+            installation.region_node_id,
             installation.version
         )
         .execute(pool)

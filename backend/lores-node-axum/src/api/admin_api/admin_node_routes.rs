@@ -4,7 +4,7 @@ use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::{
     config::config_state::LoresNodeConfigState,
-    data::{entities::RegionNode, projections_read::nodes::NodesReadRepo},
+    data::{entities::RegionNode, projections_read::region_nodes::RegionNodesReadRepo},
     DatabaseState,
 };
 
@@ -20,12 +20,18 @@ pub async fn show_this_node(
     Extension(db): Extension<DatabaseState>,
     Extension(config_state): Extension<LoresNodeConfigState>,
 ) -> impl IntoResponse {
-    let repo = NodesReadRepo::init();
+    let repo = RegionNodesReadRepo::init();
     let config = config_state.get().await;
 
     match config.public_key_hex {
         Some(public_key_hex) => {
-            let node = repo.find(&db.projections_pool, public_key_hex).await;
+            let node = repo
+                .find_by_keys(
+                    &db.projections_pool,
+                    public_key_hex,
+                    "invalid-region-id".to_string(),
+                )
+                .await;
 
             match node {
                 Ok(node) => (StatusCode::OK, Json(node)).into_response(),

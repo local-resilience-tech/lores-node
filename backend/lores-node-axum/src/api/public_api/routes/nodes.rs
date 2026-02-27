@@ -2,7 +2,7 @@ use axum::{http::StatusCode, response::IntoResponse, Extension, Json};
 use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::{
-    data::{entities::RegionNodeDetails, projections_read::nodes::NodesReadRepo},
+    data::{entities::RegionNodeDetails, projections_read::region_nodes::RegionNodesReadRepo},
     DatabaseState,
 };
 
@@ -15,7 +15,7 @@ pub fn router() -> OpenApiRouter {
     (status = INTERNAL_SERVER_ERROR, body = ()),
 ),)]
 async fn list_nodes(Extension(db): Extension<DatabaseState>) -> impl IntoResponse {
-    let repo = NodesReadRepo::init();
+    let repo = RegionNodesReadRepo::init();
 
     repo.all(&db.projections_pool)
         .await

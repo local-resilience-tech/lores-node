@@ -49,7 +49,8 @@ export interface AdminCredentials {
 
 export interface AppInstallation {
   app_name: string;
-  node_id: string;
+  /** @format int64 */
+  region_node_id: number;
   version: string;
 }
 
@@ -189,17 +190,23 @@ export interface RegionAppWithInstallations {
 export interface RegionNode {
   domain_on_internet?: string | null;
   domain_on_local_network?: string | null;
+  /** @format int64 */
+  id: number;
   name: string;
   node_id: string;
   public_ipv4?: string | null;
+  region_id: string;
 }
 
 export interface RegionNodeDetails {
   domain_on_internet?: string | null;
   domain_on_local_network?: string | null;
+  /** @format int64 */
+  id: number;
   name: string;
   node_id: string;
   public_ipv4?: string | null;
+  region_id: string;
   state?: string | null;
   status_text?: string | null;
 }

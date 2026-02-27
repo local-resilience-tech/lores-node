@@ -37,19 +37,19 @@ impl AppRegisteredHandler {
         payload: AppRegisteredDataV1,
         pool: &SqlitePool,
     ) -> Result<(), sqlx::Error> {
-        let repo = AppsWriteRepo::init();
-        let app = RegionApp {
-            name: payload.name.clone(),
-        };
-        repo.upsert(pool, app).await?;
+        // let repo = AppsWriteRepo::init();
+        // let app = RegionApp {
+        //     name: payload.name.clone(),
+        // };
+        // repo.upsert(pool, app).await?;
 
-        let repo = AppInstallationsWriteRepo::init();
-        let installation = AppInstallation {
-            app_name: payload.name.clone(),
-            node_id: header.author_node_id.clone(),
-            version: payload.version.clone(),
-        };
-        repo.upsert(pool, installation).await?;
+        // let repo = AppInstallationsWriteRepo::init();
+        // let installation = AppInstallation {
+        //     app_name: payload.name.clone(),
+        //     region_node_id: header.author_node_id.clone(),
+        //     version: payload.version.clone(),
+        // };
+        // repo.upsert(pool, installation).await?;
 
         Ok(())
     }

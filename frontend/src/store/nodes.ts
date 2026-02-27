@@ -3,20 +3,20 @@ import type { RegionNodeDetails } from "../api/Api"
 
 export type NodesState = RegionNodeDetails[] | null
 
-export type NodesMap = Map<string, RegionNodeDetails>
+export type NodesMap = Map<number, RegionNodeDetails>
 
 export function hashById(nodes: RegionNodeDetails[] | null): NodesMap {
-  if (!nodes) return new Map<string, RegionNodeDetails>()
+  if (!nodes) return new Map<number, RegionNodeDetails>()
 
   return nodes.reduce((acc, node) => {
     acc.set(node.id, node)
     return acc
-  }, new Map<string, RegionNodeDetails>())
+  }, new Map<number, RegionNodeDetails>())
 }
 
 export function getNodeById(
   nodes: RegionNodeDetails[] | null,
-  id: string | null | undefined,
+  id: number | null | undefined,
 ): RegionNodeDetails | null {
   if (!nodes || !id) return null
 

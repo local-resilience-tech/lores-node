@@ -1,7 +1,5 @@
 use sqlx::SqlitePool;
 
-use super::super::entities::RegionNode;
-
 pub struct NodesWriteRepo {}
 
 impl NodesWriteRepo {
@@ -9,48 +7,12 @@ impl NodesWriteRepo {
         NodesWriteRepo {}
     }
 
-    pub async fn upsert_name(
-        &self,
-        pool: &SqlitePool,
-        node_id: &String,
-        name: &String,
-    ) -> Result<(), sqlx::Error> {
+    pub async fn upsert_id(&self, pool: &SqlitePool, node_id: &String) -> Result<(), sqlx::Error> {
         let _node = sqlx::query!(
-            "INSERT INTO region_nodes (node_id, name) VALUES (?, ?) ON CONFLICT(node_id) DO UPDATE SET name = excluded.name",
+            "INSERT INTO nodes (id)
+            VALUES (?)
+            ON CONFLICT(id) DO NOTHING",
             node_id,
-            name
-        )
-        .execute(pool)
-        .await?;
-
-        Ok(())
-    }
-
-    pub async fn upsert(&self, pool: &SqlitePool, node: &RegionNode) -> Result<(), sqlx::Error> {
-        let _node = sqlx::query!(
-            "INSERT INTO region_nodes (node_id, name, public_ipv4, domain_on_local_network, domain_on_internet) VALUES (?, ?, ?, ?, ?) ON CONFLICT(node_id) DO UPDATE SET name = excluded.name, public_ipv4 = excluded.public_ipv4, domain_on_local_network = excluded.domain_on_local_network, domain_on_internet = excluded.domain_on_internet",
-            node.node_id,
-            node.name,
-            node.public_ipv4,
-            node.domain_on_local_network,
-            node.domain_on_internet
-        )
-        .execute(pool)
-        .await?;
-
-        Ok(())
-    }
-
-    pub async fn update(&self, pool: &SqlitePool, node: &RegionNode) -> Result<(), sqlx::Error> {
-        let _node = sqlx::query!(
-            "UPDATE region_nodes
-            SET name = ?, public_ipv4 = ?, domain_on_local_network = ?, domain_on_internet = ?
-            WHERE node_id = ?",
-            node.name,
-            node.public_ipv4,
-            node.domain_on_local_network,
-            node.domain_on_internet,
-            node.node_id
         )
         .execute(pool)
         .await?;

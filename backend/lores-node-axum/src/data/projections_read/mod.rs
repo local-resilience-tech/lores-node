@@ -1,3 +1,3 @@
 pub mod apps;
-pub mod nodes;
+pub mod region_nodes;
 pub mod regions;
