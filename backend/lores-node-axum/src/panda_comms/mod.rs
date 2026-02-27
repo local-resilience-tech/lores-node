@@ -14,7 +14,7 @@ use tokio::sync::mpsc;
 
 use crate::{
     api::public_api::realtime::RealtimeState, config::config_state::LoresNodeConfigState,
-    event_handlers::handle_event,
+    data::projections_write::nodes::NodesWriteRepo, event_handlers::handle_event,
 };
 
 pub const NODE_ADMIN_TOPIC_ID: TopicId = [0u8; 32];
@@ -23,6 +23,7 @@ pub async fn start_panda(
     config_state: &LoresNodeConfigState,
     container: &PandaContainer,
     operations_pool: &SqlitePool,
+    projections_pool: &SqlitePool,
 ) {
     let repo = ThisP2PandaNodeRepo::init();
     let config = config_state.get().await;
@@ -44,6 +45,15 @@ pub async fn start_panda(
             return;
         }
     };
+
+    let public_key = private_key.public_key();
+
+    NodesWriteRepo::init()
+        .upsert_id(projections_pool, &public_key.to_hex())
+        .await
+        .unwrap_or_else(|e| {
+            println!("Failed to upsert node id: {:?}", e);
+        });
 
     container.set_private_key(private_key).await;
 

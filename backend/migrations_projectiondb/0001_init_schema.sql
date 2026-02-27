@@ -2,9 +2,9 @@
 
 CREATE TABLE regions (
     id VARCHAR(36) PRIMARY KEY NOT NULL,
-    creator_node_id VARCHAR(36) NOT NULL,
-    slug TEXT NOT NULL,
-    name TEXT NOT NULL,
+    creator_node_id VARCHAR(36) NULL,
+    slug TEXT NULL,
+    name TEXT NULL,
     organisation_name TEXT NULL,
     organisation_url TEXT NULL,
     node_steward_conduct_url TEXT NULL,
@@ -24,7 +24,7 @@ CREATE TABLE region_nodes (
     about_your_node TEXT NULL,
     about_your_stewards TEXT NULL,
     agreed_node_steward_conduct_url TEXT NULL,
-    name VARCHAR(50) NOT NULL,
+    name VARCHAR(50) NULL,
     public_ipv4 VARCHAR(15) DEFAULT NULL,
     domain_on_local_network TEXT DEFAULT NULL,
     domain_on_internet TEXT DEFAULT NULL,

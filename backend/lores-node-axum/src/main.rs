@@ -114,7 +114,13 @@ async fn main() {
         mpsc::channel(32);
     let panda_container = PandaContainer::new(channel_tx);
     start_panda_event_handler(channel_rx, projections_pool.clone(), realtime_state.clone());
-    start_panda(&config_state, &panda_container, &operations_pool).await;
+    start_panda(
+        &config_state,
+        &panda_container,
+        &operations_pool,
+        &projections_pool,
+    )
+    .await;
 
     // ROUTES
     let (router, api) = OpenApiRouter::with_openapi(ApiDoc::openapi())
