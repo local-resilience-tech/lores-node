@@ -30,7 +30,7 @@ export default function EditNodeForm({ node, onSubmit }: EditNodeFormProps) {
     initialValues: {
       ...defaultInitialValues,
       ...{
-        name: node.name,
+        name: node.name || "",
         public_ipv4: node.public_ipv4 || "",
         domain_on_local_network: node.domain_on_local_network || "",
         domain_on_internet: node.domain_on_internet || "",

@@ -10,6 +10,11 @@
  * ---------------------------------------------------------------
  */
 
+export enum RegionNodeStatus {
+  RequestedToJoin = "RequestedToJoin",
+  Member = "Member",
+}
+
 export enum NodeStewardStatus {
   Enabled = "Enabled",
   Disabled = "Disabled",
@@ -171,13 +176,13 @@ export interface P2PandaNodeDetails {
 }
 
 export interface Region {
-  creator_node_id: string;
+  creator_node_id?: string | null;
   id: string;
-  name: string;
+  name?: string | null;
   node_steward_conduct_url?: string | null;
   organisation_name?: string | null;
   organisation_url?: string | null;
-  slug: string;
+  slug?: string | null;
   user_conduct_url?: string | null;
   user_privacy_url?: string | null;
 }
@@ -192,10 +197,11 @@ export interface RegionNode {
   domain_on_local_network?: string | null;
   /** @format int64 */
   id: number;
-  name: string;
+  name?: string | null;
   node_id: string;
   public_ipv4?: string | null;
   region_id: string;
+  status?: null | RegionNodeStatus;
 }
 
 export interface RegionNodeDetails {
@@ -203,11 +209,12 @@ export interface RegionNodeDetails {
   domain_on_local_network?: string | null;
   /** @format int64 */
   id: number;
-  name: string;
+  name?: string | null;
   node_id: string;
   public_ipv4?: string | null;
   region_id: string;
   state?: string | null;
+  status?: null | RegionNodeStatus;
   status_text?: string | null;
 }
 

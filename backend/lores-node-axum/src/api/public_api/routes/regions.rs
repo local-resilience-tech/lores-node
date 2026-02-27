@@ -63,7 +63,7 @@ async fn list_regions(
     let repo = RegionsReadRepo::init();
     let mut regions: Vec<Region> = Vec::with_capacity(region_ids.len());
     for id in region_ids {
-        let db_region = match repo.find(&db.projections_pool, id.to_string()).await {
+        let db_region = match repo.find(&db.projections_pool, &id.to_string()).await {
             Ok(region) => region,
             Err(e) => {
                 eprintln!("Failed to query region {}: {:?}", id, e);

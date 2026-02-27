@@ -59,7 +59,7 @@ impl RegionJoinRequestedHandler {
         regions_write_repo.upsert_id(pool, &region_id).await?;
 
         // Get region
-        let region = match regions_read_repo.find(pool, region_id.to_hex()).await? {
+        let region = match regions_read_repo.find(pool, &region_id.to_hex()).await? {
             Some(region) => region,
             None => {
                 eprintln!("Region not found after upsert: {}", region_id);

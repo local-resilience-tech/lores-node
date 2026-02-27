@@ -12,7 +12,7 @@ impl RegionsReadRepo {
     pub async fn find(
         &self,
         pool: &SqlitePool,
-        region_id: String,
+        region_id: &str,
     ) -> Result<Option<Region>, sqlx::Error> {
         let region = sqlx::query_as!(
             Region,

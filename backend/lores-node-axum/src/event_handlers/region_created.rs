@@ -44,9 +44,9 @@ impl RegionCreatedHandler {
 
         let region = Region {
             id: payload.region_id,
-            creator_node_id: header.author_node_id,
-            slug: payload.slug,
-            name: payload.name,
+            creator_node_id: Some(header.author_node_id),
+            slug: Some(payload.slug),
+            name: Some(payload.name),
             organisation_name: payload.organisation_name,
             organisation_url: payload.organisation_url,
             node_steward_conduct_url: payload.node_steward_conduct_url,

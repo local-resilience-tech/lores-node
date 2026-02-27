@@ -17,7 +17,7 @@ pub struct RegionNode {
     pub node_id: String,
     pub region_id: String,
     pub status: Option<RegionNodeStatus>,
-    pub name: String,
+    pub name: Option<String>,
     pub public_ipv4: Option<String>,
     pub domain_on_local_network: Option<String>,
     pub domain_on_internet: Option<String>,
@@ -29,7 +29,7 @@ pub struct RegionNodeDetails {
     pub node_id: String,
     pub region_id: String,
     pub status: Option<RegionNodeStatus>,
-    pub name: String,
+    pub name: Option<String>,
     pub public_ipv4: Option<String>,
     pub domain_on_local_network: Option<String>,
     pub domain_on_internet: Option<String>,
@@ -40,9 +40,9 @@ pub struct RegionNodeDetails {
 #[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
 pub struct Region {
     pub id: String,
-    pub creator_node_id: String,
-    pub slug: String,
-    pub name: String,
+    pub creator_node_id: Option<String>,
+    pub slug: Option<String>,
+    pub name: Option<String>,
     pub organisation_name: Option<String>,
     pub organisation_url: Option<String>,
     pub node_steward_conduct_url: Option<String>,
@@ -56,9 +56,9 @@ impl Region {
 
         Self {
             id: hex_id.clone(),
-            creator_node_id: creator_node_id.to_string(),
-            slug: hex_id.chars().take(12).collect(),
-            name: hex_id.chars().take(12).collect(),
+            creator_node_id: Some(creator_node_id.to_string()),
+            slug: Some(hex_id.chars().take(12).collect()),
+            name: Some(hex_id.chars().take(12).collect()),
             organisation_name: None,
             organisation_url: None,
             node_steward_conduct_url: None,
