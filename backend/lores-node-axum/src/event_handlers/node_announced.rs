@@ -37,7 +37,7 @@ impl NodeAnnouncedHandler {
     ) -> Result<(), sqlx::Error> {
         // let repo = RegionNodesWriteRepo::init();
 
-        // repo.upsert_name(pool, &header.author_node_id, &payload.name)
+        // repo.upsert_name(pool, &header.author_node_id, &payload.name, true)
         //     .await?;
         Ok(())
     }

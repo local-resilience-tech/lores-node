@@ -1,4 +1,4 @@
-use sqlx::{Sqlite, SqlitePool};
+use sqlx::SqlitePool;
 
 use crate::{
     api::public_api::client_events::ClientEvent,
@@ -13,7 +13,7 @@ impl RegionCreatedHandler {
     pub async fn handle(
         header: LoResEventHeader,
         payload: RegionCreatedDataV1,
-        pool: &sqlx::Pool<Sqlite>,
+        pool: &SqlitePool,
     ) -> HandlerResult {
         println!("Region created: {:?}", payload);
 

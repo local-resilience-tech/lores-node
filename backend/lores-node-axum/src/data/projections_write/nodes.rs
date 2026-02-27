@@ -7,7 +7,7 @@ impl NodesWriteRepo {
         NodesWriteRepo {}
     }
 
-    pub async fn upsert_id(&self, pool: &SqlitePool, node_id: &String) -> Result<(), sqlx::Error> {
+    pub async fn upsert_id(&self, pool: &SqlitePool, node_id: &str) -> Result<(), sqlx::Error> {
         let _node = sqlx::query!(
             "INSERT INTO nodes (id)
             VALUES (?)

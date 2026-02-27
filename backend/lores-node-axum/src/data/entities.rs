@@ -5,11 +5,18 @@ use utoipa::ToSchema;
 
 use crate::panda_comms::RegionId;
 
-#[derive(sqlx::FromRow, Serialize, Deserialize, ToSchema)]
+#[derive(Serialize, Deserialize, ToSchema, sqlx::Type, Debug, Clone)]
+pub enum RegionNodeStatus {
+    RequestedToJoin,
+    Member,
+}
+
+#[derive(sqlx::FromRow, Serialize, Deserialize, ToSchema, Debug, Clone)]
 pub struct RegionNode {
     pub id: i64,
     pub node_id: String,
     pub region_id: String,
+    pub status: Option<RegionNodeStatus>,
     pub name: String,
     pub public_ipv4: Option<String>,
     pub domain_on_local_network: Option<String>,
@@ -21,6 +28,7 @@ pub struct RegionNodeDetails {
     pub id: i64,
     pub node_id: String,
     pub region_id: String,
+    pub status: Option<RegionNodeStatus>,
     pub name: String,
     pub public_ipv4: Option<String>,
     pub domain_on_local_network: Option<String>,

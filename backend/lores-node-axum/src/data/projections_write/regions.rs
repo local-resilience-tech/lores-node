@@ -1,6 +1,6 @@
 use sqlx::SqlitePool;
 
-use crate::data::entities::Region;
+use crate::{data::entities::Region, panda_comms::RegionId};
 
 pub struct RegionsWriteRepo {}
 
@@ -25,6 +25,24 @@ impl RegionsWriteRepo {
             region.node_steward_conduct_url,
             region.user_conduct_url,
             region.user_privacy_url,
+        )
+        .execute(pool)
+        .await?;
+
+        Ok(())
+    }
+
+    pub async fn upsert_id(
+        &self,
+        pool: &SqlitePool,
+        region_id: &RegionId,
+    ) -> Result<(), sqlx::Error> {
+        let region_id_hex = region_id.to_hex();
+        let _region = sqlx::query!(
+            "INSERT INTO regions (id)
+            VALUES (?)
+            ON CONFLICT(id) DO NOTHING",
+            region_id_hex,
         )
         .execute(pool)
         .await?;

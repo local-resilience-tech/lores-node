@@ -6,7 +6,7 @@ use crate::{
     event_handlers::{
         app_registered::AppRegisteredHandler, handler_utilities::HandlerResult,
         node_status_posted::NodeStatusPostedHandler, node_updated::NodeUpdatedHandler,
-        region_created::RegionCreatedHandler,
+        region_created::RegionCreatedHandler, region_join_requested::RegionJoinRequestedHandler,
     },
     panda_comms::lores_events::{LoResEvent, LoResEventPayload},
 };
@@ -17,6 +17,7 @@ mod node_announced;
 mod node_status_posted;
 mod node_updated;
 mod region_created;
+mod region_join_requested;
 
 pub async fn handle_event(event: LoResEvent, pool: &SqlitePool, realtime_state: &RealtimeState) {
     let header = event.header.clone();
@@ -37,6 +38,9 @@ pub async fn handle_event(event: LoResEvent, pool: &SqlitePool, realtime_state: 
         }
         LoResEventPayload::AppRegistered(payload) => {
             AppRegisteredHandler::handle(header, payload, pool).await
+        }
+        LoResEventPayload::RegionJoinRequested(payload) => {
+            RegionJoinRequestedHandler::handle(header, payload, pool).await
         }
         _ => {
             eprintln!("Unhandled LoResEventPayload: {:?}", payload);
