@@ -38,15 +38,15 @@ import useWebSocket from "react-use-websocket"
 import { getSocketUrl } from "../../api"
 import { IfNodeSteward } from "../../contexts/auth/node_steward_auth"
 import { RegionSelector } from "./RegionSelector"
-import { activeRegion, activeRegionChanged } from "../../store/regions"
+import { activeRegion, activeRegionChanged } from "../../store/my_regions"
 
 export default function Layout() {
   const [opened, { toggle }] = useDisclosure()
   const iconSize = 20
 
   const network = useAppSelector((state) => state.network)
-  const allRegions = useAppSelector((state) => state.regions.all ?? [])
-  const region = useAppSelector((state) => activeRegion(state.regions))
+  const allRegions = useAppSelector((state) => state.my_regions.all ?? [])
+  const region = useAppSelector((state) => activeRegion(state.my_regions))
   const regionNode = useAppSelector((state) => state.thisRegionNode)
   const nodesCount = useAppSelector((state) => state.nodes?.length)
   const localAppsCount = useAppSelector((state) => state.localApps?.length)

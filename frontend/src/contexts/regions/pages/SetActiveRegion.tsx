@@ -1,15 +1,15 @@
 import { Outlet, useParams } from "react-router-dom"
 import { useAppDispatch, useAppSelector } from "../../../store"
-import { activeRegion, activeRegionChanged } from "../../../store/regions"
+import { activeRegion, activeRegionChanged } from "../../../store/my_regions"
 import { useEffect } from "react"
 
 export default function SetActiveRegion() {
   const currentActiveRegion = useAppSelector((state) =>
-    activeRegion(state.regions),
+    activeRegion(state.my_regions),
   )
   const { regionSlug } = useParams<{ regionSlug: string }>()
   const slugRegion = useAppSelector((state) =>
-    state.regions.all?.find((r) => r.slug === regionSlug),
+    state.my_regions.all?.find((r) => r.slug === regionSlug),
   )
   const dispatch = useAppDispatch()
 

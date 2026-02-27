@@ -1,19 +1,19 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit"
 import type { Region } from "../api/Api"
 
-export function activeRegion(state: RegionState): Region | null {
+export function activeRegion(state: MyRegionState): Region | null {
   if (!state.activeRegionId || !state.all) return null
   return state.all.find((r) => r.id === state.activeRegionId) ?? null
 }
 
-export type RegionState = {
+export type MyRegionState = {
   activeRegionId?: string | null
   all: Region[] | null
 }
 
 const regionsSlice = createSlice({
-  name: "regions",
-  initialState: { activeRegionId: null, all: null } as RegionState,
+  name: "my_regions",
+  initialState: { activeRegionId: null, all: null } as MyRegionState,
   reducers: {
     regionsLoaded: (state, action: PayloadAction<Region[]>) => {
       const regions = action.payload

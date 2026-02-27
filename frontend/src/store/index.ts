@@ -1,7 +1,7 @@
 import { useDispatch, useSelector, useStore } from "react-redux"
 import { configureStore } from "@reduxjs/toolkit"
 import networkReducer from "./network"
-import regionsReducer, { joinedRegion } from "./regions"
+import regionsReducer, { joinedRegion } from "./my_regions"
 import nodesReducer, { nodeUpdated } from "./nodes"
 import localAppsReducer from "./local_apps"
 import regionAppsReducer, { regionAppUpdated } from "./region_apps"
@@ -13,7 +13,7 @@ const store = configureStore({
   reducer: {
     me: meReducer,
     network: networkReducer,
-    regions: regionsReducer,
+    my_regions: regionsReducer,
     nodes: nodesReducer,
     localApps: localAppsReducer,
     regionApps: regionAppsReducer,
