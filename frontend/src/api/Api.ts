@@ -623,11 +623,11 @@ export class Api<
      * No description
      *
      * @name CreateRegion
-     * @request POST:/node_steward_api/regions/create
+     * @request POST:/node_steward_api/my_regions/create
      */
     createRegion: (data: CreateRegionData, params: RequestParams = {}) =>
       this.request<any, string>({
-        path: `/node_steward_api/regions/create`,
+        path: `/node_steward_api/my_regions/create`,
         method: "POST",
         body: data,
         type: ContentType.Json,
@@ -639,11 +639,11 @@ export class Api<
      * No description
      *
      * @name JoinRegion
-     * @request POST:/node_steward_api/regions/join
+     * @request POST:/node_steward_api/my_regions/join
      */
     joinRegion: (data: JoinRegionRequestData, params: RequestParams = {}) =>
       this.request<any, string>({
-        path: `/node_steward_api/regions/join`,
+        path: `/node_steward_api/my_regions/join`,
         method: "POST",
         body: data,
         type: ContentType.Json,
@@ -740,6 +740,20 @@ export class Api<
     /**
      * No description
      *
+     * @name ListRegions
+     * @request GET:/public_api/my_regions
+     */
+    listRegions: (params: RequestParams = {}) =>
+      this.request<Region[], any>({
+        path: `/public_api/my_regions`,
+        method: "GET",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
      * @name ShowNetwork
      * @request GET:/public_api/network
      */
@@ -774,20 +788,6 @@ export class Api<
     listRegionApps: (params: RequestParams = {}) =>
       this.request<RegionAppWithInstallations[], any>({
         path: `/public_api/region_apps`,
-        method: "GET",
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @name ListRegions
-     * @request GET:/public_api/regions
-     */
-    listRegions: (params: RequestParams = {}) =>
-      this.request<Region[], any>({
-        path: `/public_api/regions`,
         method: "GET",
         format: "json",
         ...params,
