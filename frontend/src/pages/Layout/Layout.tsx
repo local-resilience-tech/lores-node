@@ -182,7 +182,7 @@ export default function Layout() {
                       navigate(`/regions/${region.slug}`)
                     }
                   }}
-                  addNewPath="/regions/setup"
+                  addNewPath={me ? "/regions/setup" : undefined}
                 />
               </Group>
             </Box>

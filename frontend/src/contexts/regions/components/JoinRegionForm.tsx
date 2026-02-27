@@ -26,6 +26,7 @@ export default function JoinRegionForm({ onSubmit }: JoinRegionFormProps) {
     validate: {
       region_id: (value) => {
         if (!value) return "This is required"
+        if (value.length !== 64) return "Region ID must be 64 characters long"
         return null
       },
       about_your_node: (value) => {

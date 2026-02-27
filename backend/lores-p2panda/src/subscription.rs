@@ -26,6 +26,8 @@ pub enum SubscriptionError {
     LogSyncError(#[from] LogSyncError),
     #[error(transparent)]
     SyncHandleError(#[from] LoResSyncHandleError),
+    #[error("Already subscribed to topic_id: {0:?}")]
+    AlreadySubscribed(TopicId),
 }
 
 #[derive(Error, Debug)]

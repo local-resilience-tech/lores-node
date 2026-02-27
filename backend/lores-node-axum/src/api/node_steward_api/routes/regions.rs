@@ -7,7 +7,7 @@ use crate::{
     api::auth_api::auth_backend::AuthSession,
     config::config_state::LoresNodeConfigState,
     panda_comms::{
-        lores_events::{LoResEventPayload, RegionCreatedDataV1},
+        lores_events::{LoResEventPayload, RegionCreatedDataV1, RegionJoinRequestedDataV1},
         PandaContainer, RegionId,
     },
 };
@@ -67,26 +67,14 @@ async fn create_region(
             println!("Generated new region ID: {}", id);
             id
         }
-        Err(e) => {
-            eprintln!("Failed to store new region ID: {:?}", e);
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json("Failed to store new region ID".to_string()),
-            )
-                .into_response();
-        }
+        Err(e) => return internal_server_error(e).into_response(),
     };
 
     // Subscribe to the new region
     let topic_id = match panda_container.join_region(region_id.clone()).await {
         Ok(topic_id) => topic_id,
         Err(e) => {
-            eprintln!("Failed to join region: {:?}", e);
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json("Failed to join region".to_string()),
-            )
-                .into_response();
+            return internal_server_error(e).into_response();
         }
     };
 
@@ -107,12 +95,7 @@ async fn create_region(
         .publish_persisted(topic_id, event_payload, auth_session.user)
         .await
     {
-        eprintln!("Failed to publish RegionCreated event: {:?}", e);
-        return (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json("Failed to publish RegionCreated event".to_string()),
-        )
-            .into_response();
+        return internal_server_error(e).into_response();
     }
 
     println!("Created new region with ID: {:?}", region_id);
@@ -139,8 +122,67 @@ pub struct JoinRegionRequestData {
         (status = INTERNAL_SERVER_ERROR, body = String),
     )
 )]
-async fn join_region() -> impl IntoResponse {
-    return (StatusCode::INTERNAL_SERVER_ERROR, "not implemented").into_response();
+async fn join_region(
+    Extension(panda_container): Extension<PandaContainer>,
+    auth_session: AuthSession,
+    Extension(config_state): Extension<LoresNodeConfigState>,
+    axum::extract::Json(data): axum::extract::Json<JoinRegionRequestData>,
+) -> impl IntoResponse {
+    // Validate data
+    if data.region_id.is_empty()
+        || data.region_id.len() != 64
+        || data.about_your_node.is_empty()
+        || data.about_your_stewards.is_empty()
+    {
+        return (
+            StatusCode::BAD_REQUEST,
+            Json("Invalid request data".to_string()),
+        )
+            .into_response();
+    }
+
+    let region_id = match RegionId::from_hex(data.region_id.as_str()) {
+        Ok(id) => id,
+        Err(e) => {
+            eprintln!("Invalid region ID: {:?}", e);
+            return (
+                StatusCode::BAD_REQUEST,
+                Json("Invalid region ID".to_string()),
+            )
+                .into_response();
+        }
+    };
+
+    // Store the region ID in the config if it's not already there
+    if let Err(e) = store_region_id(&config_state, &region_id).await {
+        return internal_server_error(e).into_response();
+    }
+
+    // Subscribe to the new region
+    let topic_id = match panda_container.join_region(region_id.clone()).await {
+        Ok(topic_id) => topic_id,
+        Err(e) => {
+            return internal_server_error(e).into_response();
+        }
+    };
+
+    // Publish the RegionCreated event
+    let event_payload = LoResEventPayload::RegionJoinRequested(RegionJoinRequestedDataV1 {
+        region_id: region_id.to_hex(),
+        about_your_node: data.about_your_node.clone(),
+        about_your_stewards: data.about_your_stewards.clone(),
+        agreed_node_steward_conduct_url: data.agreed_node_steward_conduct_url.clone(),
+    });
+    println!("Prepared event payload: {:?}", event_payload);
+
+    if let Err(e) = panda_container
+        .publish_persisted(topic_id, event_payload, auth_session.user)
+        .await
+    {
+        return internal_server_error(e).into_response();
+    }
+
+    return (StatusCode::OK, ()).into_response();
 }
 
 async fn store_new_region_id(
@@ -178,4 +220,33 @@ async fn store_new_region_id(
         },
         None => Err(anyhow::anyhow!("Failed to store new region ID")),
     }
+}
+
+async fn store_region_id(
+    config_state: &LoresNodeConfigState,
+    region_id: &RegionId,
+) -> Result<(), anyhow::Error> {
+    config_state
+        .update(|config| {
+            let mut result = config.clone();
+            let mut region_ids: Vec<String> = result.region_ids.unwrap_or_else(|| vec![]);
+
+            if !region_ids.contains(&region_id.to_hex()) {
+                region_ids.push(region_id.to_hex());
+            }
+
+            println!("Setting region_ids to {:?}", region_ids);
+
+            result.region_ids = Some(region_ids);
+            result
+        })
+        .await?;
+
+    Ok(())
+}
+
+fn internal_server_error<E: std::fmt::Debug>(error: E) -> (StatusCode, Json<String>) {
+    let stringified_error = format!("Internal server error: {:?}", error);
+
+    (StatusCode::INTERNAL_SERVER_ERROR, Json(stringified_error))
 }

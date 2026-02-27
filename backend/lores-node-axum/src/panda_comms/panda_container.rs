@@ -10,7 +10,7 @@ use lores_p2panda::{
     operations::{LoResMeshExtensions, LoresOperation},
     p2panda_core::{identity::PUBLIC_KEY_LEN, Hash, Operation, PrivateKey, PublicKey},
     panda_node::{PandaNode, RequiredNodeParams},
-    PandaNodeError, PandaPublishError, TopicId,
+    PandaNodeError, PandaPublishError, SubscriptionError, TopicId,
 };
 
 use crate::api::auth_api::auth_backend::User;
@@ -32,8 +32,16 @@ pub struct NodeParams {
 pub enum PandaContainerError {
     #[error(transparent)]
     PandaNodeError(#[from] PandaNodeError),
-    #[error("Panda subscribe error")]
-    PandaSubscribeError(),
+}
+
+#[derive(Debug, Error)]
+pub enum PandaSubscriptionError {
+    #[error(transparent)]
+    SubscriptionError(#[from] SubscriptionError),
+    #[error("Couldn't get node lock")]
+    CouldntGetNodeLock(),
+    #[error("Couldn't get operation sender lock")]
+    CouldntGetOperationTx(),
 }
 
 #[derive(Clone)]
@@ -149,24 +157,27 @@ impl PandaContainer {
         }
     }
 
-    pub async fn join_region(&self, region_id: RegionId) -> Result<TopicId, PandaContainerError> {
+    pub async fn join_region(
+        &self,
+        region_id: RegionId,
+    ) -> Result<TopicId, PandaSubscriptionError> {
         let topic_id: TopicId = region_id.into();
 
         self.subscribe(topic_id).await?;
         Ok(topic_id)
     }
 
-    pub async fn subscribe(&self, topic_id: TopicId) -> Result<(), PandaContainerError> {
+    pub async fn subscribe(&self, topic_id: TopicId) -> Result<(), PandaSubscriptionError> {
         let operation_tx = match self.operation_tx.lock().await.as_ref() {
             Some(tx) => tx.clone(),
-            None => return Err(PandaContainerError::PandaSubscribeError()),
+            None => return Err(PandaSubscriptionError::CouldntGetOperationTx()),
         };
 
         let node_lock = self.node.lock().await;
 
         let node = match node_lock.as_ref() {
             Some(node) => node,
-            None => return Err(PandaContainerError::PandaSubscribeError()),
+            None => return Err(PandaSubscriptionError::CouldntGetNodeLock()),
         };
 
         node.inner
