@@ -34,7 +34,7 @@ import {
 import "@mantine/core/styles.css"
 import "@mantine/notifications/styles.css"
 import { P2PandaNode } from "./contexts/network"
-import { SetupRegion } from "./contexts/regions"
+import { SetActiveRegion, SetupRegion } from "./contexts/regions"
 
 function withStore(
   func: (store: AppStore) => any,
@@ -143,6 +143,7 @@ const router = createBrowserRouter([
               { path: "nodes", element: <Nodes /> },
               { path: "apps", element: <RegionApps /> },
             ],
+            element: <SetActiveRegion />,
           },
         ],
       },
