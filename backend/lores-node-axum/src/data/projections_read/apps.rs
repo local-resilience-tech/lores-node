@@ -22,7 +22,8 @@ impl AppsReadRepo {
     ) -> Result<Vec<RegionAppWithInstallations>, sqlx::Error> {
         let installations = sqlx::query_as!(
             AppInstallation,
-            "SELECT app_name, node_id, version FROM app_installations"
+            "SELECT app_name, region_node_id, version
+            FROM app_installations"
         )
         .fetch_all(pool)
         .await?;
@@ -55,7 +56,9 @@ impl AppsReadRepo {
     ) -> Result<Option<RegionAppWithInstallations>, sqlx::Error> {
         let installations = sqlx::query_as!(
             AppInstallation,
-            "SELECT app_name, node_id, version FROM app_installations WHERE app_name = ?",
+            "SELECT app_name, region_node_id, version
+            FROM app_installations
+            WHERE app_name = ?",
             name
         )
         .fetch_all(pool)

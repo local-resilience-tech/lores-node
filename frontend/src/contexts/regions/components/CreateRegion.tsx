@@ -16,14 +16,13 @@ export default function CreateRegion() {
     data: CreateRegionData,
   ): Promise<ActionPromiseResult> => {
     console.log("Creating region with data", data)
-    getApi()
+    return getApi()
       .nodeStewardApi.createRegion(data)
       .then((_result) => {
         navigate(`/regions/${data.slug}`)
         return actionSuccess()
       })
       .catch(actionFailure)
-    return actionSuccess()
   }
 
   return <CreateRegionForm onSubmit={onSubmit} />

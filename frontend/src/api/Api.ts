@@ -49,7 +49,8 @@ export interface AdminCredentials {
 
 export interface AppInstallation {
   app_name: string;
-  node_id: string;
+  /** @format int64 */
+  region_node_id: number;
   version: string;
 }
 
@@ -94,6 +95,13 @@ export interface DockerService {
 export interface DockerStackWithServices {
   name: string;
   services: DockerService[];
+}
+
+export interface JoinRegionRequestData {
+  about_your_node: string;
+  about_your_stewards: string;
+  agreed_node_steward_conduct_url?: string | null;
+  region_id: string;
 }
 
 export interface LocalApp {
@@ -182,17 +190,23 @@ export interface RegionAppWithInstallations {
 export interface RegionNode {
   domain_on_internet?: string | null;
   domain_on_local_network?: string | null;
-  id: string;
+  /** @format int64 */
+  id: number;
   name: string;
+  node_id: string;
   public_ipv4?: string | null;
+  region_id: string;
 }
 
 export interface RegionNodeDetails {
   domain_on_internet?: string | null;
   domain_on_local_network?: string | null;
-  id: string;
+  /** @format int64 */
+  id: number;
   name: string;
+  node_id: string;
   public_ipv4?: string | null;
+  region_id: string;
   state?: string | null;
   status_text?: string | null;
 }
@@ -607,6 +621,22 @@ export class Api<
     createRegion: (data: CreateRegionData, params: RequestParams = {}) =>
       this.request<any, string>({
         path: `/node_steward_api/regions/create`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @name JoinRegion
+     * @request POST:/node_steward_api/regions/join
+     */
+    joinRegion: (data: JoinRegionRequestData, params: RequestParams = {}) =>
+      this.request<any, string>({
+        path: `/node_steward_api/regions/join`,
         method: "POST",
         body: data,
         type: ContentType.Json,

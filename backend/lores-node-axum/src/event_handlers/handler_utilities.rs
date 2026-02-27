@@ -1,7 +1,8 @@
 use sqlx::SqlitePool;
 
 use crate::{
-    api::public_api::client_events::ClientEvent, data::projections_read::nodes::NodesReadRepo,
+    api::public_api::client_events::ClientEvent,
+    data::projections_read::region_nodes::RegionNodesReadRepo,
 };
 
 #[derive(Default, Debug)]
@@ -15,7 +16,9 @@ pub fn handle_db_write_error(e: sqlx::Error) -> HandlerResult {
 }
 
 pub async fn read_node_updated_event(pool: &SqlitePool, node_id: String) -> Vec<ClientEvent> {
-    let node_details = NodesReadRepo::init().find_detailed(pool, node_id).await;
+    let node_details = RegionNodesReadRepo::init()
+        .find_detailed(pool, node_id)
+        .await;
     match node_details {
         Ok(Some(details)) => vec![ClientEvent::NodeUpdated(details)],
         Ok(None) => {

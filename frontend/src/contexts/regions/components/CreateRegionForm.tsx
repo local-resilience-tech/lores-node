@@ -82,7 +82,7 @@ export default function CreateRegionForm({ onSubmit }: CreateRegionFormProps) {
     <form onSubmit={form.onSubmit(handleSubmit)}>
       <Stack gap="lg">
         <Text>
-          When you create a new region, it will get a unique id, but you can
+          When you create a new region, it will get a unique ID, but you can
           choose some details to describe it.
         </Text>
 

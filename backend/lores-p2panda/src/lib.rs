@@ -9,6 +9,7 @@ mod topic;
 
 pub use panda_node::PandaNodeError;
 pub use panda_node_inner::PandaPublishError;
+pub use subscription::SubscriptionError;
 
 pub use p2panda_core;
 pub use p2panda_net::TopicId;

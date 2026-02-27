@@ -45,26 +45,28 @@ async fn create_this_region_node(
     });
     println!("Created event payload: {:?}", event_payload);
 
-    let result = panda_container
+    let _result = panda_container
         .publish_persisted(NODE_ADMIN_TOPIC_ID, event_payload, auth_session.user)
         .await;
 
-    match result {
-        Ok(_) => {
-            let node = RegionNode {
-                id: "1".to_string(),
-                name: data.name.clone(),
-                public_ipv4: None,
-                domain_on_local_network: None,
-                domain_on_internet: None,
-            };
-            (StatusCode::CREATED, Json(node)).into_response()
-        }
-        Err(e) => {
-            eprintln!("Error publishing event: {}", e);
-            (StatusCode::INTERNAL_SERVER_ERROR, ()).into_response()
-        }
-    }
+    (StatusCode::INTERNAL_SERVER_ERROR, "not implemented").into_response()
+
+    // match result {
+    //     Ok(_) => {
+    //         let node = RegionNode {
+    //             node_id: "1".to_string(),
+    //             name: data.name.clone(),
+    //             public_ipv4: None,
+    //             domain_on_local_network: None,
+    //             domain_on_internet: None,
+    //         };
+    //         (StatusCode::CREATED, Json(node)).into_response()
+    //     }
+    //     Err(e) => {
+    //         eprintln!("Error publishing event: {}", e);
+    //         (StatusCode::INTERNAL_SERVER_ERROR, ()).into_response()
+    //     }
+    // }
 }
 
 #[derive(Deserialize, ToSchema, Debug)]
@@ -99,26 +101,28 @@ async fn update_this_region_node(
     });
     println!("Prepared event payload: {:?}", event_payload);
 
-    let result = panda_container
+    let _result = panda_container
         .publish_persisted(NODE_ADMIN_TOPIC_ID, event_payload, auth_session.user)
         .await;
 
-    match result {
-        Ok(_) => {
-            let node = RegionNode {
-                id: "1".to_string(),
-                name: data.name.clone(),
-                public_ipv4: Some(data.public_ipv4.clone()),
-                domain_on_local_network: data.domain_on_local_network.clone(),
-                domain_on_internet: data.domain_on_internet.clone(),
-            };
-            (StatusCode::OK, Json(node)).into_response()
-        }
-        Err(e) => {
-            eprintln!("Error publishing event: {}", e);
-            (StatusCode::INTERNAL_SERVER_ERROR, ()).into_response()
-        }
-    }
+    (StatusCode::INTERNAL_SERVER_ERROR, "not implemented").into_response()
+
+    // match result {
+    //     Ok(_) => {
+    //         let node = RegionNode {
+    //             node_id: "1".to_string(),
+    //             name: data.name.clone(),
+    //             public_ipv4: Some(data.public_ipv4.clone()),
+    //             domain_on_local_network: data.domain_on_local_network.clone(),
+    //             domain_on_internet: data.domain_on_internet.clone(),
+    //         };
+    //         (StatusCode::OK, Json(node)).into_response()
+    //     }
+    //     Err(e) => {
+    //         eprintln!("Error publishing event: {}", e);
+    //         (StatusCode::INTERNAL_SERVER_ERROR, ()).into_response()
+    //     }
+    // }
 }
 
 #[derive(Deserialize, ToSchema, Debug)]

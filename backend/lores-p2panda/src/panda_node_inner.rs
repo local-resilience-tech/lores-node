@@ -10,7 +10,7 @@ use super::{
     operation_store::{CreationError, OperationStore},
     operations::LoresOperation,
     panda_node::PandaNodeError,
-    subscription::{Subscription, SubscriptionPublishError},
+    subscription::{Subscription, SubscriptionError, SubscriptionPublishError},
 };
 
 #[derive(Error, Debug)]
@@ -93,7 +93,13 @@ impl PandaNodeInner {
         &self,
         topic_id: TopicId,
         operation_tx: mpsc::Sender<LoresOperation>,
-    ) -> Result<(), PandaNodeError> {
+    ) -> Result<(), SubscriptionError> {
+        println!("Subscribing to topic_id: {:?}", hex::encode(topic_id));
+
+        if self.is_subscribed(&topic_id).await {
+            return Err(SubscriptionError::AlreadySubscribed(topic_id));
+        }
+
         let network = self.network.write().await;
 
         let log_sync = network.get_log_sync();
@@ -110,5 +116,10 @@ impl PandaNodeInner {
         self.subscriptions.write().await.push(subscription);
 
         Ok(())
+    }
+
+    async fn is_subscribed(&self, topic_id: &TopicId) -> bool {
+        let subscriptions = self.subscriptions.read().await;
+        subscriptions.iter().any(|s| s.has_topic_id(topic_id))
     }
 }
