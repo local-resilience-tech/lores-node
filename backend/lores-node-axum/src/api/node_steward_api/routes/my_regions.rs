@@ -4,7 +4,7 @@ use utoipa::ToSchema;
 use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::{
-    api::auth_api::auth_backend::AuthSession,
+    api::{auth_api::auth_backend::AuthSession, helpers::internal_server_error},
     config::config_state::LoresNodeConfigState,
     panda_comms::{
         lores_events::{LoResEventPayload, RegionCreatedDataV1, RegionJoinRequestedDataV1},
@@ -243,10 +243,4 @@ async fn store_region_id(
         .await?;
 
     Ok(())
-}
-
-fn internal_server_error<E: std::fmt::Debug>(error: E) -> (StatusCode, Json<String>) {
-    let stringified_error = format!("Internal server error: {:?}", error);
-
-    (StatusCode::INTERNAL_SERVER_ERROR, Json(stringified_error))
 }
