@@ -68,6 +68,12 @@ impl Region {
     }
 }
 
+#[derive(Serialize, ToSchema, Debug, Clone)]
+pub struct RegionWithNodes {
+    pub region: Region,
+    pub nodes: Vec<RegionNodeDetails>,
+}
+
 #[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
 pub struct NodeAppUrl {
     pub internet_url: Option<String>,

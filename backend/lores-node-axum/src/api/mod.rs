@@ -5,6 +5,7 @@ use crate::api::auth_api::auth_backend::AppAuthBackend;
 
 mod admin_api;
 pub mod auth_api;
+mod helpers;
 mod node_steward_api;
 pub mod public_api;
 

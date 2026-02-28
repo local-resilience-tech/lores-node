@@ -2,7 +2,7 @@ import { AppStore } from "."
 import { getApi } from "../api"
 import { localAppsLoaded } from "./local_apps"
 import { nodesLoaded } from "./nodes"
-import { regionsLoaded } from "./regions"
+import { regionsLoaded } from "./my_regions"
 import { regionAppsLoaded } from "./region_apps"
 import { thisRegionNodeLoaded } from "./this_region_node"
 import { meLoaded } from "./me"
@@ -36,7 +36,7 @@ export async function loadInitialData(store: AppStore) {
   }
 
   if (state.network === null) loadNetwork(store)
-  if (state.regions.all === null) loadRegions(store)
+  if (state.my_regions.all === null) loadRegions(store)
   if (state.nodes === null) loadNodes(store)
   if (state.localApps === null) loadLocalApps(store)
   if (state.thisRegionNode === null) loadThisRegionNode(store)

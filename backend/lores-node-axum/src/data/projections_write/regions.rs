@@ -9,13 +9,22 @@ impl RegionsWriteRepo {
         RegionsWriteRepo {}
     }
 
-    pub async fn insert(&self, pool: &SqlitePool, region: &Region) -> Result<(), sqlx::Error> {
+    pub async fn upsert(&self, pool: &SqlitePool, region: &Region) -> Result<(), sqlx::Error> {
         let _region = sqlx::query!(
             "INSERT INTO regions (
                 id, creator_node_id, slug, name, organisation_name,
                 organisation_url, node_steward_conduct_url, user_conduct_url, user_privacy_url
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(id) DO UPDATE SET
+                creator_node_id = excluded.creator_node_id,
+                slug = excluded.slug,
+                name = excluded.name,
+                organisation_name = excluded.organisation_name,
+                organisation_url = excluded.organisation_url,
+                node_steward_conduct_url = excluded.node_steward_conduct_url,
+                user_conduct_url = excluded.user_conduct_url,
+                user_privacy_url = excluded.user_privacy_url",
             region.id,
             region.creator_node_id,
             region.slug,
