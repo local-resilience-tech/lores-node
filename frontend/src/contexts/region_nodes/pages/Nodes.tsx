@@ -7,11 +7,14 @@ export default function Nodes() {
   const region = useAppSelector((state) =>
     activeRegionWithNodes(state.my_regions),
   )
-  const nodes = useAppSelector((state) => state.nodes)
 
   if (!region) {
     return <Container>No region</Container>
   }
+
+  const nodes = region.nodes
+
+  console.log("Region nodes", nodes)
 
   return (
     <Container>

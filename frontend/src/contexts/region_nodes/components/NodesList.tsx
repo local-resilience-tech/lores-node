@@ -1,6 +1,6 @@
 import { Stack, Card, Text, Box, Table, useMantineTheme } from "@mantine/core"
-import { RegionNodeDetailsWithStatus } from "../../this_region_node"
 import { Anchor } from "../../../components"
+import { RegionNodeDetails } from "../../../api/Api"
 
 const IpLink = ({ ip }: { ip: string | undefined | null }) => {
   if (!ip) return <Text c="dimmed">unknown</Text>
@@ -12,11 +12,11 @@ const IpLink = ({ ip }: { ip: string | undefined | null }) => {
   )
 }
 
-export default function NodesList({
-  nodes: nodes,
-}: {
-  nodes: RegionNodeDetailsWithStatus[]
-}) {
+interface NodesListProps {
+  nodes: RegionNodeDetails[]
+}
+
+export default function NodesList({ nodes: nodes }: NodesListProps) {
   const theme = useMantineTheme()
 
   return (
@@ -27,7 +27,7 @@ export default function NodesList({
             <Box>
               <Text fw={500}>{node.name}</Text>
               <Text size="xs" ff="mono">
-                {node.id}
+                {nodeName(node)}
               </Text>
             </Box>
             <Card.Section>
@@ -57,4 +57,8 @@ export default function NodesList({
       ))}
     </Stack>
   )
+}
+
+function nodeName(node: RegionNodeDetails) {
+  return node.name ?? node.node_id
 }
