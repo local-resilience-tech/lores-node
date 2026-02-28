@@ -28,7 +28,8 @@ export function RegionSelector({
 
   const options = regions.map((region) => (
     <Combobox.Option value={region.id} key={region.id}>
-      {region.name}
+      {[region.name, region.slug, region.id.slice(0, 12)].filter(Boolean)[0] ||
+        "Unnamed"}
     </Combobox.Option>
   ))
 

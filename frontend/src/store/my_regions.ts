@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit"
-import type { Region, RegionWithNodes } from "../api/Api"
+import type { Region, RegionNodeDetails, RegionWithNodes } from "../api/Api"
 
 export function activeRegionWithNodes(
   state: MyRegionState,
@@ -11,6 +11,19 @@ export function activeRegionWithNodes(
 export function activeRegion(state: MyRegionState): Region | null {
   const regionWithNodes = activeRegionWithNodes(state)
   return regionWithNodes ? regionWithNodes.region : null
+}
+
+export function myActiveRegionNode(
+  state: MyRegionState,
+  myNodeId: string | null | undefined,
+): RegionNodeDetails | null {
+  if (!myNodeId) return null
+
+  const regionWithNodes = activeRegionWithNodes(state)
+  if (!regionWithNodes) return null
+
+  const myNode = regionWithNodes.nodes.find((n) => n.node_id === myNodeId)
+  return myNode ?? null
 }
 
 export type MyRegionState = {

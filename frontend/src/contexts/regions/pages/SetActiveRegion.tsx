@@ -3,7 +3,11 @@ import { useAppDispatch, useAppSelector } from "../../../store"
 import { activeRegion, activeRegionChanged } from "../../../store/my_regions"
 import { useEffect } from "react"
 
-export default function SetActiveRegion() {
+interface SetActiveRegionProps {
+  children?: React.ReactNode
+}
+
+export default function SetActiveRegion({ children }: SetActiveRegionProps) {
   const currentActiveRegion = useAppSelector((state) =>
     activeRegion(state.my_regions),
   )
@@ -24,5 +28,5 @@ export default function SetActiveRegion() {
     }
   }, [regionSlug, currentActiveRegion])
 
-  return <Outlet />
+  return children ? children : <Outlet />
 }

@@ -1,9 +1,6 @@
 use sqlx::SqlitePool;
 
-use crate::{
-    data::entities::{Region, RegionWithNodes},
-    panda_comms::RegionId,
-};
+use crate::data::entities::{Region, RegionWithNodes};
 
 use super::super::entities::{RegionNode, RegionNodeDetails, RegionNodeStatus};
 
