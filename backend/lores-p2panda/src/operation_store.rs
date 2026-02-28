@@ -9,9 +9,9 @@ use p2panda_store::{
 use thiserror::Error;
 use tokio::sync::Semaphore;
 
-use super::{operations::LoResMeshExtensions, topic::LogId};
+use crate::operations::LogType;
 
-pub const LOG_ID: LogId = 1;
+use super::{operations::LoResMeshExtensions, topic::LogId};
 
 #[derive(Debug, Error)]
 pub enum CreationError {
@@ -45,6 +45,7 @@ impl OperationStore {
     pub async fn create_operation(
         &self,
         topic_id: TopicId,
+        log_type: LogType,
         private_key: &PrivateKey,
         body: Option<&[u8]>,
     ) -> Result<Operation<LoResMeshExtensions>, CreationError> {
@@ -57,7 +58,7 @@ impl OperationStore {
         let body = body.map(Body::new);
         let public_key = private_key.public_key();
 
-        let log_id = LOG_ID;
+        let log_id = LogId::new(log_type, &topic_id);
         let latest_operation = self.inner.latest_operation(&public_key, &log_id).await?;
 
         let (seq_num, backlink) = match latest_operation {
@@ -72,6 +73,7 @@ impl OperationStore {
         let extensions = LoResMeshExtensions {
             prune_flag: Default::default(),
             topic: topic_id,
+            log_type,
         };
 
         let mut header = Header {

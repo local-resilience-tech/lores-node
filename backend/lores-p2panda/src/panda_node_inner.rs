@@ -5,6 +5,8 @@ use sqlx::SqlitePool;
 use thiserror::Error;
 use tokio::sync::{mpsc, RwLock};
 
+use crate::operations::LogType;
+
 use super::{
     network::Network,
     operation_store::{CreationError, OperationStore},
@@ -69,11 +71,12 @@ impl PandaNodeInner {
     pub async fn publish_persisted(
         &self,
         topic_id: TopicId,
+        log_type: LogType,
         encoded_payload: &Vec<u8>,
     ) -> Result<LoresOperation, PandaPublishError> {
         let operation = self
             .operation_store
-            .create_operation(topic_id, &self.private_key, Some(encoded_payload))
+            .create_operation(topic_id, log_type, &self.private_key, Some(encoded_payload))
             .await?;
 
         let subscriptions = self.subscriptions.read().await;

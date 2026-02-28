@@ -1,4 +1,5 @@
 use axum::{http::StatusCode, response::IntoResponse, Extension, Json};
+use lores_p2panda::operations::LogType;
 use serde::Deserialize;
 use utoipa::ToSchema;
 use utoipa_axum::{router::OpenApiRouter, routes};
@@ -92,7 +93,7 @@ async fn create_region(
     println!("Prepared event payload: {:?}", event_payload);
 
     if let Err(e) = panda_container
-        .publish_persisted(topic_id, event_payload, auth_session.user)
+        .publish_persisted(topic_id, LogType::Admin, event_payload, auth_session.user)
         .await
     {
         return internal_server_error(e).into_response();
@@ -176,7 +177,7 @@ async fn join_region(
     println!("Prepared event payload: {:?}", event_payload);
 
     if let Err(e) = panda_container
-        .publish_persisted(topic_id, event_payload, auth_session.user)
+        .publish_persisted(topic_id, LogType::Admin, event_payload, auth_session.user)
         .await
     {
         return internal_server_error(e).into_response();

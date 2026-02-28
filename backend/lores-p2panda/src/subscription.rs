@@ -10,9 +10,10 @@ use thiserror::Error;
 use tokio::sync::mpsc;
 use tokio_stream::{wrappers::ReceiverStream, StreamExt};
 
+use crate::operations::LogType;
+
 use super::{
     network::{LogSync, LogSyncError},
-    operation_store::LOG_ID,
     operations::{LoResMeshExtensions, LoresOperation},
     topic::{LoResNodeTopicMap, LogId},
 };
@@ -59,7 +60,8 @@ impl Subscription {
 
         let mut topic_rx = sync_tx.subscribe().await?;
 
-        topic_map.insert(topic_id, this_node_id, LOG_ID).await;
+        let admin_log_id = LogId::new(LogType::Admin, &topic_id);
+        topic_map.insert(topic_id, this_node_id, admin_log_id).await;
 
         let (persistent_tx, persistent_rx) =
             mpsc::channel::<(Header<LoResMeshExtensions>, Option<Body>, Vec<u8>)>(128);

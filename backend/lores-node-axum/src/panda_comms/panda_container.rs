@@ -7,7 +7,7 @@ use tokio::sync::{mpsc, Mutex};
 use tokio_stream::wrappers::ReceiverStream;
 
 use lores_p2panda::{
-    operations::{LoResMeshExtensions, LoresOperation},
+    operations::{LoResMeshExtensions, LogType, LoresOperation},
     p2panda_core::{identity::PUBLIC_KEY_LEN, Hash, Operation, PrivateKey, PublicKey},
     panda_node::{PandaNode, RequiredNodeParams},
     PandaNodeError, PandaPublishError, SubscriptionError, TopicId,
@@ -190,6 +190,7 @@ impl PandaContainer {
     pub async fn publish_persisted(
         &self,
         topic_id: TopicId,
+        log_type: LogType,
         event_payload: LoResEventPayload,
         current_user: Option<User>,
     ) -> Result<(), PandaPublishError> {
@@ -208,7 +209,7 @@ impl PandaContainer {
 
         let operation = node
             .inner
-            .publish_persisted(topic_id, &encoded_payload)
+            .publish_persisted(topic_id, log_type, &encoded_payload)
             .await?;
 
         // Since this came from this node, it wont be received via subscription, so we

@@ -1,16 +1,12 @@
-use axum::{http::StatusCode, response::IntoResponse, Extension, Json};
+use axum::{http::StatusCode, response::IntoResponse};
 use serde::Deserialize;
 use utoipa::ToSchema;
 use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::{
-    api::auth_api::auth_backend::AuthSession,
     data::entities::RegionNode,
-    panda_comms::{
-        lores_events::{
-            LoResEventPayload, NodeAnnouncedDataV1, NodeStatusPostedDataV1, NodeUpdatedDataV1,
-        },
-        PandaContainer, NODE_ADMIN_TOPIC_ID,
+    panda_comms::lores_events::{
+        LoResEventPayload, NodeAnnouncedDataV1, NodeStatusPostedDataV1, NodeUpdatedDataV1,
     },
 };
 
@@ -36,8 +32,6 @@ struct CreateNodeDetails {
     request_body(content = CreateNodeDetails, content_type = "application/json"),
 )]
 async fn create_this_region_node(
-    Extension(panda_container): Extension<PandaContainer>,
-    auth_session: AuthSession,
     axum::extract::Json(data): axum::extract::Json<CreateNodeDetails>,
 ) -> impl IntoResponse {
     let event_payload = LoResEventPayload::NodeAnnounced(NodeAnnouncedDataV1 {
@@ -45,9 +39,14 @@ async fn create_this_region_node(
     });
     println!("Created event payload: {:?}", event_payload);
 
-    let _result = panda_container
-        .publish_persisted(NODE_ADMIN_TOPIC_ID, event_payload, auth_session.user)
-        .await;
+    // let _result = panda_container
+    //     .publish_persisted(
+    //         TopicId::new, // TODO: use real topic id
+    //         LogType::Admin,
+    //         event_payload,
+    //         auth_session.user,
+    //     )
+    //     .await;
 
     (StatusCode::INTERNAL_SERVER_ERROR, "not implemented").into_response()
 
@@ -87,8 +86,6 @@ struct UpdateNodeDetails {
     request_body(content = UpdateNodeDetails, content_type = "application/json"),
 )]
 async fn update_this_region_node(
-    Extension(panda_container): Extension<PandaContainer>,
-    auth_session: AuthSession,
     axum::extract::Json(data): axum::extract::Json<UpdateNodeDetails>,
 ) -> impl IntoResponse {
     println!("update node: {:?}", data);
@@ -101,9 +98,9 @@ async fn update_this_region_node(
     });
     println!("Prepared event payload: {:?}", event_payload);
 
-    let _result = panda_container
-        .publish_persisted(NODE_ADMIN_TOPIC_ID, event_payload, auth_session.user)
-        .await;
+    // let _result = panda_container
+    //     .publish_persisted(NODE_ADMIN_TOPIC_ID, event_payload, auth_session.user)
+    //     .await;
 
     (StatusCode::INTERNAL_SERVER_ERROR, "not implemented").into_response()
 
@@ -141,8 +138,6 @@ struct RegionNodeStatusData {
     request_body(content = RegionNodeStatusData, content_type = "application/json"),
 )]
 async fn post_region_node_status(
-    Extension(panda_container): Extension<PandaContainer>,
-    auth_session: AuthSession,
     axum::extract::Json(data): axum::extract::Json<RegionNodeStatusData>,
 ) -> impl IntoResponse {
     println!("post status: {:?}", data);
@@ -153,15 +148,17 @@ async fn post_region_node_status(
     });
     println!("Created event payload: {:?}", event_payload);
 
-    let result = panda_container
-        .publish_persisted(NODE_ADMIN_TOPIC_ID, event_payload, auth_session.user)
-        .await;
+    // let result = panda_container
+    //     .publish_persisted(NODE_ADMIN_TOPIC_ID, event_payload, auth_session.user)
+    //     .await;
 
-    match result {
-        Ok(_) => (StatusCode::OK, Json(())).into_response(),
-        Err(e) => {
-            eprintln!("Error publishing event: {}", e);
-            (StatusCode::INTERNAL_SERVER_ERROR, ()).into_response()
-        }
-    }
+    // match result {
+    //     Ok(_) => (StatusCode::OK, Json(())).into_response(),
+    //     Err(e) => {
+    //         eprintln!("Error publishing event: {}", e);
+    //         (StatusCode::INTERNAL_SERVER_ERROR, ()).into_response()
+    //     }
+    // }
+
+    (StatusCode::INTERNAL_SERVER_ERROR, "not implemented").into_response()
 }
