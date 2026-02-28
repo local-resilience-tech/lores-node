@@ -65,7 +65,7 @@ export interface AppReference {
 
 export type ClientEvent =
   | {
-      JoinedRegion: Region;
+      JoinedRegion: RegionWithNodes;
     }
   | {
       NodeUpdated: RegionNodeDetails;
@@ -221,6 +221,11 @@ export interface RegionNodeDetails {
 export interface RegionNodeStatusData {
   state?: string | null;
   text?: string | null;
+}
+
+export interface RegionWithNodes {
+  nodes: RegionNodeDetails[];
+  region: Region;
 }
 
 export interface UpdateNodeDetails {
@@ -744,7 +749,7 @@ export class Api<
      * @request GET:/public_api/my_regions
      */
     listRegions: (params: RequestParams = {}) =>
-      this.request<Region[], any>({
+      this.request<RegionWithNodes[], any>({
         path: `/public_api/my_regions`,
         method: "GET",
         format: "json",

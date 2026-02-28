@@ -1,35 +1,44 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit"
-import type { Region } from "../api/Api"
+import type { Region, RegionWithNodes } from "../api/Api"
+
+export function activeRegionWithNodes(
+  state: MyRegionState,
+): RegionWithNodes | null {
+  if (!state.activeRegionId || !state.all) return null
+  return state.all.find((r) => r.region.id === state.activeRegionId) ?? null
+}
 
 export function activeRegion(state: MyRegionState): Region | null {
-  if (!state.activeRegionId || !state.all) return null
-  return state.all.find((r) => r.id === state.activeRegionId) ?? null
+  const regionWithNodes = activeRegionWithNodes(state)
+  return regionWithNodes ? regionWithNodes.region : null
 }
 
 export type MyRegionState = {
   activeRegionId?: string | null
-  all: Region[] | null
+  all: RegionWithNodes[] | null
 }
 
 const regionsSlice = createSlice({
   name: "my_regions",
   initialState: { activeRegionId: null, all: null } as MyRegionState,
   reducers: {
-    regionsLoaded: (state, action: PayloadAction<Region[]>) => {
+    regionsLoaded: (state, action: PayloadAction<RegionWithNodes[]>) => {
       const regions = action.payload
 
       state.all = regions
-      state.activeRegionId = regions.length > 0 ? regions[0].id : null
+      state.activeRegionId = regions.length > 0 ? regions[0].region.id : null
 
       return state
     },
-    joinedRegion: (state, action: PayloadAction<Region>) => {
+    joinedRegion: (state, action: PayloadAction<RegionWithNodes>) => {
       const region = action.payload
-      const existingRegion = state?.all?.find((r) => r.id === region.id)
+      const existingRegion = state?.all?.find(
+        (r) => r.region.id === region.region.id,
+      )
 
       if (!existingRegion && state !== null) {
         state.all?.push(region)
-        if (!state.activeRegionId) state.activeRegionId = region.id
+        if (!state.activeRegionId) state.activeRegionId = region.region.id
       }
 
       return state
@@ -38,7 +47,7 @@ const regionsSlice = createSlice({
       const newRegionId = action.payload
 
       if (newRegionId !== null && newRegionId != "") {
-        const regionExists = state.all?.some((r) => r.id === newRegionId)
+        const regionExists = state.all?.some((r) => r.region.id === newRegionId)
 
         if (regionExists) {
           state.activeRegionId = newRegionId

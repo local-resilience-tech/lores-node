@@ -2,7 +2,11 @@ use sqlx::SqlitePool;
 
 use crate::{
     api::public_api::client_events::ClientEvent,
-    data::{entities::Region, projections_write::regions::RegionsWriteRepo},
+    data::{
+        entities::{Region, RegionWithNodes},
+        projections_read::region_nodes::RegionNodesReadRepo,
+        projections_write::regions::RegionsWriteRepo,
+    },
     event_handlers::handler_utilities::{handle_db_write_error, HandlerResult},
     panda_comms::lores_events::{LoResEventHeader, RegionCreatedDataV1},
 };
@@ -27,8 +31,8 @@ impl RegionCreatedHandler {
         let result = Self::write_projections(header, payload, pool).await;
 
         match result {
-            Ok(region) => HandlerResult {
-                client_events: vec![ClientEvent::JoinedRegion(region)],
+            Ok(region_with_nodes) => HandlerResult {
+                client_events: vec![ClientEvent::JoinedRegion(region_with_nodes)],
             },
 
             Err(e) => handle_db_write_error(e),
@@ -39,8 +43,9 @@ impl RegionCreatedHandler {
         header: LoResEventHeader,
         payload: RegionCreatedDataV1,
         pool: &SqlitePool,
-    ) -> Result<Region, sqlx::Error> {
+    ) -> Result<RegionWithNodes, sqlx::Error> {
         let repo = RegionsWriteRepo::init();
+        let node_read_repo = RegionNodesReadRepo::init();
 
         let region = Region {
             id: payload.region_id,
@@ -55,7 +60,10 @@ impl RegionCreatedHandler {
         };
 
         repo.insert(pool, &region).await?;
-        Ok(region)
+
+        let result = node_read_repo.append_detailed_nodes(pool, &region).await?;
+
+        Ok(result)
     }
 
     fn validate(header: &LoResEventHeader, payload: &RegionCreatedDataV1) -> bool {

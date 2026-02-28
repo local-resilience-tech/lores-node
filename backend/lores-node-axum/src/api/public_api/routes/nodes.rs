@@ -17,7 +17,8 @@ pub fn router() -> OpenApiRouter {
 async fn list_nodes(Extension(db): Extension<DatabaseState>) -> impl IntoResponse {
     let repo = RegionNodesReadRepo::init();
 
-    repo.all(&db.projections_pool)
+    let region_id = "dummy_region_id".to_string();
+    repo.find_all_detailed(&db.projections_pool, &region_id)
         .await
         .map(|nodes| (StatusCode::OK, Json(nodes)))
         .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, Json(())))

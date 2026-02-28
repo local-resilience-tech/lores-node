@@ -1,10 +1,14 @@
 use axum::{http::StatusCode, response::IntoResponse, Extension, Json};
+
 use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::{
     api::helpers::internal_server_error,
     config::config_state::LoresNodeConfigState,
-    data::{entities::Region, projections_read::regions::RegionsReadRepo},
+    data::{
+        entities::{Region, RegionWithNodes},
+        projections_read::{region_nodes::RegionNodesReadRepo, regions::RegionsReadRepo},
+    },
     panda_comms::{PandaContainer, RegionId},
     DatabaseState,
 };
@@ -14,7 +18,7 @@ pub fn router() -> OpenApiRouter {
 }
 
 #[utoipa::path(get, path = "/", responses(
-    (status = 200, body = Vec<Region>),
+    (status = 200, body = Vec<RegionWithNodes>),
     (status = INTERNAL_SERVER_ERROR, body = ()),
 ),)]
 async fn list_regions(
@@ -23,6 +27,7 @@ async fn list_regions(
     Extension(db): Extension<DatabaseState>,
 ) -> impl IntoResponse {
     let config = config_state.get().await;
+    let node_read_repo = RegionNodesReadRepo::init();
 
     // Get this node id
     let node_id = match panda_container.get_public_key().await {
@@ -49,7 +54,7 @@ async fn list_regions(
         }
         None => {
             println!("no region ids found in config");
-            return (StatusCode::OK, Json(Vec::<Region>::new())).into_response();
+            return (StatusCode::OK, Json(Vec::<RegionWithNodes>::new())).into_response();
         }
     };
 
@@ -79,5 +84,14 @@ async fn list_regions(
         result_regions.push(region);
     }
 
-    (StatusCode::OK, Json(result_regions)).into_response()
+    // Build region with nodes for each region
+    let result = match node_read_repo
+        .append_detail_nodes_to_list(&db.projections_pool, result_regions)
+        .await
+    {
+        Ok(result) => result,
+        Err(e) => return internal_server_error(e).into_response(),
+    };
+
+    (StatusCode::OK, Json(result)).into_response()
 }

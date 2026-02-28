@@ -3,8 +3,8 @@ use sqlx::SqlitePool;
 use crate::{
     api::public_api::client_events::ClientEvent,
     data::{
-        entities::{Region, RegionNodeStatus},
-        projections_read::regions::RegionsReadRepo,
+        entities::{RegionNodeStatus, RegionWithNodes},
+        projections_read::{region_nodes::RegionNodesReadRepo, regions::RegionsReadRepo},
         projections_write::{region_nodes::RegionNodesWriteRepo, regions::RegionsWriteRepo},
     },
     event_handlers::handler_utilities::{handle_db_write_error, HandlerResult},
@@ -35,8 +35,8 @@ impl RegionJoinRequestedHandler {
         let result = Self::write_projections(header, payload, region_id, pool).await;
 
         match result {
-            Ok(region) => HandlerResult {
-                client_events: vec![ClientEvent::JoinedRegion(region)],
+            Ok(region_with_nodes) => HandlerResult {
+                client_events: vec![ClientEvent::JoinedRegion(region_with_nodes)],
             },
 
             Err(e) => handle_db_write_error(e),
@@ -48,27 +48,19 @@ impl RegionJoinRequestedHandler {
         payload: RegionJoinRequestedDataV1,
         region_id: RegionId,
         pool: &SqlitePool,
-    ) -> Result<Region, sqlx::Error> {
+    ) -> Result<RegionWithNodes, sqlx::Error> {
         let regions_write_repo = RegionsWriteRepo::init();
         let regions_read_repo = RegionsReadRepo::init();
-        let node_repo = RegionNodesWriteRepo::init();
+        let node_write_repo = RegionNodesWriteRepo::init();
+        let node_read_repo = RegionNodesReadRepo::init();
 
         let node_id = header.author_node_id;
 
         // Ensure region exists
         regions_write_repo.upsert_id(pool, &region_id).await?;
 
-        // Get region
-        let region = match regions_read_repo.find(pool, &region_id.to_hex()).await? {
-            Some(region) => region,
-            None => {
-                eprintln!("Region not found after upsert: {}", region_id);
-                return Err(sqlx::Error::RowNotFound);
-            }
-        };
-
         // Upsert region node status
-        node_repo
+        node_write_repo
             .upsert_join_status(
                 pool,
                 &node_id,
@@ -80,6 +72,16 @@ impl RegionJoinRequestedHandler {
             )
             .await?;
 
-        Ok(region)
+        // Get region
+        let region = match regions_read_repo.find(pool, &region_id.to_hex()).await? {
+            Some(region) => region,
+            None => {
+                eprintln!("Region not found after upsert: {}", region_id);
+                return Err(sqlx::Error::RowNotFound);
+            }
+        };
+        let result = node_read_repo.append_detailed_nodes(pool, &region).await?;
+
+        Ok(result)
     }
 }

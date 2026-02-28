@@ -38,7 +38,10 @@ import useWebSocket from "react-use-websocket"
 import { getSocketUrl } from "../../api"
 import { IfNodeSteward } from "../../contexts/auth/node_steward_auth"
 import { RegionSelector } from "./RegionSelector"
-import { activeRegion, activeRegionChanged } from "../../store/my_regions"
+import {
+  activeRegionWithNodes,
+  activeRegionChanged,
+} from "../../store/my_regions"
 
 export default function Layout() {
   const [opened, { toggle }] = useDisclosure()
@@ -46,7 +49,9 @@ export default function Layout() {
 
   const network = useAppSelector((state) => state.network)
   const allRegions = useAppSelector((state) => state.my_regions.all ?? [])
-  const region = useAppSelector((state) => activeRegion(state.my_regions))
+  const region = useAppSelector((state) =>
+    activeRegionWithNodes(state.my_regions),
+  )
   const regionNode = useAppSelector((state) => state.thisRegionNode)
   const nodesCount = useAppSelector((state) => state.nodes?.length)
   const localAppsCount = useAppSelector((state) => state.localApps?.length)
@@ -84,7 +89,7 @@ export default function Layout() {
           <Burger opened={opened} onClick={toggle} hiddenFrom="sm" size="sm" />
           <Anchor href="/">LoRes Mesh</Anchor>
           <Breadcrumbs>
-            {region && <Text>{region.name}</Text>}
+            {region && <Text>{region.region.name}</Text>}
             {regionNode && <Text>{regionNode.name}</Text>}
           </Breadcrumbs>
         </Group>
@@ -162,7 +167,10 @@ export default function Layout() {
         )}
 
         {region && (
-          <AppShell.Section className={classes.menu_section} key={region.id}>
+          <AppShell.Section
+            className={classes.menu_section}
+            key={region.region.id}
+          >
             <Box className={classes.section_header}>
               <Group
                 justify="center"
@@ -174,8 +182,8 @@ export default function Layout() {
                   Region:
                 </Text>
                 <RegionSelector
-                  regions={allRegions}
-                  selected={region}
+                  regions={allRegions.map((r) => r.region)}
+                  selected={region.region}
                   onChange={(region) => {
                     if (region) {
                       dispatch(activeRegionChanged(region.id))
@@ -188,7 +196,7 @@ export default function Layout() {
             </Box>
             <NavLink
               label="Nodes"
-              href={`/regions/${region.slug}/nodes`}
+              href={`/regions/${region.region.slug}/nodes`}
               leftSection={<IconAffiliate size={iconSize} />}
               rightSection={
                 nodesCount !== undefined &&
@@ -202,7 +210,7 @@ export default function Layout() {
             />
             <NavLink
               label="All apps"
-              href={`/regions/${region.slug}/apps`}
+              href={`/regions/${region.region.slug}/apps`}
               leftSection={<IconApps size={iconSize} />}
               onClick={toggle}
             />

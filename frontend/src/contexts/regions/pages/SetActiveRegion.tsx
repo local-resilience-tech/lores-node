@@ -8,8 +8,9 @@ export default function SetActiveRegion() {
     activeRegion(state.my_regions),
   )
   const { regionSlug } = useParams<{ regionSlug: string }>()
-  const slugRegion = useAppSelector((state) =>
-    state.my_regions.all?.find((r) => r.slug === regionSlug),
+  const slugRegion = useAppSelector(
+    (state) =>
+      state.my_regions.all?.find((r) => r.region.slug === regionSlug)?.region,
   )
   const dispatch = useAppDispatch()
 
