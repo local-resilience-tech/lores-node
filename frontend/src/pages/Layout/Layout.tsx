@@ -42,6 +42,7 @@ import {
   activeRegionWithNodes,
   activeRegionChanged,
   myActiveRegionNode,
+  nodeName,
 } from "../../store/my_regions"
 
 export default function Layout() {
@@ -93,7 +94,7 @@ export default function Layout() {
           <Anchor href="/">LoRes Mesh</Anchor>
           <Breadcrumbs>
             {region && <Text>{region.region.name}</Text>}
-            {regionNode && <Text>{regionNode.name}</Text>}
+            {regionNode && <Text>{nodeName(regionNode)}</Text>}
           </Breadcrumbs>
         </Group>
       </AppShell.Header>
@@ -120,12 +121,12 @@ export default function Layout() {
         <AppShell.Section className={classes.menu_section}>
           <Box className={classes.section_header}>
             <Text className={classes.section_title}>
-              {regionNode?.name ? (
+              {regionNode ? (
                 <>
                   <Text span c="dimmed">
                     Node:{" "}
                   </Text>
-                  <Text span>{regionNode.name}</Text>
+                  <Text span>{nodeName(regionNode)}</Text>
                 </>
               ) : (
                 "This Node"
@@ -133,13 +134,15 @@ export default function Layout() {
             </Text>
           </Box>
 
-          <NavLink
-            label="This node"
-            href="/this_region_node"
-            key={regionNode ? regionNode.id : "this_region_node"}
-            leftSection={<IconHome size={iconSize} />}
-            onClick={toggle}
-          />
+          {region && (
+            <NavLink
+              label="This node"
+              href={`/regions/${region.region.slug}/node`}
+              key={regionNode ? regionNode.id : "this_region_node"}
+              leftSection={<IconHome size={iconSize} />}
+              onClick={toggle}
+            />
+          )}
 
           <NavLink
             label="Local apps"

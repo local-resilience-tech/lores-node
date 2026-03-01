@@ -79,10 +79,6 @@ export type ClientEvent =
       RegionAppUpdated: RegionAppWithInstallations;
     };
 
-export interface CreateNodeDetails {
-  name: string;
-}
-
 export interface CreateRegionData {
   name: string;
   node_steward_conduct_url?: string | null;
@@ -240,7 +236,7 @@ export interface UpdateNodeDetails {
   domain_on_internet?: string | null;
   domain_on_local_network?: string | null;
   name: string;
-  public_ipv4: string;
+  public_ipv4?: string | null;
 }
 
 export interface UserRef {
@@ -635,6 +631,44 @@ export class Api<
     /**
      * No description
      *
+     * @name PostRegionNodeStatus
+     * @request POST:/node_steward_api/my_region_nodes/status
+     */
+    postRegionNodeStatus: (
+      data: RegionNodeStatusData,
+      params: RequestParams = {},
+    ) =>
+      this.request<any, string>({
+        path: `/node_steward_api/my_region_nodes/status`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @name UpdateThisRegionNode
+     * @request PUT:/node_steward_api/my_region_nodes/{region_id_string}/my_node
+     */
+    updateThisRegionNode: (
+      regionIdString: string,
+      data: UpdateNodeDetails,
+      params: RequestParams = {},
+    ) =>
+      this.request<void, string>({
+        path: `/node_steward_api/my_region_nodes/${regionIdString}/my_node`,
+        method: "PUT",
+        body: data,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
      * @name ApproveJoinRequest
      * @request PUT:/node_steward_api/my_regions/approve_join_request
      */
@@ -676,63 +710,6 @@ export class Api<
     joinRegion: (data: JoinRegionRequestData, params: RequestParams = {}) =>
       this.request<any, string>({
         path: `/node_steward_api/my_regions/join`,
-        method: "POST",
-        body: data,
-        type: ContentType.Json,
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @name UpdateThisRegionNode
-     * @request PUT:/node_steward_api/this_region_node
-     */
-    updateThisRegionNode: (
-      data: UpdateNodeDetails,
-      params: RequestParams = {},
-    ) =>
-      this.request<RegionNode, string>({
-        path: `/node_steward_api/this_region_node`,
-        method: "PUT",
-        body: data,
-        type: ContentType.Json,
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @name CreateThisRegionNode
-     * @request POST:/node_steward_api/this_region_node
-     */
-    createThisRegionNode: (
-      data: CreateNodeDetails,
-      params: RequestParams = {},
-    ) =>
-      this.request<RegionNode, string>({
-        path: `/node_steward_api/this_region_node`,
-        method: "POST",
-        body: data,
-        type: ContentType.Json,
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @name PostRegionNodeStatus
-     * @request POST:/node_steward_api/this_region_node/status
-     */
-    postRegionNodeStatus: (
-      data: RegionNodeStatusData,
-      params: RequestParams = {},
-    ) =>
-      this.request<any, string>({
-        path: `/node_steward_api/this_region_node/status`,
         method: "POST",
         body: data,
         type: ContentType.Json,

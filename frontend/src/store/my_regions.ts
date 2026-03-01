@@ -6,31 +6,6 @@ export type MyRegionState = {
   all: RegionWithNodes[] | null
 }
 
-export function activeRegionWithNodes(
-  state: MyRegionState,
-): RegionWithNodes | null {
-  if (!state.activeRegionId || !state.all) return null
-  return state.all.find((r) => r.region.id === state.activeRegionId) ?? null
-}
-
-export function activeRegion(state: MyRegionState): Region | null {
-  const regionWithNodes = activeRegionWithNodes(state)
-  return regionWithNodes ? regionWithNodes.region : null
-}
-
-export function myActiveRegionNode(
-  state: MyRegionState,
-  myNodeId: string | null | undefined,
-): RegionNodeDetails | null {
-  if (!myNodeId) return null
-
-  const regionWithNodes = activeRegionWithNodes(state)
-  if (!regionWithNodes) return null
-
-  const myNode = regionWithNodes.nodes.find((n) => n.node_id === myNodeId)
-  return myNode ?? null
-}
-
 export type NodesMap = Map<number, RegionNodeDetails>
 
 export function hashById(nodes: RegionNodeDetails[] | null): NodesMap {
@@ -112,6 +87,35 @@ const regionsSlice = createSlice({
     },
   },
 })
+
+export function activeRegionWithNodes(
+  state: MyRegionState,
+): RegionWithNodes | null {
+  if (!state.activeRegionId || !state.all) return null
+  return state.all.find((r) => r.region.id === state.activeRegionId) ?? null
+}
+
+export function activeRegion(state: MyRegionState): Region | null {
+  const regionWithNodes = activeRegionWithNodes(state)
+  return regionWithNodes ? regionWithNodes.region : null
+}
+
+export function myActiveRegionNode(
+  state: MyRegionState,
+  myNodeId: string | null | undefined,
+): RegionNodeDetails | null {
+  if (!myNodeId) return null
+
+  const regionWithNodes = activeRegionWithNodes(state)
+  if (!regionWithNodes) return null
+
+  const myNode = regionWithNodes.nodes.find((n) => n.node_id === myNodeId)
+  return myNode ?? null
+}
+
+export function nodeName(node: RegionNodeDetails): string {
+  return node.name || `unnamed ${node.node_id.slice(0, 8)}`
+}
 
 function findRegionIndex(state: MyRegionState, regionId: string): number {
   return state.all?.findIndex((r) => r.region.id === regionId) ?? -1

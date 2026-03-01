@@ -25,6 +25,17 @@ export default function EditNodeForm({ node, onSubmit }: EditNodeFormProps) {
   const [actionResult, onSubmitWithResult] =
     useOnSubmitWithResult<UpdateNodeDetails>(onSubmit)
 
+  const onSubmitWithResultWrapped = (data: UpdateNodeDetails) => {
+    // Convert empty strings to undefined for optional fields
+    const dataToSubmit = {
+      ...data,
+      public_ipv4: data.public_ipv4 || undefined,
+      domain_on_local_network: data.domain_on_local_network || undefined,
+      domain_on_internet: data.domain_on_internet || undefined,
+    }
+    return onSubmitWithResult(dataToSubmit)
+  }
+
   const form = useForm<UpdateNodeDetails>({
     mode: "controlled",
     initialValues: {
@@ -40,8 +51,8 @@ export default function EditNodeForm({ node, onSubmit }: EditNodeFormProps) {
       name: (value) => {
         if (!value) return "This is required"
         if (value.length > 50) return "Must be less than 50 characters"
-        if (!/^[a-z]+(-[a-z]+)*$/.test(value))
-          return "Lowercase letters only, no spaces, hyphens allowed"
+        if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(value))
+          return "Lowercase letters, numbers and hyphens only, no spaces"
         return null
       },
       public_ipv4: (value) => {
@@ -63,13 +74,13 @@ export default function EditNodeForm({ node, onSubmit }: EditNodeFormProps) {
   })
 
   return (
-    <form onSubmit={form.onSubmit(onSubmitWithResult)}>
+    <form onSubmit={form.onSubmit(onSubmitWithResultWrapped)}>
       <Stack>
         <Stack>
           <TextInput
             label="Node name"
             placeholder="Enter node name"
-            description="A name to identify your Node - use lowercase letters and no spaces"
+            description="A name to identify your Node - use lowercase letters, numbers and hyphens only, no spaces"
             key="name"
             {...form.getInputProps("name")}
           />

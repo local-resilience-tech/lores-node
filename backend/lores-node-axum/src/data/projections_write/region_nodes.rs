@@ -1,6 +1,6 @@
 use sqlx::SqlitePool;
 
-use crate::data::entities::{RegionNode, RegionNodeStatus};
+use crate::{data::entities::RegionNodeStatus, panda_comms::lores_events::RegionNodeUpdatedDataV1};
 
 use super::nodes::NodesWriteRepo;
 
@@ -9,30 +9,6 @@ pub struct RegionNodesWriteRepo {}
 impl RegionNodesWriteRepo {
     pub fn init() -> Self {
         RegionNodesWriteRepo {}
-    }
-
-    pub async fn upsert_name(
-        &self,
-        pool: &SqlitePool,
-        node_id: &str,
-        region_id: &str,
-        name: &str,
-    ) -> Result<(), sqlx::Error> {
-        let node_repo = NodesWriteRepo::init();
-        node_repo.upsert_id(pool, node_id).await?;
-
-        sqlx::query!(
-            "INSERT INTO region_nodes (node_id, region_id, name)
-            VALUES (?, ?, ?)
-            ON CONFLICT(node_id, region_id) DO UPDATE SET name = excluded.name",
-            node_id,
-            region_id,
-            name
-        )
-        .execute(pool)
-        .await?;
-
-        Ok(())
     }
 
     pub async fn upsert_join_status_and_details(
@@ -89,36 +65,27 @@ impl RegionNodesWriteRepo {
         Ok(())
     }
 
-    pub async fn upsert(&self, pool: &SqlitePool, node: &RegionNode) -> Result<(), sqlx::Error> {
+    pub async fn upsert_details(
+        &self,
+        pool: &SqlitePool,
+        data: &RegionNodeUpdatedDataV1,
+    ) -> Result<(), sqlx::Error> {
         sqlx::query!(
-            "INSERT INTO region_nodes (node_id, region_id, status, name, public_ipv4, domain_on_local_network, domain_on_internet)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-            ON CONFLICT(node_id, region_id) DO UPDATE SET status = excluded.status, name = excluded.name, public_ipv4 = excluded.public_ipv4, domain_on_local_network = excluded.domain_on_local_network, domain_on_internet = excluded.domain_on_internet",
-            node.node_id,
-            node.region_id,
-            node.status,
-            node.name,
-            node.public_ipv4,
-            node.domain_on_local_network,
-            node.domain_on_internet
-        )
-        .execute(pool)
-        .await?;
-
-        Ok(())
-    }
-
-    pub async fn update(&self, pool: &SqlitePool, node: &RegionNode) -> Result<(), sqlx::Error> {
-        let _node = sqlx::query!(
-            "UPDATE region_nodes
-            SET status = ?, name = ?, public_ipv4 = ?, domain_on_local_network = ?, domain_on_internet = ?
-            WHERE node_id = ?",
-            node.status,
-            node.name,
-            node.public_ipv4,
-            node.domain_on_local_network,
-            node.domain_on_internet,
-            node.node_id
+            "INSERT INTO region_nodes (
+                node_id, region_id, name , public_ipv4, domain_on_local_network, domain_on_internet
+            )
+            VALUES (?, ?, ?, ?, ?, ?)
+            ON CONFLICT(node_id, region_id) DO UPDATE SET
+                name = excluded.name,
+                public_ipv4 = excluded.public_ipv4,
+                domain_on_local_network = excluded.domain_on_local_network,
+                domain_on_internet = excluded.domain_on_internet",
+            data.node_id,
+            data.region_id,
+            data.name,
+            data.public_ipv4,
+            data.domain_on_local_network,
+            data.domain_on_internet
         )
         .execute(pool)
         .await?;
