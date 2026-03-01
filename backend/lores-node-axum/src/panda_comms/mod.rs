@@ -7,7 +7,7 @@ use std::fmt::Display;
 pub use config::ThisP2PandaNodeRepo;
 use hex::FromHexError;
 use lores_events::LoResEvent;
-use lores_p2panda::{p2panda_core::PublicKey, TopicId};
+use lores_p2panda::p2panda_core::PublicKey;
 pub use panda_container::{build_public_key_from_hex, PandaContainer};
 use sqlx::SqlitePool;
 use tokio::sync::mpsc;
@@ -16,8 +16,6 @@ use crate::{
     api::public_api::realtime::RealtimeState, config::config_state::LoresNodeConfigState,
     data::projections_write::nodes::NodesWriteRepo, event_handlers::handle_event,
 };
-
-pub const NODE_ADMIN_TOPIC_ID: TopicId = [0u8; 32];
 
 pub async fn start_panda(
     config_state: &LoresNodeConfigState,

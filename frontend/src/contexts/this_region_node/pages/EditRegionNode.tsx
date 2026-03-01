@@ -19,7 +19,7 @@ export default function EditRegionNode() {
     data: UpdateNodeDetails,
   ): Promise<ActionPromiseResult> => {
     return getApi()
-      .nodeStewardApi.updateThisRegionNode(data)
+      .nodeStewardApi.updateThisRegionNode(node.region_id, data)
       .then(() => {
         navigate("..")
       })

@@ -25,6 +25,17 @@ export default function EditNodeForm({ node, onSubmit }: EditNodeFormProps) {
   const [actionResult, onSubmitWithResult] =
     useOnSubmitWithResult<UpdateNodeDetails>(onSubmit)
 
+  const onSubmitWithResultWrapped = (data: UpdateNodeDetails) => {
+    // Convert empty strings to undefined for optional fields
+    const dataToSubmit = {
+      ...data,
+      public_ipv4: data.public_ipv4 || undefined,
+      domain_on_local_network: data.domain_on_local_network || undefined,
+      domain_on_internet: data.domain_on_internet || undefined,
+    }
+    return onSubmitWithResult(dataToSubmit)
+  }
+
   const form = useForm<UpdateNodeDetails>({
     mode: "controlled",
     initialValues: {
@@ -63,7 +74,7 @@ export default function EditNodeForm({ node, onSubmit }: EditNodeFormProps) {
   })
 
   return (
-    <form onSubmit={form.onSubmit(onSubmitWithResult)}>
+    <form onSubmit={form.onSubmit(onSubmitWithResultWrapped)}>
       <Stack>
         <Stack>
           <TextInput

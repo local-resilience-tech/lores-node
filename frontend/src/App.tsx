@@ -7,7 +7,6 @@ import {
 import { Layout } from "./pages"
 import {
   EditRegionNode,
-  EnsureRegionNode,
   ManageStatus,
   ThisRegionNode,
 } from "./contexts/this_region_node"
@@ -90,10 +89,9 @@ const router = createBrowserRouter([
     element: <Layout />,
     loader: withStore(loadInitialData, store),
     children: [
-      { path: "", element: <Navigate to="/this_region_node" replace /> },
+      { path: "", element: <Navigate to="/node/apps" replace /> },
       {
         path: "this_region_node",
-        element: <EnsureRegionNode />,
         children: [
           {
             path: "status",

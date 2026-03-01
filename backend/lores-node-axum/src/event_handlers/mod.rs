@@ -1,26 +1,24 @@
-use self::node_announced::NodeAnnouncedHandler;
 use sqlx::SqlitePool;
 
 use crate::{
     api::public_api::realtime::RealtimeState,
     event_handlers::{
         app_registered::AppRegisteredHandler, handler_utilities::HandlerResult,
-        node_status_posted::NodeStatusPostedHandler, node_updated::NodeUpdatedHandler,
-        region_created::RegionCreatedHandler,
+        node_status_posted::NodeStatusPostedHandler, region_created::RegionCreatedHandler,
         region_join_request_approved::RegionJoinRequestApprovedHandler,
         region_join_requested::RegionJoinRequestedHandler,
+        region_node_updated::RegionNodeUpdatedHandler,
     },
     panda_comms::lores_events::{LoResEvent, LoResEventPayload},
 };
 
 mod app_registered;
 mod handler_utilities;
-mod node_announced;
 mod node_status_posted;
-mod node_updated;
 mod region_created;
 mod region_join_request_approved;
 mod region_join_requested;
+mod region_node_updated;
 
 pub async fn handle_event(event: LoResEvent, pool: &SqlitePool, realtime_state: &RealtimeState) {
     let header = event.header.clone();
@@ -30,11 +28,8 @@ pub async fn handle_event(event: LoResEvent, pool: &SqlitePool, realtime_state: 
         LoResEventPayload::RegionCreated(payload) => {
             RegionCreatedHandler::handle(header, payload, pool).await
         }
-        LoResEventPayload::NodeAnnounced(payload) => {
-            NodeAnnouncedHandler::handle(header, payload, pool).await
-        }
-        LoResEventPayload::NodeUpdated(payload) => {
-            NodeUpdatedHandler::handle(header, payload, pool).await
+        LoResEventPayload::RegionNodeUpdated(payload) => {
+            RegionNodeUpdatedHandler::handle(header, payload, pool).await
         }
         LoResEventPayload::NodeStatusPosted(payload) => {
             NodeStatusPostedHandler::handle(header, payload, pool).await
@@ -48,6 +43,7 @@ pub async fn handle_event(event: LoResEvent, pool: &SqlitePool, realtime_state: 
         LoResEventPayload::RegionJoinRequestApproved(payload) => {
             RegionJoinRequestApprovedHandler::handle(header, payload, pool).await
         }
+        #[allow(unreachable_patterns)]
         _ => {
             eprintln!("Unhandled LoResEventPayload: {:?}", payload);
             HandlerResult::default()

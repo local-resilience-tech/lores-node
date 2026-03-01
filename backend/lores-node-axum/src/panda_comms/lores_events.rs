@@ -30,14 +30,11 @@ pub struct RegionJoinRequestApprovedDataV1 {
 }
 
 #[derive(Deserialize, Serialize, Clone, PartialEq, Debug)]
-pub struct NodeAnnouncedDataV1 {
-    pub name: String,
-}
-
-#[derive(Deserialize, Serialize, Clone, PartialEq, Debug)]
-pub struct NodeUpdatedDataV1 {
-    pub name: String,
-    pub public_ipv4: String,
+pub struct RegionNodeUpdatedDataV1 {
+    pub node_id: String,
+    pub region_id: String,
+    pub name: Option<String>,
+    pub public_ipv4: Option<String>,
     pub domain_on_local_network: Option<String>,
     pub domain_on_internet: Option<String>,
 }
@@ -59,8 +56,7 @@ pub enum LoResEventPayload {
     RegionCreated(RegionCreatedDataV1),
     RegionJoinRequested(RegionJoinRequestedDataV1),
     RegionJoinRequestApproved(RegionJoinRequestApprovedDataV1),
-    NodeAnnounced(NodeAnnouncedDataV1),
-    NodeUpdated(NodeUpdatedDataV1),
+    RegionNodeUpdated(RegionNodeUpdatedDataV1),
     NodeStatusPosted(NodeStatusPostedDataV1),
     AppRegistered(AppRegisteredDataV1),
 }

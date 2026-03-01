@@ -2739,6 +2739,7 @@ dependencies = [
  "password-auth",
  "pwgen2",
  "rand 0.10.0",
+ "regex",
  "semver",
  "serde",
  "serde_json",
