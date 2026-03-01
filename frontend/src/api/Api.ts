@@ -631,25 +631,6 @@ export class Api<
     /**
      * No description
      *
-     * @name PostRegionNodeStatus
-     * @request POST:/node_steward_api/my_region_nodes/status
-     */
-    postRegionNodeStatus: (
-      data: RegionNodeStatusData,
-      params: RequestParams = {},
-    ) =>
-      this.request<any, string>({
-        path: `/node_steward_api/my_region_nodes/status`,
-        method: "POST",
-        body: data,
-        type: ContentType.Json,
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
      * @name UpdateThisRegionNode
      * @request PUT:/node_steward_api/my_region_nodes/{region_id_string}/my_node
      */
@@ -663,6 +644,26 @@ export class Api<
         method: "PUT",
         body: data,
         type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @name PostRegionNodeStatus
+     * @request POST:/node_steward_api/my_region_nodes/{region_id_string}/status
+     */
+    postRegionNodeStatus: (
+      regionIdString: string,
+      data: RegionNodeStatusData,
+      params: RequestParams = {},
+    ) =>
+      this.request<any, string>({
+        path: `/node_steward_api/my_region_nodes/${regionIdString}/status`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
         ...params,
       }),
 

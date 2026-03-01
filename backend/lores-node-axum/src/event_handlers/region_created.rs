@@ -7,7 +7,7 @@ use crate::{
         projections_read::region_nodes::RegionNodesReadRepo,
         projections_write::{region_nodes::RegionNodesWriteRepo, regions::RegionsWriteRepo},
     },
-    event_handlers::handler_utilities::{handle_db_write_error, HandlerResult},
+    event_handlers::utilities::{handle_db_write_error, HandlerResult},
     panda_comms::lores_events::{LoResEventHeader, RegionCreatedDataV1},
 };
 

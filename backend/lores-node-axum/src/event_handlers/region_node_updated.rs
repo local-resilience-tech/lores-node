@@ -2,7 +2,7 @@ use sqlx::{Sqlite, SqlitePool};
 
 use crate::{
     data::projections_write::region_nodes::RegionNodesWriteRepo,
-    event_handlers::handler_utilities::{
+    event_handlers::utilities::{
         handle_db_write_error, node_id_is_author, read_node_updated_event, HandlerResult,
     },
     panda_comms::{

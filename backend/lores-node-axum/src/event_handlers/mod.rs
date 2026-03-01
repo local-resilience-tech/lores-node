@@ -3,22 +3,22 @@ use sqlx::SqlitePool;
 use crate::{
     api::public_api::realtime::RealtimeState,
     event_handlers::{
-        app_registered::AppRegisteredHandler, handler_utilities::HandlerResult,
-        node_status_posted::NodeStatusPostedHandler, region_created::RegionCreatedHandler,
+        app_registered::AppRegisteredHandler, node_status_posted::NodeStatusPostedHandler,
+        region_created::RegionCreatedHandler,
         region_join_request_approved::RegionJoinRequestApprovedHandler,
         region_join_requested::RegionJoinRequestedHandler,
-        region_node_updated::RegionNodeUpdatedHandler,
+        region_node_updated::RegionNodeUpdatedHandler, utilities::HandlerResult,
     },
     panda_comms::lores_events::{LoResEvent, LoResEventPayload},
 };
 
 mod app_registered;
-mod handler_utilities;
 mod node_status_posted;
 mod region_created;
 mod region_join_request_approved;
 mod region_join_requested;
 mod region_node_updated;
+mod utilities;
 
 pub async fn handle_event(event: LoResEvent, pool: &SqlitePool, realtime_state: &RealtimeState) {
     let header = event.header.clone();

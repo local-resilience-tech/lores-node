@@ -7,7 +7,7 @@ use crate::{
         projections_read::apps::AppsReadRepo,
         projections_write::{app_installations::AppInstallationsWriteRepo, apps::AppsWriteRepo},
     },
-    event_handlers::handler_utilities::{handle_db_write_error, HandlerResult},
+    event_handlers::utilities::{handle_db_write_error, HandlerResult},
     panda_comms::lores_events::{AppRegisteredDataV1, LoResEventHeader},
 };
 

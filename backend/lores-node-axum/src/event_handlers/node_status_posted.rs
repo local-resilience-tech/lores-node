@@ -5,9 +5,7 @@ use crate::{
         current_node_statuses::{CurrentNodeStatusRow, CurrentNodeStatusesWriteRepo},
         node_statuses::{NodeStatusRow, NodeStatusesWriteRepo},
     },
-    event_handlers::handler_utilities::{
-        handle_db_write_error, read_node_updated_event, HandlerResult,
-    },
+    event_handlers::utilities::{handle_db_write_error, read_node_updated_event, HandlerResult},
     panda_comms::lores_events::{LoResEventHeader, NodeStatusPostedDataV1},
 };
 

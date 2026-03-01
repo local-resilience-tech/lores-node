@@ -78,6 +78,8 @@ async fn update_this_region_node(
     if let Err(e) = data.validate() {
         return bad_request(e).into_response();
     }
+
+    // Get region_id from path and validate it
     let region_id = match RegionId::from_hex(&region_id_string) {
         Ok(id) => id,
         Err(e) => return bad_request(e).into_response(),
@@ -117,9 +119,27 @@ struct RegionNodeStatusData {
     pub state: Option<String>,
 }
 
+impl RegionNodeStatusData {
+    fn validate(&self) -> Result<(), String> {
+        if let Some(state) = &self.state {
+            let valid_states = ["active", "inactive", "maintenance", "development"];
+            if !valid_states.contains(&state.as_str()) {
+                return Err(format!(
+                    "Invalid state. Valid states are: {}",
+                    valid_states.join(", ")
+                ));
+            }
+        }
+        Ok(())
+    }
+}
+
 #[utoipa::path(
     post,
-    path = "/status",
+    path = "/{region_id_string}/status",
+    params(
+        ("region_id_string" = String, Path),
+    ),
     responses(
         (status = OK, body = ()),
         (status = INTERNAL_SERVER_ERROR, body = String),
@@ -127,27 +147,38 @@ struct RegionNodeStatusData {
     request_body(content = RegionNodeStatusData, content_type = "application/json"),
 )]
 async fn post_region_node_status(
+    Extension(panda_container): Extension<PandaContainer>,
+    auth_session: AuthSession,
+    axum::extract::Path(region_id_string): axum::extract::Path<String>,
     axum::extract::Json(data): axum::extract::Json<RegionNodeStatusData>,
 ) -> impl IntoResponse {
     println!("post status: {:?}", data);
 
+    // Validate input data
+    if let Err(e) = data.validate() {
+        return bad_request(e).into_response();
+    }
+
+    // Get region_id from path and validate it
+    let region_id = match RegionId::from_hex(&region_id_string) {
+        Ok(id) => id,
+        Err(e) => return bad_request(e).into_response(),
+    };
+
+    // Send Operation
     let event_payload = LoResEventPayload::NodeStatusPosted(NodeStatusPostedDataV1 {
         text: data.text.clone(),
         state: data.state.clone(),
     });
     println!("Created event payload: {:?}", event_payload);
 
-    // let result = panda_container
-    //     .publish_persisted(NODE_ADMIN_TOPIC_ID, event_payload, auth_session.user)
-    //     .await;
+    let topic_id = PandaContainer::get_region_topic_id(&region_id);
+    if let Err(e) = panda_container
+        .publish_persisted(topic_id, LogType::Admin, event_payload, auth_session.user)
+        .await
+    {
+        return internal_server_error(e).into_response();
+    }
 
-    // match result {
-    //     Ok(_) => (StatusCode::OK, Json(())).into_response(),
-    //     Err(e) => {
-    //         eprintln!("Error publishing event: {}", e);
-    //         (StatusCode::INTERNAL_SERVER_ERROR, ()).into_response()
-    //     }
-    // }
-
-    (StatusCode::INTERNAL_SERVER_ERROR, "not implemented").into_response()
+    (StatusCode::OK, ()).into_response()
 }

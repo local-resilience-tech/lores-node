@@ -3,18 +3,7 @@ use sqlx::SqlitePool;
 use crate::{
     api::public_api::client_events::ClientEvent,
     data::projections_read::region_nodes::RegionNodesReadRepo,
-    panda_comms::lores_events::LoResEventHeader,
 };
-
-#[derive(Default, Debug)]
-pub struct HandlerResult {
-    pub client_events: Vec<ClientEvent>,
-}
-
-pub fn handle_db_write_error(e: sqlx::Error) -> HandlerResult {
-    eprintln!("Database write error: {}", e);
-    HandlerResult::default()
-}
 
 pub async fn read_node_updated_event(
     pool: &SqlitePool,
@@ -34,17 +23,5 @@ pub async fn read_node_updated_event(
             eprintln!("Error reading node details: {}", e);
             vec![]
         }
-    }
-}
-
-pub fn node_id_is_author(header: &LoResEventHeader, node_id: &str) -> bool {
-    if !header.author_node_id.is_empty() && header.author_node_id == node_id {
-        true
-    } else {
-        println!(
-            "Validation failed: author node ID {} does not match event node ID {}",
-            header.author_node_id, node_id
-        );
-        false
     }
 }
