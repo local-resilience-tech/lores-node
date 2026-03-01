@@ -13,7 +13,7 @@ import { useNavigate } from "react-router-dom"
 import { IconEdit } from "@tabler/icons-react"
 import DisplayStatus from "../components/DisplayStatus"
 import { IfNodeSteward } from "../../auth/node_steward_auth"
-import { myActiveRegionNode } from "../../../store/my_regions"
+import { myActiveRegionNode, nodeName } from "../../../store/my_regions"
 
 export default function ThisRegionNode() {
   const navigate = useNavigate()
@@ -31,7 +31,7 @@ export default function ThisRegionNode() {
             <Text span inherit c="dimmed">
               This Node:{" "}
             </Text>
-            {node.name}
+            {nodeName(node)}
           </Title>
         </Stack>
         <IfNodeSteward>

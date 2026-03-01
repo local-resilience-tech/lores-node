@@ -96,14 +96,6 @@ const router = createBrowserRouter([
         element: <EnsureRegionNode />,
         children: [
           {
-            path: "edit",
-            element: (
-              <RequireNodeSteward>
-                <EditRegionNode />
-              </RequireNodeSteward>
-            ),
-          },
-          {
             path: "status",
             element: (
               <RequireNodeSteward>
@@ -140,7 +132,20 @@ const router = createBrowserRouter([
             path: ":regionSlug",
             children: [
               { path: "", element: <Navigate to="nodes" replace /> },
-              { path: "node", element: <ThisRegionNode /> },
+              {
+                path: "node",
+                children: [
+                  { path: "", element: <ThisRegionNode /> },
+                  {
+                    path: "edit",
+                    element: (
+                      <RequireNodeSteward>
+                        <EditRegionNode />
+                      </RequireNodeSteward>
+                    ),
+                  },
+                ],
+              },
               { path: "nodes", element: <Nodes /> },
               { path: "apps", element: <RegionApps /> },
             ],

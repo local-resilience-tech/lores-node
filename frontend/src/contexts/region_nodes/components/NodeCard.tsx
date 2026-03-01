@@ -10,6 +10,7 @@ import {
 } from "@mantine/core"
 import { Anchor } from "../../../components"
 import { RegionNodeDetails } from "../../../api/Api"
+import { nodeName } from "../../../store/my_regions"
 
 const IpLink = ({ ip }: { ip: string | undefined | null }) => {
   if (!ip) return <Text c="dimmed">unknown</Text>
@@ -65,8 +66,4 @@ export default function NodeCard({ node, isRegionCreator }: NodeCardProps) {
       </Stack>
     </Card>
   )
-}
-
-function nodeName(node: RegionNodeDetails) {
-  return node.name ?? node.node_id.slice(0, 12) + "..."
 }

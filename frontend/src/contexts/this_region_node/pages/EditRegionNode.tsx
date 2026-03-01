@@ -5,7 +5,7 @@ import { getApi } from "../../../api"
 import { useAppSelector } from "../../../store"
 import { actionFailure, ActionPromiseResult, Anchor } from "../../../components"
 import { useNavigate } from "react-router-dom"
-import { myActiveRegionNode } from "../../../store/my_regions"
+import { myActiveRegionNode, nodeName } from "../../../store/my_regions"
 
 export default function EditRegionNode() {
   const node = useAppSelector((state) =>
@@ -30,7 +30,7 @@ export default function EditRegionNode() {
     <Stack gap="lg">
       <Stack gap="xs">
         <Breadcrumbs>
-          <Anchor href="/this_region_node">{node.name}</Anchor>
+          <Anchor href="/this_region_node">{nodeName(node)}</Anchor>
           <Text c="dimmed">edit</Text>
         </Breadcrumbs>
         <Title order={1}>Edit this node</Title>
