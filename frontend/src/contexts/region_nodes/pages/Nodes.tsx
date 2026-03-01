@@ -11,6 +11,8 @@ import { useAppSelector } from "../../../store"
 import { activeRegionWithNodes } from "../../../store/my_regions"
 import { IconList, IconMessageQuestion } from "@tabler/icons-react"
 import { RegionNodeDetails } from "../../../api/Api"
+import { getApi } from "../../../api"
+import { actionFailure, actionSuccess } from "../../../components"
 
 export default function Nodes() {
   const region = useAppSelector((state) =>
@@ -34,6 +36,21 @@ export default function Nodes() {
     } else {
       member_nodes.push(node)
     }
+  }
+
+  const onApproveJoin = async (regionNode: RegionNodeDetails) => {
+    console.log("Approving join for region node ID:", regionNode.id)
+    return getApi()
+      .nodeStewardApi.approveJoinRequest({
+        node_id: regionNode.node_id,
+        region_id: regionNode.region_id,
+      })
+      .then((result) => {
+        return actionSuccess()
+      })
+      .catch((error) => {
+        return actionFailure(error)
+      })
   }
 
   const tabIconSize = 18
@@ -82,6 +99,7 @@ export default function Nodes() {
             <NodesList
               nodes={join_request_nodes}
               regionCreatorId={region.region.creator_node_id}
+              onApprove={onApproveJoin}
             />
           </Tabs.Panel>
         </Tabs>

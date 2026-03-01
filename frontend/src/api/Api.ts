@@ -63,6 +63,11 @@ export interface AppReference {
   app_name: string;
 }
 
+export interface ApproveJoinRequestData {
+  node_id: string;
+  region_id: string;
+}
+
 export type ClientEvent =
   | {
       JoinedRegion: RegionWithNodes;
@@ -621,6 +626,25 @@ export class Api<
       this.request<any, any>({
         path: `/node_steward_api/local_apps/register`,
         method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @name ApproveJoinRequest
+     * @request PUT:/node_steward_api/my_regions/approve_join_request
+     */
+    approveJoinRequest: (
+      data: ApproveJoinRequestData,
+      params: RequestParams = {},
+    ) =>
+      this.request<any, string>({
+        path: `/node_steward_api/my_regions/approve_join_request`,
+        method: "PUT",
         body: data,
         type: ContentType.Json,
         format: "json",

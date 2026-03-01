@@ -17,6 +17,7 @@ pub fn router() -> OpenApiRouter {
     OpenApiRouter::new()
         .routes(routes!(create_region))
         .routes(routes!(join_region))
+        .routes(routes!(approve_join_request))
 }
 
 #[derive(Deserialize, ToSchema, Debug)]
@@ -182,6 +183,63 @@ async fn join_region(
     {
         return internal_server_error(e).into_response();
     }
+
+    return (StatusCode::OK, ()).into_response();
+}
+
+#[derive(Deserialize, ToSchema, Debug)]
+#[allow(dead_code)]
+pub struct ApproveJoinRequestData {
+    pub region_id: String,
+    pub node_id: String,
+}
+
+#[utoipa::path(
+    put,
+    path = "/approve_join_request",
+    request_body(content = ApproveJoinRequestData, content_type = "application/json"),
+    responses(
+        (status = 200, body = ()),
+        (status = BAD_REQUEST, body = String),
+        (status = INTERNAL_SERVER_ERROR, body = String),
+    )
+)]
+async fn approve_join_request(
+    // Extension(panda_container): Extension<PandaContainer>,
+    // auth_session: AuthSession,
+    axum::extract::Json(data): axum::extract::Json<ApproveJoinRequestData>,
+) -> impl IntoResponse {
+    // Validate data
+    if data.region_id.is_empty()
+        || data.region_id.len() != 64
+        || data.node_id.is_empty()
+        || data.node_id.len() != 64
+    {
+        return (
+            StatusCode::BAD_REQUEST,
+            Json("Invalid request data".to_string()),
+        )
+            .into_response();
+    }
+
+    let _region_id = match RegionId::from_hex(data.region_id.as_str()) {
+        Ok(id) => id,
+        Err(e) => {
+            eprintln!("Invalid region ID: {:?}", e);
+            return (
+                StatusCode::BAD_REQUEST,
+                Json("Invalid region ID".to_string()),
+            )
+                .into_response();
+        }
+    };
+
+    // if let Err(e) = panda_container
+    //     .approve_join_request(region_id, data.node_id.clone(), auth_session.user)
+    //     .await
+    // {
+    //     return internal_server_error(e).into_response();
+    // }
 
     return (StatusCode::OK, ()).into_response();
 }
