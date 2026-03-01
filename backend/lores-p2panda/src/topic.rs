@@ -1,12 +1,23 @@
 use p2panda_core::PublicKey;
 use p2panda_net::{NodeId, TopicId};
 use p2panda_sync::traits::TopicMap;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::convert::Infallible;
+use std::hash::Hash as StdHash;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 
-pub type LogId = u64;
+use crate::operations::LogType;
+
+#[derive(Clone, Debug, PartialEq, Eq, StdHash, Serialize, Deserialize)]
+pub struct LogId(LogType, TopicId);
+
+impl LogId {
+    pub fn new(log_type: LogType, topic: &TopicId) -> Self {
+        Self(log_type, *topic)
+    }
+}
 
 pub type Logs<L> = HashMap<PublicKey, Vec<L>>;
 
@@ -18,11 +29,11 @@ impl LoResNodeTopicMap {
         let mut map = self.0.write().await;
         map.entry(topic_id)
             .and_modify(|logs| {
-                logs.insert(node_id, vec![log_id]);
+                logs.insert(node_id, vec![log_id.clone()]);
             })
             .or_insert({
                 let mut value = HashMap::new();
-                value.insert(node_id, vec![log_id]);
+                value.insert(node_id, vec![log_id.clone()]);
                 value
             });
     }

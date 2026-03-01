@@ -13,7 +13,7 @@ import {
 } from "./contexts/this_region_node"
 import { EventLog } from "./contexts/this_p2panda_node"
 import { ShowLocalApp, LocalApps, RegionApps } from "./contexts/apps"
-import { Nodes } from "./contexts/this_region"
+import { Nodes } from "./contexts/region_nodes"
 import { MantineProvider } from "@mantine/core"
 import { ModalsProvider } from "@mantine/modals"
 import { Notifications } from "@mantine/notifications"

@@ -1,8 +1,15 @@
 use p2panda_core::{Extension, Header, Operation, PruneFlag};
 use p2panda_net::TopicId;
 use serde::{Deserialize, Serialize};
+use std::hash::Hash as StdHash;
 
-use super::{operation_store::LOG_ID, topic::LogId};
+use super::topic::LogId;
+
+#[derive(Copy, Clone, Default, Debug, PartialEq, Eq, StdHash, Serialize, Deserialize)]
+pub enum LogType {
+    #[default]
+    Admin,
+}
 
 /// Custom extensions for p2panda header.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Default)]
@@ -18,6 +25,10 @@ pub struct LoResMeshExtensions {
         default = "PruneFlag::default"
     )]
     pub prune_flag: PruneFlag,
+
+    /// We may want multiple logs per author per subject in order to prioritise messages.
+    #[serde(rename = "t")]
+    pub log_type: LogType,
 
     /// Identifier of the topic this operation relates to.
     #[serde(rename = "d")]
@@ -36,9 +47,18 @@ impl Extension<TopicId> for LoResMeshExtensions {
     }
 }
 
+impl Extension<LogType> for LoResMeshExtensions {
+    fn extract(header: &Header<Self>) -> Option<LogType> {
+        Some(header.extensions.log_type)
+    }
+}
+
 impl Extension<LogId> for LoResMeshExtensions {
-    fn extract(_header: &Header<Self>) -> Option<LogId> {
-        Some(LOG_ID)
+    fn extract(header: &Header<Self>) -> Option<LogId> {
+        let log_type: LogType = header.extension()?;
+        let id: TopicId = header.extension()?;
+
+        Some(LogId::new(log_type, &id))
     }
 }
 

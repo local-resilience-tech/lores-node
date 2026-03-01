@@ -205,6 +205,9 @@ export interface RegionNode {
 }
 
 export interface RegionNodeDetails {
+  about_your_node?: string | null;
+  about_your_stewards?: string | null;
+  agreed_node_steward_conduct_url?: string | null;
   domain_on_internet?: string | null;
   domain_on_local_network?: string | null;
   /** @format int64 */
