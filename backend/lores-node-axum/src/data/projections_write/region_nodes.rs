@@ -35,7 +35,7 @@ impl RegionNodesWriteRepo {
         Ok(())
     }
 
-    pub async fn upsert_join_status(
+    pub async fn upsert_join_status_and_details(
         &self,
         pool: &SqlitePool,
         node_id: &str,
@@ -58,6 +58,30 @@ impl RegionNodesWriteRepo {
             about_your_node,
             about_your_stewards,
             agreed_node_steward_conduct_url
+        )
+        .execute(pool)
+        .await?;
+
+        Ok(())
+    }
+
+    pub async fn upsert_join_status(
+        &self,
+        pool: &SqlitePool,
+        node_id: &str,
+        region_id: &str,
+        status: RegionNodeStatus,
+    ) -> Result<(), sqlx::Error> {
+        let node_repo = NodesWriteRepo::init();
+        node_repo.upsert_id(pool, node_id).await?;
+
+        sqlx::query!(
+            "INSERT INTO region_nodes (node_id, region_id, status)
+            VALUES (?, ?, ?)
+            ON CONFLICT(node_id, region_id) DO UPDATE SET status = excluded.status",
+            node_id,
+            region_id,
+            status,
         )
         .execute(pool)
         .await?;

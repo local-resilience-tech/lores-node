@@ -23,7 +23,12 @@ impl NodeAnnouncedHandler {
 
         match result {
             Ok(()) => HandlerResult {
-                client_events: read_node_updated_event(pool, author_node_id).await,
+                client_events: read_node_updated_event(
+                    pool,
+                    author_node_id,
+                    "invalid region id".to_string(),
+                )
+                .await,
             },
 
             Err(e) => handle_db_write_error(e),

@@ -8,7 +8,10 @@ use crate::{
     api::{auth_api::auth_backend::AuthSession, helpers::internal_server_error},
     config::config_state::LoresNodeConfigState,
     panda_comms::{
-        lores_events::{LoResEventPayload, RegionCreatedDataV1, RegionJoinRequestedDataV1},
+        lores_events::{
+            LoResEventPayload, RegionCreatedDataV1, RegionJoinRequestApprovedDataV1,
+            RegionJoinRequestedDataV1,
+        },
         PandaContainer, RegionId,
     },
 };
@@ -205,8 +208,8 @@ pub struct ApproveJoinRequestData {
     )
 )]
 async fn approve_join_request(
-    // Extension(panda_container): Extension<PandaContainer>,
-    // auth_session: AuthSession,
+    Extension(panda_container): Extension<PandaContainer>,
+    auth_session: AuthSession,
     axum::extract::Json(data): axum::extract::Json<ApproveJoinRequestData>,
 ) -> impl IntoResponse {
     // Validate data
@@ -222,7 +225,7 @@ async fn approve_join_request(
             .into_response();
     }
 
-    let _region_id = match RegionId::from_hex(data.region_id.as_str()) {
+    let region_id = match RegionId::from_hex(data.region_id.as_str()) {
         Ok(id) => id,
         Err(e) => {
             eprintln!("Invalid region ID: {:?}", e);
@@ -234,12 +237,20 @@ async fn approve_join_request(
         }
     };
 
-    // if let Err(e) = panda_container
-    //     .approve_join_request(region_id, data.node_id.clone(), auth_session.user)
-    //     .await
-    // {
-    //     return internal_server_error(e).into_response();
-    // }
+    let topic_id = PandaContainer::get_region_topic_id(&region_id);
+
+    // Publish the RegionJoinRequestApproved event
+    let event_payload =
+        LoResEventPayload::RegionJoinRequestApproved(RegionJoinRequestApprovedDataV1 {
+            region_id: region_id.to_hex(),
+            node_id: data.node_id.clone(),
+        });
+    if let Err(e) = panda_container
+        .publish_persisted(topic_id, LogType::Admin, event_payload, auth_session.user)
+        .await
+    {
+        return internal_server_error(e).into_response();
+    }
 
     return (StatusCode::OK, ()).into_response();
 }

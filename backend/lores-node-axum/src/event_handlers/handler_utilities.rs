@@ -15,12 +15,16 @@ pub fn handle_db_write_error(e: sqlx::Error) -> HandlerResult {
     HandlerResult::default()
 }
 
-pub async fn read_node_updated_event(pool: &SqlitePool, node_id: String) -> Vec<ClientEvent> {
+pub async fn read_node_updated_event(
+    pool: &SqlitePool,
+    node_id: String,
+    region_id: String,
+) -> Vec<ClientEvent> {
     let node_details = RegionNodesReadRepo::init()
-        .find_detailed(pool, node_id)
+        .find_detailed_by_keys(pool, node_id, region_id)
         .await;
     match node_details {
-        Ok(Some(details)) => vec![ClientEvent::NodeUpdated(details)],
+        Ok(Some(details)) => vec![ClientEvent::RegionNodeUpdated(details)],
         Ok(None) => {
             println!("Node not found for announcement.");
             vec![]

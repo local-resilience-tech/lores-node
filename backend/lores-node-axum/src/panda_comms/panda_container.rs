@@ -167,6 +167,10 @@ impl PandaContainer {
         Ok(topic_id)
     }
 
+    pub fn get_region_topic_id(region_id: &RegionId) -> TopicId {
+        region_id.clone().into()
+    }
+
     pub async fn subscribe(&self, topic_id: TopicId) -> Result<(), PandaSubscriptionError> {
         let operation_tx = match self.operation_tx.lock().await.as_ref() {
             Some(tx) => tx.clone(),

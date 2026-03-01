@@ -73,7 +73,7 @@ export type ClientEvent =
       JoinedRegion: RegionWithNodes;
     }
   | {
-      NodeUpdated: RegionNodeDetails;
+      RegionNodeUpdated: RegionNodeDetails;
     }
   | {
       RegionAppUpdated: RegionAppWithInstallations;

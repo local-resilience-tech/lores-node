@@ -61,7 +61,7 @@ impl RegionJoinRequestedHandler {
 
         // Upsert region node status
         node_write_repo
-            .upsert_join_status(
+            .upsert_join_status_and_details(
                 pool,
                 &node_id,
                 &region_id.to_hex(),

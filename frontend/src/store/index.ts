@@ -36,8 +36,8 @@ export { loadInitialData } from "./loaders"
 export async function handleClientEvent(event: ClientEvent) {
   console.log("Handling client event:", event)
 
-  if ("NodeUpdated" in event) {
-    store.dispatch(nodeUpdated(event.NodeUpdated))
+  if ("RegionNodeUpdated" in event) {
+    store.dispatch(nodeUpdated(event.RegionNodeUpdated))
   } else if ("RegionAppUpdated" in event) {
     store.dispatch(regionAppUpdated(event.RegionAppUpdated))
   } else if ("JoinedRegion" in event) {
