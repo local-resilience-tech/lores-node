@@ -33,6 +33,9 @@ pub struct RegionNodeDetails {
     pub public_ipv4: Option<String>,
     pub domain_on_local_network: Option<String>,
     pub domain_on_internet: Option<String>,
+    pub about_your_node: Option<String>,
+    pub about_your_stewards: Option<String>,
+    pub agreed_node_steward_conduct_url: Option<String>,
     pub status_text: Option<String>,
     pub state: Option<String>,
 }

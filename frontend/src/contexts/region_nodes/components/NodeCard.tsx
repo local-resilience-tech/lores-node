@@ -22,12 +22,7 @@ export default function NodeCard({ node }: NodeCardProps) {
   return (
     <Card key={node.id} withBorder>
       <Stack>
-        <Box>
-          <Text fw={500}>{node.name}</Text>
-          <Text size="sm" ff="mono">
-            {nodeName(node)}
-          </Text>
-        </Box>
+        <Text fw={500}>{nodeName(node)}</Text>
         <Card.Section>
           <Table layout="fixed" bgcolor={theme.colors.dark[7]}>
             <Table.Tbody>
