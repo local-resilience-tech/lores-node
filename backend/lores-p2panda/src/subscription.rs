@@ -88,8 +88,8 @@ impl Subscription {
                             }
                         }
                     }
-                    _ => {
-                        // TODO: Handle sync events
+                    event => {
+                        eprintln!("  -- sync event: {event:?}");
                     }
                 }
             }

@@ -1,64 +1,17 @@
-import { Stack, Card, Text, Box, Table, useMantineTheme } from "@mantine/core"
-import { Anchor } from "../../../components"
+import { Stack } from "@mantine/core"
 import { RegionNodeDetails } from "../../../api/Api"
-
-const IpLink = ({ ip }: { ip: string | undefined | null }) => {
-  if (!ip) return <Text c="dimmed">unknown</Text>
-
-  return (
-    <Anchor href={`https://${ip}`} newWindow>
-      {ip}
-    </Anchor>
-  )
-}
+import NodeCard from "./NodeCard"
 
 interface NodesListProps {
   nodes: RegionNodeDetails[]
 }
 
 export default function NodesList({ nodes: nodes }: NodesListProps) {
-  const theme = useMantineTheme()
-
   return (
     <Stack>
       {nodes.map((node) => (
-        <Card key={node.id} withBorder>
-          <Stack>
-            <Box>
-              <Text fw={500}>{node.name}</Text>
-              <Text size="xs" ff="mono">
-                {nodeName(node)}
-              </Text>
-            </Box>
-            <Card.Section>
-              <Table layout="fixed" bgcolor={theme.colors.dark[7]}>
-                <Table.Tbody>
-                  <Table.Tr>
-                    <Table.Th w={160}>Message</Table.Th>
-                    <Table.Td>{node.status_text}</Table.Td>
-                  </Table.Tr>
-                  {/*
-                  <Table.Tr>
-                    <Table.Th>IP</Table.Th>
-                    <Table.Td>
-                      <IpLink ip={node.public_ipv4} />
-                    </Table.Td>
-                  </Table.Tr> */}
-
-                  <Table.Tr>
-                    <Table.Th>State</Table.Th>
-                    <Table.Td>{node.state || "unknown"}</Table.Td>
-                  </Table.Tr>
-                </Table.Tbody>
-              </Table>
-            </Card.Section>
-          </Stack>
-        </Card>
+        <NodeCard key={node.id} node={node} />
       ))}
     </Stack>
   )
-}
-
-function nodeName(node: RegionNodeDetails) {
-  return node.name ?? node.node_id
 }
