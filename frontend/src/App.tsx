@@ -95,7 +95,6 @@ const router = createBrowserRouter([
         path: "this_region_node",
         element: <EnsureRegionNode />,
         children: [
-          { path: "", element: <ThisRegionNode /> },
           {
             path: "edit",
             element: (
@@ -141,6 +140,7 @@ const router = createBrowserRouter([
             path: ":regionSlug",
             children: [
               { path: "", element: <Navigate to="nodes" replace /> },
+              { path: "node", element: <ThisRegionNode /> },
               { path: "nodes", element: <Nodes /> },
               { path: "apps", element: <RegionApps /> },
             ],

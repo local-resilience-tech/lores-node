@@ -133,13 +133,15 @@ export default function Layout() {
             </Text>
           </Box>
 
-          <NavLink
-            label="This node"
-            href="/this_region_node"
-            key={regionNode ? regionNode.id : "this_region_node"}
-            leftSection={<IconHome size={iconSize} />}
-            onClick={toggle}
-          />
+          {region && (
+            <NavLink
+              label="This node"
+              href={`/regions/${region.region.slug}/node`}
+              key={regionNode ? regionNode.id : "this_region_node"}
+              leftSection={<IconHome size={iconSize} />}
+              onClick={toggle}
+            />
+          )}
 
           <NavLink
             label="Local apps"
