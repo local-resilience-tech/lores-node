@@ -40,8 +40,8 @@ export default function EditNodeForm({ node, onSubmit }: EditNodeFormProps) {
       name: (value) => {
         if (!value) return "This is required"
         if (value.length > 50) return "Must be less than 50 characters"
-        if (!/^[a-z]+(-[a-z]+)*$/.test(value))
-          return "Lowercase letters only, no spaces, hyphens allowed"
+        if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(value))
+          return "Lowercase letters, numbers and hyphens only, no spaces"
         return null
       },
       public_ipv4: (value) => {
@@ -69,7 +69,7 @@ export default function EditNodeForm({ node, onSubmit }: EditNodeFormProps) {
           <TextInput
             label="Node name"
             placeholder="Enter node name"
-            description="A name to identify your Node - use lowercase letters and no spaces"
+            description="A name to identify your Node - use lowercase letters, numbers and hyphens only, no spaces"
             key="name"
             {...form.getInputProps("name")}
           />
