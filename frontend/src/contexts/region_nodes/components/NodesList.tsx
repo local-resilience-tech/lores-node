@@ -2,31 +2,41 @@ import { Stack } from "@mantine/core"
 import { RegionNodeDetails, RegionNodeStatus } from "../../../api/Api"
 import NodeCard from "./NodeCard"
 import NodeJoinRequestCard from "./NodeJoinRequestCard"
+import { ActionPromiseResult } from "../../../components"
 
 interface NodesListProps {
   nodes: RegionNodeDetails[]
   regionCreatorId?: string | null
+  canAdminister?: boolean
+  onApprove?: (regionNode: RegionNodeDetails) => Promise<ActionPromiseResult>
 }
 
-export default function NodesList({ nodes, regionCreatorId }: NodesListProps) {
-  let ordered_nodes = [...nodes]
-  ordered_nodes = ordered_nodes.sort((a, b) => {
-    if (a.status === RegionNodeStatus.RequestedToJoin) return -1
-    if (b.status === RegionNodeStatus.RequestedToJoin) return 1
-    return 0
-  })
-
+export default function NodesList({
+  nodes,
+  regionCreatorId,
+  canAdminister,
+  onApprove,
+}: NodesListProps) {
   return (
     <Stack>
-      {ordered_nodes.map((node) => {
+      {nodes.map((node) => {
+        const isRegionCreator = regionCreatorId === node.node_id
+
         if (node.status == RegionNodeStatus.RequestedToJoin) {
-          return <NodeJoinRequestCard key={node.id} node={node} />
+          return (
+            <NodeJoinRequestCard
+              key={node.id}
+              node={node}
+              onApprove={onApprove}
+              canAdminister={canAdminister}
+            />
+          )
         }
         return (
           <NodeCard
             key={node.id}
             node={node}
-            regionCreatorId={regionCreatorId}
+            isRegionCreator={isRegionCreator}
           />
         )
       })}

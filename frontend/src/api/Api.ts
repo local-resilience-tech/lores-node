@@ -63,12 +63,17 @@ export interface AppReference {
   app_name: string;
 }
 
+export interface ApproveJoinRequestData {
+  node_id: string;
+  region_id: string;
+}
+
 export type ClientEvent =
   | {
       JoinedRegion: RegionWithNodes;
     }
   | {
-      NodeUpdated: RegionNodeDetails;
+      RegionNodeUpdated: RegionNodeDetails;
     }
   | {
       RegionAppUpdated: RegionAppWithInstallations;
@@ -630,6 +635,25 @@ export class Api<
     /**
      * No description
      *
+     * @name ApproveJoinRequest
+     * @request PUT:/node_steward_api/my_regions/approve_join_request
+     */
+    approveJoinRequest: (
+      data: ApproveJoinRequestData,
+      params: RequestParams = {},
+    ) =>
+      this.request<any, string>({
+        path: `/node_steward_api/my_regions/approve_join_request`,
+        method: "PUT",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
      * @name CreateRegion
      * @request POST:/node_steward_api/my_regions/create
      */
@@ -776,20 +800,6 @@ export class Api<
     /**
      * No description
      *
-     * @name ListNodes
-     * @request GET:/public_api/nodes
-     */
-    listNodes: (params: RequestParams = {}) =>
-      this.request<RegionNodeDetails[], any>({
-        path: `/public_api/nodes`,
-        method: "GET",
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
      * @name ListRegionApps
      * @request GET:/public_api/region_apps
      */
@@ -838,20 +848,6 @@ export class Api<
     p2PandaLogCounts: (params: RequestParams = {}) =>
       this.request<P2PandaLogCounts, any>({
         path: `/public_api/this_p2panda_node/event_log`,
-        method: "GET",
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @name ShowThisRegionNode
-     * @request GET:/public_api/this_region_node
-     */
-    showThisRegionNode: (params: RequestParams = {}) =>
-      this.request<null | RegionNode, string>({
-        path: `/public_api/this_region_node`,
         method: "GET",
         format: "json",
         ...params,

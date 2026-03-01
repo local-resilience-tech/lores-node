@@ -1,6 +1,11 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit"
 import type { Region, RegionNodeDetails, RegionWithNodes } from "../api/Api"
 
+export type MyRegionState = {
+  activeRegionId?: string | null
+  all: RegionWithNodes[] | null
+}
+
 export function activeRegionWithNodes(
   state: MyRegionState,
 ): RegionWithNodes | null {
@@ -26,9 +31,15 @@ export function myActiveRegionNode(
   return myNode ?? null
 }
 
-export type MyRegionState = {
-  activeRegionId?: string | null
-  all: RegionWithNodes[] | null
+export type NodesMap = Map<number, RegionNodeDetails>
+
+export function hashById(nodes: RegionNodeDetails[] | null): NodesMap {
+  if (!nodes) return new Map<number, RegionNodeDetails>()
+
+  return nodes.reduce((acc, node) => {
+    acc.set(node.id, node)
+    return acc
+  }, new Map<number, RegionNodeDetails>())
 }
 
 const regionsSlice = createSlice({
@@ -73,9 +84,43 @@ const regionsSlice = createSlice({
 
       return state
     },
+    regionNodeUpdated: (state, action: PayloadAction<RegionNodeDetails>) => {
+      const updatedNode = action.payload
+      const regionIndex = findRegionIndex(state, updatedNode.region_id)
+
+      if (regionIndex === -1) {
+        console.warn(
+          `Received node update for region ID ${updatedNode.region_id}, but that region is not in the state.`,
+        )
+        return state
+      }
+
+      const region = state.all![regionIndex]
+      const nodeIndex = region.nodes.findIndex(
+        (n) => n.node_id === updatedNode.node_id,
+      )
+
+      if (nodeIndex === -1) {
+        // Node not found, add it to the list
+        region.nodes.push(updatedNode)
+      } else {
+        // Node found, update it
+        region.nodes[nodeIndex] = updatedNode
+      }
+
+      return state
+    },
   },
 })
 
-export const { regionsLoaded, joinedRegion, activeRegionChanged } =
-  regionsSlice.actions
+function findRegionIndex(state: MyRegionState, regionId: string): number {
+  return state.all?.findIndex((r) => r.region.id === regionId) ?? -1
+}
+
+export const {
+  regionsLoaded,
+  joinedRegion,
+  activeRegionChanged,
+  regionNodeUpdated,
+} = regionsSlice.actions
 export default regionsSlice.reducer

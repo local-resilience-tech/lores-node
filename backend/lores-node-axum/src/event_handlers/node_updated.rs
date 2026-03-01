@@ -1,7 +1,7 @@
 use sqlx::{Sqlite, SqlitePool};
 
 use crate::{
-    data::{entities::RegionNode, projections_write::region_nodes::RegionNodesWriteRepo},
+    data::projections_write::region_nodes::RegionNodesWriteRepo,
     event_handlers::handler_utilities::{
         handle_db_write_error, read_node_updated_event, HandlerResult,
     },
@@ -21,7 +21,12 @@ impl NodeUpdatedHandler {
 
         match result {
             Ok(()) => HandlerResult {
-                client_events: read_node_updated_event(pool, author_node_id).await,
+                client_events: read_node_updated_event(
+                    pool,
+                    author_node_id,
+                    "invalid region id".to_string(),
+                )
+                .await,
             },
 
             Err(e) => handle_db_write_error(e),
@@ -29,9 +34,9 @@ impl NodeUpdatedHandler {
     }
 
     async fn write_projections(
-        header: LoResEventHeader,
+        _header: LoResEventHeader,
         payload: NodeUpdatedDataV1,
-        pool: &SqlitePool,
+        _pool: &SqlitePool,
     ) -> Result<(), sqlx::Error> {
         let repo = RegionNodesWriteRepo::init();
 

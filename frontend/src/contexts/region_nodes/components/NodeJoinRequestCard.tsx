@@ -1,30 +1,32 @@
-import { Stack, Card, Text, Box, Table, useMantineTheme } from "@mantine/core"
-import { Anchor } from "../../../components"
+import { Stack, Card, Text, Group, Table, useMantineTheme } from "@mantine/core"
+import { ActionButton, ActionPromiseResult } from "../../../components"
 import { RegionNodeDetails } from "../../../api/Api"
 import TextWithNewlines from "../../../components/TextWithNewlines"
+import { IfNodeSteward } from "../../auth/node_steward_auth"
 
-const IpLink = ({ ip }: { ip: string | undefined | null }) => {
-  if (!ip) return <Text c="dimmed">unknown</Text>
+// const IpLink = ({ ip }: { ip: string | undefined | null }) => {
+//   if (!ip) return <Text c="dimmed">unknown</Text>
 
-  return (
-    <Anchor href={`https://${ip}`} newWindow>
-      {ip}
-    </Anchor>
-  )
-}
+//   return (
+//     <Anchor href={`https://${ip}`} newWindow>
+//       {ip}
+//     </Anchor>
+//   )
+// }
 
 interface NodeJoinRequestCardProps {
   node: RegionNodeDetails
+  canAdminister?: boolean
+  onApprove?: (node: RegionNodeDetails) => Promise<ActionPromiseResult>
 }
 
 export default function NodeJoinRequestCard({
   node,
+  canAdminister,
+  onApprove,
 }: NodeJoinRequestCardProps) {
   const theme = useMantineTheme()
   const highlightColor = theme.colors.orange[6]
-
-  let temp_about_your_node =
-    "Dolorem et beatae temporibus est. Excepturi officiis qui molestias maiores reiciendis minima et. Tempora eos ut tempore est. Quae adipisci quod quis dolor. Blanditiis ab voluptatem officiis tempora.\n\nCulpa molestiae sit et. Omnis accusantium et eos quaerat sit ipsam nisi nihil. Autem quibusdam aut eligendi. Non nemo ut commodi adipisci porro. Aut quam inventore neque veritatis."
 
   return (
     <Card
@@ -46,7 +48,7 @@ export default function NodeJoinRequestCard({
               <Table.Tr>
                 <Table.Th w={160}>About</Table.Th>
                 <Table.Td>
-                  <TextWithNewlines text={temp_about_your_node} />
+                  <TextWithNewlines text={node.about_your_node} />
                 </Table.Td>
               </Table.Tr>
               <Table.Tr>
@@ -62,6 +64,15 @@ export default function NodeJoinRequestCard({
             </Table.Tbody>
           </Table>
         </Card.Section>
+        <IfNodeSteward>
+          {canAdminister && onApprove && (
+            <Group justify="flex-end" gap="md">
+              <ActionButton onClick={() => onApprove(node)}>
+                Approve
+              </ActionButton>
+            </Group>
+          )}
+        </IfNodeSteward>
       </Stack>
     </Card>
   )

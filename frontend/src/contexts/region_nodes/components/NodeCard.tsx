@@ -23,20 +23,18 @@ const IpLink = ({ ip }: { ip: string | undefined | null }) => {
 
 interface NodeCardProps {
   node: RegionNodeDetails
-  regionCreatorId?: string | null
+  isRegionCreator?: boolean
 }
 
-export default function NodeCard({ node, regionCreatorId }: NodeCardProps) {
+export default function NodeCard({ node, isRegionCreator }: NodeCardProps) {
   const theme = useMantineTheme()
-
-  const regionCreator = regionCreatorId === node.node_id
 
   return (
     <Card key={node.id} withBorder>
       <Stack>
         <Group justify="space-between">
           <Text fw={500}>{nodeName(node)}</Text>
-          {regionCreator && <Badge>Admin</Badge>}
+          {isRegionCreator && <Badge>Admin</Badge>}
         </Group>
         <Card.Section>
           <Table layout="fixed" bgcolor={theme.colors.dark[7]}>

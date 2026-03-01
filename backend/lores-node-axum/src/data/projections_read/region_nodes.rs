@@ -62,10 +62,11 @@ impl RegionNodesReadRepo {
         Ok(with_details)
     }
 
-    pub async fn find_detailed(
+    pub async fn find_detailed_by_keys(
         &self,
         pool: &SqlitePool,
         node_id: String,
+        region_id: String,
     ) -> Result<Option<RegionNodeDetails>, sqlx::Error> {
         let node = sqlx::query_as!(
             RegionNodeDetails,
@@ -75,10 +76,11 @@ impl RegionNodesReadRepo {
                 s.state as state, about_your_node, about_your_stewards, agreed_node_steward_conduct_url
             FROM region_nodes
             LEFT JOIN current_node_statuses AS s ON region_nodes.id = s.region_node_id
-            WHERE region_nodes.node_id = ?
+            WHERE region_nodes.node_id = ? AND region_nodes.region_id = ?
             LIMIT 1
             ",
-            node_id
+            node_id,
+            region_id
         )
         .fetch_optional(pool)
         .await?;

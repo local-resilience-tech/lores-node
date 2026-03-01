@@ -5,9 +5,12 @@ import { getApi } from "../../../api"
 import { useAppSelector } from "../../../store"
 import { actionFailure, ActionPromiseResult, Anchor } from "../../../components"
 import { useNavigate } from "react-router-dom"
+import { myActiveRegionNode } from "../../../store/my_regions"
 
 export default function EditRegionNode() {
-  const node = useAppSelector((state) => state.thisRegionNode)
+  const node = useAppSelector((state) =>
+    myActiveRegionNode(state.my_regions, state.network?.node.id),
+  )
   const navigate = useNavigate()
 
   if (!node) return null

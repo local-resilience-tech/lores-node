@@ -41,6 +41,7 @@ import { RegionSelector } from "./RegionSelector"
 import {
   activeRegionWithNodes,
   activeRegionChanged,
+  myActiveRegionNode,
 } from "../../store/my_regions"
 
 export default function Layout() {
@@ -52,8 +53,10 @@ export default function Layout() {
   const region = useAppSelector((state) =>
     activeRegionWithNodes(state.my_regions),
   )
-  const regionNode = useAppSelector((state) => state.thisRegionNode)
-  const nodesCount = useAppSelector((state) => state.nodes?.length)
+  const regionNode = useAppSelector((state) =>
+    myActiveRegionNode(state.my_regions, state.network?.node.id),
+  )
+  const nodesCount = 0
   const localAppsCount = useAppSelector((state) => state.localApps?.length)
   const me = useAppSelector((state) => state.me)
   const dispatch = useAppDispatch()
