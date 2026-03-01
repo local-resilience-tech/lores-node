@@ -41,6 +41,8 @@ pub struct RegionNodeUpdatedDataV1 {
 
 #[derive(Deserialize, Serialize, Clone, PartialEq, Debug)]
 pub struct NodeStatusPostedDataV1 {
+    pub node_id: String,
+    pub region_id: String,
     pub text: Option<String>,
     pub state: Option<String>,
 }

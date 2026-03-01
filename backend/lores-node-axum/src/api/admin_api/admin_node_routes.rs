@@ -28,8 +28,8 @@ pub async fn show_this_node(
             let node = repo
                 .find_by_keys(
                     &db.projections_pool,
-                    public_key_hex,
-                    "invalid-region-id".to_string(),
+                    &public_key_hex,
+                    &"invalid-region-id".to_string(),
                 )
                 .await;
 

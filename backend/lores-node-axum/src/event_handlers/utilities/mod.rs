@@ -17,13 +17,21 @@ pub fn handle_db_write_error(e: sqlx::Error) -> HandlerResult {
 }
 
 pub fn node_id_is_author(header: &LoResEventHeader, node_id: &str) -> bool {
-    if !header.author_node_id.is_empty() && header.author_node_id == node_id {
-        true
-    } else {
+    if (header.author_node_id.is_empty() || node_id.is_empty()) {
+        println!(
+            "Validation failed: author node ID or event node ID is empty (author_node_id: {}, event node_id: {})",
+            header.author_node_id, node_id
+        );
+        return false;
+    }
+
+    if header.author_node_id != node_id {
         println!(
             "Validation failed: author node ID {} does not match event node ID {}",
             header.author_node_id, node_id
         );
-        false
+        return false;
     }
+
+    true
 }

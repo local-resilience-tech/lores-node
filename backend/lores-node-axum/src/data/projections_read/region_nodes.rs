@@ -11,11 +11,23 @@ impl RegionNodesReadRepo {
         RegionNodesReadRepo {}
     }
 
+    pub async fn find_required_by_keys(
+        &self,
+        pool: &SqlitePool,
+        node_id: &str,
+        region_id: &str,
+    ) -> Result<RegionNode, sqlx::Error> {
+        match self.find_by_keys(pool, node_id, region_id).await? {
+            Some(node) => Ok(node),
+            None => Err(sqlx::Error::RowNotFound),
+        }
+    }
+
     pub async fn find_by_keys(
         &self,
         pool: &SqlitePool,
-        node_id: String,
-        region_id: String,
+        node_id: &str,
+        region_id: &str,
     ) -> Result<Option<RegionNode>, sqlx::Error> {
         let node = sqlx::query_as!(
             RegionNode,
