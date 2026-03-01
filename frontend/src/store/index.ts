@@ -1,12 +1,10 @@
 import { useDispatch, useSelector, useStore } from "react-redux"
 import { configureStore } from "@reduxjs/toolkit"
 import networkReducer from "./network"
-import regionsReducer, { joinedRegion } from "./my_regions"
-import nodesReducer, { nodeUpdated } from "./nodes"
+import regionsReducer, { joinedRegion, regionNodeUpdated } from "./my_regions"
 import localAppsReducer from "./local_apps"
 import regionAppsReducer, { regionAppUpdated } from "./region_apps"
 import meReducer from "./me"
-import thisRegionNodeReducer from "./this_region_node"
 import { ClientEvent } from "../api/Api"
 
 const store = configureStore({
@@ -14,10 +12,8 @@ const store = configureStore({
     me: meReducer,
     network: networkReducer,
     my_regions: regionsReducer,
-    nodes: nodesReducer,
     localApps: localAppsReducer,
     regionApps: regionAppsReducer,
-    thisRegionNode: thisRegionNodeReducer,
   },
 })
 
@@ -37,7 +33,7 @@ export async function handleClientEvent(event: ClientEvent) {
   console.log("Handling client event:", event)
 
   if ("RegionNodeUpdated" in event) {
-    store.dispatch(nodeUpdated(event.RegionNodeUpdated))
+    store.dispatch(regionNodeUpdated(event.RegionNodeUpdated))
   } else if ("RegionAppUpdated" in event) {
     store.dispatch(regionAppUpdated(event.RegionAppUpdated))
   } else if ("JoinedRegion" in event) {

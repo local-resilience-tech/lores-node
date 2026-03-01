@@ -800,20 +800,6 @@ export class Api<
     /**
      * No description
      *
-     * @name ListNodes
-     * @request GET:/public_api/nodes
-     */
-    listNodes: (params: RequestParams = {}) =>
-      this.request<RegionNodeDetails[], any>({
-        path: `/public_api/nodes`,
-        method: "GET",
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
      * @name ListRegionApps
      * @request GET:/public_api/region_apps
      */
@@ -862,20 +848,6 @@ export class Api<
     p2PandaLogCounts: (params: RequestParams = {}) =>
       this.request<P2PandaLogCounts, any>({
         path: `/public_api/this_p2panda_node/event_log`,
-        method: "GET",
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @name ShowThisRegionNode
-     * @request GET:/public_api/this_region_node
-     */
-    showThisRegionNode: (params: RequestParams = {}) =>
-      this.request<null | RegionNode, string>({
-        path: `/public_api/this_region_node`,
         method: "GET",
         format: "json",
         ...params,

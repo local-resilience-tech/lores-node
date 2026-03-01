@@ -12,14 +12,13 @@ import ThisNodeDetails from "../components/ThisNodeDetails"
 import { useNavigate } from "react-router-dom"
 import { IconEdit } from "@tabler/icons-react"
 import DisplayStatus from "../components/DisplayStatus"
-import { getNodeById } from "../../../store/nodes"
 import { IfNodeSteward } from "../../auth/node_steward_auth"
+import { myActiveRegionNode } from "../../../store/my_regions"
 
 export default function ThisRegionNode() {
   const navigate = useNavigate()
-  const node = useAppSelector((state) => state.thisRegionNode)
-  const nodeDetails = useAppSelector((state) =>
-    getNodeById(state.nodes, node?.id),
+  const node = useAppSelector((state) =>
+    myActiveRegionNode(state.my_regions, state.network?.node.id),
   )
 
   if (!node) return null
@@ -46,7 +45,7 @@ export default function ThisRegionNode() {
         <Title order={2}>Details</Title>
         <Card>
           <Card.Section>
-            <ThisNodeDetails node={node} nodeDetails={nodeDetails} />
+            <ThisNodeDetails node={node} nodeDetails={node} />
           </Card.Section>
         </Card>
       </Stack>
@@ -56,8 +55,8 @@ export default function ThisRegionNode() {
         <Card>
           <Card.Section>
             <DisplayStatus
-              state={nodeDetails?.state}
-              status_text={nodeDetails?.status_text}
+              state={node?.state}
+              status_text={node?.status_text}
             />
           </Card.Section>
         </Card>

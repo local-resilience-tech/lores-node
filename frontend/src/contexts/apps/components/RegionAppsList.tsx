@@ -1,6 +1,6 @@
 import { Badge, Group, Table, Text } from "@mantine/core"
 import { RegionAppWithInstallations, RegionNode } from "../../../api/Api"
-import { NodesMap } from "../../../store/nodes"
+import { NodesMap } from "../../../store/my_regions"
 
 interface AppsListProps {
   apps: RegionAppWithInstallations[]

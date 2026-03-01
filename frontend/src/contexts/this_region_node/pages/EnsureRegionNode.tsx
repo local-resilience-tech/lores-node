@@ -5,46 +5,25 @@ import { Loading, useLoading } from "../../shared"
 import { getApi } from "../../../api"
 import type { RegionNode } from "../../../api/Api"
 import { useAppDispatch, useAppSelector } from "../../../store"
-import { thisRegionNodeLoaded } from "../../../store/this_region_node"
 import { Outlet } from "react-router"
 import {
   actionFailure,
   ActionPromiseResult,
   actionSuccess,
 } from "../../../components"
-
-const getNode = async (): Promise<RegionNode | null> => {
-  const result = await getApi().publicApi.showThisRegionNode()
-
-  if (result.status !== 200) {
-    console.error("Failed to fetch node identity", result)
-    return null
-  }
-
-  return result.data
-}
+import { myActiveRegionNode } from "../../../store/my_regions"
 
 export default function EnsureRegionNode() {
-  const node = useAppSelector((state) => state.thisRegionNode)
+  const node = useAppSelector((state) =>
+    myActiveRegionNode(state.my_regions, state.network?.node.id),
+  )
   const dispatch = useAppDispatch()
   const [loading, withLoading] = useLoading(false)
 
   const updateNode = (newNode: RegionNode | null) => {
     console.log("Updating node", newNode)
-    dispatch(thisRegionNodeLoaded(newNode))
+    // dispatch(thisRegionNodeLoaded(newNode))
   }
-
-  const fetchNode = async () => {
-    withLoading(async () => {
-      console.log("EFFECT: fetchNode")
-      const newNode = await getNode()
-      updateNode(newNode)
-    })
-  }
-
-  useEffect(() => {
-    if (node == null) fetchNode()
-  }, [])
 
   const onSubmitNewNode = (data: NewNodeData): Promise<ActionPromiseResult> =>
     getApi()

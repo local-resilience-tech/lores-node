@@ -4,7 +4,6 @@ import { getApi } from "../../../api"
 import { useEffect, useState } from "react"
 import { P2PandaLogCounts } from "../../../api/Api"
 import { useAppSelector } from "../../../store"
-import { hashById } from "../../../store/nodes"
 import {
   ActionPromiseResult,
   actionSuccess,

@@ -5,9 +5,12 @@ import type { RegionNodeStatusData } from "../../../api/Api"
 import { actionFailure, ActionPromiseResult, Anchor } from "../../../components"
 import { useAppSelector } from "../../../store"
 import { useNavigate } from "react-router-dom"
+import { myActiveRegionNode } from "../../../store/my_regions"
 
 export default function ManageStatus() {
-  const node = useAppSelector((state) => state.thisRegionNode)
+  const node = useAppSelector((state) =>
+    myActiveRegionNode(state.my_regions, state.network?.node.id),
+  )
   const navigate = useNavigate()
 
   if (!node) return null

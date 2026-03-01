@@ -1,10 +1,8 @@
 import { AppStore } from "."
 import { getApi } from "../api"
 import { localAppsLoaded } from "./local_apps"
-import { nodesLoaded } from "./nodes"
 import { regionsLoaded } from "./my_regions"
 import { regionAppsLoaded } from "./region_apps"
-import { thisRegionNodeLoaded } from "./this_region_node"
 import { meLoaded } from "./me"
 import { redirect } from "react-router-dom"
 import { GetCurrentNodeStewardError } from "../api/Api"
@@ -37,9 +35,7 @@ export async function loadInitialData(store: AppStore) {
 
   if (state.network === null) loadNetwork(store)
   if (state.my_regions.all === null) loadRegions(store)
-  if (state.nodes === null) loadNodes(store)
   if (state.localApps === null) loadLocalApps(store)
-  if (state.thisRegionNode === null) loadThisRegionNode(store)
   if (state.regionApps === null) loadRegionApps(store)
 }
 
@@ -68,12 +64,6 @@ async function loadRegions(store: AppStore) {
   if (result) store.dispatch(regionsLoaded(result))
 }
 
-async function loadNodes(store: AppStore) {
-  const result = await fetchApiData(() => getApi().publicApi.listNodes())
-  console.log("EFFECT: fetchNodes", result)
-  if (result) store.dispatch(nodesLoaded(result))
-}
-
 async function loadLocalApps(store: AppStore) {
   const result = await fetchApiData(() => getApi().publicApi.listLocalApps())
   console.log("EFFECT: fetchApps", result)
@@ -84,14 +74,6 @@ async function loadRegionApps(store: AppStore) {
   const result = await fetchApiData(() => getApi().publicApi.listRegionApps())
   console.log("EFFECT: fetchRegionApps", result)
   if (result) store.dispatch(regionAppsLoaded(result))
-}
-
-async function loadThisRegionNode(store: AppStore) {
-  const result = await fetchApiData(() =>
-    getApi().publicApi.showThisRegionNode(),
-  )
-  console.log("EFFECT: fetchThisRegionNode", result)
-  if (result) store.dispatch(thisRegionNodeLoaded(result))
 }
 
 const fetchApiData = async <T>(
