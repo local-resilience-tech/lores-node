@@ -7,23 +7,28 @@ import { ActionPromiseResult } from "../../../components"
 interface NodesListProps {
   nodes: RegionNodeDetails[]
   regionCreatorId?: string | null
+  canAdminister?: boolean
   onApprove?: (regionNode: RegionNodeDetails) => Promise<ActionPromiseResult>
 }
 
 export default function NodesList({
   nodes,
   regionCreatorId,
+  canAdminister,
   onApprove,
 }: NodesListProps) {
   return (
     <Stack>
       {nodes.map((node) => {
+        const isRegionCreator = regionCreatorId === node.node_id
+
         if (node.status == RegionNodeStatus.RequestedToJoin) {
           return (
             <NodeJoinRequestCard
               key={node.id}
               node={node}
               onApprove={onApprove}
+              canAdminister={canAdminister}
             />
           )
         }
@@ -31,7 +36,7 @@ export default function NodesList({
           <NodeCard
             key={node.id}
             node={node}
-            regionCreatorId={regionCreatorId}
+            isRegionCreator={isRegionCreator}
           />
         )
       })}

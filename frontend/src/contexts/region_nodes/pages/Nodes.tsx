@@ -13,11 +13,15 @@ import { IconList, IconMessageQuestion } from "@tabler/icons-react"
 import { RegionNodeDetails } from "../../../api/Api"
 import { getApi } from "../../../api"
 import { actionFailure, actionSuccess } from "../../../components"
+import { use } from "react"
 
 export default function Nodes() {
   const region = useAppSelector((state) =>
     activeRegionWithNodes(state.my_regions),
   )
+  const thisNodeId = useAppSelector((state) => state.network?.node.id)
+  const isNodeAdmin =
+    thisNodeId != null && region?.region.creator_node_id === thisNodeId
 
   const theme = useMantineTheme()
   const joinRequestColor = theme.colors.orange[6]
@@ -100,6 +104,7 @@ export default function Nodes() {
               nodes={join_request_nodes}
               regionCreatorId={region.region.creator_node_id}
               onApprove={onApproveJoin}
+              canAdminister={isNodeAdmin}
             />
           </Tabs.Panel>
         </Tabs>

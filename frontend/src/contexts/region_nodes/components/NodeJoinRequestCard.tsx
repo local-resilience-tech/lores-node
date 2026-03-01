@@ -2,6 +2,7 @@ import { Stack, Card, Text, Group, Table, useMantineTheme } from "@mantine/core"
 import { ActionButton, ActionPromiseResult } from "../../../components"
 import { RegionNodeDetails } from "../../../api/Api"
 import TextWithNewlines from "../../../components/TextWithNewlines"
+import { IfNodeSteward } from "../../auth/node_steward_auth"
 
 // const IpLink = ({ ip }: { ip: string | undefined | null }) => {
 //   if (!ip) return <Text c="dimmed">unknown</Text>
@@ -15,11 +16,13 @@ import TextWithNewlines from "../../../components/TextWithNewlines"
 
 interface NodeJoinRequestCardProps {
   node: RegionNodeDetails
+  canAdminister?: boolean
   onApprove?: (node: RegionNodeDetails) => Promise<ActionPromiseResult>
 }
 
 export default function NodeJoinRequestCard({
   node,
+  canAdminister,
   onApprove,
 }: NodeJoinRequestCardProps) {
   const theme = useMantineTheme()
@@ -61,11 +64,15 @@ export default function NodeJoinRequestCard({
             </Table.Tbody>
           </Table>
         </Card.Section>
-        {onApprove && (
-          <Group justify="flex-end" gap="md">
-            <ActionButton onClick={() => onApprove(node)}>Approve</ActionButton>
-          </Group>
-        )}
+        <IfNodeSteward>
+          {canAdminister && onApprove && (
+            <Group justify="flex-end" gap="md">
+              <ActionButton onClick={() => onApprove(node)}>
+                Approve
+              </ActionButton>
+            </Group>
+          )}
+        </IfNodeSteward>
       </Stack>
     </Card>
   )
