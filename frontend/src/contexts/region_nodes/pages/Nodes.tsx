@@ -72,11 +72,17 @@ export default function Nodes() {
           </Tabs.List>
 
           <Tabs.Panel value="list" pt="lg">
-            <NodesList nodes={member_nodes} />
+            <NodesList
+              nodes={member_nodes}
+              regionCreatorId={region.region.creator_node_id}
+            />
           </Tabs.Panel>
 
           <Tabs.Panel value="requests" pt="lg">
-            <NodesList nodes={join_request_nodes} />
+            <NodesList
+              nodes={join_request_nodes}
+              regionCreatorId={region.region.creator_node_id}
+            />
           </Tabs.Panel>
         </Tabs>
       </Stack>

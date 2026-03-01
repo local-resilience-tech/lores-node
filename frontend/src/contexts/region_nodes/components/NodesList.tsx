@@ -5,9 +5,10 @@ import NodeJoinRequestCard from "./NodeJoinRequestCard"
 
 interface NodesListProps {
   nodes: RegionNodeDetails[]
+  regionCreatorId?: string | null
 }
 
-export default function NodesList({ nodes: nodes }: NodesListProps) {
+export default function NodesList({ nodes, regionCreatorId }: NodesListProps) {
   let ordered_nodes = [...nodes]
   ordered_nodes = ordered_nodes.sort((a, b) => {
     if (a.status === RegionNodeStatus.RequestedToJoin) return -1
@@ -21,7 +22,13 @@ export default function NodesList({ nodes: nodes }: NodesListProps) {
         if (node.status == RegionNodeStatus.RequestedToJoin) {
           return <NodeJoinRequestCard key={node.id} node={node} />
         }
-        return <NodeCard key={node.id} node={node} />
+        return (
+          <NodeCard
+            key={node.id}
+            node={node}
+            regionCreatorId={regionCreatorId}
+          />
+        )
       })}
     </Stack>
   )

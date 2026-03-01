@@ -1,4 +1,13 @@
-import { Stack, Card, Text, Box, Table, useMantineTheme } from "@mantine/core"
+import {
+  Stack,
+  Card,
+  Text,
+  Box,
+  Table,
+  useMantineTheme,
+  Group,
+  Badge,
+} from "@mantine/core"
 import { Anchor } from "../../../components"
 import { RegionNodeDetails } from "../../../api/Api"
 
@@ -14,15 +23,21 @@ const IpLink = ({ ip }: { ip: string | undefined | null }) => {
 
 interface NodeCardProps {
   node: RegionNodeDetails
+  regionCreatorId?: string | null
 }
 
-export default function NodeCard({ node }: NodeCardProps) {
+export default function NodeCard({ node, regionCreatorId }: NodeCardProps) {
   const theme = useMantineTheme()
+
+  const regionCreator = regionCreatorId === node.node_id
 
   return (
     <Card key={node.id} withBorder>
       <Stack>
-        <Text fw={500}>{nodeName(node)}</Text>
+        <Group justify="space-between">
+          <Text fw={500}>{nodeName(node)}</Text>
+          {regionCreator && <Badge>Admin</Badge>}
+        </Group>
         <Card.Section>
           <Table layout="fixed" bgcolor={theme.colors.dark[7]}>
             <Table.Tbody>
