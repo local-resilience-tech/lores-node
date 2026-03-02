@@ -26,9 +26,14 @@ pub async fn handle_event(event: LoResEvent, pool: &SqlitePool, realtime_state: 
     let header = event.header.clone();
     let payload = event.payload.clone();
 
-    let handler_box = get_handler(&payload);
+    let handler = get_handler(&payload);
 
-    let handle_result = handler_box.handle(header, pool).await;
+    if let Err(e) = handler.validate(&header, &pool).await {
+        eprintln!("This event is not valid: {:?}", e);
+        return;
+    }
+
+    let handle_result = handler.handle(header, pool).await;
 
     if !handle_result.client_events.is_empty() {
         // Here you would typically send the client events to the appropriate clients.
@@ -52,6 +57,12 @@ macro_rules! define_handlers {
             async fn handle(&self, header: LoResEventHeader, pool: &SqlitePool) -> HandlerResult {
                 match self {
                     $(EventHandlerBox::$variant(h) => h.handle(header, pool).await),+
+                }
+            }
+
+            async fn validate(&self, header: &LoResEventHeader, pool: &SqlitePool) -> Result<(), ()> {
+                match self {
+                    $(EventHandlerBox::$variant(h) => h.validate(header, pool).await),+
                 }
             }
         }

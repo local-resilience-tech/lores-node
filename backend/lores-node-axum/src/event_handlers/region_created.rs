@@ -63,38 +63,10 @@ impl RegionCreatedHandler {
 
         Ok(result)
     }
-
-    fn validate(&self, header: &LoResEventHeader) -> bool {
-        let region_id = match header.region_id.clone() {
-            Some(id) => id,
-            None => {
-                println!("Validation failed: header region ID is missing");
-                return false;
-            }
-        };
-
-        if region_id.to_hex() != self.payload.region_id {
-            println!(
-                "Validation failed: payload region ID {:?} does not match header region ID {:?}",
-                self.payload.region_id,
-                region_id.to_hex()
-            );
-            return false;
-        }
-
-        true
-    }
 }
 
 impl EventHandler for RegionCreatedHandler {
     async fn handle(&self, header: LoResEventHeader, pool: &SqlitePool) -> HandlerResult {
-        if self.validate(&header) {
-            println!("Region created event validation passed");
-        } else {
-            println!("Region created event validation failed");
-            return HandlerResult::default();
-        }
-
         let result = self.write_projections(header, pool).await;
 
         match result {
@@ -104,5 +76,26 @@ impl EventHandler for RegionCreatedHandler {
 
             Err(e) => handle_db_write_error(e),
         }
+    }
+
+    async fn validate(&self, header: &LoResEventHeader, _pool: &SqlitePool) -> Result<(), ()> {
+        let region_id = match header.region_id.clone() {
+            Some(id) => id,
+            None => {
+                println!("Validation failed: header region ID is missing");
+                return Err(());
+            }
+        };
+
+        if region_id.to_hex() != self.payload.region_id {
+            println!(
+                "Validation failed: payload region ID {:?} does not match header region ID {:?}",
+                self.payload.region_id,
+                region_id.to_hex()
+            );
+            return Err(());
+        }
+
+        Ok(())
     }
 }

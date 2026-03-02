@@ -77,4 +77,8 @@ impl EventHandler for AppRegisteredHandler {
             Err(e) => handle_db_write_error(e),
         }
     }
+
+    async fn validate(&self, _header: &LoResEventHeader, _pool: &SqlitePool) -> Result<(), ()> {
+        Ok(())
+    }
 }

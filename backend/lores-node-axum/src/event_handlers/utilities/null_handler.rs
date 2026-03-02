@@ -21,4 +21,8 @@ impl EventHandler for NullHandler {
         println!("NullHandler invoked - no operation performed");
         HandlerResult::default()
     }
+
+    async fn validate(&self, _header: &LoResEventHeader, _pool: &SqlitePool) -> Result<(), ()> {
+        Ok(())
+    }
 }

@@ -34,10 +34,6 @@ impl RegionNodeUpdatedHandler {
 
         Ok(())
     }
-
-    fn validate(&self, header: &LoResEventHeader) -> bool {
-        return node_id_is_author(&header, &self.payload.node_id);
-    }
 }
 
 impl EventHandler for RegionNodeUpdatedHandler {
@@ -49,13 +45,6 @@ impl EventHandler for RegionNodeUpdatedHandler {
                 return HandlerResult::default();
             }
         };
-
-        if self.validate(&header) {
-            println!("Region node updated event validation passed");
-        } else {
-            println!("Region node updated event validation failed");
-            return HandlerResult::default();
-        }
 
         let result = self.write_projections(&header, pool).await;
 
@@ -71,5 +60,9 @@ impl EventHandler for RegionNodeUpdatedHandler {
 
             Err(e) => handle_db_write_error(e),
         }
+    }
+
+    async fn validate(&self, header: &LoResEventHeader, _pool: &SqlitePool) -> Result<(), ()> {
+        node_id_is_author(&header, &self.payload.node_id)
     }
 }

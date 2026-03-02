@@ -1,4 +1,4 @@
-use sqlx::{Sqlite, SqlitePool};
+use sqlx::SqlitePool;
 
 use crate::{
     data::{
@@ -72,27 +72,10 @@ impl NodeStatusPostedHandler {
 
         Ok(())
     }
-
-    fn validate(&self, header: &LoResEventHeader) -> bool {
-        // Ensure has region
-        if self.payload.region_id.is_empty() {
-            eprintln!("Validation failed: region_id or node_id is empty");
-            return false;
-        }
-
-        return node_id_is_author(&header, &self.payload.node_id);
-    }
 }
 
 impl EventHandler for NodeStatusPostedHandler {
-    async fn handle(&self, header: LoResEventHeader, pool: &sqlx::Pool<Sqlite>) -> HandlerResult {
-        if self.validate(&header) {
-            println!("Region node updated event validation passed");
-        } else {
-            println!("Region node updated event validation failed");
-            return HandlerResult::default();
-        }
-
+    async fn handle(&self, header: LoResEventHeader, pool: &SqlitePool) -> HandlerResult {
         let result = self.write_projections(&header, pool).await;
 
         match result {
@@ -107,5 +90,15 @@ impl EventHandler for NodeStatusPostedHandler {
 
             Err(e) => handle_db_write_error(e),
         }
+    }
+
+    async fn validate(&self, header: &LoResEventHeader, _pool: &SqlitePool) -> Result<(), ()> {
+        // Ensure has region
+        if self.payload.region_id.is_empty() {
+            eprintln!("Validation failed: region_id or node_id is empty");
+            return Err(());
+        }
+
+        return node_id_is_author(&header, &self.payload.node_id);
     }
 }

@@ -61,65 +61,10 @@ impl RegionJoinRequestApprovedHandler {
 
         Ok(region_node)
     }
-
-    async fn validate(&self, header: &LoResEventHeader, pool: &SqlitePool) -> bool {
-        let region_id = match header.region_id.clone() {
-            Some(id) => id,
-            None => {
-                println!("Validation failed: header region ID is missing");
-                return false;
-            }
-        };
-
-        if region_id.to_hex() != self.payload.region_id {
-            println!(
-                "Validation failed: payload region ID {:?} does not match header region ID {:?}",
-                self.payload.region_id,
-                region_id.to_hex()
-            );
-            return false;
-        }
-
-        // Get the region
-        let repo = RegionsReadRepo::init();
-        let region = match repo.find(pool, &region_id.to_hex()).await {
-            Ok(Some(region)) => region,
-            Ok(None) => {
-                println!(
-                    "Validation failed: region not found for ID {}",
-                    region_id.to_hex()
-                );
-                return false;
-            }
-            Err(e) => {
-                eprintln!("Database error during validation: {}", e);
-                return false;
-            }
-        };
-
-        let creator_node_id = match region.creator_node_id.clone() {
-            Some(id) => id,
-            None => {
-                println!("Validation failed: region creator node ID is missing");
-                return false;
-            }
-        };
-
-        // The author node id should be the region creator
-        if header.author_node_id != creator_node_id {
-            println!(
-                "Validation failed: author node ID {:?} does not match region creator node ID {:?}",
-                header.author_node_id, creator_node_id
-            );
-            return false;
-        }
-
-        true
-    }
 }
 
 impl EventHandler for RegionJoinRequestApprovedHandler {
-    async fn handle(&self, header: LoResEventHeader, pool: &SqlitePool) -> HandlerResult {
+    async fn handle(&self, _header: LoResEventHeader, pool: &SqlitePool) -> HandlerResult {
         let region_id: RegionId = match RegionId::from_hex(&self.payload.region_id) {
             Ok(id) => id,
             Err(e) => {
@@ -131,13 +76,6 @@ impl EventHandler for RegionJoinRequestApprovedHandler {
             }
         };
 
-        if self.validate(&header, pool).await {
-            println!("Region join request approved event validation passed");
-        } else {
-            println!("Region join request approved event validation failed");
-            return HandlerResult::default();
-        }
-
         let result = self.write_projections(region_id, pool).await;
 
         match result {
@@ -147,5 +85,60 @@ impl EventHandler for RegionJoinRequestApprovedHandler {
 
             Err(e) => handle_db_write_error(e),
         }
+    }
+
+    async fn validate(&self, header: &LoResEventHeader, pool: &SqlitePool) -> Result<(), ()> {
+        let region_id = match header.region_id.clone() {
+            Some(id) => id,
+            None => {
+                println!("Validation failed: header region ID is missing");
+                return Err(());
+            }
+        };
+
+        if region_id.to_hex() != self.payload.region_id {
+            println!(
+                "Validation failed: payload region ID {:?} does not match header region ID {:?}",
+                self.payload.region_id,
+                region_id.to_hex()
+            );
+            return Err(());
+        }
+
+        // Get the region
+        let repo = RegionsReadRepo::init();
+        let region = match repo.find(pool, &region_id.to_hex()).await {
+            Ok(Some(region)) => region,
+            Ok(None) => {
+                println!(
+                    "Validation failed: region not found for ID {}",
+                    region_id.to_hex()
+                );
+                return Err(());
+            }
+            Err(e) => {
+                eprintln!("Database error during validation: {}", e);
+                return Err(());
+            }
+        };
+
+        let creator_node_id = match region.creator_node_id.clone() {
+            Some(id) => id,
+            None => {
+                println!("Validation failed: region creator node ID is missing");
+                return Err(());
+            }
+        };
+
+        // The author node id should be the region creator
+        if header.author_node_id != creator_node_id {
+            println!(
+                "Validation failed: author node ID {:?} does not match region creator node ID {:?}",
+                header.author_node_id, creator_node_id
+            );
+            return Err(());
+        }
+
+        Ok(())
     }
 }
