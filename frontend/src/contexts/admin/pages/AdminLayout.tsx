@@ -28,12 +28,11 @@ export default function AdminLayout() {
         <Group h="100%" px="md">
           <Burger opened={opened} onClick={toggle} hiddenFrom="sm" size="sm" />
           <Anchor href="/">LoRes Mesh</Anchor>
-          <Breadcrumbs>Node</Breadcrumbs>
         </Group>
       </AppShell.Header>
       <AppShell.Navbar p={0}>
         <AppShell.Section className={classes.menu_section}>
-          <Text className={classes.section_title}>"This Node"</Text>
+          <Text className={classes.section_title}>Node Admin</Text>
 
           <NavLink
             label="Node stewards"
