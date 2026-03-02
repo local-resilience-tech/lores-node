@@ -29,15 +29,22 @@ const regionsSlice = createSlice({
 
       return state
     },
-    joinedRegion: (state, action: PayloadAction<RegionWithNodes>) => {
+    nodeJoinedRegion: (state, action: PayloadAction<RegionWithNodes>) => {
       const region = action.payload
-      const existingRegion = state?.all?.find(
+      const existingRegion = state.all?.find(
         (r) => r.region.id === region.region.id,
       )
 
-      if (!existingRegion && state !== null) {
-        state.all?.push(region)
+      if (!state.all) state.all = []
+
+      if (!existingRegion) {
+        state.all.push(region)
         if (!state.activeRegionId) state.activeRegionId = region.region.id
+      } else {
+        const index = state.all.findIndex(
+          (r) => r.region.id === region.region.id,
+        )
+        state.all[index] = region
       }
 
       return state
@@ -123,7 +130,7 @@ function findRegionIndex(state: MyRegionState, regionId: string): number {
 
 export const {
   regionsLoaded,
-  joinedRegion,
+  nodeJoinedRegion,
   activeRegionChanged,
   regionNodeUpdated,
 } = regionsSlice.actions

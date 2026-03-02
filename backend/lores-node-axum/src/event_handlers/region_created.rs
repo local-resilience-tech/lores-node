@@ -80,7 +80,7 @@ impl EventHandler for RegionCreatedHandler {
 
         match result {
             Ok(region_with_nodes) => HandlerResult {
-                client_events: vec![ClientEvent::JoinedRegion(region_with_nodes)],
+                client_events: vec![ClientEvent::NodeJoinedRegion(region_with_nodes)],
             },
 
             Err(e) => handle_db_write_error(e),

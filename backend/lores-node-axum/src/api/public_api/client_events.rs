@@ -5,7 +5,7 @@ use crate::data::entities::{RegionAppWithInstallations, RegionNodeDetails, Regio
 
 #[derive(Debug, Clone, Serialize, ToSchema)]
 pub enum ClientEvent {
-    JoinedRegion(RegionWithNodes),
+    NodeJoinedRegion(RegionWithNodes),
     RegionNodeUpdated(RegionNodeDetails),
     RegionAppUpdated(RegionAppWithInstallations),
 }

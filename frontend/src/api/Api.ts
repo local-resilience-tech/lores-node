@@ -71,7 +71,7 @@ export interface ApproveJoinRequestData {
 
 export type ClientEvent =
   | {
-      JoinedRegion: RegionWithNodes;
+      NodeJoinedRegion: RegionWithNodes;
     }
   | {
       RegionNodeUpdated: RegionNodeDetails;
