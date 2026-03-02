@@ -7,12 +7,14 @@ import { getApi } from "../../../api"
 import { LocalApp } from "../../../api/Api"
 import LocalAppActions, { LocalAppAction } from "../components/LocalAppActions"
 import { IfNodeSteward } from "../../auth/node_steward_auth"
+import { activeRegion } from "../../../store/my_regions"
 
 export default function ShowLocalApp() {
   const { appName } = useParams<{ appName: string }>()
   const app = useAppSelector((state) =>
     (state.localApps || []).find((a) => a.name === appName),
   )
+  const region = useAppSelector((state) => activeRegion(state.my_regions))
 
   if (!appName) {
     return <Container>Error: App name is required</Container>
@@ -32,11 +34,14 @@ export default function ShowLocalApp() {
 
   const actions: LocalAppAction[] = []
 
-  actions.push({
-    type: "register",
-    buttonColor: "blue",
-    handler: onAppRegister,
-  })
+  if (region) {
+    actions.push({
+      type: "register",
+      buttonColor: "blue",
+      handler: onAppRegister,
+      buildName: (app, type) => `Register with ${region.slug}`,
+    })
+  }
 
   return (
     <Container>
