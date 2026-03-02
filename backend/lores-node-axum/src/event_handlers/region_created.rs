@@ -7,41 +7,24 @@ use crate::{
         projections_read::region_nodes::RegionNodesReadRepo,
         projections_write::{region_nodes::RegionNodesWriteRepo, regions::RegionsWriteRepo},
     },
-    event_handlers::utilities::{handle_db_write_error, HandlerResult},
+    event_handlers::utilities::{handle_db_write_error, EventHandler, HandlerResult},
     panda_comms::lores_events::{LoResEventHeader, RegionCreatedDataV1},
 };
 
-pub struct RegionCreatedHandler {}
+pub struct RegionCreatedHandler {
+    payload: RegionCreatedDataV1,
+}
 
 impl RegionCreatedHandler {
-    pub async fn handle(
-        header: LoResEventHeader,
-        payload: RegionCreatedDataV1,
-        pool: &SqlitePool,
-    ) -> HandlerResult {
-        println!("Region created: {:?}", payload);
-
-        if Self::validate(&header, &payload) {
-            println!("Region created event validation passed");
-        } else {
-            println!("Region created event validation failed");
-            return HandlerResult::default();
-        }
-
-        let result = Self::write_projections(header, payload, pool).await;
-
-        match result {
-            Ok(region_with_nodes) => HandlerResult {
-                client_events: vec![ClientEvent::JoinedRegion(region_with_nodes)],
-            },
-
-            Err(e) => handle_db_write_error(e),
+    pub fn new(payload: &RegionCreatedDataV1) -> Self {
+        Self {
+            payload: payload.clone(),
         }
     }
 
     async fn write_projections(
+        &self,
         header: LoResEventHeader,
-        payload: RegionCreatedDataV1,
         pool: &SqlitePool,
     ) -> Result<RegionWithNodes, sqlx::Error> {
         let region_write_repo = RegionsWriteRepo::init();
@@ -51,15 +34,15 @@ impl RegionCreatedHandler {
         let node_id = header.author_node_id;
 
         let region = Region {
-            id: payload.region_id,
+            id: self.payload.region_id.clone(),
             creator_node_id: Some(node_id.clone()),
-            slug: Some(payload.slug),
-            name: Some(payload.name),
-            organisation_name: payload.organisation_name,
-            organisation_url: payload.organisation_url,
-            node_steward_conduct_url: payload.node_steward_conduct_url,
-            user_conduct_url: payload.user_conduct_url,
-            user_privacy_url: payload.user_privacy_url,
+            slug: Some(self.payload.slug.clone()),
+            name: Some(self.payload.name.clone()),
+            organisation_name: self.payload.organisation_name.clone(),
+            organisation_url: self.payload.organisation_url.clone(),
+            node_steward_conduct_url: self.payload.node_steward_conduct_url.clone(),
+            user_conduct_url: self.payload.user_conduct_url.clone(),
+            user_privacy_url: self.payload.user_privacy_url.clone(),
         };
         region_write_repo.upsert(pool, &region).await?;
 
@@ -81,7 +64,7 @@ impl RegionCreatedHandler {
         Ok(result)
     }
 
-    fn validate(header: &LoResEventHeader, payload: &RegionCreatedDataV1) -> bool {
+    fn validate(&self, header: &LoResEventHeader) -> bool {
         let region_id = match header.region_id.clone() {
             Some(id) => id,
             None => {
@@ -90,15 +73,36 @@ impl RegionCreatedHandler {
             }
         };
 
-        if region_id.to_hex() != payload.region_id {
+        if region_id.to_hex() != self.payload.region_id {
             println!(
                 "Validation failed: payload region ID {:?} does not match header region ID {:?}",
-                payload.region_id,
+                self.payload.region_id,
                 region_id.to_hex()
             );
             return false;
         }
 
         true
+    }
+}
+
+impl EventHandler for RegionCreatedHandler {
+    async fn handle(&self, header: LoResEventHeader, pool: &SqlitePool) -> HandlerResult {
+        if self.validate(&header) {
+            println!("Region created event validation passed");
+        } else {
+            println!("Region created event validation failed");
+            return HandlerResult::default();
+        }
+
+        let result = self.write_projections(header, pool).await;
+
+        match result {
+            Ok(region_with_nodes) => HandlerResult {
+                client_events: vec![ClientEvent::JoinedRegion(region_with_nodes)],
+            },
+
+            Err(e) => handle_db_write_error(e),
+        }
     }
 }

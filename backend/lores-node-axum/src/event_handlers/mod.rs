@@ -3,13 +3,15 @@ use sqlx::SqlitePool;
 use crate::{
     api::public_api::realtime::RealtimeState,
     event_handlers::{
-        app_registered::AppRegisteredHandler, node_status_posted::NodeStatusPostedHandler,
+        app_registered::AppRegisteredHandler,
+        node_status_posted::NodeStatusPostedHandler,
         region_created::RegionCreatedHandler,
         region_join_request_approved::RegionJoinRequestApprovedHandler,
         region_join_requested::RegionJoinRequestedHandler,
-        region_node_updated::RegionNodeUpdatedHandler, utilities::HandlerResult,
+        region_node_updated::RegionNodeUpdatedHandler,
+        utilities::{EventHandler, HandlerResult},
     },
-    panda_comms::lores_events::{LoResEvent, LoResEventPayload},
+    panda_comms::lores_events::{LoResEvent, LoResEventHeader, LoResEventPayload},
 };
 
 mod app_registered;
@@ -24,40 +26,52 @@ pub async fn handle_event(event: LoResEvent, pool: &SqlitePool, realtime_state: 
     let header = event.header.clone();
     let payload = event.payload.clone();
 
-    let result: HandlerResult = match payload {
-        LoResEventPayload::RegionCreated(payload) => {
-            RegionCreatedHandler::handle(header, payload, pool).await
-        }
-        LoResEventPayload::RegionNodeUpdated(payload) => {
-            RegionNodeUpdatedHandler::handle(header, payload, pool).await
-        }
-        LoResEventPayload::NodeStatusPosted(payload) => {
-            NodeStatusPostedHandler::handle(header, payload, pool).await
-        }
-        LoResEventPayload::AppRegistered(payload) => {
-            AppRegisteredHandler::handle(header, payload, pool).await
-        }
-        LoResEventPayload::RegionJoinRequested(payload) => {
-            RegionJoinRequestedHandler::handle(header, payload, pool).await
-        }
-        LoResEventPayload::RegionJoinRequestApproved(payload) => {
-            RegionJoinRequestApprovedHandler::handle(header, payload, pool).await
-        }
-        #[allow(unreachable_patterns)]
-        _ => {
-            eprintln!("Unhandled LoResEventPayload: {:?}", payload);
-            HandlerResult::default()
-        }
-    };
+    let handler_box = get_handler(&payload);
 
-    if !result.client_events.is_empty() {
+    let handle_result = handler_box.handle(header, pool).await;
+
+    if !handle_result.client_events.is_empty() {
         // Here you would typically send the client events to the appropriate clients.
         // For example, using a WebSocket or similar mechanism.
         realtime_state
-            .broadcast_app_events(result.client_events.clone())
+            .broadcast_app_events(handle_result.client_events.clone())
             .await;
-        println!("Client events to send: {:?}", result.client_events);
+        println!("Client events to send: {:?}", handle_result.client_events);
     } else {
         println!("No client events to send.");
     }
 }
+
+macro_rules! define_handlers {
+    ($($variant:ident => $handler:ty),+ $(,)?) => {
+        enum EventHandlerBox {
+            $($variant($handler)),+
+        }
+
+        impl EventHandler for EventHandlerBox {
+            async fn handle(&self, header: LoResEventHeader, pool: &SqlitePool) -> HandlerResult {
+                match self {
+                    $(EventHandlerBox::$variant(h) => h.handle(header, pool).await),+
+                }
+            }
+        }
+
+        fn get_handler(payload: &LoResEventPayload) -> EventHandlerBox {
+            match payload {
+                $(LoResEventPayload::$variant(data) => {
+                    EventHandlerBox::$variant(<$handler>::new(data))
+                }),+
+            }
+        }
+    };
+}
+
+// Single place to add new handlers!
+define_handlers!(
+    RegionCreated => RegionCreatedHandler,
+    RegionNodeUpdated => RegionNodeUpdatedHandler,
+    NodeStatusPosted => NodeStatusPostedHandler,
+    AppRegistered => AppRegisteredHandler,
+    RegionJoinRequested => RegionJoinRequestedHandler,
+    RegionJoinRequestApproved => RegionJoinRequestApprovedHandler
+);

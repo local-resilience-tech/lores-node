@@ -2,40 +2,29 @@ use sqlx::{Sqlite, SqlitePool};
 
 use crate::{
     api::public_api::client_events::ClientEvent,
-    data::{
-        entities::{AppInstallation, RegionApp},
-        projections_read::apps::AppsReadRepo,
-        projections_write::{app_installations::AppInstallationsWriteRepo, apps::AppsWriteRepo},
+    data::projections_read::apps::AppsReadRepo,
+    event_handlers::{
+        utilities::{handle_db_write_error, HandlerResult},
+        EventHandler,
     },
-    event_handlers::utilities::{handle_db_write_error, HandlerResult},
     panda_comms::lores_events::{AppRegisteredDataV1, LoResEventHeader},
 };
 
-pub struct AppRegisteredHandler {}
+pub struct AppRegisteredHandler {
+    payload: AppRegisteredDataV1,
+}
 
 impl AppRegisteredHandler {
-    pub async fn handle(
-        header: LoResEventHeader,
-        payload: AppRegisteredDataV1,
-        pool: &sqlx::Pool<Sqlite>,
-    ) -> HandlerResult {
-        println!("App registered: {:?}", payload);
-
-        let app_name = payload.name.clone();
-        let result = Self::write_projections(header, payload, pool).await;
-
-        match result {
-            Ok(()) => HandlerResult {
-                client_events: Self::read_region_updated_event(pool, app_name).await,
-            },
-            Err(e) => handle_db_write_error(e),
+    pub fn new(payload: &AppRegisteredDataV1) -> Self {
+        Self {
+            payload: payload.clone(),
         }
     }
 
     async fn write_projections(
-        header: LoResEventHeader,
-        payload: AppRegisteredDataV1,
-        pool: &SqlitePool,
+        &self,
+        _header: LoResEventHeader,
+        _pool: &SqlitePool,
     ) -> Result<(), sqlx::Error> {
         // let repo = AppsWriteRepo::init();
         // let app = RegionApp {
@@ -54,7 +43,11 @@ impl AppRegisteredHandler {
         Ok(())
     }
 
-    async fn read_region_updated_event(pool: &SqlitePool, app_name: String) -> Vec<ClientEvent> {
+    async fn read_region_updated_event(
+        &self,
+        pool: &SqlitePool,
+        app_name: String,
+    ) -> Vec<ClientEvent> {
         let app_details = AppsReadRepo::init()
             .find_with_installations(pool, app_name)
             .await;
@@ -68,6 +61,20 @@ impl AppRegisteredHandler {
                 eprintln!("Error reading node details: {}", e);
                 vec![]
             }
+        }
+    }
+}
+
+impl EventHandler for AppRegisteredHandler {
+    async fn handle(&self, header: LoResEventHeader, pool: &sqlx::Pool<Sqlite>) -> HandlerResult {
+        let app_name = self.payload.name.clone();
+        let result = self.write_projections(header, pool).await;
+
+        match result {
+            Ok(()) => HandlerResult {
+                client_events: self.read_region_updated_event(pool, app_name).await,
+            },
+            Err(e) => handle_db_write_error(e),
         }
     }
 }

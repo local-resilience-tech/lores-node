@@ -7,45 +7,27 @@ use crate::{
         projections_read::{region_nodes::RegionNodesReadRepo, regions::RegionsReadRepo},
         projections_write::{region_nodes::RegionNodesWriteRepo, regions::RegionsWriteRepo},
     },
-    event_handlers::utilities::{handle_db_write_error, HandlerResult},
+    event_handlers::utilities::{handle_db_write_error, EventHandler, HandlerResult},
     panda_comms::{
         lores_events::{LoResEventHeader, RegionJoinRequestedDataV1},
         RegionId,
     },
 };
 
-pub struct RegionJoinRequestedHandler {}
+pub struct RegionJoinRequestedHandler {
+    payload: RegionJoinRequestedDataV1,
+}
 
 impl RegionJoinRequestedHandler {
-    pub async fn handle(
-        header: LoResEventHeader,
-        payload: RegionJoinRequestedDataV1,
-        pool: &SqlitePool,
-    ) -> HandlerResult {
-        println!("Region join requested: {:?}", payload);
-
-        let region_id: RegionId = match RegionId::from_hex(&payload.region_id) {
-            Ok(id) => id,
-            Err(e) => {
-                eprintln!("Invalid region ID in RegionJoinRequested event: {}", e);
-                return HandlerResult::default();
-            }
-        };
-
-        let result = Self::write_projections(header, payload, region_id, pool).await;
-
-        match result {
-            Ok(region_with_nodes) => HandlerResult {
-                client_events: vec![ClientEvent::JoinedRegion(region_with_nodes)],
-            },
-
-            Err(e) => handle_db_write_error(e),
+    pub fn new(payload: &RegionJoinRequestedDataV1) -> Self {
+        Self {
+            payload: payload.clone(),
         }
     }
 
     async fn write_projections(
+        &self,
         header: LoResEventHeader,
-        payload: RegionJoinRequestedDataV1,
         region_id: RegionId,
         pool: &SqlitePool,
     ) -> Result<RegionWithNodes, sqlx::Error> {
@@ -66,9 +48,9 @@ impl RegionJoinRequestedHandler {
                 &node_id,
                 &region_id.to_hex(),
                 RegionNodeStatus::RequestedToJoin,
-                Some(payload.about_your_node),
-                Some(payload.about_your_stewards),
-                payload.agreed_node_steward_conduct_url,
+                Some(self.payload.about_your_node.clone()),
+                Some(self.payload.about_your_stewards.clone()),
+                self.payload.agreed_node_steward_conduct_url.clone(),
             )
             .await?;
 
@@ -83,5 +65,29 @@ impl RegionJoinRequestedHandler {
         let result = node_read_repo.append_detailed_nodes(pool, &region).await?;
 
         Ok(result)
+    }
+}
+
+impl EventHandler for RegionJoinRequestedHandler {
+    async fn handle(&self, header: LoResEventHeader, pool: &SqlitePool) -> HandlerResult {
+        println!("Region join requested: {:?}", self.payload);
+
+        let region_id: RegionId = match RegionId::from_hex(&self.payload.region_id) {
+            Ok(id) => id,
+            Err(e) => {
+                eprintln!("Invalid region ID in RegionJoinRequested event: {}", e);
+                return HandlerResult::default();
+            }
+        };
+
+        let result = self.write_projections(header, region_id, pool).await;
+
+        match result {
+            Ok(region_with_nodes) => HandlerResult {
+                client_events: vec![ClientEvent::JoinedRegion(region_with_nodes)],
+            },
+
+            Err(e) => handle_db_write_error(e),
+        }
     }
 }
