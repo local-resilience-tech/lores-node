@@ -7,54 +7,26 @@ use crate::{
         projections_read::{region_nodes::RegionNodesReadRepo, regions::RegionsReadRepo},
         projections_write::{region_nodes::RegionNodesWriteRepo, regions::RegionsWriteRepo},
     },
-    event_handlers::handler_utilities::{handle_db_write_error, HandlerResult},
+    event_handlers::utilities::{handle_db_write_error, EventHandler, HandlerResult},
     panda_comms::{
         lores_events::{LoResEventHeader, RegionJoinRequestApprovedDataV1},
         RegionId,
     },
 };
 
-pub struct RegionJoinRequestApprovedHandler {}
+pub struct RegionJoinRequestApprovedHandler {
+    payload: RegionJoinRequestApprovedDataV1,
+}
 
 impl RegionJoinRequestApprovedHandler {
-    pub async fn handle(
-        header: LoResEventHeader,
-        payload: RegionJoinRequestApprovedDataV1,
-        pool: &SqlitePool,
-    ) -> HandlerResult {
-        println!("Region join request approved: {:?}", payload);
-
-        let region_id: RegionId = match RegionId::from_hex(&payload.region_id) {
-            Ok(id) => id,
-            Err(e) => {
-                eprintln!(
-                    "Invalid region ID in RegionJoinRequestApproved event: {}",
-                    e
-                );
-                return HandlerResult::default();
-            }
-        };
-
-        if Self::validate(&header, &payload, pool).await {
-            println!("Region join request approved event validation passed");
-        } else {
-            println!("Region join request approved event validation failed");
-            return HandlerResult::default();
-        }
-
-        let result = Self::write_projections(payload, region_id, pool).await;
-
-        match result {
-            Ok(region_node) => HandlerResult {
-                client_events: vec![ClientEvent::RegionNodeUpdated(region_node)],
-            },
-
-            Err(e) => handle_db_write_error(e),
+    pub fn new(payload: &RegionJoinRequestApprovedDataV1) -> Self {
+        Self {
+            payload: payload.clone(),
         }
     }
 
     async fn write_projections(
-        payload: RegionJoinRequestApprovedDataV1,
+        &self,
         region_id: RegionId,
         pool: &SqlitePool,
     ) -> Result<RegionNodeDetails, sqlx::Error> {
@@ -69,7 +41,7 @@ impl RegionJoinRequestApprovedHandler {
         node_write_repo
             .upsert_join_status(
                 pool,
-                &payload.node_id,
+                &self.payload.node_id,
                 &region_id.to_hex(),
                 RegionNodeStatus::Member,
             )
@@ -77,7 +49,7 @@ impl RegionJoinRequestApprovedHandler {
 
         // Get region node
         let region_node = match node_read_repo
-            .find_detailed_by_keys(pool, payload.node_id.clone(), region_id.to_hex())
+            .find_detailed_by_keys(pool, self.payload.node_id.clone(), region_id.to_hex())
             .await?
         {
             Some(region_node) => region_node,
@@ -89,27 +61,48 @@ impl RegionJoinRequestApprovedHandler {
 
         Ok(region_node)
     }
+}
 
-    async fn validate(
-        header: &LoResEventHeader,
-        payload: &RegionJoinRequestApprovedDataV1,
-        pool: &SqlitePool,
-    ) -> bool {
+impl EventHandler for RegionJoinRequestApprovedHandler {
+    async fn handle(&self, _header: LoResEventHeader, pool: &SqlitePool) -> HandlerResult {
+        let region_id: RegionId = match RegionId::from_hex(&self.payload.region_id) {
+            Ok(id) => id,
+            Err(e) => {
+                eprintln!(
+                    "Invalid region ID in RegionJoinRequestApproved event: {}",
+                    e
+                );
+                return HandlerResult::default();
+            }
+        };
+
+        let result = self.write_projections(region_id, pool).await;
+
+        match result {
+            Ok(region_node) => HandlerResult {
+                client_events: vec![ClientEvent::RegionNodeUpdated(region_node)],
+            },
+
+            Err(e) => handle_db_write_error(e),
+        }
+    }
+
+    async fn validate(&self, header: &LoResEventHeader, pool: &SqlitePool) -> Result<(), ()> {
         let region_id = match header.region_id.clone() {
             Some(id) => id,
             None => {
                 println!("Validation failed: header region ID is missing");
-                return false;
+                return Err(());
             }
         };
 
-        if region_id.to_hex() != payload.region_id {
+        if region_id.to_hex() != self.payload.region_id {
             println!(
                 "Validation failed: payload region ID {:?} does not match header region ID {:?}",
-                payload.region_id,
+                self.payload.region_id,
                 region_id.to_hex()
             );
-            return false;
+            return Err(());
         }
 
         // Get the region
@@ -121,11 +114,11 @@ impl RegionJoinRequestApprovedHandler {
                     "Validation failed: region not found for ID {}",
                     region_id.to_hex()
                 );
-                return false;
+                return Err(());
             }
             Err(e) => {
                 eprintln!("Database error during validation: {}", e);
-                return false;
+                return Err(());
             }
         };
 
@@ -133,7 +126,7 @@ impl RegionJoinRequestApprovedHandler {
             Some(id) => id,
             None => {
                 println!("Validation failed: region creator node ID is missing");
-                return false;
+                return Err(());
             }
         };
 
@@ -143,9 +136,9 @@ impl RegionJoinRequestApprovedHandler {
                 "Validation failed: author node ID {:?} does not match region creator node ID {:?}",
                 header.author_node_id, creator_node_id
             );
-            return false;
+            return Err(());
         }
 
-        true
+        Ok(())
     }
 }

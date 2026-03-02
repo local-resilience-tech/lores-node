@@ -19,9 +19,9 @@ export default function ManageStatus() {
     data: RegionNodeStatusData,
   ): Promise<ActionPromiseResult> => {
     return getApi()
-      .nodeStewardApi.postRegionNodeStatus(data)
+      .nodeStewardApi.postRegionNodeStatus(node.region_id, data)
       .then((_) => {
-        navigate("/this_region_node")
+        navigate("..")
       })
       .catch(actionFailure)
   }

@@ -91,19 +91,6 @@ const router = createBrowserRouter([
     children: [
       { path: "", element: <Navigate to="/node/apps" replace /> },
       {
-        path: "this_region_node",
-        children: [
-          {
-            path: "status",
-            element: (
-              <RequireNodeSteward>
-                <ManageStatus />
-              </RequireNodeSteward>
-            ),
-          },
-        ],
-      },
-      {
         path: "node",
         children: [
           {
@@ -139,6 +126,14 @@ const router = createBrowserRouter([
                     element: (
                       <RequireNodeSteward>
                         <EditRegionNode />
+                      </RequireNodeSteward>
+                    ),
+                  },
+                  {
+                    path: "status",
+                    element: (
+                      <RequireNodeSteward>
+                        <ManageStatus />
                       </RequireNodeSteward>
                     ),
                   },

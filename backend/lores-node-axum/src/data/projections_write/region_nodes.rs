@@ -11,6 +11,28 @@ impl RegionNodesWriteRepo {
         RegionNodesWriteRepo {}
     }
 
+    pub async fn upsert_identity(
+        &self,
+        pool: &SqlitePool,
+        node_id: &str,
+        region_id: &str,
+    ) -> Result<(), sqlx::Error> {
+        let node_repo = NodesWriteRepo::init();
+        node_repo.upsert_id(pool, node_id).await?;
+
+        sqlx::query!(
+            "INSERT INTO region_nodes (node_id, region_id)
+            VALUES (?, ?)
+            ON CONFLICT(node_id, region_id) DO NOTHING",
+            node_id,
+            region_id
+        )
+        .execute(pool)
+        .await?;
+
+        Ok(())
+    }
+
     pub async fn upsert_join_status_and_details(
         &self,
         pool: &SqlitePool,
@@ -70,6 +92,9 @@ impl RegionNodesWriteRepo {
         pool: &SqlitePool,
         data: &RegionNodeUpdatedDataV1,
     ) -> Result<(), sqlx::Error> {
+        let node_repo = NodesWriteRepo::init();
+        node_repo.upsert_id(pool, &data.node_id).await?;
+
         sqlx::query!(
             "INSERT INTO region_nodes (
                 node_id, region_id, name , public_ipv4, domain_on_local_network, domain_on_internet
