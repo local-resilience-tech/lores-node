@@ -85,7 +85,6 @@ async fn create_region(
 
     // Publish the RegionCreated event
     let event_payload = LoResEventPayload::RegionCreated(RegionCreatedDataV1 {
-        region_id: region_id.to_hex(),
         slug: data.slug.clone(),
         name: data.name.clone(),
         organisation_name: data.organisation_name.clone(),

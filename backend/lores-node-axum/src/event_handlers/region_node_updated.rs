@@ -3,7 +3,8 @@ use sqlx::{Sqlite, SqlitePool};
 use crate::{
     data::projections_write::region_nodes::RegionNodesWriteRepo,
     event_handlers::utilities::{
-        handle_db_write_error, read_node_updated_event, EventHandler, HandlerResult,
+        handle_db_write_error, header_has_region, read_node_updated_event, EventHandler,
+        HandlerResult,
     },
     panda_comms::{
         lores_events::{LoResEventHeader, RegionNodeUpdatedDataV1},
@@ -63,7 +64,7 @@ impl EventHandler for RegionNodeUpdatedHandler {
         }
     }
 
-    async fn validate(&self, _header: &LoResEventHeader, _pool: &SqlitePool) -> Result<(), ()> {
-        Ok(())
+    async fn validate(&self, header: &LoResEventHeader, _pool: &SqlitePool) -> Result<(), ()> {
+        header_has_region(header)
     }
 }

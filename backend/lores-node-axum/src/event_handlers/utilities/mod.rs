@@ -22,3 +22,11 @@ pub fn handle_db_write_error(e: sqlx::Error) -> HandlerResult {
     eprintln!("Database write error: {}", e);
     HandlerResult::default()
 }
+
+pub fn header_has_region(header: &LoResEventHeader) -> Result<(), ()> {
+    if header.region_id.is_some() {
+        Ok(())
+    } else {
+        Err(())
+    }
+}

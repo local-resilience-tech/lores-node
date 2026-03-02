@@ -7,7 +7,9 @@ use crate::{
         projections_read::region_nodes::RegionNodesReadRepo,
         projections_write::{region_nodes::RegionNodesWriteRepo, regions::RegionsWriteRepo},
     },
-    event_handlers::utilities::{handle_db_write_error, EventHandler, HandlerResult},
+    event_handlers::utilities::{
+        handle_db_write_error, header_has_region, EventHandler, HandlerResult,
+    },
     panda_comms::lores_events::{LoResEventHeader, RegionCreatedDataV1},
 };
 
@@ -32,9 +34,16 @@ impl RegionCreatedHandler {
         let node_read_repo = RegionNodesReadRepo::init();
 
         let node_id = header.author_node_id;
+        let region_id = match header.region_id.clone() {
+            Some(id) => id,
+            None => {
+                println!("Error: header region ID is missing");
+                return Err(sqlx::Error::ColumnNotFound("region_id".to_string()));
+            }
+        };
 
         let region = Region {
-            id: self.payload.region_id.clone(),
+            id: region_id.to_hex(),
             creator_node_id: Some(node_id.clone()),
             slug: Some(self.payload.slug.clone()),
             name: Some(self.payload.name.clone()),
@@ -79,23 +88,6 @@ impl EventHandler for RegionCreatedHandler {
     }
 
     async fn validate(&self, header: &LoResEventHeader, _pool: &SqlitePool) -> Result<(), ()> {
-        let region_id = match header.region_id.clone() {
-            Some(id) => id,
-            None => {
-                println!("Validation failed: header region ID is missing");
-                return Err(());
-            }
-        };
-
-        if region_id.to_hex() != self.payload.region_id {
-            println!(
-                "Validation failed: payload region ID {:?} does not match header region ID {:?}",
-                self.payload.region_id,
-                region_id.to_hex()
-            );
-            return Err(());
-        }
-
-        Ok(())
+        header_has_region(header)
     }
 }

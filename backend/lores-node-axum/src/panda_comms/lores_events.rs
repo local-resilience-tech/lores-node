@@ -5,7 +5,6 @@ use super::RegionId;
 
 #[derive(Deserialize, Serialize, Clone, PartialEq, Debug)]
 pub struct RegionCreatedDataV1 {
-    pub region_id: String,
     pub slug: String,
     pub name: String,
     pub organisation_name: Option<String>,

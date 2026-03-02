@@ -10,7 +10,8 @@ use crate::{
         },
     },
     event_handlers::utilities::{
-        handle_db_write_error, read_node_updated_event, EventHandler, HandlerResult,
+        handle_db_write_error, header_has_region, read_node_updated_event, EventHandler,
+        HandlerResult,
     },
     panda_comms::lores_events::{LoResEventHeader, NodeStatusPostedDataV1},
 };
@@ -96,11 +97,6 @@ impl EventHandler for NodeStatusPostedHandler {
     }
 
     async fn validate(&self, header: &LoResEventHeader, _pool: &SqlitePool) -> Result<(), ()> {
-        // Ensure has region
-        if header.region_id.is_none() {
-            eprintln!("Validation failed: region_id or node_id is empty");
-            return Err(());
-        }
-        Ok(())
+        header_has_region(header)
     }
 }
