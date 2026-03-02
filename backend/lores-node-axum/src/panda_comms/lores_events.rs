@@ -23,7 +23,6 @@ pub struct RegionJoinRequestedDataV1 {
 
 #[derive(Deserialize, Serialize, Clone, PartialEq, Debug)]
 pub struct RegionJoinRequestApprovedDataV1 {
-    pub region_id: String,
     pub node_id: String,
 }
 

@@ -7,7 +7,9 @@ use crate::{
         projections_read::{region_nodes::RegionNodesReadRepo, regions::RegionsReadRepo},
         projections_write::{region_nodes::RegionNodesWriteRepo, regions::RegionsWriteRepo},
     },
-    event_handlers::utilities::{handle_db_write_error, EventHandler, HandlerResult},
+    event_handlers::utilities::{
+        handle_db_write_error, header_has_region, EventHandler, HandlerResult,
+    },
     panda_comms::{
         lores_events::{LoResEventHeader, RegionJoinRequestApprovedDataV1},
         RegionId,
@@ -64,17 +66,8 @@ impl RegionJoinRequestApprovedHandler {
 }
 
 impl EventHandler for RegionJoinRequestApprovedHandler {
-    async fn handle(&self, _header: LoResEventHeader, pool: &SqlitePool) -> HandlerResult {
-        let region_id: RegionId = match RegionId::from_hex(&self.payload.region_id) {
-            Ok(id) => id,
-            Err(e) => {
-                eprintln!(
-                    "Invalid region ID in RegionJoinRequestApproved event: {}",
-                    e
-                );
-                return HandlerResult::default();
-            }
-        };
+    async fn handle(&self, header: LoResEventHeader, pool: &SqlitePool) -> HandlerResult {
+        let region_id = header.region_id.clone().unwrap();
 
         let result = self.write_projections(region_id, pool).await;
 
@@ -88,22 +81,9 @@ impl EventHandler for RegionJoinRequestApprovedHandler {
     }
 
     async fn validate(&self, header: &LoResEventHeader, pool: &SqlitePool) -> Result<(), ()> {
-        let region_id = match header.region_id.clone() {
-            Some(id) => id,
-            None => {
-                println!("Validation failed: header region ID is missing");
-                return Err(());
-            }
-        };
+        header_has_region(header)?;
 
-        if region_id.to_hex() != self.payload.region_id {
-            println!(
-                "Validation failed: payload region ID {:?} does not match header region ID {:?}",
-                self.payload.region_id,
-                region_id.to_hex()
-            );
-            return Err(());
-        }
+        let region_id = header.region_id.clone().unwrap();
 
         // Get the region
         let repo = RegionsReadRepo::init();

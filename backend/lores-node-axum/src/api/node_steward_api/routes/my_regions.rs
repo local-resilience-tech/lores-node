@@ -240,7 +240,6 @@ async fn approve_join_request(
     // Publish the RegionJoinRequestApproved event
     let event_payload =
         LoResEventPayload::RegionJoinRequestApproved(RegionJoinRequestApprovedDataV1 {
-            region_id: region_id.to_hex(),
             node_id: data.node_id.clone(),
         });
     if let Err(e) = panda_container
