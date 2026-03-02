@@ -1,7 +1,5 @@
 use sqlx::SqlitePool;
 
-use super::super::entities::RegionApp;
-
 pub struct AppsWriteRepo {}
 
 impl AppsWriteRepo {
@@ -9,13 +7,13 @@ impl AppsWriteRepo {
         AppsWriteRepo {}
     }
 
-    pub async fn upsert(&self, pool: &SqlitePool, app: RegionApp) -> Result<(), sqlx::Error> {
-        let _app = sqlx::query!(
+    pub async fn upsert(&self, pool: &SqlitePool, app_name: &str) -> Result<(), sqlx::Error> {
+        sqlx::query!(
             "
             INSERT INTO apps (name)
             VALUES (?)
             ON CONFLICT(name) DO NOTHING",
-            app.name
+            app_name
         )
         .execute(pool)
         .await?;
