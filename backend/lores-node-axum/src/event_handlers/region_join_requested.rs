@@ -7,7 +7,9 @@ use crate::{
         projections_read::{region_nodes::RegionNodesReadRepo, regions::RegionsReadRepo},
         projections_write::{region_nodes::RegionNodesWriteRepo, regions::RegionsWriteRepo},
     },
-    event_handlers::utilities::{handle_db_write_error, EventHandler, HandlerResult},
+    event_handlers::utilities::{
+        handle_db_write_error, header_has_region, EventHandler, HandlerResult,
+    },
     panda_comms::{
         lores_events::{LoResEventHeader, RegionJoinRequestedDataV1},
         RegionId,
@@ -72,13 +74,7 @@ impl EventHandler for RegionJoinRequestedHandler {
     async fn handle(&self, header: LoResEventHeader, pool: &SqlitePool) -> HandlerResult {
         println!("Region join requested: {:?}", self.payload);
 
-        let region_id: RegionId = match RegionId::from_hex(&self.payload.region_id) {
-            Ok(id) => id,
-            Err(e) => {
-                eprintln!("Invalid region ID in RegionJoinRequested event: {}", e);
-                return HandlerResult::default();
-            }
-        };
+        let region_id: RegionId = header.region_id.clone().unwrap();
 
         let result = self.write_projections(header, region_id, pool).await;
 
@@ -91,7 +87,7 @@ impl EventHandler for RegionJoinRequestedHandler {
         }
     }
 
-    async fn validate(&self, _header: &LoResEventHeader, _pool: &SqlitePool) -> Result<(), ()> {
-        Ok(())
+    async fn validate(&self, header: &LoResEventHeader, _pool: &SqlitePool) -> Result<(), ()> {
+        header_has_region(header)
     }
 }

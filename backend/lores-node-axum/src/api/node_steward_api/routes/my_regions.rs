@@ -172,7 +172,6 @@ async fn join_region(
 
     // Publish the RegionCreated event
     let event_payload = LoResEventPayload::RegionJoinRequested(RegionJoinRequestedDataV1 {
-        region_id: region_id.to_hex(),
         about_your_node: data.about_your_node.clone(),
         about_your_stewards: data.about_your_stewards.clone(),
         agreed_node_steward_conduct_url: data.agreed_node_steward_conduct_url.clone(),
