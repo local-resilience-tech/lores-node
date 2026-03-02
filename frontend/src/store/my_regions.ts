@@ -1,4 +1,4 @@
-import { createSlice, PayloadAction } from "@reduxjs/toolkit"
+import { createSlice, PayloadAction, WritableDraft } from "@reduxjs/toolkit"
 import type { Region, RegionNodeDetails, RegionWithNodes } from "../api/Api"
 
 export type MyRegionState = {
@@ -27,7 +27,7 @@ const regionsSlice = createSlice({
       state.all = regions
       state.activeRegionId = regions.length > 0 ? regions[0].region.id : null
 
-      return state
+      return ensureRegionSlugs(state)
     },
     nodeJoinedRegion: (state, action: PayloadAction<RegionWithNodes>) => {
       const region = action.payload
@@ -47,7 +47,7 @@ const regionsSlice = createSlice({
         state.all[index] = region
       }
 
-      return state
+      return ensureRegionSlugs(state)
     },
     activeRegionChanged: (state, action: PayloadAction<string | null>) => {
       const newRegionId = action.payload
@@ -94,6 +94,20 @@ const regionsSlice = createSlice({
     },
   },
 })
+
+function ensureRegionSlugs(
+  state: WritableDraft<MyRegionState>,
+): WritableDraft<MyRegionState> {
+  if (!state.all) return state
+
+  state.all.forEach((regionWithNodes) => {
+    if (!regionWithNodes.region.slug) {
+      regionWithNodes.region.slug = regionWithNodes.region.id
+    }
+  })
+
+  return state
+}
 
 export function activeRegionWithNodes(
   state: MyRegionState,
