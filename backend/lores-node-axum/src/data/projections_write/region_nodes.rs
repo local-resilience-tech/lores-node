@@ -90,10 +90,12 @@ impl RegionNodesWriteRepo {
     pub async fn upsert_details(
         &self,
         pool: &SqlitePool,
+        region_id: &str,
+        node_id: &str,
         data: &RegionNodeUpdatedDataV1,
     ) -> Result<(), sqlx::Error> {
         let node_repo = NodesWriteRepo::init();
-        node_repo.upsert_id(pool, &data.node_id).await?;
+        node_repo.upsert_id(pool, &node_id).await?;
 
         sqlx::query!(
             "INSERT INTO region_nodes (
@@ -105,8 +107,8 @@ impl RegionNodesWriteRepo {
                 public_ipv4 = excluded.public_ipv4,
                 domain_on_local_network = excluded.domain_on_local_network,
                 domain_on_internet = excluded.domain_on_internet",
-            data.node_id,
-            data.region_id,
+            node_id,
+            region_id,
             data.name,
             data.public_ipv4,
             data.domain_on_local_network,

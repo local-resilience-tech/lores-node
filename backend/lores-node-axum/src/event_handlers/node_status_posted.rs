@@ -10,8 +10,7 @@ use crate::{
         },
     },
     event_handlers::utilities::{
-        handle_db_write_error, node_id_is_author, read_node_updated_event, EventHandler,
-        HandlerResult,
+        handle_db_write_error, read_node_updated_event, EventHandler, HandlerResult,
     },
     panda_comms::lores_events::{LoResEventHeader, NodeStatusPostedDataV1},
 };
@@ -30,6 +29,7 @@ impl NodeStatusPostedHandler {
     async fn write_projections(
         &self,
         header: &LoResEventHeader,
+        region_id_string: &str,
         pool: &SqlitePool,
     ) -> Result<(), sqlx::Error> {
         let region_nodes_read_repo = RegionNodesReadRepo::init();
@@ -38,11 +38,11 @@ impl NodeStatusPostedHandler {
         let current_status_write_repo = CurrentNodeStatusesWriteRepo::init();
 
         region_nodes_write_repo
-            .upsert_identity(pool, &self.payload.node_id, &self.payload.region_id)
+            .upsert_identity(pool, &header.author_node_id, region_id_string)
             .await?;
 
         let region_node = region_nodes_read_repo
-            .find_required_by_keys(pool, &self.payload.node_id, &self.payload.region_id)
+            .find_required_by_keys(pool, &header.author_node_id, region_id_string)
             .await?;
 
         status_write_repo
@@ -76,14 +76,17 @@ impl NodeStatusPostedHandler {
 
 impl EventHandler for NodeStatusPostedHandler {
     async fn handle(&self, header: LoResEventHeader, pool: &SqlitePool) -> HandlerResult {
-        let result = self.write_projections(&header, pool).await;
+        let region_id_string = header.region_id.as_ref().unwrap().to_hex();
+        let result = self
+            .write_projections(&header, &region_id_string, pool)
+            .await;
 
         match result {
             Ok(()) => HandlerResult {
                 client_events: read_node_updated_event(
                     pool,
                     header.author_node_id,
-                    self.payload.region_id.clone(),
+                    region_id_string.clone(),
                 )
                 .await,
             },
@@ -94,11 +97,10 @@ impl EventHandler for NodeStatusPostedHandler {
 
     async fn validate(&self, header: &LoResEventHeader, _pool: &SqlitePool) -> Result<(), ()> {
         // Ensure has region
-        if self.payload.region_id.is_empty() {
+        if header.region_id.is_none() {
             eprintln!("Validation failed: region_id or node_id is empty");
             return Err(());
         }
-
-        return node_id_is_author(&header, &self.payload.node_id);
+        Ok(())
     }
 }

@@ -85,15 +85,7 @@ async fn update_this_region_node(
         Err(e) => return bad_request(e).into_response(),
     };
 
-    // Get my node id
-    let node_id = match panda_container.get_public_key().await {
-        Ok(id) => id,
-        Err(e) => return internal_server_error(e).into_response(),
-    };
-
     let event_payload = LoResEventPayload::RegionNodeUpdated(RegionNodeUpdatedDataV1 {
-        node_id: node_id.to_hex(),
-        region_id: region_id.to_hex(),
         name: Some(data.name.clone()),
         public_ipv4: data.public_ipv4.clone(),
         domain_on_local_network: data.domain_on_local_network.clone(),
@@ -159,12 +151,6 @@ async fn post_region_node_status(
         return bad_request(e).into_response();
     }
 
-    // Get my node id
-    let node_id = match panda_container.get_public_key().await {
-        Ok(id) => id,
-        Err(e) => return internal_server_error(e).into_response(),
-    };
-
     // Get region_id from path and validate it
     let region_id = match RegionId::from_hex(&region_id_string) {
         Ok(id) => id,
@@ -173,8 +159,6 @@ async fn post_region_node_status(
 
     // Send Operation
     let event_payload = LoResEventPayload::NodeStatusPosted(NodeStatusPostedDataV1 {
-        node_id: node_id.to_hex(),
-        region_id: region_id.to_hex(),
         text: data.text.clone(),
         state: data.state.clone(),
     });

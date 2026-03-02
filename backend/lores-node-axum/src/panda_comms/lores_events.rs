@@ -31,8 +31,6 @@ pub struct RegionJoinRequestApprovedDataV1 {
 
 #[derive(Deserialize, Serialize, Clone, PartialEq, Debug)]
 pub struct RegionNodeUpdatedDataV1 {
-    pub node_id: String,
-    pub region_id: String,
     pub name: Option<String>,
     pub public_ipv4: Option<String>,
     pub domain_on_local_network: Option<String>,
@@ -41,8 +39,6 @@ pub struct RegionNodeUpdatedDataV1 {
 
 #[derive(Deserialize, Serialize, Clone, PartialEq, Debug)]
 pub struct NodeStatusPostedDataV1 {
-    pub node_id: String,
-    pub region_id: String,
     pub text: Option<String>,
     pub state: Option<String>,
 }
