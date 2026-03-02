@@ -6,14 +6,13 @@ import {
 } from "react-router-dom"
 import { Layout } from "./pages"
 import {
-  EditNode,
-  EnsureNode,
+  EditRegionNode,
   ManageStatus,
-  ThisNode,
-} from "./contexts/this_node"
-import { EventLog, ThisP2PandaNode } from "./contexts/this_p2panda_node"
+  ThisRegionNode,
+} from "./contexts/this_region_node"
+import { EventLog } from "./contexts/this_p2panda_node"
 import { ShowLocalApp, LocalApps, RegionApps } from "./contexts/apps"
-import { EnsureRegion, Nodes } from "./contexts/this_region"
+import { Nodes } from "./contexts/region_nodes"
 import { MantineProvider } from "@mantine/core"
 import { ModalsProvider } from "@mantine/modals"
 import { Notifications } from "@mantine/notifications"
@@ -33,10 +32,17 @@ import {
 // All packages except `@mantine/hooks` require styles imports
 import "@mantine/core/styles.css"
 import "@mantine/notifications/styles.css"
+import { P2PandaNode } from "./contexts/network"
+import {
+  SetActiveRegion,
+  SetupRegion,
+  EnsureJoinedRegion,
+  RedirectToRegion,
+} from "./contexts/regions"
 
 function withStore(
   func: (store: AppStore) => any,
-  store: AppStore
+  store: AppStore,
 ): LoaderFunction<any> {
   const wrappedFunc: LoaderFunction<any> = async () => {
     return func(store)
@@ -87,57 +93,80 @@ const router = createBrowserRouter([
     element: <Layout />,
     loader: withStore(loadInitialData, store),
     children: [
+      { path: "", element: <Navigate to="/node/apps" replace /> },
       {
-        path: "",
-        element: <EnsureRegion />,
+        path: "node",
         children: [
-          { path: "", element: <Navigate to="/this_node" replace /> },
           {
-            path: "this_node",
-            element: <EnsureNode />,
+            path: "apps",
             children: [
-              { path: "", element: <ThisNode /> },
-              {
-                path: "edit",
-                element: (
-                  <RequireNodeSteward>
-                    <EditNode />
-                  </RequireNodeSteward>
-                ),
-              },
-              {
-                path: "status",
-                element: (
-                  <RequireNodeSteward>
-                    <ManageStatus />
-                  </RequireNodeSteward>
-                ),
-              },
-              {
-                path: "apps",
-                children: [
-                  { path: "", element: <LocalApps /> },
-                  { path: "app/:appName", element: <ShowLocalApp /> },
-                ],
-              },
+              { path: "", element: <LocalApps /> },
+              { path: "app/:appName", element: <ShowLocalApp /> },
             ],
           },
+        ],
+      },
+      {
+        path: "regions",
+        children: [
           {
-            path: "this_region",
+            path: "setup",
+            element: (
+              <RequireNodeSteward>
+                <SetupRegion />
+              </RequireNodeSteward>
+            ),
+          },
+          {
+            path: "",
+            element: <RedirectToRegion />,
+          },
+          {
+            path: ":regionSlug",
             children: [
               { path: "", element: <Navigate to="nodes" replace /> },
+              {
+                path: "node",
+                children: [
+                  { path: "", element: <ThisRegionNode /> },
+                  {
+                    path: "edit",
+                    element: (
+                      <RequireNodeSteward>
+                        <EditRegionNode />
+                      </RequireNodeSteward>
+                    ),
+                  },
+                  {
+                    path: "status",
+                    element: (
+                      <RequireNodeSteward>
+                        <ManageStatus />
+                      </RequireNodeSteward>
+                    ),
+                  },
+                ],
+              },
               { path: "nodes", element: <Nodes /> },
               { path: "apps", element: <RegionApps /> },
             ],
+            element: (
+              <SetActiveRegion>
+                <EnsureJoinedRegion />
+              </SetActiveRegion>
+            ),
           },
-          {
-            path: "debug",
-            children: [
-              { path: "p2panda_node", element: <ThisP2PandaNode /> },
-              { path: "event_log", element: <EventLog /> },
-              { path: "stacks", element: <Stacks /> },
-            ],
-          },
+        ],
+      },
+      {
+        path: "network",
+        children: [{ path: "node", element: <P2PandaNode /> }],
+      },
+      {
+        path: "debug",
+        children: [
+          { path: "event_log", element: <EventLog /> },
+          { path: "stacks", element: <Stacks /> },
         ],
       },
     ],

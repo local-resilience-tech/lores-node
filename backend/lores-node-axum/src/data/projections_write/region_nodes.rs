@@ -1,0 +1,142 @@
+use sqlx::SqlitePool;
+
+use crate::{
+    data::{
+        entities::{RegionNode, RegionNodeStatus},
+        projections_read::region_nodes::RegionNodesReadRepo,
+    },
+    panda_comms::lores_events::RegionNodeUpdatedDataV1,
+};
+
+use super::nodes::NodesWriteRepo;
+
+pub struct RegionNodesWriteRepo {}
+
+impl RegionNodesWriteRepo {
+    pub fn init() -> Self {
+        RegionNodesWriteRepo {}
+    }
+
+    pub async fn upsert_identity(
+        &self,
+        pool: &SqlitePool,
+        node_id: &str,
+        region_id: &str,
+    ) -> Result<(), sqlx::Error> {
+        let node_repo = NodesWriteRepo::init();
+        node_repo.upsert_id(pool, node_id).await?;
+
+        sqlx::query!(
+            "INSERT INTO region_nodes (node_id, region_id)
+            VALUES (?, ?)
+            ON CONFLICT(node_id, region_id) DO NOTHING",
+            node_id,
+            region_id
+        )
+        .execute(pool)
+        .await?;
+
+        Ok(())
+    }
+
+    pub async fn find_or_create_by_keys(
+        &self,
+        pool: &SqlitePool,
+        node_id: &str,
+        region_id: &str,
+    ) -> Result<RegionNode, sqlx::Error> {
+        self.upsert_identity(pool, node_id, region_id).await?;
+
+        let read_repo = RegionNodesReadRepo::init();
+        read_repo
+            .find_required_by_keys(pool, node_id, region_id)
+            .await
+    }
+
+    pub async fn upsert_join_status_and_details(
+        &self,
+        pool: &SqlitePool,
+        node_id: &str,
+        region_id: &str,
+        status: RegionNodeStatus,
+        about_your_node: Option<String>,
+        about_your_stewards: Option<String>,
+        agreed_node_steward_conduct_url: Option<String>,
+    ) -> Result<(), sqlx::Error> {
+        let node_repo = NodesWriteRepo::init();
+        node_repo.upsert_id(pool, node_id).await?;
+
+        sqlx::query!(
+            "INSERT INTO region_nodes (node_id, region_id, status, about_your_node, about_your_stewards, agreed_node_steward_conduct_url)
+            VALUES (?, ?, ?, ?, ?, ?)
+            ON CONFLICT(node_id, region_id) DO UPDATE SET status = excluded.status, about_your_node = excluded.about_your_node, about_your_stewards = excluded.about_your_stewards, agreed_node_steward_conduct_url = excluded.agreed_node_steward_conduct_url",
+            node_id,
+            region_id,
+            status,
+            about_your_node,
+            about_your_stewards,
+            agreed_node_steward_conduct_url
+        )
+        .execute(pool)
+        .await?;
+
+        Ok(())
+    }
+
+    pub async fn upsert_join_status(
+        &self,
+        pool: &SqlitePool,
+        node_id: &str,
+        region_id: &str,
+        status: RegionNodeStatus,
+    ) -> Result<(), sqlx::Error> {
+        let node_repo = NodesWriteRepo::init();
+        node_repo.upsert_id(pool, node_id).await?;
+
+        sqlx::query!(
+            "INSERT INTO region_nodes (node_id, region_id, status)
+            VALUES (?, ?, ?)
+            ON CONFLICT(node_id, region_id) DO UPDATE SET status = excluded.status",
+            node_id,
+            region_id,
+            status,
+        )
+        .execute(pool)
+        .await?;
+
+        Ok(())
+    }
+
+    pub async fn upsert_details(
+        &self,
+        pool: &SqlitePool,
+        region_id: &str,
+        node_id: &str,
+        data: &RegionNodeUpdatedDataV1,
+    ) -> Result<(), sqlx::Error> {
+        let node_repo = NodesWriteRepo::init();
+        node_repo.upsert_id(pool, &node_id).await?;
+
+        sqlx::query!(
+            "INSERT INTO region_nodes (
+                node_id, region_id, name , public_ipv4, domain_on_local_network, domain_on_internet
+            )
+            VALUES (?, ?, ?, ?, ?, ?)
+            ON CONFLICT(node_id, region_id) DO UPDATE SET
+                name = excluded.name,
+                public_ipv4 = excluded.public_ipv4,
+                domain_on_local_network = excluded.domain_on_local_network,
+                domain_on_internet = excluded.domain_on_internet",
+            node_id,
+            region_id,
+            data.name,
+            data.public_ipv4,
+            data.domain_on_local_network,
+            data.domain_on_internet
+        )
+        .execute(pool)
+        .await?;
+
+        Ok(())
+    }
+}

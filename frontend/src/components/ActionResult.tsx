@@ -42,7 +42,7 @@ export function actionSuccess(): ActionPromiseResult {
 }
 
 export function useOnSubmitWithResult<ValType>(
-  onSubmit: (values: ValType) => Promise<ActionPromiseResult>
+  onSubmit: (values: ValType) => Promise<ActionPromiseResult>,
 ): [ActionResult | null, (values: ValType) => Promise<void>] {
   const [actionResult, setActionResult] = useState<ActionResult | null>(null)
 
@@ -91,7 +91,6 @@ export function DisplayActionResult({
   displaySuccess = false,
   redirectToLogin = true,
 }: DisplayActionResultProps) {
-  console.log("Displaying action result:", result)
   const navigate = useNavigate()
 
   if (!result) return null

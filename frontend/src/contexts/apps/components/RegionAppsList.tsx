@@ -1,13 +1,13 @@
-import { Badge, Group, Table } from "@mantine/core"
-import { RegionAppWithInstallations, Node } from "../../../api/Api"
-import { NodesMap } from "../../../store/nodes"
+import { Badge, Group, Table, Text } from "@mantine/core"
+import { RegionAppWithInstallations, RegionNodeDetails } from "../../../api/Api"
+import { NodesMap } from "../../../store/my_regions"
 
 interface AppsListProps {
   apps: RegionAppWithInstallations[]
   nodes: NodesMap
 }
 
-function NodeName({ node }: { node: Node }) {
+function NodeName({ node }: { node: RegionNodeDetails }) {
   return <Badge>{node.name}</Badge>
 }
 
@@ -27,9 +27,11 @@ export default function RegionAppsList({ apps, nodes }: AppsListProps) {
             <Table.Td>
               <Group gap={4}>
                 {app.installations.map((installation) => {
-                  const node = nodes.get(installation.node_id)
+                  const node = nodes.get(installation.region_node_id)
                   return (
-                    node && <NodeName key={installation.node_id} node={node} />
+                    node && (
+                      <NodeName key={installation.region_node_id} node={node} />
+                    )
                   )
                 })}
               </Group>

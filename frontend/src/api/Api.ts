@@ -10,6 +10,11 @@
  * ---------------------------------------------------------------
  */
 
+export enum RegionNodeStatus {
+  RequestedToJoin = "RequestedToJoin",
+  Member = "Member",
+}
+
 export enum NodeStewardStatus {
   Enabled = "Enabled",
   Disabled = "Disabled",
@@ -49,29 +54,40 @@ export interface AdminCredentials {
 
 export interface AppInstallation {
   app_name: string;
-  node_id: string;
+  /** @format int64 */
+  region_node_id: number;
   version: string;
 }
 
-export interface AppReference {
-  app_name: string;
+export interface AppRegionReference {
+  app: LocalApp;
+  region_id: string;
 }
 
-export interface BootstrapNodeData {
-  network_name: string;
-  node_id?: string | null;
+export interface ApproveJoinRequestData {
+  node_id: string;
+  region_id: string;
 }
 
 export type ClientEvent =
   | {
-      NodeUpdated: NodeDetails;
+      NodeJoinedRegion: RegionWithNodes;
+    }
+  | {
+      RegionNodeUpdated: RegionNodeDetails;
     }
   | {
       RegionAppUpdated: RegionAppWithInstallations;
     };
 
-export interface CreateNodeDetails {
+export interface CreateRegionData {
   name: string;
+  node_steward_conduct_url?: string | null;
+  organisation_name?: string | null;
+  organisation_url?: string | null;
+  slug: string;
+  user_conduct_url?: string | null;
+  user_privacy_url?: string | null;
 }
 
 export interface DockerService {
@@ -88,44 +104,31 @@ export interface DockerStackWithServices {
   services: DockerService[];
 }
 
+export interface JoinRegionRequestData {
+  about_your_node: string;
+  about_your_stewards: string;
+  agreed_node_steward_conduct_url?: string | null;
+  region_id: string;
+}
+
 export interface LocalApp {
   name: string;
   url?: null | NodeAppUrl;
   version: string;
 }
 
-export interface LogCount {
-  node_id: string;
-  /** @format int64 */
-  total: number;
+export interface Network {
+  name: string;
+  node: NetworkNode;
 }
 
-export interface Node {
-  domain_on_internet?: string | null;
-  domain_on_local_network?: string | null;
+export interface NetworkNode {
   id: string;
-  name: string;
-  public_ipv4?: string | null;
 }
 
 export interface NodeAppUrl {
   internet_url?: string | null;
   local_network_url?: string | null;
-}
-
-export interface NodeDetails {
-  domain_on_internet?: string | null;
-  domain_on_local_network?: string | null;
-  id: string;
-  name: string;
-  public_ipv4?: string | null;
-  state?: string | null;
-  status_text?: string | null;
-}
-
-export interface NodeStatusData {
-  state?: string | null;
-  text?: string | null;
 }
 
 export interface NodeSteward {
@@ -160,8 +163,14 @@ export interface NodeStewardUser {
   name: string;
 }
 
+export interface P2PandaLogCount {
+  node_id: string;
+  /** @format int64 */
+  total: number;
+}
+
 export interface P2PandaLogCounts {
-  counts: LogCount[];
+  counts: P2PandaLogCount[];
 }
 
 export interface P2PandaNodeDetails {
@@ -169,7 +178,15 @@ export interface P2PandaNodeDetails {
 }
 
 export interface Region {
-  network_id: string;
+  creator_node_id?: string | null;
+  id: string;
+  name?: string | null;
+  node_steward_conduct_url?: string | null;
+  organisation_name?: string | null;
+  organisation_url?: string | null;
+  slug?: string | null;
+  user_conduct_url?: string | null;
+  user_privacy_url?: string | null;
 }
 
 export interface RegionAppWithInstallations {
@@ -177,11 +194,38 @@ export interface RegionAppWithInstallations {
   name: string;
 }
 
+export interface RegionNodeDetails {
+  about_your_node?: string | null;
+  about_your_stewards?: string | null;
+  agreed_node_steward_conduct_url?: string | null;
+  domain_on_internet?: string | null;
+  domain_on_local_network?: string | null;
+  /** @format int64 */
+  id: number;
+  name?: string | null;
+  node_id: string;
+  public_ipv4?: string | null;
+  region_id: string;
+  state?: string | null;
+  status?: null | RegionNodeStatus;
+  status_text?: string | null;
+}
+
+export interface RegionNodeStatusData {
+  state?: string | null;
+  text?: string | null;
+}
+
+export interface RegionWithNodes {
+  nodes: RegionNodeDetails[];
+  region: Region;
+}
+
 export interface UpdateNodeDetails {
   domain_on_internet?: string | null;
   domain_on_local_network?: string | null;
   name: string;
-  public_ipv4: string;
+  public_ipv4?: string | null;
 }
 
 export interface UserRef {
@@ -364,28 +408,14 @@ export class HttpClient<SecurityDataType = unknown> {
 }
 
 /**
- * @title lores-node
- * @version 0.15.2
+ * @title lores-node-axum
+ * @version 0.15.4
  * @license
  */
 export class Api<
   SecurityDataType extends unknown,
 > extends HttpClient<SecurityDataType> {
   adminApi = {
-    /**
-     * No description
-     *
-     * @name ShowThisNode
-     * @request GET:/admin_api/node
-     */
-    showThisNode: (params: RequestParams = {}) =>
-      this.request<null | Node, string>({
-        path: `/admin_api/node`,
-        method: "GET",
-        format: "json",
-        ...params,
-      }),
-
     /**
      * No description
      *
@@ -563,7 +593,7 @@ export class Api<
      * @name RegisterApp
      * @request POST:/node_steward_api/local_apps/register
      */
-    registerApp: (data: AppReference, params: RequestParams = {}) =>
+    registerApp: (data: AppRegionReference, params: RequestParams = {}) =>
       this.request<any, any>({
         path: `/node_steward_api/local_apps/register`,
         method: "POST",
@@ -576,12 +606,54 @@ export class Api<
     /**
      * No description
      *
-     * @name UpdateThisNode
-     * @request PUT:/node_steward_api/this_node
+     * @name UpdateThisRegionNode
+     * @request PUT:/node_steward_api/my_region_nodes/{region_id_string}/my_node
      */
-    updateThisNode: (data: UpdateNodeDetails, params: RequestParams = {}) =>
-      this.request<Node, string>({
-        path: `/node_steward_api/this_node`,
+    updateThisRegionNode: (
+      regionIdString: string,
+      data: UpdateNodeDetails,
+      params: RequestParams = {},
+    ) =>
+      this.request<void, string>({
+        path: `/node_steward_api/my_region_nodes/${regionIdString}/my_node`,
+        method: "PUT",
+        body: data,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @name PostRegionNodeStatus
+     * @request POST:/node_steward_api/my_region_nodes/{region_id_string}/status
+     */
+    postRegionNodeStatus: (
+      regionIdString: string,
+      data: RegionNodeStatusData,
+      params: RequestParams = {},
+    ) =>
+      this.request<any, string>({
+        path: `/node_steward_api/my_region_nodes/${regionIdString}/status`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @name ApproveJoinRequest
+     * @request PUT:/node_steward_api/my_regions/approve_join_request
+     */
+    approveJoinRequest: (
+      data: ApproveJoinRequestData,
+      params: RequestParams = {},
+    ) =>
+      this.request<any, string>({
+        path: `/node_steward_api/my_regions/approve_join_request`,
         method: "PUT",
         body: data,
         type: ContentType.Json,
@@ -592,12 +664,12 @@ export class Api<
     /**
      * No description
      *
-     * @name CreateThisNode
-     * @request POST:/node_steward_api/this_node
+     * @name CreateRegion
+     * @request POST:/node_steward_api/my_regions/create
      */
-    createThisNode: (data: CreateNodeDetails, params: RequestParams = {}) =>
-      this.request<Node, string>({
-        path: `/node_steward_api/this_node`,
+    createRegion: (data: CreateRegionData, params: RequestParams = {}) =>
+      this.request<any, string>({
+        path: `/node_steward_api/my_regions/create`,
         method: "POST",
         body: data,
         type: ContentType.Json,
@@ -608,42 +680,12 @@ export class Api<
     /**
      * No description
      *
-     * @name PostNodeStatus
-     * @request POST:/node_steward_api/this_node/status
+     * @name JoinRegion
+     * @request POST:/node_steward_api/my_regions/join
      */
-    postNodeStatus: (data: NodeStatusData, params: RequestParams = {}) =>
+    joinRegion: (data: JoinRegionRequestData, params: RequestParams = {}) =>
       this.request<any, string>({
-        path: `/node_steward_api/this_node/status`,
-        method: "POST",
-        body: data,
-        type: ContentType.Json,
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @name ShowRegion
-     * @request GET:/node_steward_api/this_region
-     */
-    showRegion: (params: RequestParams = {}) =>
-      this.request<null | Region, any>({
-        path: `/node_steward_api/this_region`,
-        method: "GET",
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @name Bootstrap
-     * @request POST:/node_steward_api/this_region/bootstrap
-     */
-    bootstrap: (data: BootstrapNodeData, params: RequestParams = {}) =>
-      this.request<any, string>({
-        path: `/node_steward_api/this_region/bootstrap`,
+        path: `/node_steward_api/my_regions/join`,
         method: "POST",
         body: data,
         type: ContentType.Json,
@@ -683,12 +725,26 @@ export class Api<
     /**
      * No description
      *
-     * @name ListNodes
-     * @request GET:/public_api/nodes
+     * @name ListRegions
+     * @request GET:/public_api/my_regions
      */
-    listNodes: (params: RequestParams = {}) =>
-      this.request<NodeDetails[], any>({
-        path: `/public_api/nodes`,
+    listRegions: (params: RequestParams = {}) =>
+      this.request<RegionWithNodes[], any>({
+        path: `/public_api/my_regions`,
+        method: "GET",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @name ShowNetwork
+     * @request GET:/public_api/network
+     */
+    showNetwork: (params: RequestParams = {}) =>
+      this.request<Network, string>({
+        path: `/public_api/network`,
         method: "GET",
         format: "json",
         ...params,
@@ -725,20 +781,6 @@ export class Api<
     /**
      * No description
      *
-     * @name ShowThisNode
-     * @request GET:/public_api/this_node
-     */
-    showThisNode: (params: RequestParams = {}) =>
-      this.request<null | Node, string>({
-        path: `/public_api/this_node`,
-        method: "GET",
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
      * @name ShowThisPandaNode
      * @request GET:/public_api/this_p2panda_node
      */
@@ -759,20 +801,6 @@ export class Api<
     p2PandaLogCounts: (params: RequestParams = {}) =>
       this.request<P2PandaLogCounts, any>({
         path: `/public_api/this_p2panda_node/event_log`,
-        method: "GET",
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @name ShowRegion
-     * @request GET:/public_api/this_region
-     */
-    showRegion: (params: RequestParams = {}) =>
-      this.request<null | Region, any>({
-        path: `/public_api/this_region`,
         method: "GET",
         format: "json",
         ...params,

@@ -7,12 +7,14 @@ import { getApi } from "../../../api"
 import { LocalApp } from "../../../api/Api"
 import LocalAppActions, { LocalAppAction } from "../components/LocalAppActions"
 import { IfNodeSteward } from "../../auth/node_steward_auth"
+import { activeRegion } from "../../../store/my_regions"
 
 export default function ShowLocalApp() {
   const { appName } = useParams<{ appName: string }>()
   const app = useAppSelector((state) =>
     (state.localApps || []).find((a) => a.name === appName),
   )
+  const region = useAppSelector((state) => activeRegion(state.my_regions))
 
   if (!appName) {
     return <Container>Error: App name is required</Container>
@@ -22,28 +24,31 @@ export default function ShowLocalApp() {
     return <Container>Error: App not found</Container>
   }
 
-  const onAppRegister = async (app: LocalApp) => {
-    console.log("Registering app:", app)
-    return getApi()
-      .nodeStewardApi.registerApp({ app_name: app.name })
-      .then((_) => actionSuccess())
-      .catch(actionFailure)
-  }
-
   const actions: LocalAppAction[] = []
 
-  actions.push({
-    type: "register",
-    buttonColor: "blue",
-    handler: onAppRegister,
-  })
+  if (region) {
+    const onAppRegister = async (app: LocalApp) => {
+      console.log("Registering app:", app)
+      return getApi()
+        .nodeStewardApi.registerApp({ app: app, region_id: region.id })
+        .then((_) => actionSuccess())
+        .catch(actionFailure)
+    }
+
+    actions.push({
+      type: "register",
+      buttonColor: "blue",
+      handler: onAppRegister,
+      buildName: (app, type) => `Register with ${region.slug}`,
+    })
+  }
 
   return (
     <Container>
       <Stack gap="lg">
         <Stack gap="xs">
           <Breadcrumbs>
-            <Anchor href="/this_node/apps">Local Apps</Anchor>
+            <Anchor href="/node/apps">Local Apps</Anchor>
             <Text c="dimmed">{app.name}</Text>
           </Breadcrumbs>
           <Title order={1}>

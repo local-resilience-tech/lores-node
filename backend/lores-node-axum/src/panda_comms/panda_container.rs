@@ -1,0 +1,309 @@
+use futures_util::StreamExt;
+
+use sqlx::SqlitePool;
+use std::sync::Arc;
+use thiserror::Error;
+use tokio::sync::{mpsc, Mutex};
+use tokio_stream::wrappers::ReceiverStream;
+
+use lores_p2panda::{
+    operations::{LoResMeshExtensions, LogType, LoresOperation},
+    p2panda_core::{identity::PUBLIC_KEY_LEN, Hash, Operation, PrivateKey, PublicKey},
+    panda_node::{PandaNode, RequiredNodeParams},
+    PandaNodeError, PandaPublishError, SubscriptionError, TopicId,
+};
+
+use crate::api::auth_api::auth_backend::User;
+
+use super::{
+    event_encoding::{decode_lores_event, encode_lores_event_payload},
+    lores_events::{LoResEvent, LoResEventHeader, LoResEventMetadataV1, LoResEventPayload},
+    RegionId,
+};
+
+#[derive(Default, Clone)]
+pub struct NodeParams {
+    pub private_key: Option<PrivateKey>,
+    pub network_name: Option<String>,
+    pub bootstrap_node_id: Option<PublicKey>,
+}
+
+#[derive(Debug, Error)]
+pub enum PandaContainerError {
+    #[error(transparent)]
+    PandaNodeError(#[from] PandaNodeError),
+}
+
+#[derive(Debug, Error)]
+pub enum PandaSubscriptionError {
+    #[error(transparent)]
+    SubscriptionError(#[from] SubscriptionError),
+    #[error("Couldn't get node lock")]
+    CouldntGetNodeLock(),
+    #[error("Couldn't get operation sender lock")]
+    CouldntGetOperationTx(),
+}
+
+#[derive(Clone)]
+pub struct PandaContainer {
+    params: Arc<Mutex<NodeParams>>,
+    node: Arc<Mutex<Option<PandaNode>>>,
+    #[allow(dead_code)]
+    lores_events_tx: mpsc::Sender<LoResEvent>,
+    operation_tx: Arc<Mutex<Option<mpsc::Sender<LoresOperation>>>>,
+}
+
+impl PandaContainer {
+    pub fn new(events_tx: mpsc::Sender<LoResEvent>) -> Self {
+        let params = Arc::new(Mutex::new(NodeParams::default()));
+
+        PandaContainer {
+            params,
+            node: Arc::new(Mutex::new(None)),
+            lores_events_tx: events_tx,
+            operation_tx: Arc::new(Mutex::new(None)),
+        }
+    }
+
+    pub async fn get_params(&self) -> NodeParams {
+        let params_lock = self.params.lock().await;
+        params_lock.clone()
+    }
+
+    pub async fn set_network_name(&self, network_name: String) {
+        let mut params_lock = self.params.lock().await;
+        params_lock.network_name = Some(network_name);
+    }
+
+    pub async fn set_private_key(&self, private_key: PrivateKey) {
+        let mut params_lock = self.params.lock().await;
+        params_lock.private_key = Some(private_key);
+    }
+
+    pub async fn set_bootstrap_node_id(&self, bootstrap_node_id: Option<PublicKey>) {
+        let mut params_lock = self.params.lock().await;
+        params_lock.bootstrap_node_id = bootstrap_node_id;
+    }
+
+    pub async fn start(&self, operations_pool: &SqlitePool) -> Result<(), PandaContainerError> {
+        println!("Starting client");
+
+        let params = self.get_params().await;
+
+        let private_key: Option<PrivateKey> = params.private_key;
+        let network_name: Option<String> = params.network_name;
+        let boostrap_node_id: Option<PublicKey> = params.bootstrap_node_id;
+
+        if private_key.is_none() {
+            println!("P2Panda: No private key found, not starting network");
+            return Ok(());
+        }
+
+        if network_name.is_none() {
+            println!("P2Panda: No network name found, not starting network");
+            return Ok(());
+        }
+
+        let private_key = private_key.unwrap();
+        let network_name = network_name.unwrap();
+
+        self.start_for(private_key, network_name, boostrap_node_id, operations_pool)
+            .await?;
+
+        self.start_operation_receiver().await?;
+
+        Ok(())
+    }
+
+    async fn start_for(
+        &self,
+        private_key: PrivateKey,
+        network_name: String,
+        boostrap_node_id: Option<PublicKey>,
+        operations_pool: &SqlitePool,
+    ) -> Result<(), PandaNodeError> {
+        let required_params = RequiredNodeParams {
+            private_key,
+            network_id: Hash::new(network_name.as_bytes()),
+            bootstrap_node_id: boostrap_node_id,
+        };
+
+        let panda_node = PandaNode::new(&required_params, operations_pool).await?;
+
+        {
+            let mut node_lock = self.node.lock().await;
+            *node_lock = Some(panda_node);
+        }
+
+        println!(
+            "P2Panda: Node started. Network name: {}, Bootstrap ID: {:?}",
+            network_name,
+            boostrap_node_id.map(|key| key.to_string())
+        );
+
+        Ok(())
+    }
+
+    pub async fn is_started(&self) -> bool {
+        let node = self.node.lock().await;
+        node.is_some()
+    }
+
+    pub async fn get_public_key(&self) -> Result<PublicKey, Box<dyn std::error::Error>> {
+        let params_lock = self.params.lock().await;
+        match params_lock.private_key {
+            Some(ref key) => Ok(key.public_key()),
+            None => Err("Private key not set".into()),
+        }
+    }
+
+    pub async fn join_region(
+        &self,
+        region_id: RegionId,
+    ) -> Result<TopicId, PandaSubscriptionError> {
+        let topic_id: TopicId = region_id.into();
+
+        self.subscribe(topic_id).await?;
+        Ok(topic_id)
+    }
+
+    pub fn get_region_topic_id(region_id: &RegionId) -> TopicId {
+        region_id.clone().into()
+    }
+
+    pub async fn subscribe(&self, topic_id: TopicId) -> Result<(), PandaSubscriptionError> {
+        let operation_tx = match self.operation_tx.lock().await.as_ref() {
+            Some(tx) => tx.clone(),
+            None => return Err(PandaSubscriptionError::CouldntGetOperationTx()),
+        };
+
+        let node_lock = self.node.lock().await;
+
+        let node = match node_lock.as_ref() {
+            Some(node) => node,
+            None => return Err(PandaSubscriptionError::CouldntGetNodeLock()),
+        };
+
+        node.inner
+            .subscribe_to_topic(topic_id, operation_tx)
+            .await?;
+
+        Ok(())
+    }
+
+    pub async fn publish_persisted(
+        &self,
+        topic_id: TopicId,
+        log_type: LogType,
+        event_payload: LoResEventPayload,
+        current_user: Option<User>,
+    ) -> Result<(), PandaPublishError> {
+        let node_lock = self.node.lock().await;
+        let node = match node_lock.as_ref() {
+            Some(node) => node,
+            None => return Err(PandaPublishError::NodeNotStarted),
+        };
+
+        let node_steward_id = match current_user {
+            Some(user) if user.is_node_steward() => Some(user.id.clone()),
+            _ => None,
+        };
+        let metadata = LoResEventMetadataV1 { node_steward_id };
+        let encoded_payload = encode_lores_event_payload(event_payload, metadata)?;
+
+        let operation = node
+            .inner
+            .publish_persisted(topic_id, log_type, &encoded_payload)
+            .await?;
+
+        // Since this came from this node, it wont be received via subscription, so we
+        // need to handle it ourselves.
+        let lores_event = Self::decode_operation_to_lores_event(&operation).map_err(|e| {
+            PandaPublishError::OperationError(format!(
+                "Failed to decode LoResEvent from published operation: {}",
+                e
+            ))
+        })?;
+
+        self.lores_events_tx.send(lores_event).await.map_err(|e| {
+            PandaPublishError::AppError(format!(
+                "Failed to send LoResEvent back to the application: {}",
+                e
+            ))
+        })?;
+
+        Ok(())
+    }
+
+    async fn start_operation_receiver(&self) -> Result<(), PandaContainerError> {
+        let (operation_tx, operation_rx): (
+            mpsc::Sender<LoresOperation>,
+            mpsc::Receiver<LoresOperation>,
+        ) = mpsc::channel(32);
+
+        *self.operation_tx.lock().await = Some(operation_tx);
+
+        // Received messages on operation_rx
+        {
+            let events_tx = self.lores_events_tx.clone();
+
+            tokio::task::spawn(async move {
+                println!("  P2Panda Network initialized, starting sync stream...");
+                let mut operation_rx = ReceiverStream::new(operation_rx);
+                while let Some(operation) = operation_rx.next().await {
+                    match Self::decode_operation_to_lores_event(&operation) {
+                        Ok(lores_event) => {
+                            if let Err(e) = events_tx.send(lores_event).await {
+                                eprintln!("  Failed to send LoResEvent: {}", e);
+                            }
+                        }
+                        Err(e) => {
+                            eprintln!("  Failed to decode LoResEvent from operation: {}", e);
+                            continue;
+                        }
+                    }
+                }
+                println!("  Sync stream read loop ended.");
+            });
+        }
+
+        Ok(())
+    }
+
+    fn decode_operation_to_lores_event(
+        operation: &Operation<LoResMeshExtensions>,
+    ) -> Result<LoResEvent, anyhow::Error> {
+        let operation_header = &operation.header;
+        let topic_id: TopicId = operation.header.extensions.topic;
+
+        let lores_header = LoResEventHeader {
+            author_node_id: operation_header.public_key.to_hex(),
+            region_id: Some(topic_id.into()),
+            timestamp: operation_header.timestamp,
+            operation_id: operation_header.hash(),
+        };
+
+        let body_bytes: Vec<u8> = match &operation.body {
+            Some(body) => body.to_bytes(),
+            None => {
+                return Err(anyhow::anyhow!(
+                    "Operation body is None, cannot decode LoResEvent"
+                ))
+            }
+        };
+
+        decode_lores_event(lores_header, &body_bytes)
+    }
+}
+
+// // TODO: This should be in p2panda-core, submit a PR
+pub fn build_public_key_from_hex(key_hex: String) -> Option<PublicKey> {
+    let key_bytes = hex::decode(key_hex).ok()?;
+    let key_byte_array: [u8; PUBLIC_KEY_LEN] = key_bytes.try_into().ok()?;
+    let result = PublicKey::from_bytes(&key_byte_array);
+
+    match result {
+        Ok(key) => Some(key),
+        Err(_) => None,
+    }
+}

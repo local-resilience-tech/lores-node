@@ -1,21 +1,22 @@
 import { useDispatch, useSelector, useStore } from "react-redux"
 import { configureStore } from "@reduxjs/toolkit"
-import regionReducer from "./region"
-import nodesReducer, { nodeUpdated } from "./nodes"
+import networkReducer from "./network"
+import regionsReducer, {
+  nodeJoinedRegion,
+  regionNodeUpdated,
+} from "./my_regions"
 import localAppsReducer from "./local_apps"
 import regionAppsReducer, { regionAppUpdated } from "./region_apps"
 import meReducer from "./me"
-import thisNodeReducer from "./this_node"
 import { ClientEvent } from "../api/Api"
 
 const store = configureStore({
   reducer: {
     me: meReducer,
-    region: regionReducer,
-    nodes: nodesReducer,
+    network: networkReducer,
+    my_regions: regionsReducer,
     localApps: localAppsReducer,
     regionApps: regionAppsReducer,
-    thisNode: thisNodeReducer,
   },
 })
 
@@ -34,10 +35,12 @@ export { loadInitialData } from "./loaders"
 export async function handleClientEvent(event: ClientEvent) {
   console.log("Handling client event:", event)
 
-  if ("NodeUpdated" in event) {
-    store.dispatch(nodeUpdated(event.NodeUpdated))
+  if ("RegionNodeUpdated" in event) {
+    store.dispatch(regionNodeUpdated(event.RegionNodeUpdated))
   } else if ("RegionAppUpdated" in event) {
     store.dispatch(regionAppUpdated(event.RegionAppUpdated))
+  } else if ("NodeJoinedRegion" in event) {
+    store.dispatch(nodeJoinedRegion(event.NodeJoinedRegion))
   } else {
     console.warn("Unhandled event type:", event)
   }

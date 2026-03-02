@@ -1,0 +1,36 @@
+use sqlx::SqlitePool;
+
+use crate::data::projections_write::apps::AppsWriteRepo;
+
+use super::super::entities::AppInstallation;
+
+pub struct AppInstallationsWriteRepo {}
+
+impl AppInstallationsWriteRepo {
+    pub fn init() -> Self {
+        AppInstallationsWriteRepo {}
+    }
+
+    pub async fn upsert(
+        &self,
+        pool: &SqlitePool,
+        installation: AppInstallation,
+    ) -> Result<(), sqlx::Error> {
+        let app_write_repo = AppsWriteRepo::init();
+        app_write_repo.upsert(pool, &installation.app_name).await?;
+
+        sqlx::query!(
+            "
+            INSERT INTO app_installations (app_name, region_node_id, version)
+            VALUES (?,?,?)
+            ON CONFLICT(app_name, region_node_id) DO UPDATE SET version = excluded.version",
+            installation.app_name,
+            installation.region_node_id,
+            installation.version
+        )
+        .execute(pool)
+        .await?;
+
+        Ok(())
+    }
+}

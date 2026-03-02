@@ -13,16 +13,19 @@ import { ActionResultErrorIcon } from "../../../components/ActionResult"
 import { awaitConfirmModal } from "../../shared"
 
 export type LocalAppActionHandler = (
-  app: LocalApp
+  app: LocalApp,
 ) => Promise<ActionPromiseResult>
 
+export type LocalAppActionType = "register"
+
 export interface LocalAppAction {
-  type: "deploy" | "remove" | "register" | "configure" | "delete"
+  type: LocalAppActionType
   buttonColor?: MantineColor
   primary?: boolean
   handler: LocalAppActionHandler
   disabled?: boolean
   tooltip?: string
+  buildName?: (app: LocalApp, type: LocalAppActionType) => string
 }
 
 function LocalAppAction({
@@ -37,7 +40,7 @@ function LocalAppAction({
 
   const handleButtonPress = async (
     app: LocalApp,
-    handler: LocalAppActionHandler
+    handler: LocalAppActionHandler,
   ) => {
     try {
       setLoading(true)
@@ -60,7 +63,9 @@ function LocalAppAction({
       loading={loading}
       disabled={action.disabled}
     >
-      {action.type.charAt(0).toUpperCase() + action.type.slice(1)}
+      {action.buildName
+        ? action.buildName(app, action.type)
+        : nameFromActionType(action.type)}
     </Button>
   )
 
@@ -95,7 +100,7 @@ export default function LocalAppActions({
 export function confirmLocalAppAction(
   actionHandler: LocalAppActionHandler,
   title?: string,
-  children?: React.ReactNode
+  children?: React.ReactNode,
 ): LocalAppActionHandler {
   return async (app: LocalApp) => {
     const confirmed = await awaitConfirmModal(title, children)
@@ -109,4 +114,8 @@ export function confirmLocalAppAction(
       return result
     }
   }
+}
+
+function nameFromActionType(type: string) {
+  return type.charAt(0).toUpperCase() + type.slice(1)
 }

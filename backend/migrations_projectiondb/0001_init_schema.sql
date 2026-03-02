@@ -1,18 +1,65 @@
 -- Add migration script here
-CREATE TABLE nodes (
+
+CREATE TABLE regions (
     id VARCHAR(36) PRIMARY KEY NOT NULL,
-    name VARCHAR(50) NOT NULL
+    creator_node_id VARCHAR(36) NULL,
+    slug TEXT NULL,
+    name TEXT NULL,
+    organisation_name TEXT NULL,
+    organisation_url TEXT NULL,
+    node_steward_conduct_url TEXT NULL,
+    user_conduct_url TEXT NULL,
+    user_privacy_url TEXT NULL
 );
 
-CREATE TABLE network_configs (
-    id INT PRIMARY KEY NOT NULL,
-    network_name VARCHAR(255),
-    bootstrap_node_id VARCHAR(64),
-    bootstrap_node_ip4 VARCHAR(15)
+CREATE TABLE nodes (
+    id VARCHAR(36) PRIMARY KEY NOT NULL
 );
 
-CREATE TABLE node_configs (
-    id INT PRIMARY KEY NOT NULL,
-    public_key_hex VARCHAR(36),
-    private_key_hex VARCHAR(64)
+CREATE TABLE region_nodes (
+    id INTEGER PRIMARY KEY NOT NULL,
+    node_id VARCHAR(36) NOT NULL,
+    region_id VARCHAR(36) NOT NULL,
+    status TEXT NULL,
+    about_your_node TEXT NULL,
+    about_your_stewards TEXT NULL,
+    agreed_node_steward_conduct_url TEXT NULL,
+    name VARCHAR(50) NULL,
+    public_ipv4 VARCHAR(15) DEFAULT NULL,
+    domain_on_local_network TEXT DEFAULT NULL,
+    domain_on_internet TEXT DEFAULT NULL,
+
+    FOREIGN KEY (node_id) REFERENCES nodes(id),
+    FOREIGN KEY (region_id) REFERENCES regions(id),
+    UNIQUE(node_id, region_id)
+);
+
+CREATE TABLE node_statuses (
+    operation_id VARCHAR(64) PRIMARY KEY NOT NULL,
+    node_id VARCHAR(36) NOT NULL,
+    text VARCHAR(255) NULL,
+    state VARCHAR(50) NULL,
+    posted_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE current_node_statuses (
+    region_node_id INTEGER PRIMARY KEY NOT NULL,
+    text VARCHAR(255) NULL,
+    state VARCHAR(50) NULL,
+    posted_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (region_node_id) REFERENCES region_nodes(id)
+);
+
+CREATE TABLE apps (
+  name TEXT NOT NULL UNIQUE,
+  PRIMARY KEY (name)
+);
+
+CREATE TABLE app_installations (
+  app_name TEXT NOT NULL,
+  region_node_id INTEGER NOT NULL,
+  version TEXT NOT NULL,
+  FOREIGN KEY (app_name) REFERENCES apps(name),
+  FOREIGN KEY (region_node_id) REFERENCES region_nodes(id),
+  PRIMARY KEY (app_name, region_node_id)
 );
