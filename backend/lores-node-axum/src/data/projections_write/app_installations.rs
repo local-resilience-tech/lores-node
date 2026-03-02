@@ -1,5 +1,7 @@
 use sqlx::SqlitePool;
 
+use crate::data::projections_write::apps::AppsWriteRepo;
+
 use super::super::entities::AppInstallation;
 
 pub struct AppInstallationsWriteRepo {}
@@ -14,6 +16,9 @@ impl AppInstallationsWriteRepo {
         pool: &SqlitePool,
         installation: AppInstallation,
     ) -> Result<(), sqlx::Error> {
+        let app_write_repo = AppsWriteRepo::init();
+        app_write_repo.upsert(pool, &installation.app_name).await?;
+
         sqlx::query!(
             "
             INSERT INTO app_installations (app_name, region_node_id, version)
