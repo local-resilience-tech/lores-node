@@ -1,5 +1,5 @@
 import { Badge, Group, Table, Text } from "@mantine/core"
-import { RegionAppWithInstallations, RegionNode } from "../../../api/Api"
+import { RegionAppWithInstallations, RegionNodeDetails } from "../../../api/Api"
 import { NodesMap } from "../../../store/my_regions"
 
 interface AppsListProps {
@@ -7,7 +7,7 @@ interface AppsListProps {
   nodes: NodesMap
 }
 
-function NodeName({ node }: { node: RegionNode }) {
+function NodeName({ node }: { node: RegionNodeDetails }) {
   return <Badge>{node.name}</Badge>
 }
 

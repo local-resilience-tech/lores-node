@@ -12,7 +12,7 @@ const regionAppsSlice = createSlice({
     },
     regionAppUpdated: (
       state,
-      action: PayloadAction<RegionAppWithInstallations>
+      action: PayloadAction<RegionAppWithInstallations>,
     ) => {
       const updatedApp = action.payload
 

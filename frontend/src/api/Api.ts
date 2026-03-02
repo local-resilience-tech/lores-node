@@ -59,8 +59,9 @@ export interface AppInstallation {
   version: string;
 }
 
-export interface AppReference {
-  app_name: string;
+export interface AppRegionReference {
+  app: LocalApp;
+  region_id: string;
 }
 
 export interface ApproveJoinRequestData {
@@ -191,18 +192,6 @@ export interface Region {
 export interface RegionAppWithInstallations {
   installations: AppInstallation[];
   name: string;
-}
-
-export interface RegionNode {
-  domain_on_internet?: string | null;
-  domain_on_local_network?: string | null;
-  /** @format int64 */
-  id: number;
-  name?: string | null;
-  node_id: string;
-  public_ipv4?: string | null;
-  region_id: string;
-  status?: null | RegionNodeStatus;
 }
 
 export interface RegionNodeDetails {
@@ -430,20 +419,6 @@ export class Api<
     /**
      * No description
      *
-     * @name ShowThisNode
-     * @request GET:/admin_api/node
-     */
-    showThisNode: (params: RequestParams = {}) =>
-      this.request<null | RegionNode, string>({
-        path: `/admin_api/node`,
-        method: "GET",
-        format: "json",
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
      * @name ListNodeStewards
      * @request GET:/admin_api/node_stewards
      */
@@ -618,7 +593,7 @@ export class Api<
      * @name RegisterApp
      * @request POST:/node_steward_api/local_apps/register
      */
-    registerApp: (data: AppReference, params: RequestParams = {}) =>
+    registerApp: (data: AppRegionReference, params: RequestParams = {}) =>
       this.request<any, any>({
         path: `/node_steward_api/local_apps/register`,
         method: "POST",

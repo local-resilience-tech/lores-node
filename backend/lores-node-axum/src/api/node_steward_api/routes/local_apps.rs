@@ -1,52 +1,64 @@
-use axum::{http::StatusCode, response::IntoResponse, Json};
+use axum::{http::StatusCode, response::IntoResponse, Extension, Json};
+use lores_p2panda::operations::LogType;
+use serde::Deserialize;
+use utoipa::ToSchema;
 use utoipa_axum::{router::OpenApiRouter, routes};
 
-use crate::local_apps::AppReference;
+use crate::{
+    api::{
+        auth_api::auth_backend::AuthSession,
+        helpers::{bad_request, internal_server_error},
+    },
+    data::entities::LocalApp,
+    panda_comms::{
+        lores_events::{AppRegisteredDataV1, LoResEventPayload},
+        PandaContainer, RegionId,
+    },
+};
 
 pub fn router() -> OpenApiRouter {
     OpenApiRouter::new().routes(routes!(register_app))
 }
 
+#[derive(Deserialize, ToSchema, Debug, Clone)]
+pub struct AppRegionReference {
+    pub region_id: String,
+    pub app: LocalApp,
+}
+
 #[utoipa::path(
     post, path = "/register",
-    request_body(content = AppReference, content_type = "application/json"),
+    request_body(content = AppRegionReference, content_type = "application/json"),
     responses(
         (status = 200, body = ()),
         (status = INTERNAL_SERVER_ERROR, body = ()),
     )
 )]
 async fn register_app(
-    // Extension(panda_container): Extension<P2PandaContainer>,
-    // auth_session: AuthSession,
-    Json(payload): Json<AppReference>,
+    Extension(panda_container): Extension<PandaContainer>,
+    auth_session: AuthSession,
+    Json(payload): Json<AppRegionReference>,
 ) -> impl IntoResponse {
-    // match load_local_app_details(&payload) {
-    //     Some(app) => {
-    //         let event_payload = LoResEventPayload::AppRegistered(AppRegisteredDataV1 {
-    //             name: app.name.clone(),
-    //             version: app.version.clone(),
-    //         });
-    //         let publish_result = panda_container
-    //             .publish_persisted(event_payload, auth_session.user)
-    //             .await;
-    //         match publish_result {
-    //             Ok(_) => {
-    //                 event!(tracing::Level::INFO, "App registered: {}", app.name);
-    //                 (StatusCode::OK, ())
-    //             }
-    //             Err(e) => {
-    //                 eprintln!("Failed to publish app registration event: {}", e);
-    //                 (StatusCode::INTERNAL_SERVER_ERROR, ())
-    //             }
-    //         }
-    //     }
-    //     None => {
-    //         eprintln!("Failed to load app configuration for: {}", payload.app_name);
-    //         (StatusCode::INTERNAL_SERVER_ERROR, ())
-    //     }
-    // }
-    // .into_response()
+    // Get region_id from data and validate it
+    let region_id = match RegionId::from_hex(&payload.region_id) {
+        Ok(id) => id,
+        Err(e) => return bad_request(e).into_response(),
+    };
 
-    println!("TODO: register_app called for app: {}", payload.app_name);
+    let event_payload = LoResEventPayload::AppRegistered(AppRegisteredDataV1 {
+        name: payload.app.name.clone(),
+        version: payload.app.version.clone(),
+    });
+    println!("Prepared event payload: {:?}", event_payload);
+
+    // Publish the operation
+    let topic_id = PandaContainer::get_region_topic_id(&region_id);
+    if let Err(e) = panda_container
+        .publish_persisted(topic_id, LogType::Admin, event_payload, auth_session.user)
+        .await
+    {
+        return internal_server_error(e).into_response();
+    }
+
     (StatusCode::OK, ()).into_response()
 }

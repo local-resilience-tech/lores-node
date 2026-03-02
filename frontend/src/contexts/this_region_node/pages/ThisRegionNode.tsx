@@ -45,7 +45,7 @@ export default function ThisRegionNode() {
         <Title order={2}>Details</Title>
         <Card>
           <Card.Section>
-            <ThisNodeDetails node={node} nodeDetails={node} />
+            <ThisNodeDetails node={node} />
           </Card.Section>
         </Card>
       </Stack>

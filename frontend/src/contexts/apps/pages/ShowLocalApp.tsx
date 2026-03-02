@@ -24,17 +24,17 @@ export default function ShowLocalApp() {
     return <Container>Error: App not found</Container>
   }
 
-  const onAppRegister = async (app: LocalApp) => {
-    console.log("Registering app:", app)
-    return getApi()
-      .nodeStewardApi.registerApp({ app_name: app.name })
-      .then((_) => actionSuccess())
-      .catch(actionFailure)
-  }
-
   const actions: LocalAppAction[] = []
 
   if (region) {
+    const onAppRegister = async (app: LocalApp) => {
+      console.log("Registering app:", app)
+      return getApi()
+        .nodeStewardApi.registerApp({ app: app, region_id: region.id })
+        .then((_) => actionSuccess())
+        .catch(actionFailure)
+    }
+
     actions.push({
       type: "register",
       buttonColor: "blue",
