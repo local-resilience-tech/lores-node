@@ -2,11 +2,6 @@ use crate::{config::config_state::LoresNodeConfigState, panda_comms::build_publi
 use hex;
 use lores_p2panda::p2panda_core::{identity::PRIVATE_KEY_LEN, PrivateKey, PublicKey};
 
-#[derive(Clone)]
-pub struct SimplifiedNodeAddress {
-    pub node_id: String,
-}
-
 pub struct ThisP2PandaNodeRepo {}
 
 impl ThisP2PandaNodeRepo {

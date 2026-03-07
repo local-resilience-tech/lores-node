@@ -7,7 +7,6 @@ use std::fmt::Display;
 pub use config::ThisP2PandaNodeRepo;
 use hex::FromHexError;
 use lores_events::LoResEvent;
-use lores_p2panda::p2panda_core::PublicKey;
 pub use panda_container::{build_public_key_from_hex, PandaContainer};
 use sqlx::SqlitePool;
 use tokio::sync::mpsc;

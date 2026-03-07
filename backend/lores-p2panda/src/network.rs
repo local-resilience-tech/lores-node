@@ -1,5 +1,4 @@
 use p2panda_core::{Hash, PrivateKey, PublicKey};
-use p2panda_discovery::address_book;
 use p2panda_net::{
     address_book::AddressBookError,
     addrs::NodeInfo,
