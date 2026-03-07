@@ -1,11 +1,12 @@
-import { Stack, Title, Container, Table, Box } from "@mantine/core"
-import { useEffect, useState } from "react"
-import { getApi } from "../../../api"
-import type { P2PandaNodeDetails } from "../../../api/Api"
+import { Stack, Title, Container, Table, Button, Collapse } from "@mantine/core"
 import { useAppSelector } from "../../../store"
+import { IconPlug } from "@tabler/icons-react"
+import { useDisclosure } from "@mantine/hooks"
+import AddBootstrapNode from "../components/AddBootstrapNode"
 
 export default function P2PandaNode() {
   const node = useAppSelector((state) => state.network?.node)
+  const [openedBootstrap, { toggle: toggleBootstrap }] = useDisclosure(false)
 
   if (!node) {
     return <></>
@@ -19,7 +20,7 @@ export default function P2PandaNode() {
 
   return (
     <Container>
-      <Stack>
+      <Stack align="flex-start">
         <Title order={1}>This P2Panda Node</Title>
         {/* <Box mb={4}>
         <Button onClick={restartNode()}>Restart Node</Button>
@@ -40,6 +41,16 @@ export default function P2PandaNode() {
             </Table.Tr>
           </Table.Tbody>
         </Table>
+        <Button
+          variant="outline"
+          leftSection={<IconPlug />}
+          onClick={toggleBootstrap}
+        >
+          Add bootstrap node
+        </Button>
+        <Collapse in={openedBootstrap}>
+          <AddBootstrapNode />
+        </Collapse>
       </Stack>
     </Container>
   )

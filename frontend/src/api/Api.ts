@@ -69,6 +69,10 @@ export interface ApproveJoinRequestData {
   region_id: string;
 }
 
+export interface BootstrapNodeRequest {
+  node_id: string;
+}
+
 export type ClientEvent =
   | {
       NodeJoinedRegion: RegionWithNodes;
@@ -686,6 +690,25 @@ export class Api<
     joinRegion: (data: JoinRegionRequestData, params: RequestParams = {}) =>
       this.request<any, string>({
         path: `/node_steward_api/my_regions/join`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @name AddBootstrapNode
+     * @request POST:/node_steward_api/network/bootstrap
+     */
+    addBootstrapNode: (
+      data: BootstrapNodeRequest,
+      params: RequestParams = {},
+    ) =>
+      this.request<any, string>({
+        path: `/node_steward_api/network/bootstrap`,
         method: "POST",
         body: data,
         type: ContentType.Json,
