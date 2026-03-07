@@ -2719,7 +2719,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "lores-node-axum"
+name = "lores-node"
 version = "0.15.4"
 dependencies = [
  "anyhow",
