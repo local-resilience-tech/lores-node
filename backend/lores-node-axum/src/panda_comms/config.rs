@@ -1,6 +1,6 @@
-use crate::config::config_state::LoresNodeConfigState;
+use crate::{config::config_state::LoresNodeConfigState, panda_comms::build_public_key_from_hex};
 use hex;
-use lores_p2panda::p2panda_core::{identity::PRIVATE_KEY_LEN, PrivateKey};
+use lores_p2panda::p2panda_core::{identity::PRIVATE_KEY_LEN, PrivateKey, PublicKey};
 
 #[derive(Clone)]
 pub struct SimplifiedNodeAddress {
@@ -14,35 +14,19 @@ impl ThisP2PandaNodeRepo {
         ThisP2PandaNodeRepo {}
     }
 
-    pub async fn get_bootstrap_details(
+    pub async fn get_bootstrap_node_ids(
         &self,
         config_state: &LoresNodeConfigState,
-    ) -> Option<SimplifiedNodeAddress> {
+    ) -> Vec<PublicKey> {
         let config = config_state.get().await;
 
         config
-            .bootstrap_node_id
-            .clone()
-            .map(|bootstrap_node_id| SimplifiedNodeAddress {
-                node_id: bootstrap_node_id,
-            })
+            .bootstrap_node_ids
+            .unwrap_or_default()
+            .into_iter()
+            .filter_map(|bootstrap_node_id| build_public_key_from_hex(&bootstrap_node_id).ok())
+            .collect()
     }
-
-    // pub async fn set_network_config(
-    //     &self,
-    //     config_state: &LoresNodeConfigState,
-    //     network_name: String,
-    //     peer_address: Option<SimplifiedNodeAddress>,
-    // ) -> Result<(), anyhow::Error> {
-    //     config_state
-    //         .update(|config| {
-    //             let mut result = config.clone();
-    //             result.bootstrap_node_id = peer_address.as_ref().map(|peer| peer.node_id.clone());
-    //             result.network_name = Some(network_name.clone());
-    //             result
-    //         })
-    //         .await
-    // }
 
     pub async fn get_or_create_private_key(
         &self,

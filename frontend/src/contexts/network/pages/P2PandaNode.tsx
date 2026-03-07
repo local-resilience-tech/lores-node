@@ -49,7 +49,7 @@ export default function P2PandaNode() {
           Add bootstrap node
         </Button>
         <Collapse in={openedBootstrap}>
-          <AddBootstrapNode />
+          <AddBootstrapNode onSuccess={toggleBootstrap} />
         </Collapse>
       </Stack>
     </Container>

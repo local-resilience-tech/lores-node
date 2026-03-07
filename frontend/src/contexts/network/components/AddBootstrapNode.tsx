@@ -9,9 +9,11 @@ import {
 
 import AddBootstrapNodeForm from "./AddBootstrapNodeForm"
 
-export default function AddBootstrapNode() {
-  const navigate = useNavigate()
+interface AddBootstrapNodeProps {
+  onSuccess?: () => void
+}
 
+export default function AddBootstrapNode({ onSuccess }: AddBootstrapNodeProps) {
   const onSubmit = async (
     data: BootstrapNodeRequest,
   ): Promise<ActionPromiseResult> => {
@@ -19,6 +21,9 @@ export default function AddBootstrapNode() {
     return getApi()
       .nodeStewardApi.addBootstrapNode(data)
       .then((_result) => {
+        if (onSuccess) {
+          onSuccess()
+        }
         return actionSuccess()
       })
       .catch(actionFailure)

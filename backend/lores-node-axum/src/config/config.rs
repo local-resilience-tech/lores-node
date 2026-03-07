@@ -14,7 +14,7 @@ pub struct LoresNodeConfig {
     pub private_key_hex: Option<String>,
     pub network_name: Option<String>,
     pub region_name: Option<String>,
-    pub bootstrap_node_id: Option<String>,
+    pub bootstrap_node_ids: Option<Vec<String>>,
     pub region_ids: Option<Vec<String>>,
     pub hashed_admin_password: Option<String>,
 }
@@ -27,7 +27,7 @@ impl ::std::default::Default for LoresNodeConfig {
             network_name: Some("lores".to_string()),
             region_name: None,
             region_ids: None,
-            bootstrap_node_id: None,
+            bootstrap_node_ids: None,
             hashed_admin_password: None,
         }
     }
