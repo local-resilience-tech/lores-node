@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "\n            INSERT INTO app_installations (app_name, region_node_id, version)\n            VALUES (?,?,?)\n            ON CONFLICT(app_name, region_node_id) DO UPDATE SET version = excluded.version",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": []
+  },
+  "hash": "4e1b3950ce88de8baf89fede59c81fecfd08a6d7570b18465d3c8eed02fb3525"
+}

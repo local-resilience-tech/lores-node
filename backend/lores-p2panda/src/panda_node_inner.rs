@@ -45,7 +45,7 @@ impl PandaNodeInner {
     pub async fn new(
         network_id: Hash,
         private_key: PrivateKey,
-        bootstrap_node_id: Option<PublicKey>,
+        bootstrap_node_ids: &Vec<PublicKey>,
         operations_pool: &SqlitePool,
     ) -> Result<Self, PandaNodeError> {
         println!("Initializing PandaNodeInner...");
@@ -55,7 +55,7 @@ impl PandaNodeInner {
         let network = Network::new(
             network_id,
             private_key.clone(),
-            bootstrap_node_id,
+            bootstrap_node_ids,
             &operation_store,
         )
         .await?;
@@ -118,6 +118,15 @@ impl PandaNodeInner {
         .await?;
         self.subscriptions.write().await.push(subscription);
 
+        Ok(())
+    }
+
+    pub async fn add_bootstrap_node(
+        &self,
+        bootstrap_node_id: &PublicKey,
+    ) -> Result<(), PandaNodeError> {
+        let network = self.network.write().await;
+        network.add_bootstrap_node(bootstrap_node_id).await?;
         Ok(())
     }
 

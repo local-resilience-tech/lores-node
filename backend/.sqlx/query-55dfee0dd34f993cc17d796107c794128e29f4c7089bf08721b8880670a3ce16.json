@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO region_nodes (node_id, region_id)\n            VALUES (?, ?)\n            ON CONFLICT(node_id, region_id) DO NOTHING",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "55dfee0dd34f993cc17d796107c794128e29f4c7089bf08721b8880670a3ce16"
+}

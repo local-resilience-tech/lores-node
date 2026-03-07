@@ -1,0 +1,68 @@
+{
+  "db_name": "SQLite",
+  "query": "\n            SELECT\n                id, creator_node_id, slug, name, organisation_name, organisation_url, node_steward_conduct_url, user_conduct_url, user_privacy_url\n            FROM regions\n            WHERE regions.id = ?\n            LIMIT 1\n            ",
+  "describe": {
+    "columns": [
+      {
+        "name": "id",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "creator_node_id",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "slug",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "name",
+        "ordinal": 3,
+        "type_info": "Text"
+      },
+      {
+        "name": "organisation_name",
+        "ordinal": 4,
+        "type_info": "Text"
+      },
+      {
+        "name": "organisation_url",
+        "ordinal": 5,
+        "type_info": "Text"
+      },
+      {
+        "name": "node_steward_conduct_url",
+        "ordinal": 6,
+        "type_info": "Text"
+      },
+      {
+        "name": "user_conduct_url",
+        "ordinal": 7,
+        "type_info": "Text"
+      },
+      {
+        "name": "user_privacy_url",
+        "ordinal": 8,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true
+    ]
+  },
+  "hash": "997d4bc923ee630e81f753be7b32cc89e7881b9e9ac81fac8f9656fbb7f352e0"
+}

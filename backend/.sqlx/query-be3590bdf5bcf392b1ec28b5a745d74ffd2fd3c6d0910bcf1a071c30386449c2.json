@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO regions (\n                id, creator_node_id, slug, name, organisation_name,\n                organisation_url, node_steward_conduct_url, user_conduct_url, user_privacy_url\n            )\n            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)\n            ON CONFLICT(id) DO UPDATE SET\n                creator_node_id = excluded.creator_node_id,\n                slug = excluded.slug,\n                name = excluded.name,\n                organisation_name = excluded.organisation_name,\n                organisation_url = excluded.organisation_url,\n                node_steward_conduct_url = excluded.node_steward_conduct_url,\n                user_conduct_url = excluded.user_conduct_url,\n                user_privacy_url = excluded.user_privacy_url",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 9
+    },
+    "nullable": []
+  },
+  "hash": "be3590bdf5bcf392b1ec28b5a745d74ffd2fd3c6d0910bcf1a071c30386449c2"
+}

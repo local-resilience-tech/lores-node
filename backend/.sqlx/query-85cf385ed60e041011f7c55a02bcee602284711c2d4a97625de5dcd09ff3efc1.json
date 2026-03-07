@@ -1,0 +1,68 @@
+{
+  "db_name": "SQLite",
+  "query": "\n            SELECT\n                r.id, r.creator_node_id, r.slug, r.name,\n                r.organisation_name, r.organisation_url,\n                r.node_steward_conduct_url, r.user_conduct_url,\n                r.user_privacy_url\n            FROM regions AS r\n            INNER JOIN region_nodes ON r.id = region_nodes.region_id\n            WHERE\n                region_nodes.node_id = ?\n            ",
+  "describe": {
+    "columns": [
+      {
+        "name": "id",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "creator_node_id",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "slug",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "name",
+        "ordinal": 3,
+        "type_info": "Text"
+      },
+      {
+        "name": "organisation_name",
+        "ordinal": 4,
+        "type_info": "Text"
+      },
+      {
+        "name": "organisation_url",
+        "ordinal": 5,
+        "type_info": "Text"
+      },
+      {
+        "name": "node_steward_conduct_url",
+        "ordinal": 6,
+        "type_info": "Text"
+      },
+      {
+        "name": "user_conduct_url",
+        "ordinal": 7,
+        "type_info": "Text"
+      },
+      {
+        "name": "user_privacy_url",
+        "ordinal": 8,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true
+    ]
+  },
+  "hash": "85cf385ed60e041011f7c55a02bcee602284711c2d4a97625de5dcd09ff3efc1"
+}

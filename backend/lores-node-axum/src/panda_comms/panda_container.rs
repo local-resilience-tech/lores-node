@@ -25,7 +25,7 @@ use super::{
 pub struct NodeParams {
     pub private_key: Option<PrivateKey>,
     pub network_name: Option<String>,
-    pub bootstrap_node_id: Option<PublicKey>,
+    pub bootstrap_node_ids: Vec<PublicKey>,
 }
 
 #[derive(Debug, Error)]
@@ -80,9 +80,9 @@ impl PandaContainer {
         params_lock.private_key = Some(private_key);
     }
 
-    pub async fn set_bootstrap_node_id(&self, bootstrap_node_id: Option<PublicKey>) {
+    pub async fn set_bootstrap_node_ids(&self, bootstrap_node_ids: Vec<PublicKey>) {
         let mut params_lock = self.params.lock().await;
-        params_lock.bootstrap_node_id = bootstrap_node_id;
+        params_lock.bootstrap_node_ids = bootstrap_node_ids;
     }
 
     pub async fn start(&self, operations_pool: &SqlitePool) -> Result<(), PandaContainerError> {
@@ -92,7 +92,7 @@ impl PandaContainer {
 
         let private_key: Option<PrivateKey> = params.private_key;
         let network_name: Option<String> = params.network_name;
-        let boostrap_node_id: Option<PublicKey> = params.bootstrap_node_id;
+        let boostrap_node_ids: Vec<PublicKey> = params.bootstrap_node_ids;
 
         if private_key.is_none() {
             println!("P2Panda: No private key found, not starting network");
@@ -107,8 +107,13 @@ impl PandaContainer {
         let private_key = private_key.unwrap();
         let network_name = network_name.unwrap();
 
-        self.start_for(private_key, network_name, boostrap_node_id, operations_pool)
-            .await?;
+        self.start_for(
+            private_key,
+            network_name,
+            &boostrap_node_ids,
+            operations_pool,
+        )
+        .await?;
 
         self.start_operation_receiver().await?;
 
@@ -119,13 +124,13 @@ impl PandaContainer {
         &self,
         private_key: PrivateKey,
         network_name: String,
-        boostrap_node_id: Option<PublicKey>,
+        boostrap_node_ids: &Vec<PublicKey>,
         operations_pool: &SqlitePool,
     ) -> Result<(), PandaNodeError> {
         let required_params = RequiredNodeParams {
             private_key,
             network_id: Hash::new(network_name.as_bytes()),
-            bootstrap_node_id: boostrap_node_id,
+            bootstrap_node_ids: boostrap_node_ids.clone(),
         };
 
         let panda_node = PandaNode::new(&required_params, operations_pool).await?;
@@ -135,11 +140,7 @@ impl PandaContainer {
             *node_lock = Some(panda_node);
         }
 
-        println!(
-            "P2Panda: Node started. Network name: {}, Bootstrap ID: {:?}",
-            network_name,
-            boostrap_node_id.map(|key| key.to_string())
-        );
+        println!("P2Panda: Node started. Network name: {}", network_name);
 
         Ok(())
     }
@@ -270,6 +271,27 @@ impl PandaContainer {
         Ok(())
     }
 
+    pub async fn add_bootstrap_node(
+        &self,
+        bootstrap_node_id_hex: &str,
+    ) -> Result<(), anyhow::Error> {
+        let bootstrap_node_id = build_public_key_from_hex(bootstrap_node_id_hex)
+            .map_err(|e| anyhow::anyhow!("Invalid bootstrap node ID: {}", e))?;
+
+        let node_lock = self.node.lock().await;
+        let node = match node_lock.as_ref() {
+            Some(node) => node,
+            None => return Err(anyhow::anyhow!("Node not started")),
+        };
+
+        node.inner
+            .add_bootstrap_node(&bootstrap_node_id)
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to add bootstrap node: {}", e))?;
+
+        Ok(())
+    }
+
     fn decode_operation_to_lores_event(
         operation: &Operation<LoResMeshExtensions>,
     ) -> Result<LoResEvent, anyhow::Error> {
@@ -297,13 +319,10 @@ impl PandaContainer {
 }
 
 // // TODO: This should be in p2panda-core, submit a PR
-pub fn build_public_key_from_hex(key_hex: String) -> Option<PublicKey> {
-    let key_bytes = hex::decode(key_hex).ok()?;
-    let key_byte_array: [u8; PUBLIC_KEY_LEN] = key_bytes.try_into().ok()?;
-    let result = PublicKey::from_bytes(&key_byte_array);
-
-    match result {
-        Ok(key) => Some(key),
-        Err(_) => None,
-    }
+pub fn build_public_key_from_hex(key_hex: &str) -> Result<PublicKey, anyhow::Error> {
+    let key_bytes = hex::decode(key_hex).map_err(|_| anyhow::anyhow!("Invalid hex string"))?;
+    let key_byte_array: [u8; PUBLIC_KEY_LEN] = key_bytes
+        .try_into()
+        .map_err(|_| anyhow::anyhow!("Invalid public key length"))?;
+    PublicKey::from_bytes(&key_byte_array).map_err(|_| anyhow::anyhow!("Invalid public key"))
 }

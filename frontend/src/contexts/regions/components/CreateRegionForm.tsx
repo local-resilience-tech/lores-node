@@ -76,10 +76,8 @@ export default function CreateRegionForm({ onSubmit }: CreateRegionFormProps) {
     },
   })
 
-  const handleSubmit = (values: CreateRegionData) => onSubmitWithResult(values)
-
   return (
-    <form onSubmit={form.onSubmit(handleSubmit)}>
+    <form onSubmit={form.onSubmit(onSubmitWithResult)}>
       <Stack gap="lg">
         <Text>
           When you create a new region, it will get a unique ID, but you can

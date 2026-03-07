@@ -61,21 +61,15 @@ impl Network {
     pub async fn new(
         network_id: Hash,
         private_key: PrivateKey,
-        bootstrap_node_id: Option<PublicKey>,
+        bootstrap_node_ids: &Vec<PublicKey>,
         operation_store: &OperationStore,
     ) -> Result<Self, NetworkError> {
         println!("Initializing P2Panda Network (id: {})", network_id.to_hex());
 
         let address_book = AddressBook::builder().spawn().await?;
 
-        if let Some(bootstrap_info) = bootstrap_node_info(bootstrap_node_id) {
-            println!(
-                "Inserting bootstrap node info for node: {:?}",
-                bootstrap_info.node_id.to_hex()
-            );
-            if let Err(e) = address_book.insert_node_info(bootstrap_info).await {
-                println!("Failed to insert bootstrap node info: {}", e);
-            }
+        for bootstrap_node_id in bootstrap_node_ids.iter() {
+            Self::add_bootstrap_node_to_address_book(bootstrap_node_id, &address_book).await?;
         }
 
         let endpoint = Endpoint::builder(address_book.clone())
@@ -123,13 +117,35 @@ impl Network {
     pub fn get_log_sync(&self) -> &LogSync {
         &self.log_sync
     }
+
+    pub async fn add_bootstrap_node(
+        &self,
+        bootstrap_node_id: &PublicKey,
+    ) -> Result<(), NetworkError> {
+        Self::add_bootstrap_node_to_address_book(bootstrap_node_id, &self.address_book).await
+    }
+
+    async fn add_bootstrap_node_to_address_book(
+        bootstrap_node_id: &PublicKey,
+        address_book: &AddressBook,
+    ) -> Result<(), NetworkError> {
+        let bootstrap_info = bootstrap_node_info(bootstrap_node_id);
+        println!(
+            "Adding bootstrap node info for node: {:?}",
+            bootstrap_info.node_id.to_hex()
+        );
+        address_book.insert_node_info(bootstrap_info).await?;
+        Ok(())
+    }
 }
 
-fn bootstrap_node_info(bootstrap_node_id: Option<PublicKey>) -> Option<NodeInfo> {
-    bootstrap_node_id.map(|node_id| {
-        let endpoint_addr =
-            iroh::EndpointAddr::new(node_id.to_hex().parse().expect("valid bootstrap node id"))
-                .with_relay_url(RELAY_URL.clone());
-        NodeInfo::from(endpoint_addr).bootstrap()
-    })
+fn bootstrap_node_info(bootstrap_node_id: &PublicKey) -> NodeInfo {
+    let endpoint_addr = iroh::EndpointAddr::new(
+        bootstrap_node_id
+            .to_hex()
+            .parse()
+            .expect("valid bootstrap node id"),
+    )
+    .with_relay_url(RELAY_URL.clone());
+    NodeInfo::from(endpoint_addr).bootstrap()
 }

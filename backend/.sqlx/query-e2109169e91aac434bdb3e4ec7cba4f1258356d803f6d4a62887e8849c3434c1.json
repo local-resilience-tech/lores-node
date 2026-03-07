@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO region_nodes (node_id, region_id, status)\n            VALUES (?, ?, ?)\n            ON CONFLICT(node_id, region_id) DO UPDATE SET status = excluded.status",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": []
+  },
+  "hash": "e2109169e91aac434bdb3e4ec7cba4f1258356d803f6d4a62887e8849c3434c1"
+}
