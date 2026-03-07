@@ -1,0 +1,62 @@
+{
+  "db_name": "SQLite",
+  "query": "\n            SELECT\n                id, node_id, region_id, status as \"status: RegionNodeStatus\", name, public_ipv4, domain_on_local_network, domain_on_internet\n            FROM region_nodes\n            WHERE region_nodes.node_id = ? AND region_nodes.region_id = ?\n            LIMIT 1\n            ",
+  "describe": {
+    "columns": [
+      {
+        "name": "id",
+        "ordinal": 0,
+        "type_info": "Integer"
+      },
+      {
+        "name": "node_id",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "region_id",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "status: RegionNodeStatus",
+        "ordinal": 3,
+        "type_info": "Text"
+      },
+      {
+        "name": "name",
+        "ordinal": 4,
+        "type_info": "Text"
+      },
+      {
+        "name": "public_ipv4",
+        "ordinal": 5,
+        "type_info": "Text"
+      },
+      {
+        "name": "domain_on_local_network",
+        "ordinal": 6,
+        "type_info": "Text"
+      },
+      {
+        "name": "domain_on_internet",
+        "ordinal": 7,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      true,
+      true,
+      true,
+      true,
+      true
+    ]
+  },
+  "hash": "e5be6ae8d433b0c2b701633bcc3e368ba5f60ada4cf140d7c004b6d20238c8d6"
+}

@@ -1,0 +1,92 @@
+{
+  "db_name": "SQLite",
+  "query": "\n            SELECT\n                id, region_nodes.node_id as node_id, region_id, status as \"status: RegionNodeStatus\", name, public_ipv4, domain_on_local_network, domain_on_internet, s.text as status_text,\n                s.state as state, about_your_node, about_your_stewards, agreed_node_steward_conduct_url\n            FROM region_nodes\n            LEFT JOIN current_node_statuses AS s ON region_nodes.id = s.region_node_id\n            WHERE region_nodes.region_id = ?\n            ",
+  "describe": {
+    "columns": [
+      {
+        "name": "id",
+        "ordinal": 0,
+        "type_info": "Integer"
+      },
+      {
+        "name": "node_id",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "region_id",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "status: RegionNodeStatus",
+        "ordinal": 3,
+        "type_info": "Text"
+      },
+      {
+        "name": "name",
+        "ordinal": 4,
+        "type_info": "Text"
+      },
+      {
+        "name": "public_ipv4",
+        "ordinal": 5,
+        "type_info": "Text"
+      },
+      {
+        "name": "domain_on_local_network",
+        "ordinal": 6,
+        "type_info": "Text"
+      },
+      {
+        "name": "domain_on_internet",
+        "ordinal": 7,
+        "type_info": "Text"
+      },
+      {
+        "name": "status_text",
+        "ordinal": 8,
+        "type_info": "Text"
+      },
+      {
+        "name": "state",
+        "ordinal": 9,
+        "type_info": "Text"
+      },
+      {
+        "name": "about_your_node",
+        "ordinal": 10,
+        "type_info": "Text"
+      },
+      {
+        "name": "about_your_stewards",
+        "ordinal": 11,
+        "type_info": "Text"
+      },
+      {
+        "name": "agreed_node_steward_conduct_url",
+        "ordinal": 12,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true
+    ]
+  },
+  "hash": "c97995413d672d9012b654b1705f2d9a5abd4a7518626b8cbb7dcc73c4c303fc"
+}

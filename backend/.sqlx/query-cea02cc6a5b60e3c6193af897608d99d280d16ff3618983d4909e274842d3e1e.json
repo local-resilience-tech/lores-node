@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO regions (id)\n            VALUES (?)\n            ON CONFLICT(id) DO NOTHING",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": []
+  },
+  "hash": "cea02cc6a5b60e3c6193af897608d99d280d16ff3618983d4909e274842d3e1e"
+}
