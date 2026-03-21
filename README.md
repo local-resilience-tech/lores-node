@@ -13,17 +13,16 @@ Developed by [Merri-bek Tech](https://www.merri-bek.tech/), but useful for all s
 
 On linux, you'll need the following things to build this:
 
-* nodejs 22.12.0
-    * I recommend that you install [asdf](https://asdf-vm.com/) in which case you can then run `asdf install` in the root of this repo to get the correct version.
-* rust (latest)
-    * You can use asdf for rust, but it's not commonly done. It's more common to use [rustup](https://rustup.rs/)
-* build dependencies for rust libraries
-    * `sudo apt install build-essentials libssl-dev pkg-config`
-* direnv (there are workarounds if you don't want to install this)
-    * `sudo apt install direnv` and then add to your shell, see [direnv.net](https://direnv.net/). I do this via adding the direnv plugin for oh-my-zsh.
-* To work with installing LoRes Apps at all, you'll need to [install docker locally](https://docs.docker.com/engine/install/).
-* To satisfy CORS, we need a specific host. It is recommended that you add the following line to your `/etc/hosts` file: `127.0.0.1 lores.localhost`. Then use http://lores.localhost:5173/ to access the frontend.
-
+- nodejs 22.12.0
+  - I recommend that you install [asdf](https://asdf-vm.com/) in which case you can then run `asdf install` in the root of this repo to get the correct version.
+- rust (latest)
+  - You can use asdf for rust, but it's not commonly done. It's more common to use [rustup](https://rustup.rs/)
+- build dependencies for rust libraries
+  - `sudo apt install build-essentials libssl-dev pkg-config`
+- direnv (there are workarounds if you don't want to install this)
+  - `sudo apt install direnv` and then add to your shell, see [direnv.net](https://direnv.net/). I do this via adding the direnv plugin for oh-my-zsh.
+- To work with installing LoRes Apps at all, you'll need to [install docker locally](https://docs.docker.com/engine/install/).
+- To satisfy CORS, we need a specific host. It is recommended that you add the following line to your `/etc/hosts` file: `127.0.0.1 lores.localhost`. Then use http://lores.localhost:5173/ to access the frontend.
 
 ## Tech Stack
 
@@ -47,7 +46,15 @@ We use [Release it](https://github.com/release-it/release-it). For the first tim
 
 ## Running Local Version in Development Mode
 
-When developing, it is recommended that you run the backend and frontend seperately.
+When developing, it is recommended that you run the backend and frontend seperately. This is most easily done using mprocs, but can be done manually.
+
+### Using mprocs
+
+Install mprocs using `cargo install mprocs`
+
+Then, run `mprocs` and it should open both front and backend.
+
+### Manually
 
 Front End: Open a terminal in the frontend directory and run `npm run dev`. This will hot-reload any changes.
 Back End: Open a terminal in the backend directory and run `cargo run`. If you make changes to the backend, you'll need to halt it with CTRL-C and re-run.

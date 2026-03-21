@@ -18,7 +18,8 @@
     "node_modules": true,
     "backend/.sqlx": true,
     "backend-rocket/target": true,
-    "frontend/node_modules": true
+    "frontend/node_modules": true,
+    "mprocs.log": true
   },
   "explorerExclude.backup": {},
   "rust-analyzer.cargo.sysroot": "discover",
