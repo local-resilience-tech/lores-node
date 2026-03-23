@@ -72,9 +72,9 @@ impl RegionsWriteRepo {
 
         let (map_data_url, min_latlng_json, max_latlng_json) = match map {
             Some(region_map) => (
-                region_map.map_data_url,
-                region_map.min_latlng.map(Json),
-                region_map.max_latlng.map(Json),
+                Some(region_map.map_data_url),
+                Some(Json(region_map.min_latlng)),
+                Some(Json(region_map.max_latlng)),
             ),
             None => (None, None, None),
         };

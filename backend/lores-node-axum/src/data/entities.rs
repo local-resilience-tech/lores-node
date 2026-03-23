@@ -66,9 +66,9 @@ pub struct RegionNodeDetails {
 
 #[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
 pub struct RegionMap {
-    pub map_data_url: Option<String>,
-    pub min_latlng: Option<LatLng>,
-    pub max_latlng: Option<LatLng>,
+    pub map_data_url: String,
+    pub min_latlng: LatLng,
+    pub max_latlng: LatLng,
 }
 
 #[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]

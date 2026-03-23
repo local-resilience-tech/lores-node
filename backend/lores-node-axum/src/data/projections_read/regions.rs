@@ -21,9 +21,9 @@ impl From<RegionRow> for Region {
     fn from(row: RegionRow) -> Self {
         let map = match (row.map_data_url, row.min_latlng, row.max_latlng) {
             (Some(map_data_url), Some(min_latlng), Some(max_latlng)) => Some(RegionMap {
-                map_data_url: Some(map_data_url),
-                min_latlng: Some(min_latlng.0),
-                max_latlng: Some(max_latlng.0),
+                map_data_url,
+                min_latlng: min_latlng.0,
+                max_latlng: max_latlng.0,
             }),
             _ => None,
         };
