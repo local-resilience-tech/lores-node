@@ -1,6 +1,6 @@
 use sqlx::SqlitePool;
 
-use crate::data::entities::{Region, RegionWithNodes};
+use crate::data::entities::{LatLng, Region, RegionWithNodes};
 
 use super::super::entities::{RegionNode, RegionNodeDetails, RegionNodeStatus};
 
@@ -33,7 +33,8 @@ impl RegionNodesReadRepo {
             RegionNode,
             "
             SELECT
-                id, node_id, region_id, status as \"status: RegionNodeStatus\", name, public_ipv4, domain_on_local_network, domain_on_internet
+                id, node_id, region_id, status as \"status: RegionNodeStatus\", name, public_ipv4, domain_on_local_network, domain_on_internet,
+                latlng as \"latlng: LatLng\"
             FROM region_nodes
             WHERE region_nodes.node_id = ? AND region_nodes.region_id = ?
             LIMIT 1

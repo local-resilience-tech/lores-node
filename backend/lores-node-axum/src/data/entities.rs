@@ -1,14 +1,36 @@
 use lores_p2panda::p2panda_core::PublicKey;
 use serde::{Deserialize, Serialize};
-use sqlx;
+use sqlx::{
+    error::BoxDynError,
+    sqlite::{SqliteTypeInfo, SqliteValueRef},
+    Decode, Sqlite, Type,
+};
 use utoipa::ToSchema;
 
 use crate::panda_comms::RegionId;
 
-#[derive(Serialize, Deserialize, ToSchema, Debug, Clone, PartialEq, sqlx::Type)]
+#[derive(Serialize, Deserialize, ToSchema, Debug, Clone, PartialEq)]
 pub struct LatLng {
     pub lat: f64,
     pub lng: f64,
+}
+
+impl Type<Sqlite> for LatLng {
+    fn type_info() -> SqliteTypeInfo {
+        <String as Type<Sqlite>>::type_info()
+    }
+
+    fn compatible(ty: &SqliteTypeInfo) -> bool {
+        <String as Type<Sqlite>>::compatible(ty)
+    }
+}
+
+impl<'r> Decode<'r, Sqlite> for LatLng {
+    fn decode(value: SqliteValueRef<'r>) -> Result<Self, BoxDynError> {
+        let raw = <String as Decode<Sqlite>>::decode(value)?;
+        let latlng = serde_json::from_str(&raw)?;
+        Ok(latlng)
+    }
 }
 
 impl LatLng {
@@ -45,6 +67,7 @@ pub struct RegionNode {
     pub public_ipv4: Option<String>,
     pub domain_on_local_network: Option<String>,
     pub domain_on_internet: Option<String>,
+    pub latlng: Option<LatLng>,
 }
 
 #[derive(sqlx::FromRow, Serialize, Deserialize, ToSchema, Debug, Clone)]

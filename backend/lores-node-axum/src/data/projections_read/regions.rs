@@ -1,4 +1,4 @@
-use sqlx::{types::Json, SqlitePool};
+use sqlx::SqlitePool;
 
 use crate::data::entities::{LatLng, Region, RegionMap};
 
@@ -13,8 +13,8 @@ struct RegionRow {
     pub user_conduct_url: Option<String>,
     pub user_privacy_url: Option<String>,
     pub map_data_url: Option<String>,
-    pub min_latlng: Option<Json<LatLng>>,
-    pub max_latlng: Option<Json<LatLng>>,
+    pub min_latlng: Option<LatLng>,
+    pub max_latlng: Option<LatLng>,
 }
 
 impl From<RegionRow> for Region {
@@ -22,8 +22,8 @@ impl From<RegionRow> for Region {
         let map = match (row.map_data_url, row.min_latlng, row.max_latlng) {
             (Some(map_data_url), Some(min_latlng), Some(max_latlng)) => Some(RegionMap {
                 map_data_url,
-                min_latlng: min_latlng.0,
-                max_latlng: max_latlng.0,
+                min_latlng,
+                max_latlng,
             }),
             _ => None,
         };
@@ -69,8 +69,8 @@ impl RegionsReadRepo {
                 user_conduct_url,
                 user_privacy_url,
                 map AS map_data_url,
-                min_latlng AS \"min_latlng: Json<LatLng>\",
-                max_latlng AS \"max_latlng: Json<LatLng>\"
+                min_latlng AS \"min_latlng: LatLng\",
+                max_latlng AS \"max_latlng: LatLng\"
             FROM regions
             WHERE regions.id = ?
             LIMIT 1
@@ -103,8 +103,8 @@ impl RegionsReadRepo {
                 r.user_conduct_url,
                 r.user_privacy_url,
                 r.map AS map_data_url,
-                r.min_latlng AS \"min_latlng: Json<LatLng>\",
-                r.max_latlng AS \"max_latlng: Json<LatLng>\"
+                r.min_latlng AS \"min_latlng: LatLng\",
+                r.max_latlng AS \"max_latlng: LatLng\"
             FROM regions AS r
             INNER JOIN region_nodes ON r.id = region_nodes.region_id
             WHERE
