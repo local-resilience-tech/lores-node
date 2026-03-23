@@ -65,6 +65,13 @@ pub struct RegionNodeDetails {
 }
 
 #[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
+pub struct RegionMap {
+    pub map_data_url: Option<String>,
+    pub min_latlng: Option<LatLng>,
+    pub max_latlng: Option<LatLng>,
+}
+
+#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
 pub struct Region {
     pub id: String,
     pub creator_node_id: Option<String>,
@@ -75,9 +82,7 @@ pub struct Region {
     pub node_steward_conduct_url: Option<String>,
     pub user_conduct_url: Option<String>,
     pub user_privacy_url: Option<String>,
-    pub map: Option<String>,
-    pub min_latlng: Option<LatLng>,
-    pub max_latlng: Option<LatLng>,
+    pub map: Option<RegionMap>,
 }
 
 impl Region {
@@ -95,8 +100,6 @@ impl Region {
             user_conduct_url: None,
             user_privacy_url: None,
             map: None,
-            min_latlng: None,
-            max_latlng: None,
         }
     }
 }
