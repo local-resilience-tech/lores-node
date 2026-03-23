@@ -5,7 +5,7 @@ use utoipa::ToSchema;
 
 use crate::panda_comms::RegionId;
 
-#[derive(Serialize, Deserialize, ToSchema, Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, ToSchema, Debug, Clone, PartialEq, sqlx::Type)]
 pub struct LatLng {
     pub lat: f64,
     pub lng: f64,
@@ -75,6 +75,9 @@ pub struct Region {
     pub node_steward_conduct_url: Option<String>,
     pub user_conduct_url: Option<String>,
     pub user_privacy_url: Option<String>,
+    pub map: Option<String>,
+    pub min_latlng: Option<LatLng>,
+    pub max_latlng: Option<LatLng>,
 }
 
 impl Region {
@@ -91,6 +94,9 @@ impl Region {
             node_steward_conduct_url: None,
             user_conduct_url: None,
             user_privacy_url: None,
+            map: None,
+            min_latlng: None,
+            max_latlng: None,
         }
     }
 }

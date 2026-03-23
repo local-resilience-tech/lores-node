@@ -35,7 +35,15 @@ impl RegionMapUpdatedHandler {
         let regions_read_repo = RegionsReadRepo::init();
 
         // Ensure region exists
-        regions_write_repo.upsert_id(pool, &region_id).await?;
+        regions_write_repo
+            .upsert_map(
+                pool,
+                &region_id,
+                &Some(self.payload.image_data_url.clone()),
+                &Some(self.payload.min_latlng.clone()),
+                &Some(self.payload.max_latlng.clone()),
+            )
+            .await?;
 
         // Get region
         let region = match regions_read_repo.find(pool, &region_id.to_hex()).await? {
