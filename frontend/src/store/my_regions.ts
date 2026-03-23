@@ -92,6 +92,26 @@ const regionsSlice = createSlice({
 
       return state
     },
+    regionUpdated: (state, action: PayloadAction<Region>) => {
+      const updatedRegion = action.payload
+      const regionIndex = findRegionIndex(state, updatedRegion.id)
+
+      if (regionIndex === -1) {
+        console.warn(
+          `Received region update for region ID ${updatedRegion.id}, but that region is not in the state.`,
+        )
+        return state
+      }
+
+      // Update the region details while preserving the nodes
+      const existingRegionWithNodes = state.all![regionIndex]
+      state.all![regionIndex] = {
+        region: updatedRegion,
+        nodes: existingRegionWithNodes.nodes,
+      }
+
+      return ensureRegionSlugs(state)
+    },
   },
 })
 
@@ -147,5 +167,6 @@ export const {
   nodeJoinedRegion,
   activeRegionChanged,
   regionNodeUpdated,
+  regionUpdated,
 } = regionsSlice.actions
 export default regionsSlice.reducer

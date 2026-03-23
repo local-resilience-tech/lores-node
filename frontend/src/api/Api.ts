@@ -82,6 +82,9 @@ export type ClientEvent =
     }
   | {
       RegionAppUpdated: RegionAppWithInstallations;
+    }
+  | {
+      RegionUpdated: Region;
     };
 
 export interface CreateRegionData {
@@ -191,6 +194,9 @@ export interface P2PandaNodeDetails {
 export interface Region {
   creator_node_id?: string | null;
   id: string;
+  map?: string | null;
+  max_latlng?: null | LatLng;
+  min_latlng?: null | LatLng;
   name?: string | null;
   node_steward_conduct_url?: string | null;
   organisation_name?: string | null;
