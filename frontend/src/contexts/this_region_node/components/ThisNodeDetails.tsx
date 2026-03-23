@@ -29,6 +29,14 @@ export default function ThisNodeDetails({
           <Table.Th>Domain on Internet</Table.Th>
           <Table.Td>{node?.domain_on_internet}</Table.Td>
         </Table.Tr>
+        {node?.latlng && (
+          <Table.Tr>
+            <Table.Th>Location</Table.Th>
+            <Table.Td>
+              {node.latlng.lat}, {node.latlng.lng}
+            </Table.Td>
+          </Table.Tr>
+        )}
       </Table.Tbody>
     </Table>
   )

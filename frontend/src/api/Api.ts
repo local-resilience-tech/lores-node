@@ -223,6 +223,7 @@ export interface RegionNodeDetails {
   domain_on_local_network?: string | null;
   /** @format int64 */
   id: number;
+  latlng?: null | LatLng;
   name?: string | null;
   node_id: string;
   public_ipv4?: string | null;
