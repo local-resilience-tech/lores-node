@@ -5,7 +5,7 @@ use utoipa::ToSchema;
 
 use crate::panda_comms::RegionId;
 
-#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
+#[derive(Serialize, Deserialize, ToSchema, Debug, Clone, PartialEq)]
 pub struct LatLng {
     pub lat: f64,
     pub lng: f64,

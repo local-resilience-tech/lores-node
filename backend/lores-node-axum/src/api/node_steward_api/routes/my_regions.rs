@@ -12,7 +12,7 @@ use crate::{
     panda_comms::{
         lores_events::{
             LoResEventPayload, RegionCreatedDataV1, RegionJoinRequestApprovedDataV1,
-            RegionJoinRequestedDataV1,
+            RegionJoinRequestedDataV1, RegionMapUpdatedDataV1,
         },
         PandaContainer, RegionId,
     },
@@ -312,6 +312,7 @@ impl UpdateMapData {
 )]
 async fn update_map(
     Extension(panda_container): Extension<PandaContainer>,
+    auth_session: AuthSession,
     Extension(db): Extension<DatabaseState>,
     axum::extract::Json(data): axum::extract::Json<UpdateMapData>,
 ) -> impl IntoResponse {
@@ -345,6 +346,21 @@ async fn update_map(
             Json(format!("Controller node check failed: {}", e)),
         )
             .into_response();
+    }
+
+    let topic_id = PandaContainer::get_region_topic_id(&region_id);
+
+    // Publish the event
+    let event_payload = LoResEventPayload::RegionMapUpdated(RegionMapUpdatedDataV1 {
+        min_latlng: data.min_latlng.clone(),
+        max_latlng: data.max_latlng.clone(),
+        image_data_url: data.image_data_url.clone(),
+    });
+    if let Err(e) = panda_container
+        .publish_persisted(topic_id, LogType::Admin, event_payload, auth_session.user)
+        .await
+    {
+        return internal_server_error(e).into_response();
     }
 
     return (StatusCode::OK, ()).into_response();
