@@ -115,6 +115,13 @@ export interface JoinRegionRequestData {
   region_id: string;
 }
 
+export interface LatLng {
+  /** @format double */
+  lat: number;
+  /** @format double */
+  lng: number;
+}
+
 export interface LocalApp {
   name: string;
   url?: null | NodeAppUrl;
@@ -223,6 +230,13 @@ export interface RegionNodeStatusData {
 export interface RegionWithNodes {
   nodes: RegionNodeDetails[];
   region: Region;
+}
+
+export interface UpdateMapData {
+  image_data_url: string;
+  max_latlng: LatLng;
+  min_latlng: LatLng;
+  region_id: string;
 }
 
 export interface UpdateNodeDetails {
@@ -412,7 +426,7 @@ export class HttpClient<SecurityDataType = unknown> {
 }
 
 /**
- * @title lores-node-axum
+ * @title lores-node
  * @version 0.15.4
  * @license
  */
@@ -690,6 +704,26 @@ export class Api<
     joinRegion: (data: JoinRegionRequestData, params: RequestParams = {}) =>
       this.request<any, string>({
         path: `/node_steward_api/my_regions/join`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @name UpdateMap
+     * @request POST:/node_steward_api/my_regions/region/{region_id}/map
+     */
+    updateMap: (
+      regionId: string,
+      data: UpdateMapData,
+      params: RequestParams = {},
+    ) =>
+      this.request<any, string>({
+        path: `/node_steward_api/my_regions/region/${regionId}/map`,
         method: "POST",
         body: data,
         type: ContentType.Json,

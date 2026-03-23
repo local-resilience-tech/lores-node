@@ -5,6 +5,30 @@ use utoipa::ToSchema;
 
 use crate::panda_comms::RegionId;
 
+#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
+pub struct LatLng {
+    pub lat: f64,
+    pub lng: f64,
+}
+
+impl LatLng {
+    pub fn validate(&self) -> Result<(), String> {
+        if self.lat < -90.0 || self.lat > 90.0 {
+            return Err(format!(
+                "Invalid latitude: {}. Must be between -90 and 90.",
+                self.lat
+            ));
+        }
+        if self.lng < -180.0 || self.lng > 180.0 {
+            return Err(format!(
+                "Invalid longitude: {}. Must be between -180 and 180.",
+                self.lng
+            ));
+        }
+        Ok(())
+    }
+}
+
 #[derive(Serialize, Deserialize, ToSchema, sqlx::Type, Debug, Clone)]
 pub enum RegionNodeStatus {
     RequestedToJoin,
