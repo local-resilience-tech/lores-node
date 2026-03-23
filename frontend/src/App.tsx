@@ -38,6 +38,7 @@ import {
   SetupRegion,
   EnsureJoinedRegion,
   RedirectToRegion,
+  ShowRegion,
 } from "./contexts/regions"
 
 function withStore(
@@ -124,7 +125,7 @@ const router = createBrowserRouter([
           {
             path: ":regionSlug",
             children: [
-              { path: "", element: <Navigate to="nodes" replace /> },
+              { path: "", element: <ShowRegion /> },
               {
                 path: "node",
                 children: [

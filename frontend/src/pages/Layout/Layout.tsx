@@ -23,6 +23,7 @@ import {
   IconExternalLink,
   IconGhost,
   IconHome,
+  IconMap,
   IconMapPlus,
   IconPlus,
   IconSquarePlus,
@@ -201,9 +202,15 @@ export default function Layout() {
               </Group>
             </Box>
             <NavLink
+              label="Region"
+              href={`/regions/${region.region.slug}`}
+              leftSection={<IconAffiliate size={iconSize} />}
+              onClick={toggle}
+            />
+            <NavLink
               label="Nodes"
               href={`/regions/${region.region.slug}/nodes`}
-              leftSection={<IconAffiliate size={iconSize} />}
+              leftSection={<IconMap size={iconSize} />}
               rightSection={
                 nodesCount !== undefined &&
                 nodesCount > 0 && (
