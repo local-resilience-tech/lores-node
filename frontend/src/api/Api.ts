@@ -210,9 +210,9 @@ export interface RegionAppWithInstallations {
 }
 
 export interface RegionMap {
-  map_data_url?: string | null;
-  max_latlng?: null | LatLng;
-  min_latlng?: null | LatLng;
+  map_data_url: string;
+  max_latlng: LatLng;
+  min_latlng: LatLng;
 }
 
 export interface RegionNodeDetails {

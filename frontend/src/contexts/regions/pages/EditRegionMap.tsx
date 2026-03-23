@@ -2,7 +2,7 @@ import { Container, Stack, Title } from "@mantine/core"
 import EditRegionMapForm from "../components/EditRegionMapForm"
 import { useAppSelector } from "../../../store"
 
-import { useParams } from "react-router-dom"
+import { useNavigate, useParams } from "react-router-dom"
 import { UpdateMapData } from "../../../api/Api"
 import {
   actionFailure,
@@ -17,6 +17,7 @@ export default function EditRegionMap() {
       state.my_regions.all?.find((r) => r.region.slug === regionSlug)?.region,
   )
   const myNodeId = useAppSelector((state) => state.network?.node.id)
+  const navigate = useNavigate()
 
   if (!region) return <div>Region not found</div>
 
@@ -31,6 +32,7 @@ export default function EditRegionMap() {
     return getApi()
       .nodeStewardApi.updateMap(data)
       .then(() => {
+        navigate(`/regions/${region.slug}`)
         return actionSuccess()
       })
       .catch(actionFailure)

@@ -1,4 +1,4 @@
-import { Text } from "@mantine/core"
+import { Image, Text } from "@mantine/core"
 import type { RegionMap } from "../../../api/Api"
 
 type NodesMapProps = {
@@ -6,9 +6,17 @@ type NodesMapProps = {
 }
 
 export default function NodesMap({ map }: NodesMapProps) {
+  if (!map.map_data_url) {
+    return <Text c="dimmed">No map image available.</Text>
+  }
+
   return (
-    <Text c="dimmed">
-      Node map placeholder {map.map_data_url ? "(map data available)" : ""}
-    </Text>
+    <Image
+      src={map.map_data_url}
+      alt="Region map"
+      w="100%"
+      h="auto"
+      radius={0}
+    />
   )
 }
