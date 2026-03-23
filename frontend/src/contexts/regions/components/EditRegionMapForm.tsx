@@ -5,12 +5,18 @@ import {
   DisplayActionResult,
   useOnSubmitWithResult,
 } from "../../../components"
-import { LatLng, UpdateMapData } from "../../../api/Api"
+import { UpdateMapData } from "../../../api/Api"
+import LatLngInput, {
+  EditableLatLng,
+  emptyEditableLatLng,
+  toLatLng,
+  validateLatLng,
+} from "../../../components/LatLngInput"
 
 export interface UpdateMapFormData {
   image_file: File | null
-  max_latlng: LatLng
-  min_latlng: LatLng
+  max_latlng: EditableLatLng
+  min_latlng: EditableLatLng
   region_id: string
 }
 
@@ -31,10 +37,13 @@ export default function EditRegionMapForm({
     initialValues: {
       region_id: regionId,
       image_file: null,
-      min_latlng: { lat: 0, lng: 0 },
-      max_latlng: { lat: 0, lng: 0 },
+      min_latlng: emptyEditableLatLng(),
+      max_latlng: emptyEditableLatLng(),
     },
-    validate: {},
+    validate: {
+      min_latlng: validateLatLng,
+      max_latlng: validateLatLng,
+    },
   })
 
   const convertDataAndSubmit = async (
@@ -44,6 +53,8 @@ export default function EditRegionMapForm({
 
     const updateData: UpdateMapData = {
       ...data,
+      min_latlng: toLatLng(data.min_latlng),
+      max_latlng: toLatLng(data.max_latlng),
       image_data_url: dataUrl || "",
     }
     return onSubmitWithResult(updateData)
@@ -65,6 +76,22 @@ export default function EditRegionMapForm({
             key="image_file"
             withAsterisk
             {...form.getInputProps("image_file")}
+          />
+
+          <LatLngInput
+            label="Min Lat & Lng"
+            description="The minimum latitude and longitude for the region"
+            key="min_latlng"
+            withAsterisk
+            {...form.getInputProps("min_latlng")}
+          />
+
+          <LatLngInput
+            label="Max Lat & Lng"
+            description="The maximum latitude and longitude for the region"
+            key="max_latlng"
+            withAsterisk
+            {...form.getInputProps("max_latlng")}
           />
         </Stack>
 
