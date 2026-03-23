@@ -58,6 +58,7 @@ export default function Nodes() {
   }
 
   const tabIconSize = 18
+  const regionMap = region.region.map
 
   return (
     <Container>
@@ -77,12 +78,14 @@ export default function Nodes() {
             >
               List
             </Tabs.Tab>
-            <Tabs.Tab
-              value="map"
-              leftSection={<IconMapPin size={tabIconSize} />}
-            >
-              Map
-            </Tabs.Tab>
+            {regionMap ? (
+              <Tabs.Tab
+                value="map"
+                leftSection={<IconMapPin size={tabIconSize} />}
+              >
+                Map
+              </Tabs.Tab>
+            ) : null}
             <Tabs.Tab
               value="requests"
               leftSection={<IconMessageQuestion size={tabIconSize} />}
@@ -105,9 +108,11 @@ export default function Nodes() {
             />
           </Tabs.Panel>
 
-          <Tabs.Panel value="map" pt="lg">
-            <NodesMap />
-          </Tabs.Panel>
+          {regionMap ? (
+            <Tabs.Panel value="map" pt="lg">
+              <NodesMap map={regionMap} />
+            </Tabs.Panel>
+          ) : null}
 
           <Tabs.Panel value="requests" pt="lg">
             <NodesList

@@ -194,9 +194,7 @@ export interface P2PandaNodeDetails {
 export interface Region {
   creator_node_id?: string | null;
   id: string;
-  map?: string | null;
-  max_latlng?: null | LatLng;
-  min_latlng?: null | LatLng;
+  map?: null | RegionMap;
   name?: string | null;
   node_steward_conduct_url?: string | null;
   organisation_name?: string | null;
@@ -209,6 +207,12 @@ export interface Region {
 export interface RegionAppWithInstallations {
   installations: AppInstallation[];
   name: string;
+}
+
+export interface RegionMap {
+  map_data_url?: string | null;
+  max_latlng?: null | LatLng;
+  min_latlng?: null | LatLng;
 }
 
 export interface RegionNodeDetails {
