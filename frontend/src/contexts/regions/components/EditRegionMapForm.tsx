@@ -53,8 +53,8 @@ export default function EditRegionMapForm({
 
     const updateData: UpdateMapData = {
       ...data,
-      min_latlng: toLatLng(data.min_latlng),
-      max_latlng: toLatLng(data.max_latlng),
+      min_latlng: toLatLng(data.min_latlng)!,
+      max_latlng: toLatLng(data.max_latlng)!,
       image_data_url: dataUrl || "",
     }
     return onSubmitWithResult(updateData)

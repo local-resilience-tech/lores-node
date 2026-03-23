@@ -12,11 +12,27 @@ export function emptyEditableLatLng(): EditableLatLng {
 export function toLatLng(editable: EditableLatLng): {
   lat: number
   lng: number
-} {
-  return {
-    lat: editable.lat ?? 0,
-    lng: editable.lng ?? 0,
+} | null {
+  if (
+    editable.lat === null ||
+    editable.lat === undefined ||
+    editable.lng === null ||
+    editable.lng === undefined
+  ) {
+    return null
   }
+
+  return {
+    lat: editable.lat,
+    lng: editable.lng,
+  }
+}
+
+export function validateOptionalLatLng(
+  value: EditableLatLng | null | undefined,
+): string | null {
+  if (!value || (value.lat == null && value.lng == null)) return null
+  return validateLatLng(value)
 }
 
 export function validateLatLng(
