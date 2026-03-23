@@ -39,6 +39,7 @@ import {
   EnsureJoinedRegion,
   RedirectToRegion,
   ShowRegion,
+  EditRegionMap,
 } from "./contexts/regions"
 
 function withStore(
@@ -150,6 +151,7 @@ const router = createBrowserRouter([
               },
               { path: "nodes", element: <Nodes /> },
               { path: "apps", element: <RegionApps /> },
+              { path: "edit-map", element: <EditRegionMap /> },
             ],
             element: (
               <SetActiveRegion>
