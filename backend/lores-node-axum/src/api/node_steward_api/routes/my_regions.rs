@@ -1,13 +1,14 @@
 use axum::{http::StatusCode, response::IntoResponse, Extension, Json};
 use lores_p2panda::operations::LogType;
 use serde::Deserialize;
+use sqlx::SqlitePool;
 use utoipa::ToSchema;
 use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::{
     api::{auth_api::auth_backend::AuthSession, helpers::internal_server_error},
     config::config_state::LoresNodeConfigState,
-    data::entities::LatLng,
+    data::{entities::LatLng, projections_read::regions::RegionsReadRepo},
     panda_comms::{
         lores_events::{
             LoResEventPayload, RegionCreatedDataV1, RegionJoinRequestApprovedDataV1,
@@ -15,6 +16,7 @@ use crate::{
         },
         PandaContainer, RegionId,
     },
+    DatabaseState,
 };
 
 pub fn router() -> OpenApiRouter {
@@ -210,6 +212,7 @@ pub struct ApproveJoinRequestData {
 async fn approve_join_request(
     Extension(panda_container): Extension<PandaContainer>,
     auth_session: AuthSession,
+    Extension(db): Extension<DatabaseState>,
     axum::extract::Json(data): axum::extract::Json<ApproveJoinRequestData>,
 ) -> impl IntoResponse {
     // Validate data
@@ -236,6 +239,17 @@ async fn approve_join_request(
                 .into_response();
         }
     };
+
+    // Check that I am the controller node for this region
+    if let Err(e) = ensure_controller_node(&db.projections_pool, &region_id, &panda_container).await
+    {
+        eprintln!("Controller node check failed: {:?}", e);
+        return (
+            StatusCode::BAD_REQUEST,
+            Json(format!("Controller node check failed: {}", e)),
+        )
+            .into_response();
+    }
 
     let topic_id = PandaContainer::get_region_topic_id(&region_id);
 
@@ -297,6 +311,8 @@ impl UpdateMapData {
     )
 )]
 async fn update_map(
+    Extension(panda_container): Extension<PandaContainer>,
+    Extension(db): Extension<DatabaseState>,
     axum::extract::Json(data): axum::extract::Json<UpdateMapData>,
 ) -> impl IntoResponse {
     // Validate data
@@ -304,6 +320,29 @@ async fn update_map(
         return (
             StatusCode::BAD_REQUEST,
             Json(format!("Invalid request data: {}", e)),
+        )
+            .into_response();
+    }
+
+    let region_id = match RegionId::from_hex(data.region_id.as_str()) {
+        Ok(id) => id,
+        Err(e) => {
+            eprintln!("Invalid region ID: {:?}", e);
+            return (
+                StatusCode::BAD_REQUEST,
+                Json("Invalid region ID".to_string()),
+            )
+                .into_response();
+        }
+    };
+
+    // Ensure I am the controller node for this region
+    if let Err(e) = ensure_controller_node(&db.projections_pool, &region_id, &panda_container).await
+    {
+        eprintln!("Controller node check failed: {:?}", e);
+        return (
+            StatusCode::BAD_REQUEST,
+            Json(format!("Controller node check failed: {}", e)),
         )
             .into_response();
     }
@@ -367,6 +406,32 @@ async fn store_region_id(
             result
         })
         .await?;
+
+    Ok(())
+}
+
+async fn ensure_controller_node(
+    pool: &SqlitePool,
+    region_id: &RegionId,
+    panda_container: &PandaContainer,
+) -> Result<(), String> {
+    let region = RegionsReadRepo::init()
+        .find(pool, &region_id.to_hex())
+        .await
+        .map_err(|_| "Failed to read region".to_string())?;
+    if region.is_none() {
+        return Err("Region not found".to_string());
+    }
+
+    let my_node_id_string = panda_container
+        .get_public_key()
+        .await
+        .map_err(|_| "Failed to get my node ID".to_string())?
+        .to_hex();
+
+    if region.unwrap().creator_node_id != Some(my_node_id_string) {
+        return Err("Only the controller node can perform this action".to_string());
+    }
 
     Ok(())
 }
