@@ -151,7 +151,14 @@ const router = createBrowserRouter([
               },
               { path: "nodes", element: <Nodes /> },
               { path: "apps", element: <RegionApps /> },
-              { path: "edit-map", element: <EditRegionMap /> },
+              {
+                path: "edit-map",
+                element: (
+                  <RequireNodeSteward>
+                    <EditRegionMap />
+                  </RequireNodeSteward>
+                ),
+              },
             ],
             element: (
               <SetActiveRegion>

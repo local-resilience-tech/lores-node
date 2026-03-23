@@ -715,15 +715,11 @@ export class Api<
      * No description
      *
      * @name UpdateMap
-     * @request POST:/node_steward_api/my_regions/region/{region_id}/map
+     * @request POST:/node_steward_api/my_regions/map
      */
-    updateMap: (
-      regionId: string,
-      data: UpdateMapData,
-      params: RequestParams = {},
-    ) =>
+    updateMap: (data: UpdateMapData, params: RequestParams = {}) =>
       this.request<any, string>({
-        path: `/node_steward_api/my_regions/region/${regionId}/map`,
+        path: `/node_steward_api/my_regions/map`,
         method: "POST",
         body: data,
         type: ContentType.Json,

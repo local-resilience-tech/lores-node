@@ -3,6 +3,7 @@ import { useAppSelector } from "../../../store"
 import { useParams } from "react-router-dom"
 import RegionDetails from "../components/RegionDetails"
 import { Anchor } from "../../../components"
+import { IfNodeSteward } from "../../auth/node_steward_auth"
 
 export default function ShowRegion() {
   const { regionSlug } = useParams<{ regionSlug: string }>()
@@ -29,14 +30,16 @@ export default function ShowRegion() {
           </Card>
         </Stack>
         {isCreator && (
-          <Stack gap="xs">
-            <Title order={2}>Admin Actions</Title>
-            <Card>
-              <Group>
-                <Anchor href="./edit-map">Edit map</Anchor>
-              </Group>
-            </Card>
-          </Stack>
+          <IfNodeSteward>
+            <Stack gap="xs">
+              <Title order={2}>Admin Actions</Title>
+              <Card>
+                <Group>
+                  <Anchor href="./edit-map">Edit map</Anchor>
+                </Group>
+              </Card>
+            </Stack>
+          </IfNodeSteward>
         )}
       </Stack>
     </Container>

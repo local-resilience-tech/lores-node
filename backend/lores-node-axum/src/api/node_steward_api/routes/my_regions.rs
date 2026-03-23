@@ -288,7 +288,7 @@ impl UpdateMapData {
 
 #[utoipa::path(
     post,
-    path = "/region/{region_id}/map",
+    path = "/map",
     request_body(content = UpdateMapData, content_type = "application/json"),
     responses(
         (status = 200, body = ()),
