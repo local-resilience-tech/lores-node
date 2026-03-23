@@ -252,6 +252,7 @@ export interface UpdateMapData {
 export interface UpdateNodeDetails {
   domain_on_internet?: string | null;
   domain_on_local_network?: string | null;
+  latlng?: null | LatLng;
   name: string;
   public_ipv4?: string | null;
 }

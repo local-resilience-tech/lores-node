@@ -1,9 +1,11 @@
 use lores_p2panda::p2panda_core::PublicKey;
 use serde::{Deserialize, Serialize};
 use sqlx::{
+    database::Database,
+    encode::IsNull,
     error::BoxDynError,
     sqlite::{SqliteTypeInfo, SqliteValueRef},
-    Decode, Sqlite, Type,
+    Decode, Encode, Sqlite, Type,
 };
 use utoipa::ToSchema;
 
@@ -30,6 +32,16 @@ impl<'r> Decode<'r, Sqlite> for LatLng {
         let raw = <String as Decode<Sqlite>>::decode(value)?;
         let latlng = serde_json::from_str(&raw)?;
         Ok(latlng)
+    }
+}
+
+impl<'q> Encode<'q, Sqlite> for LatLng {
+    fn encode_by_ref(
+        &self,
+        buf: &mut <Sqlite as Database>::ArgumentBuffer<'q>,
+    ) -> Result<IsNull, BoxDynError> {
+        let raw = serde_json::to_string(self).expect("Failed to serialize LatLng");
+        <String as Encode<Sqlite>>::encode(raw, buf)
     }
 }
 

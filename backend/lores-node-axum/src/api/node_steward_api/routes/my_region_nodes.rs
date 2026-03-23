@@ -9,6 +9,7 @@ use crate::{
         auth_api::auth_backend::AuthSession,
         helpers::{bad_request, internal_server_error},
     },
+    data::entities::LatLng,
     panda_comms::{
         lores_events::{LoResEventPayload, NodeStatusPostedDataV1, RegionNodeUpdatedDataV1},
         PandaContainer, RegionId,
@@ -27,6 +28,7 @@ struct UpdateNodeDetails {
     public_ipv4: Option<String>,
     domain_on_local_network: Option<String>,
     domain_on_internet: Option<String>,
+    latlng: Option<LatLng>,
 }
 
 fn valid_slug(value: &str) -> bool {
@@ -47,6 +49,10 @@ impl UpdateNodeDetails {
             if public_ipv4.trim().is_empty() {
                 return Err("Public IPv4 cannot be empty".to_string());
             }
+        }
+
+        if let Some(latlng) = &self.latlng {
+            latlng.validate()?;
         }
 
         Ok(())
@@ -90,6 +96,7 @@ async fn update_this_region_node(
         public_ipv4: data.public_ipv4.clone(),
         domain_on_local_network: data.domain_on_local_network.clone(),
         domain_on_internet: data.domain_on_internet.clone(),
+        latlng: data.latlng.clone(),
     });
     println!("Prepared event payload: {:?}", event_payload);
 

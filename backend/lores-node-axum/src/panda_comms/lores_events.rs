@@ -41,6 +41,7 @@ pub struct RegionNodeUpdatedDataV1 {
     pub public_ipv4: Option<String>,
     pub domain_on_local_network: Option<String>,
     pub domain_on_internet: Option<String>,
+    pub latlng: Option<LatLng>,
 }
 
 #[derive(Deserialize, Serialize, Clone, PartialEq, Debug)]
