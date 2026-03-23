@@ -1,7 +1,7 @@
 use sqlx::{types::Json, SqlitePool};
 
 use crate::{
-    data::entities::{LatLng, Region},
+    data::entities::{Region, RegionMap},
     panda_comms::RegionId,
 };
 
@@ -66,13 +66,18 @@ impl RegionsWriteRepo {
         &self,
         pool: &SqlitePool,
         region_id: &RegionId,
-        map_data_url: &Option<String>,
-        min_latlng: &Option<LatLng>,
-        max_latlng: &Option<LatLng>,
+        map: Option<RegionMap>,
     ) -> Result<(), sqlx::Error> {
         let region_id_hex = region_id.to_hex();
-        let min_latlng_json = min_latlng.clone().map(Json);
-        let max_latlng_json = max_latlng.clone().map(Json);
+
+        let (map_data_url, min_latlng_json, max_latlng_json) = match map {
+            Some(region_map) => (
+                region_map.map_data_url,
+                region_map.min_latlng.map(Json),
+                region_map.max_latlng.map(Json),
+            ),
+            None => (None, None, None),
+        };
 
         let _region = sqlx::query!(
             "UPDATE regions

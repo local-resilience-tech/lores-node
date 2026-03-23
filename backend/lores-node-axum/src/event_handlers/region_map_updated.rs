@@ -3,7 +3,8 @@ use sqlx::SqlitePool;
 use crate::{
     api::public_api::client_events::ClientEvent,
     data::{
-        entities::Region, projections_read::regions::RegionsReadRepo,
+        entities::{Region, RegionMap},
+        projections_read::regions::RegionsReadRepo,
         projections_write::regions::RegionsWriteRepo,
     },
     event_handlers::utilities::{
@@ -39,9 +40,11 @@ impl RegionMapUpdatedHandler {
             .upsert_map(
                 pool,
                 &region_id,
-                &Some(self.payload.image_data_url.clone()),
-                &Some(self.payload.min_latlng.clone()),
-                &Some(self.payload.max_latlng.clone()),
+                Some(RegionMap {
+                    map_data_url: Some(self.payload.image_data_url.clone()),
+                    min_latlng: Some(self.payload.min_latlng.clone()),
+                    max_latlng: Some(self.payload.max_latlng.clone()),
+                }),
             )
             .await?;
 
