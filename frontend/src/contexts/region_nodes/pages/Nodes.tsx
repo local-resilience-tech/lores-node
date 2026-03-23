@@ -110,7 +110,7 @@ export default function Nodes() {
 
           {regionMap ? (
             <Tabs.Panel value="map" pt="lg">
-              <NodesMap map={regionMap} />
+              <NodesMap map={regionMap} nodes={member_nodes} />
             </Tabs.Panel>
           ) : null}
 
