@@ -1,11 +1,7 @@
 import { Box, Image, Text, Tooltip } from "@mantine/core"
 import { IconMapPinFilled } from "@tabler/icons-react"
 import type { LatLng, RegionMap, RegionNodeDetails } from "../../../api/Api"
-
-interface Coordinate2D {
-  x: number
-  y: number
-}
+import { Coordinate2D } from "../utilities/coordinate_2D"
 
 type NodesMapProps = {
   map: RegionMap
@@ -72,10 +68,11 @@ function interpolatePosition(
   max: LatLng,
   source: LatLng,
 ): Coordinate2D {
-  const lngRange = max.lng - min.lng
-  const latRange = max.lat - min.lat
-  return {
-    x: lngRange !== 0 ? ((source.lng - min.lng) / lngRange) * 100 : 50,
-    y: latRange !== 0 ? ((max.lat - source.lat) / latRange) * 100 : 50,
-  }
+  const minCoordinate = Coordinate2D.fromLatLng(min)
+  const maxCoordinate = Coordinate2D.fromLatLng(max)
+
+  return Coordinate2D.fromLatLng(source)
+    .normalizeBetween(minCoordinate, maxCoordinate)
+    .invertYWithinUnitRange()
+    .toScreenPercent()
 }

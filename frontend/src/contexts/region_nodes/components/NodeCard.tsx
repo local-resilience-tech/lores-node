@@ -1,13 +1,10 @@
+import { Stack, Card, Text, Group, Badge, ThemeIcon } from "@mantine/core"
 import {
-  Stack,
-  Card,
-  Text,
-  Box,
-  Table,
-  useMantineTheme,
-  Group,
-  Badge,
-} from "@mantine/core"
+  IconAlertCircle,
+  IconCircleCheck,
+  IconClock,
+  IconHelpCircle,
+} from "@tabler/icons-react"
 import { Anchor } from "../../../components"
 import { RegionNodeDetails } from "../../../api/Api"
 import { nodeName } from "../../../store/my_regions"
@@ -27,41 +24,82 @@ interface NodeCardProps {
   isRegionCreator?: boolean
 }
 
+function stateMeta(state?: string | null): {
+  label: string
+  color: "red" | "yellow" | "green" | "gray"
+  Icon: typeof IconHelpCircle
+} {
+  const label = state?.trim() || "unknown"
+  const normalized = label.toLowerCase()
+
+  if (
+    normalized.includes("error") ||
+    normalized.includes("fail") ||
+    normalized.includes("offline") ||
+    normalized.includes("down") ||
+    normalized.includes("reject")
+  ) {
+    return { label, color: "red", Icon: IconAlertCircle }
+  }
+
+  if (
+    normalized.includes("pending") ||
+    normalized.includes("join") ||
+    normalized.includes("starting") ||
+    normalized.includes("sync") ||
+    normalized.includes("wait")
+  ) {
+    return { label, color: "yellow", Icon: IconClock }
+  }
+
+  if (
+    normalized.includes("online") ||
+    normalized.includes("active") ||
+    normalized.includes("ready") ||
+    normalized.includes("ok") ||
+    normalized.includes("healthy") ||
+    normalized.includes("connected")
+  ) {
+    return { label, color: "green", Icon: IconCircleCheck }
+  }
+
+  return { label, color: "gray", Icon: IconHelpCircle }
+}
+
 export default function NodeCard({ node, isRegionCreator }: NodeCardProps) {
-  const theme = useMantineTheme()
+  const { label: stateLabel, color: stateColor, Icon } = stateMeta(node.state)
+  const message = node.status_text?.trim()
 
   return (
     <Card key={node.id} withBorder>
       <Stack>
         <Group justify="space-between">
-          <Text fw={500}>{nodeName(node)}</Text>
+          <Stack gap={0}>
+            <Text fw={500} size="lg">
+              {nodeName(node)}
+            </Text>
+            <Text size="sm" ff="monospace">
+              {node.node_id}
+            </Text>
+          </Stack>
           {isRegionCreator && <Badge>Admin</Badge>}
         </Group>
-        <Card.Section>
-          <Table layout="fixed" bgcolor={theme.colors.dark[7]}>
-            <Table.Tbody>
-              <Table.Tr>
-                <Table.Th w={160}>ID</Table.Th>
-                <Table.Td>{node.node_id}</Table.Td>
-              </Table.Tr>
-              <Table.Tr>
-                <Table.Th w={160}>Message</Table.Th>
-                <Table.Td>{node.status_text}</Table.Td>
-              </Table.Tr>
-              {/*
-                  <Table.Tr>
-                    <Table.Th>IP</Table.Th>
-                    <Table.Td>
-                      <IpLink ip={node.public_ipv4} />
-                    </Table.Td>
-                  </Table.Tr> */}
-
-              <Table.Tr>
-                <Table.Th>State</Table.Th>
-                <Table.Td>{node.state || "unknown"}</Table.Td>
-              </Table.Tr>
-            </Table.Tbody>
-          </Table>
+        <Card.Section bg="dark.7" px="md" py="sm">
+          <Group gap="xs" wrap="nowrap">
+            <ThemeIcon variant="light" color={stateColor} size="sm" radius="xl">
+              <Icon size={14} />
+            </ThemeIcon>
+            <Text size="sm">
+              <Text span fw={500}>
+                {stateLabel}
+              </Text>
+              {message ? (
+                <Text span c="dimmed">
+                  : {message}
+                </Text>
+              ) : null}
+            </Text>
+          </Group>
         </Card.Section>
       </Stack>
     </Card>
