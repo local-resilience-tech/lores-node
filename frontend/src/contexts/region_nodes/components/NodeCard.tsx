@@ -1,4 +1,5 @@
 import { Stack, Card, Text, Group, Badge, ThemeIcon } from "@mantine/core"
+import type { ReactNode } from "react"
 import {
   IconAlertCircle,
   IconCircleCheck,
@@ -22,6 +23,7 @@ const IpLink = ({ ip }: { ip: string | undefined | null }) => {
 interface NodeCardProps {
   node: RegionNodeDetails
   isRegionCreator?: boolean
+  rightSection?: ReactNode
 }
 
 interface NodeStatusProps {
@@ -74,20 +76,35 @@ function NodeStatus({ state, statusText }: NodeStatusProps) {
   )
 }
 
-export default function NodeCard({ node, isRegionCreator }: NodeCardProps) {
+export default function NodeCard({
+  node,
+  isRegionCreator,
+  rightSection,
+}: NodeCardProps) {
   return (
     <Card key={node.id} withBorder>
       <Stack>
-        <Group justify="space-between">
-          <Stack gap={0}>
+        <Group justify="space-between" wrap="nowrap" align="flex-start">
+          <Stack gap={0} style={{ flex: 1, minWidth: 0 }}>
             <Text fw={500} size="lg">
               {nodeName(node)}
             </Text>
-            <Text size="sm" ff="monospace">
+            <Text
+              size="sm"
+              ff="monospace"
+              maw="90%"
+              truncate="end"
+              title={node.node_id}
+            >
               {node.node_id}
             </Text>
           </Stack>
-          {isRegionCreator && <Badge>Admin</Badge>}
+          {(isRegionCreator || rightSection) && (
+            <Group gap="xs" wrap="nowrap" align="center">
+              {isRegionCreator && <Badge>Admin</Badge>}
+              {rightSection}
+            </Group>
+          )}
         </Group>
 
         <NodeStatus state={node.state} statusText={node.status_text} />
