@@ -6,7 +6,7 @@ import {
   IconHelpCircle,
 } from "@tabler/icons-react"
 import { Anchor } from "../../../components"
-import { RegionNodeDetails } from "../../../api/Api"
+import { NodeState, RegionNodeDetails } from "../../../api/Api"
 import { nodeName } from "../../../store/my_regions"
 
 const IpLink = ({ ip }: { ip: string | undefined | null }) => {
@@ -24,52 +24,57 @@ interface NodeCardProps {
   isRegionCreator?: boolean
 }
 
-function stateMeta(state?: string | null): {
-  label: string
-  color: "red" | "yellow" | "green" | "gray"
-  Icon: typeof IconHelpCircle
-} {
-  const label = state?.trim() || "unknown"
-  const normalized = label.toLowerCase()
+interface NodeStatusProps {
+  state?: NodeState | null
+  statusText?: string | null
+}
 
-  if (
-    normalized.includes("error") ||
-    normalized.includes("fail") ||
-    normalized.includes("offline") ||
-    normalized.includes("down") ||
-    normalized.includes("reject")
-  ) {
-    return { label, color: "red", Icon: IconAlertCircle }
-  }
+function NodeStatus({ state, statusText }: NodeStatusProps) {
+  const message = statusText?.trim() || undefined
 
-  if (
-    normalized.includes("pending") ||
-    normalized.includes("join") ||
-    normalized.includes("starting") ||
-    normalized.includes("sync") ||
-    normalized.includes("wait")
-  ) {
-    return { label, color: "yellow", Icon: IconClock }
-  }
+  if (!state && !message) return null
 
-  if (
-    normalized.includes("online") ||
-    normalized.includes("active") ||
-    normalized.includes("ready") ||
-    normalized.includes("ok") ||
-    normalized.includes("healthy") ||
-    normalized.includes("connected")
-  ) {
-    return { label, color: "green", Icon: IconCircleCheck }
-  }
+  const {
+    label: stateLabel,
+    color: stateColor,
+    Icon,
+  } = (() => {
+    switch (state) {
+      case NodeState.Active:
+        return { label: "Active", color: "green", Icon: IconCircleCheck }
+      case NodeState.Inactive:
+        return { label: "Inactive", color: "red", Icon: IconAlertCircle }
+      case NodeState.Maintenance:
+        return { label: "Maintenance", color: "yellow", Icon: IconClock }
+      case NodeState.Development:
+        return { label: "Development", color: "gray", Icon: IconHelpCircle }
+      default:
+        return { label: "Unknown", color: "gray", Icon: IconHelpCircle }
+    }
+  })()
 
-  return { label, color: "gray", Icon: IconHelpCircle }
+  return (
+    <Group gap="sm">
+      <Group gap={1} wrap="nowrap">
+        <ThemeIcon variant="light" color={stateColor} size="sm" radius="xl">
+          <Icon size={22} />
+        </ThemeIcon>
+
+        <Text span fw={500} size="sm" c={stateColor}>
+          {stateLabel}
+        </Text>
+      </Group>
+
+      {message ? (
+        <Text span size="sm">
+          {message}
+        </Text>
+      ) : null}
+    </Group>
+  )
 }
 
 export default function NodeCard({ node, isRegionCreator }: NodeCardProps) {
-  const { label: stateLabel, color: stateColor, Icon } = stateMeta(node.state)
-  const message = node.status_text?.trim()
-
   return (
     <Card key={node.id} withBorder>
       <Stack>
@@ -84,23 +89,8 @@ export default function NodeCard({ node, isRegionCreator }: NodeCardProps) {
           </Stack>
           {isRegionCreator && <Badge>Admin</Badge>}
         </Group>
-        <Card.Section bg="dark.7" px="md" py="sm">
-          <Group gap="xs" wrap="nowrap">
-            <ThemeIcon variant="light" color={stateColor} size="sm" radius="xl">
-              <Icon size={14} />
-            </ThemeIcon>
-            <Text size="sm">
-              <Text span fw={500}>
-                {stateLabel}
-              </Text>
-              {message ? (
-                <Text span c="dimmed">
-                  : {message}
-                </Text>
-              ) : null}
-            </Text>
-          </Group>
-        </Card.Section>
+
+        <NodeStatus state={node.state} statusText={node.status_text} />
       </Stack>
     </Card>
   )
