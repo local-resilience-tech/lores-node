@@ -1,5 +1,5 @@
 import { Box, Image, Text, Tooltip } from "@mantine/core"
-import { IconMapPin } from "@tabler/icons-react"
+import { IconMapPinFilled } from "@tabler/icons-react"
 import type { LatLng, RegionMap, RegionNodeDetails } from "../../../api/Api"
 
 interface Coordinate2D {
@@ -39,7 +39,12 @@ export default function NodesMap({ map, nodes }: NodesMapProps) {
         radius={0}
       />
       {nodesWithPosition.map(({ node, position }) => (
-        <Tooltip key={node.node_id} label={node.name ?? node.node_id} withArrow>
+        <Tooltip
+          key={node.node_id}
+          label={node.name ?? node.node_id}
+          withArrow
+          color="gray"
+        >
           <Box
             style={{
               position: "absolute",
@@ -50,7 +55,11 @@ export default function NodesMap({ map, nodes }: NodesMapProps) {
               lineHeight: 0,
             }}
           >
-            <IconMapPin color="blue" size={32} style={{ display: "block" }} />
+            <IconMapPinFilled
+              color="blue"
+              size={36}
+              style={{ display: "block" }}
+            />
           </Box>
         </Tooltip>
       ))}
