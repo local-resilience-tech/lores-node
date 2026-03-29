@@ -37,6 +37,13 @@ export enum NodeStewardLoginError {
   InternalServerError = "InternalServerError",
 }
 
+export enum NodeState {
+  Active = "active",
+  Inactive = "inactive",
+  Maintenance = "maintenance",
+  Development = "development",
+}
+
 export enum GetCurrentNodeStewardError {
   InternalServerError = "InternalServerError",
   AdminNotFound = "AdminNotFound",
@@ -228,13 +235,13 @@ export interface RegionNodeDetails {
   node_id: string;
   public_ipv4?: string | null;
   region_id: string;
-  state?: string | null;
+  state?: null | NodeState;
   status?: null | RegionNodeStatus;
   status_text?: string | null;
 }
 
 export interface RegionNodeStatusData {
-  state?: string | null;
+  state?: null | NodeState;
   text?: string | null;
 }
 

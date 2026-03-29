@@ -69,6 +69,27 @@ pub enum RegionNodeStatus {
     Member,
 }
 
+#[derive(Serialize, Deserialize, ToSchema, sqlx::Type, Debug, Clone, PartialEq)]
+#[serde(rename_all = "lowercase")]
+#[sqlx(rename_all = "lowercase")]
+pub enum NodeState {
+    Active,
+    Inactive,
+    Maintenance,
+    Development,
+}
+
+impl std::fmt::Display for NodeState {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            NodeState::Active => write!(f, "active"),
+            NodeState::Inactive => write!(f, "inactive"),
+            NodeState::Maintenance => write!(f, "maintenance"),
+            NodeState::Development => write!(f, "development"),
+        }
+    }
+}
+
 #[derive(sqlx::FromRow, Serialize, Deserialize, ToSchema, Debug, Clone)]
 pub struct RegionNode {
     pub id: i64,
@@ -97,7 +118,7 @@ pub struct RegionNodeDetails {
     pub about_your_stewards: Option<String>,
     pub agreed_node_steward_conduct_url: Option<String>,
     pub status_text: Option<String>,
-    pub state: Option<String>,
+    pub state: Option<NodeState>,
 }
 
 #[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]

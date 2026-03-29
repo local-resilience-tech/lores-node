@@ -9,7 +9,7 @@ use crate::{
         auth_api::auth_backend::AuthSession,
         helpers::{bad_request, internal_server_error},
     },
-    data::entities::LatLng,
+    data::entities::{LatLng, NodeState},
     panda_comms::{
         lores_events::{LoResEventPayload, NodeStatusPostedDataV1, RegionNodeUpdatedDataV1},
         PandaContainer, RegionId,
@@ -115,22 +115,7 @@ async fn update_this_region_node(
 #[derive(Deserialize, ToSchema, Debug)]
 struct RegionNodeStatusData {
     pub text: Option<String>,
-    pub state: Option<String>,
-}
-
-impl RegionNodeStatusData {
-    fn validate(&self) -> Result<(), String> {
-        if let Some(state) = &self.state {
-            let valid_states = ["active", "inactive", "maintenance", "development"];
-            if !valid_states.contains(&state.as_str()) {
-                return Err(format!(
-                    "Invalid state. Valid states are: {}",
-                    valid_states.join(", ")
-                ));
-            }
-        }
-        Ok(())
-    }
+    pub state: Option<NodeState>,
 }
 
 #[utoipa::path(
@@ -153,11 +138,6 @@ async fn post_region_node_status(
 ) -> impl IntoResponse {
     println!("post status: {:?}", data);
 
-    // Validate input data
-    if let Err(e) = data.validate() {
-        return bad_request(e).into_response();
-    }
-
     // Get region_id from path and validate it
     let region_id = match RegionId::from_hex(&region_id_string) {
         Ok(id) => id,
@@ -167,7 +147,7 @@ async fn post_region_node_status(
     // Send Operation
     let event_payload = LoResEventPayload::NodeStatusPosted(NodeStatusPostedDataV1 {
         text: data.text.clone(),
-        state: data.state.clone(),
+        state: data.state.map(|s| s.to_string()),
     });
     println!("Created event payload: {:?}", event_payload);
 

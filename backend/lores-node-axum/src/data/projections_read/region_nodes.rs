@@ -2,7 +2,7 @@ use sqlx::SqlitePool;
 
 use crate::data::entities::{LatLng, Region, RegionWithNodes};
 
-use super::super::entities::{RegionNode, RegionNodeDetails, RegionNodeStatus};
+use super::super::entities::{NodeState, RegionNode, RegionNodeDetails, RegionNodeStatus};
 
 pub struct RegionNodesReadRepo {}
 
@@ -87,7 +87,7 @@ impl RegionNodesReadRepo {
             SELECT
                 id, region_nodes.node_id as node_id, region_id, status as \"status: RegionNodeStatus\", name, public_ipv4, domain_on_local_network, domain_on_internet,
                 latlng as \"latlng: LatLng\", s.text as status_text,
-                s.state as state, about_your_node, about_your_stewards, agreed_node_steward_conduct_url
+                s.state as \"state: NodeState\", about_your_node, about_your_stewards, agreed_node_steward_conduct_url
             FROM region_nodes
             LEFT JOIN current_node_statuses AS s ON region_nodes.id = s.region_node_id
             WHERE region_nodes.node_id = ? AND region_nodes.region_id = ?
@@ -113,7 +113,7 @@ impl RegionNodesReadRepo {
             SELECT
                 id, region_nodes.node_id as node_id, region_id, status as \"status: RegionNodeStatus\", name, public_ipv4, domain_on_local_network, domain_on_internet,
                 latlng as \"latlng: LatLng\", s.text as status_text,
-                s.state as state, about_your_node, about_your_stewards, agreed_node_steward_conduct_url
+                s.state as \"state: NodeState\", about_your_node, about_your_stewards, agreed_node_steward_conduct_url
             FROM region_nodes
             LEFT JOIN current_node_statuses AS s ON region_nodes.id = s.region_node_id
             WHERE region_nodes.region_id = ?
