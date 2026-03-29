@@ -1,61 +1,61 @@
 {
   "db_name": "SQLite",
-  "query": "\n            SELECT\n                id, creator_node_id, slug, name, organisation_name, organisation_url, node_steward_conduct_url, user_conduct_url, user_privacy_url\n            FROM regions\n            WHERE regions.id = ?\n            LIMIT 1\n            ",
+  "query": "\n            SELECT\n                id, node_id, region_id, status as \"status: RegionNodeStatus\", name, public_ipv4, domain_on_local_network, domain_on_internet,\n                latlng as \"latlng: LatLng\"\n            FROM region_nodes\n            WHERE region_nodes.node_id = ? AND region_nodes.region_id = ?\n            LIMIT 1\n            ",
   "describe": {
     "columns": [
       {
         "name": "id",
         "ordinal": 0,
-        "type_info": "Text"
+        "type_info": "Integer"
       },
       {
-        "name": "creator_node_id",
+        "name": "node_id",
         "ordinal": 1,
         "type_info": "Text"
       },
       {
-        "name": "slug",
+        "name": "region_id",
         "ordinal": 2,
         "type_info": "Text"
       },
       {
-        "name": "name",
+        "name": "status: RegionNodeStatus",
         "ordinal": 3,
         "type_info": "Text"
       },
       {
-        "name": "organisation_name",
+        "name": "name",
         "ordinal": 4,
         "type_info": "Text"
       },
       {
-        "name": "organisation_url",
+        "name": "public_ipv4",
         "ordinal": 5,
         "type_info": "Text"
       },
       {
-        "name": "node_steward_conduct_url",
+        "name": "domain_on_local_network",
         "ordinal": 6,
         "type_info": "Text"
       },
       {
-        "name": "user_conduct_url",
+        "name": "domain_on_internet",
         "ordinal": 7,
         "type_info": "Text"
       },
       {
-        "name": "user_privacy_url",
+        "name": "latlng: LatLng",
         "ordinal": 8,
         "type_info": "Text"
       }
     ],
     "parameters": {
-      "Right": 1
+      "Right": 2
     },
     "nullable": [
       false,
-      true,
-      true,
+      false,
+      false,
       true,
       true,
       true,
@@ -64,5 +64,5 @@
       true
     ]
   },
-  "hash": "997d4bc923ee630e81f753be7b32cc89e7881b9e9ac81fac8f9656fbb7f352e0"
+  "hash": "dfdba894c6d53d954d332be7570deea47aae6b7a810856384fd5b16820dcbd50"
 }

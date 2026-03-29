@@ -19,6 +19,7 @@ mod node_status_posted;
 mod region_created;
 mod region_join_request_approved;
 mod region_join_requested;
+mod region_map_updated;
 mod region_node_updated;
 mod utilities;
 
@@ -84,5 +85,6 @@ define_handlers!(
     NodeStatusPosted => NodeStatusPostedHandler,
     AppRegistered => AppRegisteredHandler,
     RegionJoinRequested => RegionJoinRequestedHandler,
-    RegionJoinRequestApproved => RegionJoinRequestApprovedHandler
+    RegionJoinRequestApproved => RegionJoinRequestApprovedHandler,
+    RegionMapUpdated => region_map_updated::RegionMapUpdatedHandler
 );

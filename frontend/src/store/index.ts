@@ -4,6 +4,7 @@ import networkReducer from "./network"
 import regionsReducer, {
   nodeJoinedRegion,
   regionNodeUpdated,
+  regionUpdated,
 } from "./my_regions"
 import localAppsReducer from "./local_apps"
 import regionAppsReducer, { regionAppUpdated } from "./region_apps"
@@ -41,6 +42,8 @@ export async function handleClientEvent(event: ClientEvent) {
     store.dispatch(regionAppUpdated(event.RegionAppUpdated))
   } else if ("NodeJoinedRegion" in event) {
     store.dispatch(nodeJoinedRegion(event.NodeJoinedRegion))
+  } else if ("RegionUpdated" in event) {
+    store.dispatch(regionUpdated(event.RegionUpdated))
   } else {
     console.warn("Unhandled event type:", event)
   }

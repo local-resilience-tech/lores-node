@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE regions\n            SET map = ?, min_latlng = ?, max_latlng = ?\n            WHERE id = ?",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 4
+    },
+    "nullable": []
+  },
+  "hash": "b5b212896e51facb7e118f0c6be2cd19c04080847023fcc43a59354962a4ee72"
+}

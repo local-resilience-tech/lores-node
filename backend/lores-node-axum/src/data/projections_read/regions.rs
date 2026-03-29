@@ -1,6 +1,47 @@
 use sqlx::SqlitePool;
 
-use crate::data::entities::Region;
+use crate::data::entities::{LatLng, Region, RegionMap};
+
+struct RegionRow {
+    pub id: String,
+    pub creator_node_id: Option<String>,
+    pub slug: Option<String>,
+    pub name: Option<String>,
+    pub organisation_name: Option<String>,
+    pub organisation_url: Option<String>,
+    pub node_steward_conduct_url: Option<String>,
+    pub user_conduct_url: Option<String>,
+    pub user_privacy_url: Option<String>,
+    pub map_data_url: Option<String>,
+    pub min_latlng: Option<LatLng>,
+    pub max_latlng: Option<LatLng>,
+}
+
+impl From<RegionRow> for Region {
+    fn from(row: RegionRow) -> Self {
+        let map = match (row.map_data_url, row.min_latlng, row.max_latlng) {
+            (Some(map_data_url), Some(min_latlng), Some(max_latlng)) => Some(RegionMap {
+                map_data_url,
+                min_latlng,
+                max_latlng,
+            }),
+            _ => None,
+        };
+
+        Region {
+            id: row.id,
+            creator_node_id: row.creator_node_id,
+            slug: row.slug,
+            name: row.name,
+            organisation_name: row.organisation_name,
+            organisation_url: row.organisation_url,
+            node_steward_conduct_url: row.node_steward_conduct_url,
+            user_conduct_url: row.user_conduct_url,
+            user_privacy_url: row.user_privacy_url,
+            map,
+        }
+    }
+}
 
 pub struct RegionsReadRepo {}
 
@@ -15,10 +56,21 @@ impl RegionsReadRepo {
         region_id: &str,
     ) -> Result<Option<Region>, sqlx::Error> {
         let region = sqlx::query_as!(
-            Region,
+            RegionRow,
             "
             SELECT
-                id, creator_node_id, slug, name, organisation_name, organisation_url, node_steward_conduct_url, user_conduct_url, user_privacy_url
+                id,
+                creator_node_id,
+                slug,
+                name,
+                organisation_name,
+                organisation_url,
+                node_steward_conduct_url,
+                user_conduct_url,
+                user_privacy_url,
+                map AS map_data_url,
+                min_latlng AS \"min_latlng: LatLng\",
+                max_latlng AS \"max_latlng: LatLng\"
             FROM regions
             WHERE regions.id = ?
             LIMIT 1
@@ -26,7 +78,8 @@ impl RegionsReadRepo {
             region_id
         )
         .fetch_optional(pool)
-        .await?;
+        .await?
+        .map(Region::from);
 
         return Ok(region);
     }
@@ -37,13 +90,21 @@ impl RegionsReadRepo {
         node_id: &str,
     ) -> Result<Vec<Region>, sqlx::Error> {
         let regions = sqlx::query_as!(
-            Region,
+            RegionRow,
             "
             SELECT
-                r.id, r.creator_node_id, r.slug, r.name,
-                r.organisation_name, r.organisation_url,
-                r.node_steward_conduct_url, r.user_conduct_url,
-                r.user_privacy_url
+                r.id,
+                r.creator_node_id,
+                r.slug,
+                r.name,
+                r.organisation_name,
+                r.organisation_url,
+                r.node_steward_conduct_url,
+                r.user_conduct_url,
+                r.user_privacy_url,
+                r.map AS map_data_url,
+                r.min_latlng AS \"min_latlng: LatLng\",
+                r.max_latlng AS \"max_latlng: LatLng\"
             FROM regions AS r
             INNER JOIN region_nodes ON r.id = region_nodes.region_id
             WHERE
@@ -52,7 +113,10 @@ impl RegionsReadRepo {
             node_id
         )
         .fetch_all(pool)
-        .await?;
+        .await?
+        .into_iter()
+        .map(Region::from)
+        .collect();
 
         return Ok(regions);
     }

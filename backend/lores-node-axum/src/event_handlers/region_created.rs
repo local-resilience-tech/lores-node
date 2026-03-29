@@ -52,6 +52,7 @@ impl RegionCreatedHandler {
             node_steward_conduct_url: self.payload.node_steward_conduct_url.clone(),
             user_conduct_url: self.payload.user_conduct_url.clone(),
             user_privacy_url: self.payload.user_privacy_url.clone(),
+            map: None,
         };
         region_write_repo.upsert(pool, &region).await?;
 

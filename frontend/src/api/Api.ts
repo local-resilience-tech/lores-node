@@ -37,6 +37,13 @@ export enum NodeStewardLoginError {
   InternalServerError = "InternalServerError",
 }
 
+export enum NodeState {
+  Active = "active",
+  Inactive = "inactive",
+  Maintenance = "maintenance",
+  Development = "development",
+}
+
 export enum GetCurrentNodeStewardError {
   InternalServerError = "InternalServerError",
   AdminNotFound = "AdminNotFound",
@@ -82,6 +89,9 @@ export type ClientEvent =
     }
   | {
       RegionAppUpdated: RegionAppWithInstallations;
+    }
+  | {
+      RegionUpdated: Region;
     };
 
 export interface CreateRegionData {
@@ -113,6 +123,13 @@ export interface JoinRegionRequestData {
   about_your_stewards: string;
   agreed_node_steward_conduct_url?: string | null;
   region_id: string;
+}
+
+export interface LatLng {
+  /** @format double */
+  lat: number;
+  /** @format double */
+  lng: number;
 }
 
 export interface LocalApp {
@@ -184,6 +201,7 @@ export interface P2PandaNodeDetails {
 export interface Region {
   creator_node_id?: string | null;
   id: string;
+  map?: null | RegionMap;
   name?: string | null;
   node_steward_conduct_url?: string | null;
   organisation_name?: string | null;
@@ -198,6 +216,12 @@ export interface RegionAppWithInstallations {
   name: string;
 }
 
+export interface RegionMap {
+  map_data_url: string;
+  max_latlng: LatLng;
+  min_latlng: LatLng;
+}
+
 export interface RegionNodeDetails {
   about_your_node?: string | null;
   about_your_stewards?: string | null;
@@ -206,17 +230,18 @@ export interface RegionNodeDetails {
   domain_on_local_network?: string | null;
   /** @format int64 */
   id: number;
+  latlng?: null | LatLng;
   name?: string | null;
   node_id: string;
   public_ipv4?: string | null;
   region_id: string;
-  state?: string | null;
+  state?: null | NodeState;
   status?: null | RegionNodeStatus;
   status_text?: string | null;
 }
 
 export interface RegionNodeStatusData {
-  state?: string | null;
+  state?: null | NodeState;
   text?: string | null;
 }
 
@@ -225,9 +250,17 @@ export interface RegionWithNodes {
   region: Region;
 }
 
+export interface UpdateMapData {
+  image_data_url: string;
+  max_latlng: LatLng;
+  min_latlng: LatLng;
+  region_id: string;
+}
+
 export interface UpdateNodeDetails {
   domain_on_internet?: string | null;
   domain_on_local_network?: string | null;
+  latlng?: null | LatLng;
   name: string;
   public_ipv4?: string | null;
 }
@@ -412,7 +445,7 @@ export class HttpClient<SecurityDataType = unknown> {
 }
 
 /**
- * @title lores-node-axum
+ * @title lores-node
  * @version 0.15.4
  * @license
  */
@@ -690,6 +723,22 @@ export class Api<
     joinRegion: (data: JoinRegionRequestData, params: RequestParams = {}) =>
       this.request<any, string>({
         path: `/node_steward_api/my_regions/join`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @name UpdateMap
+     * @request POST:/node_steward_api/my_regions/map
+     */
+    updateMap: (data: UpdateMapData, params: RequestParams = {}) =>
+      this.request<any, string>({
+        path: `/node_steward_api/my_regions/map`,
         method: "POST",
         body: data,
         type: ContentType.Json,

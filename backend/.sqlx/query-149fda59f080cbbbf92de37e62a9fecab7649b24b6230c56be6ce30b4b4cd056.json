@@ -1,0 +1,86 @@
+{
+  "db_name": "SQLite",
+  "query": "\n            SELECT\n                r.id,\n                r.creator_node_id,\n                r.slug,\n                r.name,\n                r.organisation_name,\n                r.organisation_url,\n                r.node_steward_conduct_url,\n                r.user_conduct_url,\n                r.user_privacy_url,\n                r.map AS map_data_url,\n                r.min_latlng AS \"min_latlng: LatLng\",\n                r.max_latlng AS \"max_latlng: LatLng\"\n            FROM regions AS r\n            INNER JOIN region_nodes ON r.id = region_nodes.region_id\n            WHERE\n                region_nodes.node_id = ?\n            ",
+  "describe": {
+    "columns": [
+      {
+        "name": "id",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "creator_node_id",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "slug",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "name",
+        "ordinal": 3,
+        "type_info": "Text"
+      },
+      {
+        "name": "organisation_name",
+        "ordinal": 4,
+        "type_info": "Text"
+      },
+      {
+        "name": "organisation_url",
+        "ordinal": 5,
+        "type_info": "Text"
+      },
+      {
+        "name": "node_steward_conduct_url",
+        "ordinal": 6,
+        "type_info": "Text"
+      },
+      {
+        "name": "user_conduct_url",
+        "ordinal": 7,
+        "type_info": "Text"
+      },
+      {
+        "name": "user_privacy_url",
+        "ordinal": 8,
+        "type_info": "Text"
+      },
+      {
+        "name": "map_data_url",
+        "ordinal": 9,
+        "type_info": "Text"
+      },
+      {
+        "name": "min_latlng: LatLng",
+        "ordinal": 10,
+        "type_info": "Text"
+      },
+      {
+        "name": "max_latlng: LatLng",
+        "ordinal": 11,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true
+    ]
+  },
+  "hash": "149fda59f080cbbbf92de37e62a9fecab7649b24b6230c56be6ce30b4b4cd056"
+}

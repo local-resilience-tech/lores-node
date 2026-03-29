@@ -1,0 +1,12 @@
+
+ALTER TABLE regions
+ADD COLUMN map TEXT NULL;
+
+ALTER TABLE regions
+ADD COLUMN min_latlng TEXT NULL;
+
+ALTER TABLE regions
+ADD COLUMN max_latlng TEXT NULL;
+
+ALTER TABLE region_nodes
+ADD COLUMN latlng TEXT NULL;

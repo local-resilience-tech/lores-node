@@ -1,14 +1,93 @@
 use lores_p2panda::p2panda_core::PublicKey;
 use serde::{Deserialize, Serialize};
-use sqlx;
+use sqlx::{
+    database::Database,
+    encode::IsNull,
+    error::BoxDynError,
+    sqlite::{SqliteTypeInfo, SqliteValueRef},
+    Decode, Encode, Sqlite, Type,
+};
 use utoipa::ToSchema;
 
 use crate::panda_comms::RegionId;
+
+#[derive(Serialize, Deserialize, ToSchema, Debug, Clone, PartialEq)]
+pub struct LatLng {
+    pub lat: f64,
+    pub lng: f64,
+}
+
+impl Type<Sqlite> for LatLng {
+    fn type_info() -> SqliteTypeInfo {
+        <String as Type<Sqlite>>::type_info()
+    }
+
+    fn compatible(ty: &SqliteTypeInfo) -> bool {
+        <String as Type<Sqlite>>::compatible(ty)
+    }
+}
+
+impl<'r> Decode<'r, Sqlite> for LatLng {
+    fn decode(value: SqliteValueRef<'r>) -> Result<Self, BoxDynError> {
+        let raw = <String as Decode<Sqlite>>::decode(value)?;
+        let latlng = serde_json::from_str(&raw)?;
+        Ok(latlng)
+    }
+}
+
+impl<'q> Encode<'q, Sqlite> for LatLng {
+    fn encode_by_ref(
+        &self,
+        buf: &mut <Sqlite as Database>::ArgumentBuffer<'q>,
+    ) -> Result<IsNull, BoxDynError> {
+        let raw = serde_json::to_string(self).expect("Failed to serialize LatLng");
+        <String as Encode<Sqlite>>::encode(raw, buf)
+    }
+}
+
+impl LatLng {
+    pub fn validate(&self) -> Result<(), String> {
+        if self.lat < -90.0 || self.lat > 90.0 {
+            return Err(format!(
+                "Invalid latitude: {}. Must be between -90 and 90.",
+                self.lat
+            ));
+        }
+        if self.lng < -180.0 || self.lng > 180.0 {
+            return Err(format!(
+                "Invalid longitude: {}. Must be between -180 and 180.",
+                self.lng
+            ));
+        }
+        Ok(())
+    }
+}
 
 #[derive(Serialize, Deserialize, ToSchema, sqlx::Type, Debug, Clone)]
 pub enum RegionNodeStatus {
     RequestedToJoin,
     Member,
+}
+
+#[derive(Serialize, Deserialize, ToSchema, sqlx::Type, Debug, Clone, PartialEq)]
+#[serde(rename_all = "lowercase")]
+#[sqlx(rename_all = "lowercase")]
+pub enum NodeState {
+    Active,
+    Inactive,
+    Maintenance,
+    Development,
+}
+
+impl std::fmt::Display for NodeState {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            NodeState::Active => write!(f, "active"),
+            NodeState::Inactive => write!(f, "inactive"),
+            NodeState::Maintenance => write!(f, "maintenance"),
+            NodeState::Development => write!(f, "development"),
+        }
+    }
 }
 
 #[derive(sqlx::FromRow, Serialize, Deserialize, ToSchema, Debug, Clone)]
@@ -21,6 +100,7 @@ pub struct RegionNode {
     pub public_ipv4: Option<String>,
     pub domain_on_local_network: Option<String>,
     pub domain_on_internet: Option<String>,
+    pub latlng: Option<LatLng>,
 }
 
 #[derive(sqlx::FromRow, Serialize, Deserialize, ToSchema, Debug, Clone)]
@@ -33,11 +113,19 @@ pub struct RegionNodeDetails {
     pub public_ipv4: Option<String>,
     pub domain_on_local_network: Option<String>,
     pub domain_on_internet: Option<String>,
+    pub latlng: Option<LatLng>,
     pub about_your_node: Option<String>,
     pub about_your_stewards: Option<String>,
     pub agreed_node_steward_conduct_url: Option<String>,
     pub status_text: Option<String>,
-    pub state: Option<String>,
+    pub state: Option<NodeState>,
+}
+
+#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
+pub struct RegionMap {
+    pub map_data_url: String,
+    pub min_latlng: LatLng,
+    pub max_latlng: LatLng,
 }
 
 #[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
@@ -51,6 +139,7 @@ pub struct Region {
     pub node_steward_conduct_url: Option<String>,
     pub user_conduct_url: Option<String>,
     pub user_privacy_url: Option<String>,
+    pub map: Option<RegionMap>,
 }
 
 impl Region {
@@ -67,6 +156,7 @@ impl Region {
             node_steward_conduct_url: None,
             user_conduct_url: None,
             user_privacy_url: None,
+            map: None,
         }
     }
 }

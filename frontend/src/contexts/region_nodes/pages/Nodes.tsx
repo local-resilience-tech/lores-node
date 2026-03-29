@@ -7,13 +7,13 @@ import {
   useMantineTheme,
 } from "@mantine/core"
 import NodesList from "../components/NodesList"
+import NodesMap from "../components/NodesMap"
 import { useAppSelector } from "../../../store"
 import { activeRegionWithNodes } from "../../../store/my_regions"
-import { IconList, IconMessageQuestion } from "@tabler/icons-react"
+import { IconList, IconMapPin, IconMessageQuestion } from "@tabler/icons-react"
 import { RegionNodeDetails } from "../../../api/Api"
 import { getApi } from "../../../api"
 import { actionFailure, actionSuccess } from "../../../components"
-import { use } from "react"
 
 export default function Nodes() {
   const region = useAppSelector((state) =>
@@ -58,6 +58,7 @@ export default function Nodes() {
   }
 
   const tabIconSize = 18
+  const regionMap = region.region.map
 
   return (
     <Container>
@@ -77,6 +78,14 @@ export default function Nodes() {
             >
               List
             </Tabs.Tab>
+            {regionMap ? (
+              <Tabs.Tab
+                value="map"
+                leftSection={<IconMapPin size={tabIconSize} />}
+              >
+                Map
+              </Tabs.Tab>
+            ) : null}
             <Tabs.Tab
               value="requests"
               leftSection={<IconMessageQuestion size={tabIconSize} />}
@@ -98,6 +107,16 @@ export default function Nodes() {
               regionCreatorId={region.region.creator_node_id}
             />
           </Tabs.Panel>
+
+          {regionMap ? (
+            <Tabs.Panel value="map" pt="lg">
+              <NodesMap
+                map={regionMap}
+                nodes={member_nodes}
+                regionCreatorId={region.region.creator_node_id}
+              />
+            </Tabs.Panel>
+          ) : null}
 
           <Tabs.Panel value="requests" pt="lg">
             <NodesList

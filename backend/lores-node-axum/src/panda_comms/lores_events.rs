@@ -1,6 +1,8 @@
 use lores_p2panda::p2panda_core::hash::Hash;
 use serde::{Deserialize, Serialize};
 
+use crate::data::entities::LatLng;
+
 use super::RegionId;
 
 #[derive(Deserialize, Serialize, Clone, PartialEq, Debug)]
@@ -27,11 +29,19 @@ pub struct RegionJoinRequestApprovedDataV1 {
 }
 
 #[derive(Deserialize, Serialize, Clone, PartialEq, Debug)]
+pub struct RegionMapUpdatedDataV1 {
+    pub min_latlng: LatLng,
+    pub max_latlng: LatLng,
+    pub image_data_url: String,
+}
+
+#[derive(Deserialize, Serialize, Clone, PartialEq, Debug)]
 pub struct RegionNodeUpdatedDataV1 {
     pub name: Option<String>,
     pub public_ipv4: Option<String>,
     pub domain_on_local_network: Option<String>,
     pub domain_on_internet: Option<String>,
+    pub latlng: Option<LatLng>,
 }
 
 #[derive(Deserialize, Serialize, Clone, PartialEq, Debug)]
@@ -51,6 +61,7 @@ pub enum LoResEventPayload {
     RegionCreated(RegionCreatedDataV1),
     RegionJoinRequested(RegionJoinRequestedDataV1),
     RegionJoinRequestApproved(RegionJoinRequestApprovedDataV1),
+    RegionMapUpdated(RegionMapUpdatedDataV1),
     RegionNodeUpdated(RegionNodeUpdatedDataV1),
     NodeStatusPosted(NodeStatusPostedDataV1),
     AppRegistered(AppRegisteredDataV1),

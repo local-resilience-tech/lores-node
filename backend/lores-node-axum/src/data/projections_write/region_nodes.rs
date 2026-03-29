@@ -119,20 +119,22 @@ impl RegionNodesWriteRepo {
 
         sqlx::query!(
             "INSERT INTO region_nodes (
-                node_id, region_id, name , public_ipv4, domain_on_local_network, domain_on_internet
+                node_id, region_id, name , public_ipv4, domain_on_local_network, domain_on_internet, latlng
             )
-            VALUES (?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT(node_id, region_id) DO UPDATE SET
                 name = excluded.name,
                 public_ipv4 = excluded.public_ipv4,
                 domain_on_local_network = excluded.domain_on_local_network,
-                domain_on_internet = excluded.domain_on_internet",
+                domain_on_internet = excluded.domain_on_internet,
+                latlng = excluded.latlng",
             node_id,
             region_id,
             data.name,
             data.public_ipv4,
             data.domain_on_local_network,
-            data.domain_on_internet
+            data.domain_on_internet,
+            data.latlng
         )
         .execute(pool)
         .await?;

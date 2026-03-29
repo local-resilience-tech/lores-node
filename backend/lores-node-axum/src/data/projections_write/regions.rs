@@ -1,6 +1,9 @@
-use sqlx::SqlitePool;
+use sqlx::{types::Json, SqlitePool};
 
-use crate::{data::entities::Region, panda_comms::RegionId};
+use crate::{
+    data::entities::{Region, RegionMap},
+    panda_comms::RegionId,
+};
 
 pub struct RegionsWriteRepo {}
 
@@ -51,6 +54,38 @@ impl RegionsWriteRepo {
             "INSERT INTO regions (id)
             VALUES (?)
             ON CONFLICT(id) DO NOTHING",
+            region_id_hex,
+        )
+        .execute(pool)
+        .await?;
+
+        Ok(())
+    }
+
+    pub async fn upsert_map(
+        &self,
+        pool: &SqlitePool,
+        region_id: &RegionId,
+        map: Option<RegionMap>,
+    ) -> Result<(), sqlx::Error> {
+        let region_id_hex = region_id.to_hex();
+
+        let (map_data_url, min_latlng_json, max_latlng_json) = match map {
+            Some(region_map) => (
+                Some(region_map.map_data_url),
+                Some(Json(region_map.min_latlng)),
+                Some(Json(region_map.max_latlng)),
+            ),
+            None => (None, None, None),
+        };
+
+        let _region = sqlx::query!(
+            "UPDATE regions
+            SET map = ?, min_latlng = ?, max_latlng = ?
+            WHERE id = ?",
+            map_data_url,
+            min_latlng_json,
+            max_latlng_json,
             region_id_hex,
         )
         .execute(pool)

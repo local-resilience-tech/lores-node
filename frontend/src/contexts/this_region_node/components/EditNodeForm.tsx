@@ -6,6 +6,12 @@ import {
   DisplayActionResult,
   useOnSubmitWithResult,
 } from "../../../components"
+import LatLngInput, {
+  EditableLatLng,
+  emptyEditableLatLng,
+  toLatLng,
+  validateOptionalLatLng,
+} from "../../../components/LatLngInput"
 import isValidHostname from "is-valid-hostname"
 import { isIPv4 } from "@chainsafe/is-ip"
 
@@ -14,29 +20,40 @@ interface EditNodeFormProps {
   onSubmit: (data: UpdateNodeDetails) => Promise<ActionPromiseResult>
 }
 
-const defaultInitialValues: UpdateNodeDetails = {
+interface UpdateNodeFormData extends Omit<UpdateNodeDetails, "latlng"> {
+  latlng: EditableLatLng
+}
+
+const defaultInitialValues: UpdateNodeFormData = {
   name: "",
   public_ipv4: "",
   domain_on_local_network: undefined,
   domain_on_internet: undefined,
+  latlng: emptyEditableLatLng(),
 }
 
 export default function EditNodeForm({ node, onSubmit }: EditNodeFormProps) {
   const [actionResult, onSubmitWithResult] =
     useOnSubmitWithResult<UpdateNodeDetails>(onSubmit)
+  const nodeLatLng = (
+    node as RegionNodeDetails & {
+      latlng?: { lat?: number | null; lng?: number | null } | null
+    }
+  ).latlng
 
-  const onSubmitWithResultWrapped = (data: UpdateNodeDetails) => {
+  const onSubmitWithResultWrapped = (data: UpdateNodeFormData) => {
     // Convert empty strings to undefined for optional fields
-    const dataToSubmit = {
+    const dataToSubmit: UpdateNodeDetails = {
       ...data,
       public_ipv4: data.public_ipv4 || undefined,
       domain_on_local_network: data.domain_on_local_network || undefined,
       domain_on_internet: data.domain_on_internet || undefined,
+      latlng: toLatLng(data.latlng),
     }
     return onSubmitWithResult(dataToSubmit)
   }
 
-  const form = useForm<UpdateNodeDetails>({
+  const form = useForm<UpdateNodeFormData>({
     mode: "controlled",
     initialValues: {
       ...defaultInitialValues,
@@ -45,6 +62,12 @@ export default function EditNodeForm({ node, onSubmit }: EditNodeFormProps) {
         public_ipv4: node.public_ipv4 || "",
         domain_on_local_network: node.domain_on_local_network || "",
         domain_on_internet: node.domain_on_internet || "",
+        latlng: nodeLatLng
+          ? {
+              lat: nodeLatLng.lat ?? null,
+              lng: nodeLatLng.lng ?? null,
+            }
+          : emptyEditableLatLng(),
       },
     },
     validate: {
@@ -70,6 +93,7 @@ export default function EditNodeForm({ node, onSubmit }: EditNodeFormProps) {
         if (!isValidHostname(value)) return "Invalid hostname for internet"
         return null
       },
+      latlng: validateOptionalLatLng,
     },
   })
 
@@ -107,6 +131,13 @@ export default function EditNodeForm({ node, onSubmit }: EditNodeFormProps) {
             description="Hostname that is valid for clients accessing over the internet"
             key="domain_on_internet"
             {...form.getInputProps("domain_on_internet")}
+          />
+
+          <LatLngInput
+            label="Latitude and Longitude"
+            description="The location of your node"
+            key="latlng"
+            {...form.getInputProps("latlng")}
           />
         </Stack>
 
