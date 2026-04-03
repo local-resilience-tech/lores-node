@@ -316,7 +316,7 @@ impl PandaContainer {
         let lores_header = LoResEventHeader {
             author_node_id: operation_header.public_key.to_hex(),
             region_id: Some(topic.to_bytes().into()),
-            timestamp: operation_header.timestamp,
+            timestamp: operation_header.timestamp.into(),
             operation_id: operation_header.hash(),
         };
 

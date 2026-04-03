@@ -97,7 +97,7 @@ impl OperationStore {
             signature: None,
             payload_size: body.as_ref().map_or(0, |body| body.size()),
             payload_hash: body.as_ref().map(|body| body.hash()),
-            timestamp,
+            timestamp: timestamp.into(),
             seq_num,
             backlink,
             extensions,
