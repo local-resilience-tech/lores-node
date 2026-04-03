@@ -1,7 +1,6 @@
 use p2panda_core::{cbor::EncodeError, Hash, PrivateKey, PublicKey};
 use p2panda_net::TopicId;
 
-use sqlx::SqlitePool;
 use thiserror::Error;
 use tokio::sync::{mpsc, RwLock};
 
@@ -46,11 +45,11 @@ impl PandaNodeInner {
         network_id: Hash,
         private_key: PrivateKey,
         bootstrap_node_ids: &Vec<PublicKey>,
-        operations_pool: &SqlitePool,
+        operations_database_url: &str,
     ) -> Result<Self, PandaNodeError> {
         println!("Initializing PandaNodeInner...");
 
-        let operation_store = OperationStore::new(operations_pool.clone()).await?;
+        let operation_store = OperationStore::new(operations_database_url).await?;
 
         let network = Network::new(
             network_id,

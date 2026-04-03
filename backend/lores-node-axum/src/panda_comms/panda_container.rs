@@ -1,6 +1,5 @@
 use futures_util::StreamExt;
 
-use sqlx::SqlitePool;
 use std::sync::Arc;
 use thiserror::Error;
 use tokio::sync::{mpsc, Mutex};
@@ -85,7 +84,7 @@ impl PandaContainer {
         params_lock.bootstrap_node_ids = bootstrap_node_ids;
     }
 
-    pub async fn start(&self, operations_pool: &SqlitePool) -> Result<(), PandaContainerError> {
+    pub async fn start(&self, operations_database_url: &str) -> Result<(), PandaContainerError> {
         println!("Starting client");
 
         let params = self.get_params().await;
@@ -111,7 +110,7 @@ impl PandaContainer {
             private_key,
             network_name,
             &boostrap_node_ids,
-            operations_pool,
+            operations_database_url,
         )
         .await?;
 
@@ -125,7 +124,7 @@ impl PandaContainer {
         private_key: PrivateKey,
         network_name: String,
         boostrap_node_ids: &Vec<PublicKey>,
-        operations_pool: &SqlitePool,
+        operations_database_url: &str,
     ) -> Result<(), PandaNodeError> {
         let required_params = RequiredNodeParams {
             private_key,
@@ -133,7 +132,7 @@ impl PandaContainer {
             bootstrap_node_ids: boostrap_node_ids.clone(),
         };
 
-        let panda_node = PandaNode::new(&required_params, operations_pool).await?;
+        let panda_node = PandaNode::new(&required_params, operations_database_url).await?;
 
         {
             let mut node_lock = self.node.lock().await;

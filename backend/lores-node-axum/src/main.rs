@@ -117,7 +117,6 @@ async fn main() {
     start_panda(
         &config_state,
         &panda_container,
-        &operations_pool,
         &projections_pool,
     )
     .await;

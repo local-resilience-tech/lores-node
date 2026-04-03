@@ -31,12 +31,9 @@ pub struct OperationStore {
 }
 
 impl OperationStore {
-    pub async fn new(_pool: sqlx::SqlitePool) -> Result<Self, SqliteError> {
-        let database_url = std::env::var("OPERATION_DATABASE_URL")
-            .unwrap_or_else(|_| "sqlite:operations.sqlite".to_string());
-
+    pub async fn new(database_url: &str) -> Result<Self, SqliteError> {
         let inner = SqliteStoreBuilder::new()
-            .database_url(&database_url)
+            .database_url(database_url)
             .create_database(false)
             .run_default_migrations(false)
             .build()
