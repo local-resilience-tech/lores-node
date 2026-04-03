@@ -4,7 +4,7 @@ use p2panda_net::{
     addrs::NodeInfo,
     discovery::DiscoveryError,
     gossip::GossipError,
-    iroh_endpoint::EndpointError,
+    iroh_endpoint::{EndpointAddr, EndpointError, RelayUrl},
     iroh_mdns::{MdnsDiscoveryError, MdnsDiscoveryMode},
     AddressBook, Discovery, Endpoint, Gossip, MdnsDiscovery,
 };
@@ -17,7 +17,7 @@ use super::{
 };
 
 lazy_static! {
-    pub static ref RELAY_URL: iroh::RelayUrl = "https://euc1-1.relay.n0.iroh-canary.iroh.link"
+    pub static ref RELAY_URL: RelayUrl = "https://euc1-1.relay.n0.iroh-canary.iroh.link"
         .parse()
         .expect("valid relay URL");
 }
@@ -140,7 +140,7 @@ impl Network {
 }
 
 fn bootstrap_node_info(bootstrap_node_id: &PublicKey) -> NodeInfo {
-    let endpoint_addr = iroh::EndpointAddr::new(
+    let endpoint_addr = EndpointAddr::new(
         bootstrap_node_id
             .to_hex()
             .parse()
