@@ -34,8 +34,8 @@ impl OperationStore {
     pub async fn new(database_url: &str) -> Result<Self, SqliteError> {
         let inner = SqliteStoreBuilder::new()
             .database_url(database_url)
-            .create_database(false)
-            .run_default_migrations(false)
+            .create_database(true)
+            .run_default_migrations(true)
             .build()
             .await?;
 

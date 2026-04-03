@@ -12,7 +12,8 @@ use sqlx::SqlitePool;
 use tokio::sync::mpsc;
 
 use crate::{
-    api::public_api::realtime::RealtimeState, config::config_state::LoresNodeConfigState,
+    api::public_api::realtime::RealtimeState,
+    config::config_state::LoresNodeConfigState,
     data::{projections_write::nodes::NodesWriteRepo, setup::OPERATION_DATABASE_URL},
     event_handlers::handle_event,
 };

@@ -1,5 +1,4 @@
 use anyhow::Result;
-use lores_p2panda::run_pending_migrations;
 use sqlx::{migrate::Migrator, sqlite::SqliteConnectOptions, Pool, Sqlite, SqlitePool};
 use std::env;
 
@@ -22,21 +21,14 @@ pub async fn prepare_projections_database() -> Result<Pool<Sqlite>> {
     prepare_database(&DATABASE_URL, Some("./migrations_projectiondb")).await
 }
 
-pub async fn prepare_operations_database() -> Result<Pool<Sqlite>> {
-    let pool = prepare_database(&OPERATION_DATABASE_URL, None).await?;
-
-    run_pending_migrations(&pool)
-        .await
-        .map_err(anyhow::Error::from)?;
-
-    Ok(pool)
-}
-
 pub async fn prepare_node_data_database() -> Result<Pool<Sqlite>> {
     prepare_database(&NODE_DATA_DATABASE_URL, Some("./migrations_nodedatadb")).await
 }
 
-async fn prepare_database(db_url: &str, migrations: Option<&str>) -> Result<Pool<Sqlite>> {
+pub(crate) async fn prepare_database(
+    db_url: &str,
+    migrations: Option<&str>,
+) -> Result<Pool<Sqlite>> {
     let filename = db_url
         .strip_prefix("sqlite:")
         .ok_or_else(|| anyhow::anyhow!("Database URL must start with 'sqlite:'"))?;

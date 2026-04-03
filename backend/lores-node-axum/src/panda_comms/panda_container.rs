@@ -6,6 +6,7 @@ use tokio::sync::{mpsc, Mutex};
 use tokio_stream::wrappers::ReceiverStream;
 
 use lores_p2panda::{
+    log_access::{find_log_count, LogCount},
     operations::{LoResMeshExtensions, LogType, LoresOperation},
     p2panda_core::{identity::PUBLIC_KEY_LEN, Hash, Operation, PrivateKey, PublicKey},
     panda_node::{PandaNode, RequiredNodeParams},
@@ -289,6 +290,21 @@ impl PandaContainer {
             .map_err(|e| anyhow::anyhow!("Failed to add bootstrap node: {}", e))?;
 
         Ok(())
+    }
+
+    pub async fn get_log_counts(&self) -> Result<Vec<LogCount>, anyhow::Error> {
+        let node_lock = self.node.lock().await;
+        let node = match node_lock.as_ref() {
+            Some(node) => node,
+            None => return Err(anyhow::anyhow!("Node not started")),
+        };
+
+        let store = node.inner.operation_store.clone_inner();
+        let counts = find_log_count(&store)
+            .await
+            .map_err(|e| anyhow::anyhow!("Error finding log count: {}", e))?;
+
+        Ok(counts)
     }
 
     fn decode_operation_to_lores_event(
