@@ -46,7 +46,7 @@ impl Subscription {
         topic_id: Topic,
         this_node_id: NodeId,
         log_sync: &LogSync,
-        _inner_operation_store: SqliteStore<'static>,
+        _inner_operation_store: SqliteStore,
         topic_map: &LoResNodeTopicMap,
         operation_tx: &mpsc::Sender<LoresOperation>,
     ) -> Result<Self, SubscriptionError> {

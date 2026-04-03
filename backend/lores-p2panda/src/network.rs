@@ -23,7 +23,7 @@ lazy_static! {
 }
 
 pub type LogSync =
-    p2panda_net::sync::LogSync<p2panda_store::SqliteStore<'static>, LogId, LoResMeshExtensions>;
+    p2panda_net::sync::LogSync<p2panda_store::SqliteStore, LogId, LoResMeshExtensions>;
 pub type LogSyncError = p2panda_net::sync::LogSyncError<LoResMeshExtensions>;
 
 #[derive(Error, Debug)]

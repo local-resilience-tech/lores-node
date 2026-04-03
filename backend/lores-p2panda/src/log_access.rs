@@ -21,6 +21,6 @@ async fn query_log_count(pool: &sqlx::SqlitePool) -> Result<Vec<LogCount>, Sqlit
         .collect())
 }
 
-pub async fn find_log_count(store: &SqliteStore<'_>) -> Result<Vec<LogCount>, SqliteError> {
+pub async fn find_log_count(store: &SqliteStore) -> Result<Vec<LogCount>, SqliteError> {
     store.execute(query_log_count).await
 }

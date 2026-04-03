@@ -23,7 +23,7 @@ pub enum CreationError {
 
 #[derive(Debug)]
 pub struct OperationStore {
-    inner: SqliteStore<'static>,
+    inner: SqliteStore,
     // FIXME: This makes sure we only create one operation at the time and not in parallel
     // Since we would mess up the sequence of operations
     semaphore_operation_store: Arc<Semaphore>,
@@ -44,7 +44,7 @@ impl OperationStore {
         })
     }
 
-    pub fn clone_inner(&self) -> SqliteStore<'static> {
+    pub fn clone_inner(&self) -> SqliteStore {
         self.inner.clone()
     }
 
@@ -66,8 +66,8 @@ impl OperationStore {
         let public_key = private_key.public_key();
 
         let log_id = LogId::new(log_type, &topic_id);
-        let latest_entry: Option<(Hash, u64)> =
-            <SqliteStore<'static> as LogStore<
+        let latest_entry: Option<Operation<LoResMeshExtensions>> =
+            <SqliteStore as LogStore<
                 Operation<LoResMeshExtensions>,
                 PublicKey,
                 LogId,
@@ -77,7 +77,7 @@ impl OperationStore {
             .await?;
 
         let (seq_num, backlink) = match latest_entry {
-            Some((hash, seq_num)) => (seq_num + 1, Some(hash)),
+            Some(op) => (op.header.seq_num + 1, Some(op.hash)),
             None => (0, None),
         };
 
@@ -112,7 +112,7 @@ impl OperationStore {
 
         let inner_clone = self.clone_inner();
         inner_clone
-            .insert_operation(&operation.hash, operation.clone(), log_id)
+            .insert_operation(&operation.hash, &operation, &log_id)
             .await?;
 
         Ok(operation)
