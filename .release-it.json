@@ -15,7 +15,12 @@
           "replace": "\"version\": \"{{version}}\""
         },
         {
-          "file": "./backend/Cargo.toml",
+          "file": "./backend/lores-node-axum/Cargo.toml",
+          "search": "version = \"\\d+\\.\\d+\\.\\d+\"",
+          "replace": "version = \"{{version}}\""
+        },
+        {
+          "file": "./backend/lores-p2panda/Cargo.toml",
           "search": "version = \"\\d+\\.\\d+\\.\\d+\"",
           "replace": "version = \"{{version}}\""
         }
