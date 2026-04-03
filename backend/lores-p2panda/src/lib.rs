@@ -13,7 +13,7 @@ pub use subscription::SubscriptionError;
 
 pub use p2panda_core;
 pub use p2panda_net::TopicId;
-pub use p2panda_store::sqlite::store::run_pending_migrations;
+pub use p2panda_store::sqlite::run_pending_migrations;
 
 #[macro_use]
 extern crate lazy_static;

@@ -1,4 +1,5 @@
 use p2panda_core::{Hash, PrivateKey, PublicKey};
+use p2panda_store::SqliteError;
 use sqlx::SqlitePool;
 use std::sync::Arc;
 use thiserror::Error;
@@ -13,6 +14,8 @@ pub enum PandaNodeError {
     RuntimeStartup(#[from] std::io::Error),
     #[error(transparent)]
     RuntimeSpawn(#[from] tokio::task::JoinError),
+    #[error(transparent)]
+    StoreError(#[from] SqliteError),
     #[error(transparent)]
     NetworkError(#[from] NetworkError),
     #[error(transparent)]
@@ -67,17 +70,13 @@ impl PandaNode {
         let bootstrap_node_ids = params.bootstrap_node_ids.clone();
         let operations_pool = operations_pool.clone();
 
-        let inner = runtime
-            .spawn(async move {
-                PandaNodeInner::new(
-                    network_id,
-                    private_key,
-                    &bootstrap_node_ids,
-                    &operations_pool,
-                )
-                .await
-            })
-            .await??;
+        let inner = PandaNodeInner::new(
+            network_id,
+            private_key,
+            &bootstrap_node_ids,
+            &operations_pool,
+        )
+        .await?;
 
         Ok(PandaNode {
             inner: Arc::new(inner),

@@ -1,16 +1,14 @@
 use p2panda_core::PublicKey;
 use p2panda_net::{NodeId, TopicId};
-use p2panda_sync::traits::TopicMap;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::convert::Infallible;
 use std::hash::Hash as StdHash;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 
 use crate::operations::LogType;
 
-#[derive(Clone, Debug, PartialEq, Eq, StdHash, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, StdHash, Serialize, Deserialize)]
 pub struct LogId(LogType, TopicId);
 
 impl LogId {
@@ -37,13 +35,9 @@ impl LoResNodeTopicMap {
                 value
             });
     }
-}
 
-impl TopicMap<TopicId, Logs<LogId>> for LoResNodeTopicMap {
-    type Error = Infallible;
-
-    async fn get(&self, topic_query: &TopicId) -> Result<Logs<LogId>, Self::Error> {
+    pub async fn get(&self, topic_query: &TopicId) -> Logs<LogId> {
         let map = self.0.read().await;
-        Ok(map.get(topic_query).cloned().unwrap_or_default())
+        map.get(topic_query).cloned().unwrap_or_default()
     }
 }

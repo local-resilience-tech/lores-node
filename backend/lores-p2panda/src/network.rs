@@ -22,12 +22,8 @@ lazy_static! {
         .expect("valid relay URL");
 }
 
-pub type LogSync = p2panda_net::sync::LogSync<
-    p2panda_store::SqliteStore<LogId, LoResMeshExtensions>,
-    LogId,
-    LoResMeshExtensions,
-    LoResNodeTopicMap,
->;
+pub type LogSync =
+    p2panda_net::sync::LogSync<p2panda_store::SqliteStore<'static>, LogId, LoResMeshExtensions>;
 pub type LogSyncError = p2panda_net::sync::LogSyncError<LoResMeshExtensions>;
 
 #[derive(Error, Debug)]
@@ -96,7 +92,6 @@ impl Network {
 
         let log_sync = LogSync::builder(
             operation_store.clone_inner(),
-            topic_map.clone(),
             endpoint.clone(),
             gossip.clone(),
         )

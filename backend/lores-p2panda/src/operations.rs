@@ -5,7 +5,7 @@ use std::hash::Hash as StdHash;
 
 use super::topic::LogId;
 
-#[derive(Copy, Clone, Default, Debug, PartialEq, Eq, StdHash, Serialize, Deserialize)]
+#[derive(Copy, Clone, Default, Debug, PartialEq, Eq, PartialOrd, Ord, StdHash, Serialize, Deserialize)]
 pub enum LogType {
     #[default]
     Admin,

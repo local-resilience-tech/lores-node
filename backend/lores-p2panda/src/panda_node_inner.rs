@@ -50,7 +50,7 @@ impl PandaNodeInner {
     ) -> Result<Self, PandaNodeError> {
         println!("Initializing PandaNodeInner...");
 
-        let operation_store = OperationStore::new(operations_pool.clone());
+        let operation_store = OperationStore::new(operations_pool.clone()).await?;
 
         let network = Network::new(
             network_id,

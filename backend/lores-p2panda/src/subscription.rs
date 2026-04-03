@@ -4,7 +4,6 @@ use p2panda_net::{
     NodeId, TopicId,
 };
 use p2panda_store::SqliteStore;
-use p2panda_stream::IngestExt;
 use p2panda_sync::protocols::TopicLogSyncEvent;
 use thiserror::Error;
 use tokio::sync::mpsc;
@@ -47,7 +46,7 @@ impl Subscription {
         topic_id: TopicId,
         this_node_id: NodeId,
         log_sync: &LogSync,
-        inner_operation_store: SqliteStore<LogId, LoResMeshExtensions>,
+        _inner_operation_store: SqliteStore<'static>,
         topic_map: &LoResNodeTopicMap,
         operation_tx: &mpsc::Sender<LoresOperation>,
     ) -> Result<Self, SubscriptionError> {
@@ -95,18 +94,11 @@ impl Subscription {
             }
         });
 
-        let mut stream = stream
-            // NOTE(adz): The persisting part should happen later, we want to check the payload on
-            // application layer first. In general "ingest" does too much at once and is
-            // inflexible. Related issue: https://github.com/p2panda/p2panda/issues/696
-            .ingest(inner_operation_store, 128)
-            .filter_map(|result| match result {
-                Ok(operation) => Some(operation),
-                Err(err) => {
-                    println!("ingesting operation failed: {err}");
-                    None
-                }
-            });
+        let mut stream = stream.map(|(header, body, _raw_header)| Operation {
+            hash: header.hash(),
+            header,
+            body,
+        });
 
         let operation_tx = operation_tx.clone();
 
