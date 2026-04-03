@@ -1,16 +1,16 @@
 use futures_util::StreamExt;
 
-use sqlx::SqlitePool;
 use std::sync::Arc;
 use thiserror::Error;
 use tokio::sync::{mpsc, Mutex};
 use tokio_stream::wrappers::ReceiverStream;
 
 use lores_p2panda::{
+    log_access::{find_log_count, LogCount},
     operations::{LoResMeshExtensions, LogType, LoresOperation},
     p2panda_core::{identity::PUBLIC_KEY_LEN, Hash, Operation, PrivateKey, PublicKey},
     panda_node::{PandaNode, RequiredNodeParams},
-    PandaNodeError, PandaPublishError, SubscriptionError, TopicId,
+    PandaNodeError, PandaPublishError, SubscriptionError, Topic,
 };
 
 use crate::api::auth_api::auth_backend::User;
@@ -85,7 +85,7 @@ impl PandaContainer {
         params_lock.bootstrap_node_ids = bootstrap_node_ids;
     }
 
-    pub async fn start(&self, operations_pool: &SqlitePool) -> Result<(), PandaContainerError> {
+    pub async fn start(&self, operations_database_url: &str) -> Result<(), PandaContainerError> {
         println!("Starting client");
 
         let params = self.get_params().await;
@@ -111,7 +111,7 @@ impl PandaContainer {
             private_key,
             network_name,
             &boostrap_node_ids,
-            operations_pool,
+            operations_database_url,
         )
         .await?;
 
@@ -125,7 +125,7 @@ impl PandaContainer {
         private_key: PrivateKey,
         network_name: String,
         boostrap_node_ids: &Vec<PublicKey>,
-        operations_pool: &SqlitePool,
+        operations_database_url: &str,
     ) -> Result<(), PandaNodeError> {
         let required_params = RequiredNodeParams {
             private_key,
@@ -133,7 +133,7 @@ impl PandaContainer {
             bootstrap_node_ids: boostrap_node_ids.clone(),
         };
 
-        let panda_node = PandaNode::new(&required_params, operations_pool).await?;
+        let panda_node = PandaNode::new(&required_params, operations_database_url).await?;
 
         {
             let mut node_lock = self.node.lock().await;
@@ -158,21 +158,18 @@ impl PandaContainer {
         }
     }
 
-    pub async fn join_region(
-        &self,
-        region_id: RegionId,
-    ) -> Result<TopicId, PandaSubscriptionError> {
-        let topic_id: TopicId = region_id.into();
+    pub async fn join_region(&self, region_id: RegionId) -> Result<Topic, PandaSubscriptionError> {
+        let topic_id = Topic::from(<[u8; 32]>::from(region_id));
 
         self.subscribe(topic_id).await?;
         Ok(topic_id)
     }
 
-    pub fn get_region_topic_id(region_id: &RegionId) -> TopicId {
-        region_id.clone().into()
+    pub fn get_region_topic_id(region_id: &RegionId) -> Topic {
+        Topic::from(<[u8; 32]>::from(region_id.clone()))
     }
 
-    pub async fn subscribe(&self, topic_id: TopicId) -> Result<(), PandaSubscriptionError> {
+    pub async fn subscribe(&self, topic_id: Topic) -> Result<(), PandaSubscriptionError> {
         let operation_tx = match self.operation_tx.lock().await.as_ref() {
             Some(tx) => tx.clone(),
             None => return Err(PandaSubscriptionError::CouldntGetOperationTx()),
@@ -194,7 +191,7 @@ impl PandaContainer {
 
     pub async fn publish_persisted(
         &self,
-        topic_id: TopicId,
+        topic_id: Topic,
         log_type: LogType,
         event_payload: LoResEventPayload,
         current_user: Option<User>,
@@ -292,16 +289,31 @@ impl PandaContainer {
         Ok(())
     }
 
+    pub async fn get_log_counts(&self) -> Result<Vec<LogCount>, anyhow::Error> {
+        let node_lock = self.node.lock().await;
+        let node = match node_lock.as_ref() {
+            Some(node) => node,
+            None => return Err(anyhow::anyhow!("Node not started")),
+        };
+
+        let store = node.inner.operation_store.clone_inner();
+        let counts = find_log_count(&store)
+            .await
+            .map_err(|e| anyhow::anyhow!("Error finding log count: {}", e))?;
+
+        Ok(counts)
+    }
+
     fn decode_operation_to_lores_event(
         operation: &Operation<LoResMeshExtensions>,
     ) -> Result<LoResEvent, anyhow::Error> {
         let operation_header = &operation.header;
-        let topic_id: TopicId = operation.header.extensions.topic;
+        let topic = operation.header.extensions.topic;
 
         let lores_header = LoResEventHeader {
             author_node_id: operation_header.public_key.to_hex(),
-            region_id: Some(topic_id.into()),
-            timestamp: operation_header.timestamp,
+            region_id: Some(topic.to_bytes().into()),
+            timestamp: operation_header.timestamp.into(),
             operation_id: operation_header.hash(),
         };
 

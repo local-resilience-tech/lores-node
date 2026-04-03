@@ -42,7 +42,6 @@ extern crate lazy_static;
 
 #[derive(Clone)]
 struct DatabaseState {
-    operations_pool: SqlitePool,
     projections_pool: SqlitePool,
 
     #[allow(dead_code)]
@@ -94,9 +93,6 @@ async fn main() {
     let node_data_pool = data::setup::prepare_node_data_database()
         .await
         .expect("Failed to prepare node data database");
-    let operations_pool = data::setup::prepare_operations_database()
-        .await
-        .expect("Failed to prepare operation database");
 
     // SESSION MANAGEMENT
     let session_store = MemoryStore::default();
@@ -114,13 +110,7 @@ async fn main() {
         mpsc::channel(32);
     let panda_container = PandaContainer::new(channel_tx);
     start_panda_event_handler(channel_rx, projections_pool.clone(), realtime_state.clone());
-    start_panda(
-        &config_state,
-        &panda_container,
-        &operations_pool,
-        &projections_pool,
-    )
-    .await;
+    start_panda(&config_state, &panda_container, &projections_pool).await;
 
     // ROUTES
     let (router, api) = OpenApiRouter::with_openapi(ApiDoc::openapi())
@@ -134,7 +124,6 @@ async fn main() {
         .layer(cors)
         .layer(TraceLayer::new_for_http())
         .layer(Extension(DatabaseState {
-            operations_pool,
             projections_pool,
             node_data_pool,
         }))

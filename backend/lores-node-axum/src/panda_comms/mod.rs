@@ -12,14 +12,15 @@ use sqlx::SqlitePool;
 use tokio::sync::mpsc;
 
 use crate::{
-    api::public_api::realtime::RealtimeState, config::config_state::LoresNodeConfigState,
-    data::projections_write::nodes::NodesWriteRepo, event_handlers::handle_event,
+    api::public_api::realtime::RealtimeState,
+    config::config_state::LoresNodeConfigState,
+    data::{projections_write::nodes::NodesWriteRepo, setup::OPERATION_DATABASE_URL},
+    event_handlers::handle_event,
 };
 
 pub async fn start_panda(
     config_state: &LoresNodeConfigState,
     container: &PandaContainer,
-    operations_pool: &SqlitePool,
     projections_pool: &SqlitePool,
 ) {
     let repo = ThisP2PandaNodeRepo::init();
@@ -57,7 +58,7 @@ pub async fn start_panda(
     let bootstrap_node_ids = repo.get_bootstrap_node_ids(config_state).await;
     container.set_bootstrap_node_ids(bootstrap_node_ids).await;
 
-    if let Err(e) = container.start(operations_pool).await {
+    if let Err(e) = container.start(OPERATION_DATABASE_URL.as_str()).await {
         println!("Failed to start P2PandaContainer on liftoff: {:?}", e);
     }
 

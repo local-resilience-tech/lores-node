@@ -1,10 +1,9 @@
-use p2panda_core::{Body, Header, Operation};
+use p2panda_core::{Body, Header, Operation, Topic};
 use p2panda_net::{
     sync::{SyncHandle, SyncHandleError},
-    NodeId, TopicId,
+    NodeId,
 };
 use p2panda_store::SqliteStore;
-use p2panda_stream::IngestExt;
 use p2panda_sync::protocols::TopicLogSyncEvent;
 use thiserror::Error;
 use tokio::sync::mpsc;
@@ -28,7 +27,7 @@ pub enum SubscriptionError {
     #[error(transparent)]
     SyncHandleError(#[from] LoResSyncHandleError),
     #[error("Already subscribed to topic_id: {0:?}")]
-    AlreadySubscribed(TopicId),
+    AlreadySubscribed(Topic),
 }
 
 #[derive(Error, Debug)]
@@ -38,23 +37,20 @@ pub enum SubscriptionPublishError {
 }
 
 pub struct Subscription {
-    topic_id: TopicId,
+    topic_id: Topic,
     sync_tx: SyncHandle<Operation<LoResMeshExtensions>, TopicLogSyncEvent<LoResMeshExtensions>>,
 }
 
 impl Subscription {
     pub async fn new(
-        topic_id: TopicId,
+        topic_id: Topic,
         this_node_id: NodeId,
         log_sync: &LogSync,
-        inner_operation_store: SqliteStore<LogId, LoResMeshExtensions>,
+        _inner_operation_store: SqliteStore,
         topic_map: &LoResNodeTopicMap,
         operation_tx: &mpsc::Sender<LoresOperation>,
     ) -> Result<Self, SubscriptionError> {
-        println!(
-            "Starting subscription for topic_id: {:?}",
-            hex::encode(topic_id)
-        );
+        println!("Starting subscription for topic_id: {}", topic_id);
 
         let sync_tx = log_sync.stream(topic_id, true).await?;
 
@@ -78,16 +74,17 @@ impl Subscription {
                     }
                 };
                 match event.event() {
-                    TopicLogSyncEvent::Operation(operation) => {
-                        match validate_and_unpack(operation.as_ref().to_owned(), topic_id) {
-                            Ok(data) => {
-                                persistent_tx.send(data).await.unwrap();
-                            }
-                            Err(err) => {
-                                eprintln!("Failed to unpack operation: {err}");
-                            }
+                    TopicLogSyncEvent::OperationReceived {
+                        operation,
+                        metrics: _metrics,
+                    } => match validate_and_unpack(operation.as_ref().to_owned(), topic_id) {
+                        Ok(data) => {
+                            persistent_tx.send(data).await.unwrap();
                         }
-                    }
+                        Err(err) => {
+                            eprintln!("Failed to unpack operation: {err}");
+                        }
+                    },
                     event => {
                         eprintln!("  -- sync event: {event:?}");
                     }
@@ -95,18 +92,11 @@ impl Subscription {
             }
         });
 
-        let mut stream = stream
-            // NOTE(adz): The persisting part should happen later, we want to check the payload on
-            // application layer first. In general "ingest" does too much at once and is
-            // inflexible. Related issue: https://github.com/p2panda/p2panda/issues/696
-            .ingest(inner_operation_store, 128)
-            .filter_map(|result| match result {
-                Ok(operation) => Some(operation),
-                Err(err) => {
-                    println!("ingesting operation failed: {err}");
-                    None
-                }
-            });
+        let mut stream = stream.map(|(header, body, _raw_header)| Operation {
+            hash: header.hash(),
+            header,
+            body,
+        });
 
         let operation_tx = operation_tx.clone();
 
@@ -122,7 +112,7 @@ impl Subscription {
         Ok(Subscription { topic_id, sync_tx })
     }
 
-    pub fn has_topic_id(&self, topic_id: &TopicId) -> bool {
+    pub fn has_topic_id(&self, topic_id: &Topic) -> bool {
         &self.topic_id == topic_id
     }
 
@@ -153,11 +143,11 @@ pub enum UnpackError {
 
 fn validate_and_unpack(
     operation: Operation<LoResMeshExtensions>,
-    id: TopicId,
+    id: Topic,
 ) -> Result<OperationWithRawHeader, UnpackError> {
     let Operation::<LoResMeshExtensions> { header, body, .. } = operation;
 
-    let Some(operation_id): Option<TopicId> = header.extension() else {
+    let Some(operation_id): Option<Topic> = header.extension() else {
         return Err(UnpackError::InvalidTopicId);
     };
 

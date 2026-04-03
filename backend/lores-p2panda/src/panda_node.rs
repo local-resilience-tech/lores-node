@@ -1,5 +1,5 @@
 use p2panda_core::{Hash, PrivateKey, PublicKey};
-use sqlx::SqlitePool;
+use p2panda_store::SqliteError;
 use std::sync::Arc;
 use thiserror::Error;
 
@@ -13,6 +13,8 @@ pub enum PandaNodeError {
     RuntimeStartup(#[from] std::io::Error),
     #[error(transparent)]
     RuntimeSpawn(#[from] tokio::task::JoinError),
+    #[error(transparent)]
+    StoreError(#[from] SqliteError),
     #[error(transparent)]
     NetworkError(#[from] NetworkError),
     #[error(transparent)]
@@ -50,7 +52,7 @@ impl std::ops::Deref for OwnedRuntimeOrHandle {
 impl PandaNode {
     pub async fn new(
         params: &RequiredNodeParams,
-        operations_pool: &SqlitePool,
+        operations_database_url: &str,
     ) -> Result<Self, PandaNodeError> {
         let runtime = if let Ok(handle) = tokio::runtime::Handle::try_current() {
             OwnedRuntimeOrHandle::Handle(handle)
@@ -65,19 +67,15 @@ impl PandaNode {
         let network_id = params.network_id.clone();
         let private_key = params.private_key.clone();
         let bootstrap_node_ids = params.bootstrap_node_ids.clone();
-        let operations_pool = operations_pool.clone();
+        let operations_database_url = operations_database_url.to_owned();
 
-        let inner = runtime
-            .spawn(async move {
-                PandaNodeInner::new(
-                    network_id,
-                    private_key,
-                    &bootstrap_node_ids,
-                    &operations_pool,
-                )
-                .await
-            })
-            .await??;
+        let inner = PandaNodeInner::new(
+            network_id,
+            private_key,
+            &bootstrap_node_ids,
+            &operations_database_url,
+        )
+        .await?;
 
         Ok(PandaNode {
             inner: Arc::new(inner),

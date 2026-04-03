@@ -4,7 +4,7 @@ use p2panda_net::{
     addrs::NodeInfo,
     discovery::DiscoveryError,
     gossip::GossipError,
-    iroh_endpoint::EndpointError,
+    iroh_endpoint::{EndpointAddr, EndpointError, RelayUrl},
     iroh_mdns::{MdnsDiscoveryError, MdnsDiscoveryMode},
     AddressBook, Discovery, Endpoint, Gossip, MdnsDiscovery,
 };
@@ -17,17 +17,13 @@ use super::{
 };
 
 lazy_static! {
-    pub static ref RELAY_URL: iroh::RelayUrl = "https://euc1-1.relay.n0.iroh-canary.iroh.link"
+    pub static ref RELAY_URL: RelayUrl = "https://euc1-1.relay.n0.iroh-canary.iroh.link"
         .parse()
         .expect("valid relay URL");
 }
 
-pub type LogSync = p2panda_net::sync::LogSync<
-    p2panda_store::SqliteStore<LogId, LoResMeshExtensions>,
-    LogId,
-    LoResMeshExtensions,
-    LoResNodeTopicMap,
->;
+pub type LogSync =
+    p2panda_net::sync::LogSync<p2panda_store::SqliteStore, LogId, LoResMeshExtensions>;
 pub type LogSyncError = p2panda_net::sync::LogSyncError<LoResMeshExtensions>;
 
 #[derive(Error, Debug)]
@@ -96,7 +92,6 @@ impl Network {
 
         let log_sync = LogSync::builder(
             operation_store.clone_inner(),
-            topic_map.clone(),
             endpoint.clone(),
             gossip.clone(),
         )
@@ -140,7 +135,7 @@ impl Network {
 }
 
 fn bootstrap_node_info(bootstrap_node_id: &PublicKey) -> NodeInfo {
-    let endpoint_addr = iroh::EndpointAddr::new(
+    let endpoint_addr = EndpointAddr::new(
         bootstrap_node_id
             .to_hex()
             .parse()
