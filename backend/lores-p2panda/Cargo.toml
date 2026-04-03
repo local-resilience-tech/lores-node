@@ -5,12 +5,12 @@ edition = "2021"
 publish = false
 
 [dependencies]
-p2panda-net = { git = "https://github.com/p2panda/p2panda", rev = "236fa65" }
-p2panda-core = { git = "https://github.com/p2panda/p2panda", rev = "236fa65" }
-p2panda-store = { git = "https://github.com/p2panda/p2panda", rev = "236fa65", features = ["sqlite"] }
-p2panda-discovery = { git = "https://github.com/p2panda/p2panda", rev = "236fa65" }
-p2panda-sync = { git = "https://github.com/p2panda/p2panda", rev = "236fa65" }
-p2panda-stream = { git = "https://github.com/p2panda/p2panda", rev = "236fa65" }
+p2panda-net = { git = "https://github.com/p2panda/p2panda", rev = "36c639c" }
+p2panda-core = { git = "https://github.com/p2panda/p2panda", rev = "36c639c" }
+p2panda-store = { git = "https://github.com/p2panda/p2panda", rev = "36c639c", features = ["sqlite"] }
+p2panda-discovery = { git = "https://github.com/p2panda/p2panda", rev = "36c639c" }
+p2panda-sync = { git = "https://github.com/p2panda/p2panda", rev = "36c639c" }
+p2panda-stream = { git = "https://github.com/p2panda/p2panda", rev = "36c639c" }
 serde = { version = "1.0.219", features = ["derive"] }
 sqlx = { version = "0.8.6", features = [
   "runtime-tokio-native-tls",
