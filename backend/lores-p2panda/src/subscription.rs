@@ -74,16 +74,17 @@ impl Subscription {
                     }
                 };
                 match event.event() {
-                    TopicLogSyncEvent::Operation(operation) => {
-                        match validate_and_unpack(operation.as_ref().to_owned(), topic_id) {
-                            Ok(data) => {
-                                persistent_tx.send(data).await.unwrap();
-                            }
-                            Err(err) => {
-                                eprintln!("Failed to unpack operation: {err}");
-                            }
+                    TopicLogSyncEvent::OperationReceived {
+                        operation,
+                        metrics: _metrics,
+                    } => match validate_and_unpack(operation.as_ref().to_owned(), topic_id) {
+                        Ok(data) => {
+                            persistent_tx.send(data).await.unwrap();
                         }
-                    }
+                        Err(err) => {
+                            eprintln!("Failed to unpack operation: {err}");
+                        }
+                    },
                     event => {
                         eprintln!("  -- sync event: {event:?}");
                     }

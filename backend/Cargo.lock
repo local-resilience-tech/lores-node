@@ -3377,7 +3377,7 @@ checksum = "1a80800c0488c3a21695ea981a54918fbb37abf04f4d0720c453632255e2ff0e"
 [[package]]
 name = "p2panda-core"
 version = "0.5.2"
-source = "git+https://github.com/p2panda/p2panda?rev=f0f9eb3#f0f9eb3f779b78ff33d81ddf3684f9701d3433ea"
+source = "git+https://github.com/p2panda/p2panda?rev=236fa65#236fa65e231b4ddd7e77745e512a61d352e7ca69"
 dependencies = [
  "blake3",
  "ciborium",
@@ -3392,7 +3392,7 @@ dependencies = [
 [[package]]
 name = "p2panda-discovery"
 version = "0.5.2"
-source = "git+https://github.com/p2panda/p2panda?rev=f0f9eb3#f0f9eb3f779b78ff33d81ddf3684f9701d3433ea"
+source = "git+https://github.com/p2panda/p2panda?rev=236fa65#236fa65e231b4ddd7e77745e512a61d352e7ca69"
 dependencies = [
  "blake3",
  "futures-util",
@@ -3407,7 +3407,7 @@ dependencies = [
 [[package]]
 name = "p2panda-net"
 version = "0.5.2"
-source = "git+https://github.com/p2panda/p2panda?rev=f0f9eb3#f0f9eb3f779b78ff33d81ddf3684f9701d3433ea"
+source = "git+https://github.com/p2panda/p2panda?rev=236fa65#236fa65e231b4ddd7e77745e512a61d352e7ca69"
 dependencies = [
  "ciborium",
  "futures-channel",
@@ -3434,7 +3434,7 @@ dependencies = [
 [[package]]
 name = "p2panda-store"
 version = "0.5.2"
-source = "git+https://github.com/p2panda/p2panda?rev=f0f9eb3#f0f9eb3f779b78ff33d81ddf3684f9701d3433ea"
+source = "git+https://github.com/p2panda/p2panda?rev=236fa65#236fa65e231b4ddd7e77745e512a61d352e7ca69"
 dependencies = [
  "p2panda-core",
  "serde",
@@ -3446,7 +3446,7 @@ dependencies = [
 [[package]]
 name = "p2panda-stream"
 version = "0.5.2"
-source = "git+https://github.com/p2panda/p2panda?rev=f0f9eb3#f0f9eb3f779b78ff33d81ddf3684f9701d3433ea"
+source = "git+https://github.com/p2panda/p2panda?rev=236fa65#236fa65e231b4ddd7e77745e512a61d352e7ca69"
 dependencies = [
  "futures-core",
  "p2panda-core",
@@ -3459,7 +3459,7 @@ dependencies = [
 [[package]]
 name = "p2panda-sync"
 version = "0.5.2"
-source = "git+https://github.com/p2panda/p2panda?rev=f0f9eb3#f0f9eb3f779b78ff33d81ddf3684f9701d3433ea"
+source = "git+https://github.com/p2panda/p2panda?rev=236fa65#236fa65e231b4ddd7e77745e512a61d352e7ca69"
 dependencies = [
  "futures",
  "futures-util",
