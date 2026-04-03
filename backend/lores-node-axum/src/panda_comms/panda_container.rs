@@ -10,7 +10,7 @@ use lores_p2panda::{
     operations::{LoResMeshExtensions, LogType, LoresOperation},
     p2panda_core::{identity::PUBLIC_KEY_LEN, Hash, Operation, PrivateKey, PublicKey},
     panda_node::{PandaNode, RequiredNodeParams},
-    PandaNodeError, PandaPublishError, SubscriptionError, TopicId,
+    PandaNodeError, PandaPublishError, SubscriptionError, Topic,
 };
 
 use crate::api::auth_api::auth_backend::User;
@@ -161,18 +161,18 @@ impl PandaContainer {
     pub async fn join_region(
         &self,
         region_id: RegionId,
-    ) -> Result<TopicId, PandaSubscriptionError> {
-        let topic_id: TopicId = region_id.into();
+    ) -> Result<Topic, PandaSubscriptionError> {
+        let topic_id = Topic::from(<[u8; 32]>::from(region_id));
 
         self.subscribe(topic_id).await?;
         Ok(topic_id)
     }
 
-    pub fn get_region_topic_id(region_id: &RegionId) -> TopicId {
-        region_id.clone().into()
+    pub fn get_region_topic_id(region_id: &RegionId) -> Topic {
+        Topic::from(<[u8; 32]>::from(region_id.clone()))
     }
 
-    pub async fn subscribe(&self, topic_id: TopicId) -> Result<(), PandaSubscriptionError> {
+    pub async fn subscribe(&self, topic_id: Topic) -> Result<(), PandaSubscriptionError> {
         let operation_tx = match self.operation_tx.lock().await.as_ref() {
             Some(tx) => tx.clone(),
             None => return Err(PandaSubscriptionError::CouldntGetOperationTx()),
@@ -194,7 +194,7 @@ impl PandaContainer {
 
     pub async fn publish_persisted(
         &self,
-        topic_id: TopicId,
+        topic_id: Topic,
         log_type: LogType,
         event_payload: LoResEventPayload,
         current_user: Option<User>,
@@ -311,11 +311,11 @@ impl PandaContainer {
         operation: &Operation<LoResMeshExtensions>,
     ) -> Result<LoResEvent, anyhow::Error> {
         let operation_header = &operation.header;
-        let topic_id: TopicId = operation.header.extensions.topic;
+        let topic = operation.header.extensions.topic;
 
         let lores_header = LoResEventHeader {
             author_node_id: operation_header.public_key.to_hex(),
-            region_id: Some(topic_id.into()),
+            region_id: Some(topic.to_bytes().into()),
             timestamp: operation_header.timestamp,
             operation_id: operation_header.hash(),
         };

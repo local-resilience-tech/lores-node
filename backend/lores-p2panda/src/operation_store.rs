@@ -1,8 +1,7 @@
 use std::sync::Arc;
 use std::time::{SystemTime, SystemTimeError};
 
-use p2panda_core::{Body, Hash, Header, Operation, PrivateKey, PublicKey};
-use p2panda_net::TopicId;
+use p2panda_core::{Body, Hash, Header, Operation, PrivateKey, PublicKey, Topic};
 use p2panda_store::{
     logs::LogStore, operations::OperationStore as TraitOperationStore, SqliteError, SqliteStore,
     SqliteStoreBuilder,
@@ -52,7 +51,7 @@ impl OperationStore {
     /// Creates, signs and stores new operation in the author's append-only log.
     pub async fn create_operation(
         &self,
-        topic_id: TopicId,
+        topic_id: Topic,
         log_type: LogType,
         private_key: &PrivateKey,
         body: Option<&[u8]>,

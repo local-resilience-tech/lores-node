@@ -1,5 +1,4 @@
-use p2panda_core::{cbor::EncodeError, Hash, PrivateKey, PublicKey};
-use p2panda_net::TopicId;
+use p2panda_core::{cbor::EncodeError, Hash, PrivateKey, PublicKey, Topic};
 
 use thiserror::Error;
 use tokio::sync::{mpsc, RwLock};
@@ -29,7 +28,7 @@ pub enum PandaPublishError {
     #[error(transparent)]
     SubscriptionPublishError(#[from] SubscriptionPublishError),
     #[error("No subscription found for topic_id: {0:?}")]
-    NoSubscriptionFound(TopicId),
+    NoSubscriptionFound(Topic),
 }
 
 #[allow(dead_code)]
@@ -69,7 +68,7 @@ impl PandaNodeInner {
 
     pub async fn publish_persisted(
         &self,
-        topic_id: TopicId,
+        topic_id: Topic,
         log_type: LogType,
         encoded_payload: &Vec<u8>,
     ) -> Result<LoresOperation, PandaPublishError> {
@@ -93,10 +92,10 @@ impl PandaNodeInner {
 
     pub async fn subscribe_to_topic(
         &self,
-        topic_id: TopicId,
+        topic_id: Topic,
         operation_tx: mpsc::Sender<LoresOperation>,
     ) -> Result<(), SubscriptionError> {
-        println!("Subscribing to topic_id: {:?}", hex::encode(topic_id));
+        println!("Subscribing to topic_id: {}", topic_id);
 
         if self.is_subscribed(&topic_id).await {
             return Err(SubscriptionError::AlreadySubscribed(topic_id));
@@ -129,7 +128,7 @@ impl PandaNodeInner {
         Ok(())
     }
 
-    async fn is_subscribed(&self, topic_id: &TopicId) -> bool {
+    async fn is_subscribed(&self, topic_id: &Topic) -> bool {
         let subscriptions = self.subscriptions.read().await;
         subscriptions.iter().any(|s| s.has_topic_id(topic_id))
     }

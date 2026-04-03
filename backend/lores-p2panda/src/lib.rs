@@ -12,7 +12,7 @@ pub use panda_node_inner::PandaPublishError;
 pub use subscription::SubscriptionError;
 
 pub use p2panda_core;
-pub use p2panda_net::TopicId;
+pub use p2panda_core::Topic;
 pub use p2panda_store::sqlite::run_pending_migrations;
 
 #[macro_use]

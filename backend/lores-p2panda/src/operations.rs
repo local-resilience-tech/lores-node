@@ -1,5 +1,4 @@
-use p2panda_core::{Extension, Header, Operation, PruneFlag};
-use p2panda_net::TopicId;
+use p2panda_core::{Extension, Header, Operation, PruneFlag, Topic};
 use serde::{Deserialize, Serialize};
 use std::hash::Hash as StdHash;
 
@@ -32,7 +31,7 @@ pub struct LoResMeshExtensions {
 
     /// Identifier of the topic this operation relates to.
     #[serde(rename = "d")]
-    pub topic: TopicId,
+    pub topic: Topic,
 }
 
 impl Extension<PruneFlag> for LoResMeshExtensions {
@@ -41,8 +40,8 @@ impl Extension<PruneFlag> for LoResMeshExtensions {
     }
 }
 
-impl Extension<TopicId> for LoResMeshExtensions {
-    fn extract(header: &Header<Self>) -> Option<TopicId> {
+impl Extension<Topic> for LoResMeshExtensions {
+    fn extract(header: &Header<Self>) -> Option<Topic> {
         Some(header.extensions.topic)
     }
 }
@@ -56,7 +55,7 @@ impl Extension<LogType> for LoResMeshExtensions {
 impl Extension<LogId> for LoResMeshExtensions {
     fn extract(header: &Header<Self>) -> Option<LogId> {
         let log_type: LogType = header.extension()?;
-        let id: TopicId = header.extension()?;
+        let id: Topic = header.extension()?;
 
         Some(LogId::new(log_type, &id))
     }

@@ -5,12 +5,12 @@ edition = "2021"
 publish = false
 
 [dependencies]
-p2panda-net = { git = "https://github.com/p2panda/p2panda", rev = "2341c5e98f99d3a1f0c166eb891e5143974e69b7" }
-p2panda-core = { git = "https://github.com/p2panda/p2panda", rev = "2341c5e98f99d3a1f0c166eb891e5143974e69b7" }
-p2panda-store = { git = "https://github.com/p2panda/p2panda", rev = "2341c5e98f99d3a1f0c166eb891e5143974e69b7", features = ["sqlite"] }
-p2panda-discovery = { git = "https://github.com/p2panda/p2panda", rev = "2341c5e98f99d3a1f0c166eb891e5143974e69b7" }
-p2panda-sync = { git = "https://github.com/p2panda/p2panda", rev = "2341c5e98f99d3a1f0c166eb891e5143974e69b7" }
-p2panda-stream = { git = "https://github.com/p2panda/p2panda", rev = "2341c5e98f99d3a1f0c166eb891e5143974e69b7" }
+p2panda-net = { git = "https://github.com/p2panda/p2panda", rev = "dd711b787bb1d53d216b455d0a49f6d8d29a30c0" }
+p2panda-core = { git = "https://github.com/p2panda/p2panda", rev = "dd711b787bb1d53d216b455d0a49f6d8d29a30c0" }
+p2panda-store = { git = "https://github.com/p2panda/p2panda", rev = "dd711b787bb1d53d216b455d0a49f6d8d29a30c0", features = ["sqlite"] }
+p2panda-discovery = { git = "https://github.com/p2panda/p2panda", rev = "dd711b787bb1d53d216b455d0a49f6d8d29a30c0" }
+p2panda-sync = { git = "https://github.com/p2panda/p2panda", rev = "dd711b787bb1d53d216b455d0a49f6d8d29a30c0" }
+p2panda-stream = { git = "https://github.com/p2panda/p2panda", rev = "dd711b787bb1d53d216b455d0a49f6d8d29a30c0" }
 serde = { version = "1.0.219", features = ["derive"] }
 sqlx = { version = "0.8.6", features = [
   "runtime-tokio-native-tls",
