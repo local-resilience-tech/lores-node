@@ -158,10 +158,7 @@ impl PandaContainer {
         }
     }
 
-    pub async fn join_region(
-        &self,
-        region_id: RegionId,
-    ) -> Result<Topic, PandaSubscriptionError> {
+    pub async fn join_region(&self, region_id: RegionId) -> Result<Topic, PandaSubscriptionError> {
         let topic_id = Topic::from(<[u8; 32]>::from(region_id));
 
         self.subscribe(topic_id).await?;
