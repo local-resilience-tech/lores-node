@@ -101,7 +101,6 @@ impl OperationStore {
             timestamp,
             seq_num,
             backlink,
-            previous: vec![],
             extensions,
         };
         header.sign(private_key);

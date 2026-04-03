@@ -35,9 +35,4 @@ impl LoResNodeTopicMap {
                 value
             });
     }
-
-    pub async fn get(&self, topic_query: &TopicId) -> Logs<LogId> {
-        let map = self.0.read().await;
-        map.get(topic_query).cloned().unwrap_or_default()
-    }
 }
