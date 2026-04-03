@@ -3377,7 +3377,7 @@ checksum = "1a80800c0488c3a21695ea981a54918fbb37abf04f4d0720c453632255e2ff0e"
 [[package]]
 name = "p2panda-core"
 version = "0.5.1"
-source = "git+https://github.com/p2panda/p2panda?rev=a1308c116c1bd345f2cd6af7df41d2a6e0a4a682#a1308c116c1bd345f2cd6af7df41d2a6e0a4a682"
+source = "git+https://github.com/p2panda/p2panda?rev=ef166bbb4b9d3a072a8c2f9b39bb946658b98f91#ef166bbb4b9d3a072a8c2f9b39bb946658b98f91"
 dependencies = [
  "blake3",
  "ciborium",
@@ -3392,7 +3392,7 @@ dependencies = [
 [[package]]
 name = "p2panda-discovery"
 version = "0.5.1"
-source = "git+https://github.com/p2panda/p2panda?rev=a1308c116c1bd345f2cd6af7df41d2a6e0a4a682#a1308c116c1bd345f2cd6af7df41d2a6e0a4a682"
+source = "git+https://github.com/p2panda/p2panda?rev=ef166bbb4b9d3a072a8c2f9b39bb946658b98f91#ef166bbb4b9d3a072a8c2f9b39bb946658b98f91"
 dependencies = [
  "blake3",
  "futures-util",
@@ -3406,7 +3406,7 @@ dependencies = [
 [[package]]
 name = "p2panda-net"
 version = "0.5.1"
-source = "git+https://github.com/p2panda/p2panda?rev=a1308c116c1bd345f2cd6af7df41d2a6e0a4a682#a1308c116c1bd345f2cd6af7df41d2a6e0a4a682"
+source = "git+https://github.com/p2panda/p2panda?rev=ef166bbb4b9d3a072a8c2f9b39bb946658b98f91#ef166bbb4b9d3a072a8c2f9b39bb946658b98f91"
 dependencies = [
  "ciborium",
  "futures-channel",
@@ -3433,7 +3433,7 @@ dependencies = [
 [[package]]
 name = "p2panda-store"
 version = "0.5.1"
-source = "git+https://github.com/p2panda/p2panda?rev=a1308c116c1bd345f2cd6af7df41d2a6e0a4a682#a1308c116c1bd345f2cd6af7df41d2a6e0a4a682"
+source = "git+https://github.com/p2panda/p2panda?rev=ef166bbb4b9d3a072a8c2f9b39bb946658b98f91#ef166bbb4b9d3a072a8c2f9b39bb946658b98f91"
 dependencies = [
  "ciborium",
  "hex",
@@ -3446,7 +3446,7 @@ dependencies = [
 [[package]]
 name = "p2panda-stream"
 version = "0.5.1"
-source = "git+https://github.com/p2panda/p2panda?rev=a1308c116c1bd345f2cd6af7df41d2a6e0a4a682#a1308c116c1bd345f2cd6af7df41d2a6e0a4a682"
+source = "git+https://github.com/p2panda/p2panda?rev=ef166bbb4b9d3a072a8c2f9b39bb946658b98f91#ef166bbb4b9d3a072a8c2f9b39bb946658b98f91"
 dependencies = [
  "ciborium",
  "futures-channel",
@@ -3461,7 +3461,7 @@ dependencies = [
 [[package]]
 name = "p2panda-sync"
 version = "0.5.1"
-source = "git+https://github.com/p2panda/p2panda?rev=a1308c116c1bd345f2cd6af7df41d2a6e0a4a682#a1308c116c1bd345f2cd6af7df41d2a6e0a4a682"
+source = "git+https://github.com/p2panda/p2panda?rev=ef166bbb4b9d3a072a8c2f9b39bb946658b98f91#ef166bbb4b9d3a072a8c2f9b39bb946658b98f91"
 dependencies = [
  "futures",
  "futures-util",
