@@ -4,7 +4,7 @@ use std::time::{SystemTime, SystemTimeError};
 use p2panda_core::{Body, Hash, Header, Operation, PrivateKey, PublicKey, Topic};
 use p2panda_store::{
     logs::LogStore, operations::OperationStore as TraitOperationStore, SqliteError, SqliteStore,
-    SqliteStoreBuilder,
+    SqliteStoreBuilder, Transaction,
 };
 use thiserror::Error;
 use tokio::sync::Semaphore;
@@ -111,9 +111,11 @@ impl OperationStore {
         };
 
         let inner_clone = self.clone_inner();
+        let permit = inner_clone.begin().await?;
         inner_clone
             .insert_operation(&operation.hash, &operation, &log_id)
             .await?;
+        inner_clone.commit(permit).await?;
 
         Ok(operation)
     }
