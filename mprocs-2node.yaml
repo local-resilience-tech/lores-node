@@ -4,6 +4,8 @@ procs:
   # Build the backend binary first: cd backend && cargo build
   backends:
     shell: "docker compose -f docker-compose-p2p-test.yml up --build"
+    stop:
+      send-keys: ["<C-c>"]
 
   # Node 1 — http://lores.localhost:5173 (frontend) / http://lores.localhost:8200 (backend)
   frontend-1:
