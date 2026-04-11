@@ -1,5 +1,4 @@
 use axum::{http::StatusCode, response::IntoResponse, Extension, Json};
-use lores_p2panda::operations::LogType;
 use serde::Deserialize;
 use sqlx::SqlitePool;
 use utoipa::ToSchema;
@@ -100,7 +99,7 @@ async fn create_region(
     println!("Prepared event payload: {:?}", event_payload);
 
     if let Err(e) = panda_container
-        .publish_persisted(topic_id, LogType::Admin, event_payload, auth_session.user)
+        .publish_persisted(topic_id, event_payload, auth_session.user)
         .await
     {
         return internal_server_error(e).into_response();
@@ -183,7 +182,7 @@ async fn join_region(
     println!("Prepared event payload: {:?}", event_payload);
 
     if let Err(e) = panda_container
-        .publish_persisted(topic_id, LogType::Admin, event_payload, auth_session.user)
+        .publish_persisted(topic_id, event_payload, auth_session.user)
         .await
     {
         return internal_server_error(e).into_response();
@@ -259,7 +258,7 @@ async fn approve_join_request(
             node_id: data.node_id.clone(),
         });
     if let Err(e) = panda_container
-        .publish_persisted(topic_id, LogType::Admin, event_payload, auth_session.user)
+        .publish_persisted(topic_id, event_payload, auth_session.user)
         .await
     {
         return internal_server_error(e).into_response();
@@ -357,7 +356,7 @@ async fn update_map(
         image_data_url: data.image_data_url.clone(),
     });
     if let Err(e) = panda_container
-        .publish_persisted(topic_id, LogType::Admin, event_payload, auth_session.user)
+        .publish_persisted(topic_id, event_payload, auth_session.user)
         .await
     {
         return internal_server_error(e).into_response();

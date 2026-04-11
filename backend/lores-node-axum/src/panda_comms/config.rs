@@ -1,6 +1,6 @@
 use crate::{config::config_state::LoresNodeConfigState, panda_comms::build_public_key_from_hex};
 use hex;
-use lores_p2panda::p2panda_core::{identity::PRIVATE_KEY_LEN, PrivateKey, PublicKey};
+use p2panda_core::{identity::PRIVATE_KEY_LEN, PrivateKey, PublicKey};
 
 pub struct ThisP2PandaNodeRepo {}
 

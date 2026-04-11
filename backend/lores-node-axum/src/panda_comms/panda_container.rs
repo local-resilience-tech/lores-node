@@ -1,16 +1,12 @@
-use futures_util::StreamExt;
-
 use std::sync::Arc;
 use thiserror::Error;
 use tokio::sync::{mpsc, Mutex};
-use tokio_stream::wrappers::ReceiverStream;
 
 use lores_p2panda::{
-    log_access::{find_log_count, LogCount},
-    operations::{LoResMeshExtensions, LogType, LoresOperation},
-    p2panda_core::{identity::PUBLIC_KEY_LEN, Hash, Operation, PrivateKey, PublicKey},
-    panda_node::{PandaNode, RequiredNodeParams},
-    PandaNodeError, PandaPublishError, SubscriptionError, Topic,
+    IncomingOperation,
+    p2panda_core::{identity::PUBLIC_KEY_LEN, Hash, PrivateKey, PublicKey},
+    panda_node::{LogCount, PandaNode, PandaPublishError, RequiredNodeParams, SubscriptionError},
+    PandaNodeError, Topic,
 };
 
 use crate::api::auth_api::auth_backend::User;
@@ -40,17 +36,13 @@ pub enum PandaSubscriptionError {
     SubscriptionError(#[from] SubscriptionError),
     #[error("Couldn't get node lock")]
     CouldntGetNodeLock(),
-    #[error("Couldn't get operation sender lock")]
-    CouldntGetOperationTx(),
 }
 
 #[derive(Clone)]
 pub struct PandaContainer {
     params: Arc<Mutex<NodeParams>>,
-    node: Arc<Mutex<Option<PandaNode>>>,
-    #[allow(dead_code)]
+    node: Arc<Mutex<Option<Arc<PandaNode>>>>,
     lores_events_tx: mpsc::Sender<LoResEvent>,
-    operation_tx: Arc<Mutex<Option<mpsc::Sender<LoresOperation>>>>,
 }
 
 impl PandaContainer {
@@ -61,7 +53,6 @@ impl PandaContainer {
             params,
             node: Arc::new(Mutex::new(None)),
             lores_events_tx: events_tx,
-            operation_tx: Arc::new(Mutex::new(None)),
         }
     }
 
@@ -115,8 +106,6 @@ impl PandaContainer {
         )
         .await?;
 
-        self.start_operation_receiver().await?;
-
         Ok(())
     }
 
@@ -133,7 +122,7 @@ impl PandaContainer {
             bootstrap_node_ids: boostrap_node_ids.clone(),
         };
 
-        let panda_node = PandaNode::new(&required_params, operations_database_url).await?;
+        let panda_node = Arc::new(PandaNode::new(&required_params, operations_database_url).await?);
 
         {
             let mut node_lock = self.node.lock().await;
@@ -160,7 +149,6 @@ impl PandaContainer {
 
     pub async fn join_region(&self, region_id: RegionId) -> Result<Topic, PandaSubscriptionError> {
         let topic_id = Topic::from(<[u8; 32]>::from(region_id));
-
         self.subscribe(topic_id).await?;
         Ok(topic_id)
     }
@@ -170,21 +158,32 @@ impl PandaContainer {
     }
 
     pub async fn subscribe(&self, topic_id: Topic) -> Result<(), PandaSubscriptionError> {
-        let operation_tx = match self.operation_tx.lock().await.as_ref() {
-            Some(tx) => tx.clone(),
-            None => return Err(PandaSubscriptionError::CouldntGetOperationTx()),
-        };
-
         let node_lock = self.node.lock().await;
-
         let node = match node_lock.as_ref() {
-            Some(node) => node,
+            Some(node) => node.clone(),
             None => return Err(PandaSubscriptionError::CouldntGetNodeLock()),
         };
+        drop(node_lock);
 
-        node.inner
-            .subscribe_to_topic(topic_id, operation_tx)
-            .await?;
+        let (incoming_tx, mut incoming_rx) = mpsc::channel::<IncomingOperation>(32);
+
+        node.subscribe_to_topic(topic_id, incoming_tx).await?;
+
+        let events_tx = self.lores_events_tx.clone();
+        tokio::spawn(async move {
+            while let Some(incoming) = incoming_rx.recv().await {
+                match Self::decode_incoming_to_lores_event(incoming) {
+                    Ok(lores_event) => {
+                        if events_tx.send(lores_event).await.is_err() {
+                            break;
+                        }
+                    }
+                    Err(e) => {
+                        eprintln!("Failed to decode LoResEvent from operation: {}", e);
+                    }
+                }
+            }
+        });
 
         Ok(())
     }
@@ -192,145 +191,66 @@ impl PandaContainer {
     pub async fn publish_persisted(
         &self,
         topic_id: Topic,
-        log_type: LogType,
         event_payload: LoResEventPayload,
         current_user: Option<User>,
     ) -> Result<(), PandaPublishError> {
         let node_lock = self.node.lock().await;
         let node = match node_lock.as_ref() {
-            Some(node) => node,
+            Some(node) => node.clone(),
             None => return Err(PandaPublishError::NodeNotStarted),
         };
+        drop(node_lock);
 
         let node_steward_id = match current_user {
             Some(user) if user.is_node_steward() => Some(user.id.clone()),
             _ => None,
         };
         let metadata = LoResEventMetadataV1 { node_steward_id };
-        let encoded_payload = encode_lores_event_payload(event_payload, metadata)?;
+        let encoded_payload = encode_lores_event_payload(event_payload, metadata)
+            .map_err(|e| PandaPublishError::AppError(format!("Encoding error: {e}")))?;
 
-        let operation = node
-            .inner
-            .publish_persisted(topic_id, log_type, &encoded_payload)
-            .await?;
-
-        // Since this came from this node, it wont be received via subscription, so we
-        // need to handle it ourselves.
-        let lores_event = Self::decode_operation_to_lores_event(&operation).map_err(|e| {
-            PandaPublishError::OperationError(format!(
-                "Failed to decode LoResEvent from published operation: {}",
-                e
-            ))
-        })?;
-
-        self.lores_events_tx.send(lores_event).await.map_err(|e| {
-            PandaPublishError::AppError(format!(
-                "Failed to send LoResEvent back to the application: {}",
-                e
-            ))
-        })?;
+        node.publish(topic_id, encoded_payload).await?;
 
         Ok(())
     }
 
-    async fn start_operation_receiver(&self) -> Result<(), PandaContainerError> {
-        let (operation_tx, operation_rx): (
-            mpsc::Sender<LoresOperation>,
-            mpsc::Receiver<LoresOperation>,
-        ) = mpsc::channel(32);
-
-        *self.operation_tx.lock().await = Some(operation_tx);
-
-        // Received messages on operation_rx
-        {
-            let events_tx = self.lores_events_tx.clone();
-
-            tokio::task::spawn(async move {
-                println!("  P2Panda Network initialized, starting sync stream...");
-                let mut operation_rx = ReceiverStream::new(operation_rx);
-                while let Some(operation) = operation_rx.next().await {
-                    match Self::decode_operation_to_lores_event(&operation) {
-                        Ok(lores_event) => {
-                            if let Err(e) = events_tx.send(lores_event).await {
-                                eprintln!("  Failed to send LoResEvent: {}", e);
-                            }
-                        }
-                        Err(e) => {
-                            eprintln!("  Failed to decode LoResEvent from operation: {}", e);
-                            continue;
-                        }
-                    }
-                }
-                println!("  Sync stream read loop ended.");
-            });
-        }
-
-        Ok(())
-    }
-
-    pub async fn add_bootstrap_node(
-        &self,
-        bootstrap_node_id_hex: &str,
-    ) -> Result<(), anyhow::Error> {
-        let bootstrap_node_id = build_public_key_from_hex(bootstrap_node_id_hex)
-            .map_err(|e| anyhow::anyhow!("Invalid bootstrap node ID: {}", e))?;
-
-        let node_lock = self.node.lock().await;
-        let node = match node_lock.as_ref() {
-            Some(node) => node,
-            None => return Err(anyhow::anyhow!("Node not started")),
+    fn decode_incoming_to_lores_event(incoming: IncomingOperation) -> Result<LoResEvent, anyhow::Error> {
+        let lores_header = LoResEventHeader {
+            author_node_id: incoming.author.to_hex(),
+            region_id: Some(incoming.topic.to_bytes().into()),
+            timestamp: incoming.timestamp,
+            operation_id: incoming.operation_id,
         };
 
-        node.inner
-            .add_bootstrap_node(&bootstrap_node_id)
-            .await
-            .map_err(|e| anyhow::anyhow!("Failed to add bootstrap node: {}", e))?;
-
-        Ok(())
+        decode_lores_event(lores_header, &incoming.bytes)
     }
 
     pub async fn get_log_counts(&self) -> Result<Vec<LogCount>, anyhow::Error> {
         let node_lock = self.node.lock().await;
         let node = match node_lock.as_ref() {
-            Some(node) => node,
+            Some(node) => node.clone(),
             None => return Err(anyhow::anyhow!("Node not started")),
         };
+        drop(node_lock);
 
-        let store = node.inner.operation_store.clone_inner();
-        let counts = find_log_count(&store)
+        node.get_log_counts()
             .await
-            .map_err(|e| anyhow::anyhow!("Error finding log count: {}", e))?;
-
-        Ok(counts)
+            .map_err(|e| anyhow::anyhow!("Error finding log count: {}", e))
     }
 
-    fn decode_operation_to_lores_event(
-        operation: &Operation<LoResMeshExtensions>,
-    ) -> Result<LoResEvent, anyhow::Error> {
-        let operation_header = &operation.header;
-        let topic = operation.header.extensions.topic;
-
-        let lores_header = LoResEventHeader {
-            author_node_id: operation_header.public_key.to_hex(),
-            region_id: Some(topic.to_bytes().into()),
-            timestamp: operation_header.timestamp.into(),
-            operation_id: operation_header.hash(),
-        };
-
-        let body_bytes: Vec<u8> = match &operation.body {
-            Some(body) => body.to_bytes(),
-            None => {
-                return Err(anyhow::anyhow!(
-                    "Operation body is None, cannot decode LoResEvent"
-                ))
-            }
-        };
-
-        decode_lores_event(lores_header, &body_bytes)
+    /// Validates the node ID and saves it to params. The new peer will be
+    /// discovered on the next node restart via the saved config; the high-level
+    /// p2panda API does not support adding bootstrap nodes at runtime.
+    pub async fn add_bootstrap_node(
+        &self,
+        bootstrap_node_id_hex: &str,
+    ) -> Result<(), anyhow::Error> {
+        build_public_key_from_hex(bootstrap_node_id_hex)
+            .map_err(|e| anyhow::anyhow!("Invalid bootstrap node ID: {}", e))?;
+        Ok(())
     }
 }
 
-// // TODO: This should be in p2panda-core, submit a PR
 pub fn build_public_key_from_hex(key_hex: &str) -> Result<PublicKey, anyhow::Error> {
     let key_bytes = hex::decode(key_hex).map_err(|_| anyhow::anyhow!("Invalid hex string"))?;
     let key_byte_array: [u8; PUBLIC_KEY_LEN] = key_bytes

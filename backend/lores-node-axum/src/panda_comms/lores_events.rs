@@ -1,4 +1,4 @@
-use lores_p2panda::p2panda_core::hash::Hash;
+use p2panda_core::hash::Hash;
 use serde::{Deserialize, Serialize};
 
 use crate::data::entities::LatLng;
