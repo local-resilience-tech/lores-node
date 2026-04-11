@@ -1,16 +1,16 @@
 use std::collections::HashMap;
 use std::sync::LazyLock;
 
-use p2panda::Node;
 use p2panda::node::SpawnError;
 use p2panda::streams::{Offset, PublishError, StreamEvent, StreamPublisher};
+use p2panda::Node;
 use p2panda_core::{Hash, PrivateKey, PublicKey, Topic};
-use p2panda_store::SqliteError;
 use p2panda_net::iroh_endpoint::RelayUrl;
+use p2panda_store::SqliteError;
 use sqlx::sqlite::{SqliteConnectOptions, SqlitePool, SqlitePoolOptions};
 use sqlx::Row;
 use thiserror::Error;
-use tokio::sync::{RwLock, mpsc};
+use tokio::sync::{mpsc, RwLock};
 use tokio_stream::StreamExt;
 
 use crate::IncomingOperation;
@@ -19,12 +19,6 @@ static RELAY_URL: LazyLock<RelayUrl> = LazyLock::new(|| {
     "https://euc1-1.relay.n0.iroh-canary.iroh.link"
         .parse()
         .expect("valid relay URL")
-});
-
-static BOOTSTRAP_NODE_ID: LazyLock<PublicKey> = LazyLock::new(|| {
-    "9f63a15ab95959a992af96bf72fbc3e7dc98eeb4799f788bb07b20125053e795"
-        .parse()
-        .expect("valid bootstrap node id")
 });
 
 #[derive(Debug, Error)]
@@ -85,9 +79,7 @@ impl PandaNode {
             for bootstrap_id in &params.bootstrap_node_ids {
                 builder = builder.bootstrap(*bootstrap_id, RELAY_URL.clone());
             }
-            builder = builder
-                .bootstrap(*BOOTSTRAP_NODE_ID, RELAY_URL.clone())
-                .relay_url(RELAY_URL.clone());
+            builder = builder.relay_url(RELAY_URL.clone());
         }
 
         let node = builder.spawn().await?;
@@ -183,9 +175,7 @@ pub struct LogCount {
 async fn open_pool(database_url: &str) -> Result<SqlitePool, sqlx::Error> {
     // Strip the "sqlite:" scheme prefix if present since SqliteConnectOptions
     // wants just the path.
-    let path = database_url
-        .strip_prefix("sqlite:")
-        .unwrap_or(database_url);
+    let path = database_url.strip_prefix("sqlite:").unwrap_or(database_url);
 
     let options = SqliteConnectOptions::new()
         .filename(path)

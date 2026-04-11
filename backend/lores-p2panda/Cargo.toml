@@ -7,10 +7,15 @@ publish = false
 [dependencies]
 p2panda = { git = "https://github.com/p2panda/p2panda", rev = "534363c" }
 p2panda-core = { git = "https://github.com/p2panda/p2panda", rev = "534363c" }
-p2panda-store = { git = "https://github.com/p2panda/p2panda", rev = "534363c", features = ["sqlite"] }
+p2panda-store = { git = "https://github.com/p2panda/p2panda", rev = "534363c", features = [
+  "sqlite",
+] }
 p2panda-net = { git = "https://github.com/p2panda/p2panda", rev = "534363c" }
 serde = { version = "1.0.219", features = ["derive"] }
-sqlx = { version = "0.8.6", features = ["runtime-tokio", "sqlite"], default-features = false }
+sqlx = { version = "0.8.6", features = [
+  "runtime-tokio",
+  "sqlite",
+], default-features = false }
 thiserror = "2.0.17"
 tokio = { version = "1.46.1", features = ["macros", "rt-multi-thread"] }
 tokio-stream = "0.1.18"
