@@ -71,24 +71,40 @@ To test P2P behaviour locally you can run two full instances on the same machine
 mprocs --config mprocs-2node.yaml
 ```
 
-This starts four processes:
+The two backends run as separate Docker containers on a shared bridge network. This gives each node its own IP address, which is necessary for mDNS multicast discovery and Iroh's QUIC/UDP traffic to work correctly between them — something that isn't possible when both processes share the same loopback interface.
+
+Build the backend binary before starting (and rebuild it after any backend code changes):
+
+```
+cd backend && cargo build
+```
+
+This starts three processes:
 
 | Process    | URL                          |
 | ---------- | ---------------------------- |
+| backends   | Docker (both nodes)          |
 | frontend-1 | http://lores.localhost:5173  |
-| backend-1  | http://lores.localhost:8200  |
 | frontend-2 | http://lores2.localhost:5174 |
-| backend-2  | http://lores2.localhost:8201 |
 
-Each node uses a separate set of SQLite databases under `backend/data/node2/` so they maintain independent state.
+The backends are accessible at:
 
-**Prerequisites:** Both hostnames must resolve to `127.0.0.1`. Add this line to `/etc/hosts` if it is not already there:
+| Node      | URL                          |
+| --------- | ---------------------------- |
+| backend-1 | http://lores.localhost:8200  |
+| backend-2 | http://lores2.localhost:8201 |
+
+Each node uses a separate set of SQLite databases under `backend/data/node_data/` and `backend/data/node2/` respectively, so they maintain independent state.
+
+**Prerequisites:**
+
+Both hostnames must resolve to `127.0.0.1`. Add this line to `/etc/hosts` if it is not already there:
 
 ```
 127.0.0.1 lores.localhost lores2.localhost
 ```
 
-The two nodes will discover each other automatically on the local network via mDNS — no manual bootstrap configuration is needed.
+Docker must be running. The two nodes will discover each other automatically via mDNS once they are on the same bridge network.
 
 ## Running Local Version in Release Mode
 
