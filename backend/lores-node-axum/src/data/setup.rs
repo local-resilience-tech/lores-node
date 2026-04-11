@@ -1,6 +1,7 @@
 use anyhow::Result;
 use sqlx::{migrate::Migrator, sqlite::SqliteConnectOptions, Pool, Sqlite, SqlitePool};
 use std::env;
+use tower_sessions_sqlx_store::SqliteStore;
 
 lazy_static! {
     pub static ref DATABASE_URL: String =
@@ -23,6 +24,12 @@ pub async fn prepare_projections_database() -> Result<Pool<Sqlite>> {
 
 pub async fn prepare_node_data_database() -> Result<Pool<Sqlite>> {
     prepare_database(&NODE_DATA_DATABASE_URL, Some("./migrations_nodedatadb")).await
+}
+
+pub async fn prepare_session_store(node_data_pool: &SqlitePool) -> Result<SqliteStore> {
+    let session_store = SqliteStore::new(node_data_pool.clone());
+    session_store.migrate().await?;
+    Ok(session_store)
 }
 
 pub(crate) async fn prepare_database(

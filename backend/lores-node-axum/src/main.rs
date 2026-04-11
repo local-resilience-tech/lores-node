@@ -9,7 +9,7 @@ use std::env;
 use time::Duration;
 use tokio::sync::mpsc;
 use tower_http::{cors::CorsLayer, trace::TraceLayer};
-use tower_sessions::{Expiry, MemoryStore, SessionManagerLayer};
+use tower_sessions::{Expiry, SessionManagerLayer};
 use tracing_subscriber::EnvFilter;
 use utoipa::OpenApi;
 use utoipa_axum::router::OpenApiRouter;
@@ -96,7 +96,9 @@ async fn main() {
         .expect("Failed to prepare node data database");
 
     // SESSION MANAGEMENT
-    let session_store = MemoryStore::default();
+    let session_store = data::setup::prepare_session_store(&node_data_pool)
+        .await
+        .expect("Failed to prepare session store");
     let session_layer = SessionManagerLayer::new(session_store)
         .with_secure(false)
         .with_expiry(Expiry::OnInactivity(Duration::days(30)));
