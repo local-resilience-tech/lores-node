@@ -1,0 +1,24 @@
+# Lightweight runtime image for two-node P2P testing.
+# Does NOT compile Rust — it runs the binary you already built locally.
+#
+# Build the binary first:
+#   cd backend && cargo build
+#
+# Then start both nodes:
+#   docker compose -f ../docker-compose-p2p-test.yml up --build
+
+FROM ubuntu:24.04
+
+RUN apt-get update \
+&& apt-get install -y --no-install-recommends libgcc-s1 \
+&& rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+COPY target/debug/lores-node ./lores-node
+COPY migrations_projectiondb ./migrations_projectiondb
+COPY migrations_nodedatadb ./migrations_nodedatadb
+
+EXPOSE 8200
+
+CMD ["./lores-node"]

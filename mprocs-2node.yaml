@@ -1,26 +1,16 @@
 procs:
+  # Both backends run in Docker so they get separate IPs on a bridge network,
+  # enabling mDNS discovery and p2p UDP traffic between them.
+  # Build the backend binary first: cd backend && cargo build
+  backends:
+    shell: "docker compose -f docker-compose-p2p-test.yml up --build"
+
   # Node 1 — http://lores.localhost:5173 (frontend) / http://lores.localhost:8200 (backend)
-  # VITE_API_HOST and BASE_URL for node 1 are already set by frontend/.env.development
-  # and the backend default respectively.
   frontend-1:
     shell: "npm run dev -- --port 5173"
     cwd: "./frontend"
-  backend-1:
-    shell: "cargo run"
-    cwd: "./backend"
 
   # Node 2 — http://lores2.localhost:5174 (frontend) / http://lores2.localhost:8201 (backend)
-  # lores2.localhost must be present in /etc/hosts (127.0.0.1 lores2.localhost)
   frontend-2:
     shell: "VITE_API_HOST=http://lores2.localhost:8201/ npm run dev -- --port 5174"
     cwd: "./frontend"
-  backend-2:
-    shell: >
-      CONFIG_PATH=./data/node2/config.toml
-      DATABASE_URL=sqlite:./data/node2/projections.sqlite
-      NODE_DATA_DATABASE_URL=sqlite:./data/node2/node_data.sqlite
-      OPERATION_DATABASE_URL=sqlite:./data/node2/operations.sqlite
-      HTTP_PORT=8201
-      BASE_URL=http://lores2.localhost:5174
-      cargo run
-    cwd: "./backend"

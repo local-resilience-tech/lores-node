@@ -1,24 +1,23 @@
 [package]
 name = "lores-p2panda"
-version = "0.17.1"
+version = "0.18.0"
 edition = "2021"
 publish = false
 
 [dependencies]
-p2panda-net = { git = "https://github.com/p2panda/p2panda", rev = "36c639c" }
-p2panda-core = { git = "https://github.com/p2panda/p2panda", rev = "36c639c" }
-p2panda-store = { git = "https://github.com/p2panda/p2panda", rev = "36c639c", features = ["sqlite"] }
-p2panda-discovery = { git = "https://github.com/p2panda/p2panda", rev = "36c639c" }
-p2panda-sync = { git = "https://github.com/p2panda/p2panda", rev = "36c639c" }
-p2panda-stream = { git = "https://github.com/p2panda/p2panda", rev = "36c639c" }
+p2panda = { git = "https://github.com/p2panda/p2panda", rev = "534363c" }
+p2panda-core = { git = "https://github.com/p2panda/p2panda", rev = "534363c" }
+p2panda-store = { git = "https://github.com/p2panda/p2panda", rev = "534363c", features = [
+  "sqlite",
+] }
+p2panda-net = { git = "https://github.com/p2panda/p2panda", rev = "534363c" }
 serde = { version = "1.0.219", features = ["derive"] }
 sqlx = { version = "0.8.6", features = [
-  "runtime-tokio-native-tls",
+  "runtime-tokio",
   "sqlite",
-  "chrono",
-] }
+], default-features = false }
 thiserror = "2.0.17"
-lazy_static = "1.5.0"
 tokio = { version = "1.46.1", features = ["macros", "rt-multi-thread"] }
 tokio-stream = "0.1.18"
+tracing = "0.1"
 hex = "0.4.3"

@@ -1,5 +1,4 @@
 use axum::{http::StatusCode, response::IntoResponse, Extension, Json};
-use lores_p2panda::operations::LogType;
 use serde::Deserialize;
 use utoipa::ToSchema;
 use utoipa_axum::{router::OpenApiRouter, routes};
@@ -54,7 +53,7 @@ async fn register_app(
     // Publish the operation
     let topic_id = PandaContainer::get_region_topic_id(&region_id);
     if let Err(e) = panda_container
-        .publish_persisted(topic_id, LogType::Admin, event_payload, auth_session.user)
+        .publish_persisted(topic_id, event_payload, auth_session.user)
         .await
     {
         return internal_server_error(e).into_response();
