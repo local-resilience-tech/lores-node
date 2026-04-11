@@ -5,11 +5,15 @@ use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::{
     config::config_state::LoresNodeConfigState,
+    data::projections_write::truncate_all,
     panda_comms::{build_public_key_from_hex, PandaContainer},
+    DatabaseState,
 };
 
 pub fn router() -> OpenApiRouter {
-    OpenApiRouter::new().routes(routes!(add_bootstrap_node))
+    OpenApiRouter::new()
+        .routes(routes!(add_bootstrap_node))
+        .routes(routes!(replay_projections))
 }
 
 #[derive(Deserialize, ToSchema, Debug)]
@@ -75,4 +79,42 @@ async fn add_bootstrap_node(
     }
 
     (StatusCode::OK, ()).into_response()
+}
+
+#[utoipa::path(
+    post,
+    path = "/replay",
+    responses(
+        (status = 200, body = String),
+        (status = 500, body = String),
+    )
+)]
+async fn replay_projections(
+    Extension(db): Extension<DatabaseState>,
+    Extension(panda_container): Extension<PandaContainer>,
+) -> impl IntoResponse {
+    if let Err(e) = truncate_all(&db.projections_pool).await {
+        eprintln!("Failed to truncate projection tables: {e}");
+        return (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            format!("Failed to truncate projection tables: {e}"),
+        )
+            .into_response();
+    }
+
+    match panda_container.replay_all_regions().await {
+        Ok(count) => (
+            StatusCode::OK,
+            format!("Replaying {count} region(s) from the operations store"),
+        )
+            .into_response(),
+        Err(e) => {
+            eprintln!("Failed to start replay: {e}");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                format!("Failed to start replay: {e}"),
+            )
+                .into_response()
+        }
+    }
 }

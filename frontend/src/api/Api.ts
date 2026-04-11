@@ -446,7 +446,7 @@ export class HttpClient<SecurityDataType = unknown> {
 
 /**
  * @title lores-node
- * @version 0.15.4
+ * @version 0.18.0
  * @license
  */
 export class Api<
@@ -762,6 +762,19 @@ export class Api<
         body: data,
         type: ContentType.Json,
         format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @name ReplayProjections
+     * @request POST:/node_steward_api/network/replay
+     */
+    replayProjections: (params: RequestParams = {}) =>
+      this.request<string, string>({
+        path: `/node_steward_api/network/replay`,
+        method: "POST",
         ...params,
       }),
   };

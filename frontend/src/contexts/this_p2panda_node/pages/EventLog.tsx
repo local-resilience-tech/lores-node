@@ -1,78 +1,44 @@
-import { Container, Group, Stack, Table, Title, Text } from "@mantine/core"
-import { IconRefresh } from "@tabler/icons-react"
+import { Alert, Container, Stack, Text, Title } from "@mantine/core"
+import { IconDatabaseExclamation } from "@tabler/icons-react"
 import { getApi } from "../../../api"
-import { useEffect, useState } from "react"
-import { P2PandaLogCounts } from "../../../api/Api"
-import { useAppSelector } from "../../../store"
+import { useState } from "react"
 import {
   ActionPromiseResult,
   actionSuccess,
   actionFailure,
-  LoadingActionIcon,
+  ActionButton,
 } from "../../../components"
 
 export default function EventLog() {
+  const [replayMessage, setReplayMessage] = useState<string | null>(null)
+
+  const replayProjections = async (): Promise<ActionPromiseResult> =>
+    getApi()
+      .nodeStewardApi.replayProjections()
+      .then((response) => {
+        setReplayMessage(response.data)
+        return actionSuccess()
+      })
+      .catch(actionFailure)
+
   return (
     <Container>
-      <Text>This needs fixing now that we have RegionNodes</Text>
+      <Stack>
+        <Title order={2}>Replay Operations</Title>
+        <Text c="dimmed" size="sm">
+          Truncates all projection tables and re-processes every stored
+          operation through the event handlers. Use this after fixing handler
+          code during development.
+        </Text>
+        <ActionButton onClick={replayProjections} color="orange">
+          Replay all operations
+        </ActionButton>
+        {replayMessage && (
+          <Alert color="green" icon={<IconDatabaseExclamation />}>
+            {replayMessage}
+          </Alert>
+        )}
+      </Stack>
     </Container>
   )
-
-  // const [logCounts, setLogCounts] = useState<null | P2PandaLogCounts>(null)
-  // const nodesHash = hashById(useAppSelector((state) => state.nodes))
-  // const loadEventLog = async (): Promise<ActionPromiseResult> =>
-  //   getApi()
-  //     .publicApi.p2PandaLogCounts()
-  //     .then((response) => {
-  //       console.log("Event log loaded:", response.data)
-  //       setLogCounts(response.data)
-  //       return actionSuccess()
-  //     })
-  //     .catch(actionFailure)
-  // const nodeName = (nodeId: number) => {
-  //   if (!nodesHash) return null
-  //   return nodesHash.get(nodeId)?.name
-  // }
-  // useEffect(() => {
-  //   loadEventLog()
-  // }, [])
-  // return (
-  //   <Container>
-  //     <Stack>
-  //       <Group justify="space-between">
-  //         <Title order={1}>P2Panda Event Log</Title>
-  //         <LoadingActionIcon onClick={loadEventLog}>
-  //           <IconRefresh />
-  //         </LoadingActionIcon>
-  //       </Group>
-  //       {logCounts && (
-  //         <Table>
-  //           <Table.Thead>
-  //             <Table.Tr>
-  //               <Table.Th>Node</Table.Th>
-  //               <Table.Th>Total Events</Table.Th>
-  //             </Table.Tr>
-  //           </Table.Thead>
-  //           <Table.Tbody>
-  //             {logCounts.counts.map((logCount) => (
-  //               <Table.Tr key={logCount.node_id}>
-  //                 <Table.Td>
-  //                   <Stack gap={0}>
-  //                     <Text size="md" fw={600} span>
-  //                       {nodeName(logCount.node_id) || "Unknown Node"}
-  //                     </Text>
-  //                     <Text size="xs" span c="dimmed">
-  //                       {logCount.node_id}
-  //                     </Text>
-  //                   </Stack>
-  //                 </Table.Td>
-  //                 <Table.Td>{logCount.total}</Table.Td>
-  //               </Table.Tr>
-  //             ))}
-  //           </Table.Tbody>
-  //         </Table>
-  //       )}
-  //     </Stack>
-  //   </Container>
-  // )
 }
