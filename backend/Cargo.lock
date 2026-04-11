@@ -2754,6 +2754,7 @@ dependencies = [
  "tower",
  "tower-http",
  "tower-sessions",
+ "tower-sessions-sqlx-store",
  "tracing",
  "tracing-subscriber",
  "utoipa",
@@ -4206,6 +4207,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "rmp"
+version = "0.8.15"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4ba8be72d372b2c9b35542551678538b562e7cf86c3315773cae48dfbfe7790c"
+dependencies = [
+ "num-traits",
+]
+
+[[package]]
+name = "rmp-serde"
+version = "1.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "72f81bee8c8ef9b577d1681a70ebbc962c232461e397b22c208c43c04b67a155"
+dependencies = [
+ "rmp",
+ "serde",
+]
+
+[[package]]
 name = "rsa"
 version = "0.9.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4819,6 +4839,7 @@ dependencies = [
  "sha2 0.10.9",
  "smallvec",
  "thiserror 2.0.18",
+ "time",
  "tokio",
  "tokio-stream",
  "tracing",
@@ -4902,6 +4923,7 @@ dependencies = [
  "sqlx-core",
  "stringprep",
  "thiserror 2.0.18",
+ "time",
  "tracing",
  "whoami",
 ]
@@ -4940,6 +4962,7 @@ dependencies = [
  "sqlx-core",
  "stringprep",
  "thiserror 2.0.18",
+ "time",
  "tracing",
  "whoami",
 ]
@@ -4965,6 +4988,7 @@ dependencies = [
  "serde_urlencoded",
  "sqlx-core",
  "thiserror 2.0.18",
+ "time",
  "tracing",
  "url",
 ]
@@ -5529,6 +5553,20 @@ dependencies = [
  "async-trait",
  "time",
  "tokio",
+ "tower-sessions-core",
+]
+
+[[package]]
+name = "tower-sessions-sqlx-store"
+version = "0.15.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e054622079f57fc1a7d6a6089c9334f963d62028fe21dc9eddd58af9a78480b3"
+dependencies = [
+ "async-trait",
+ "rmp-serde",
+ "sqlx",
+ "thiserror 1.0.69",
+ "time",
  "tower-sessions-core",
 ]
 
