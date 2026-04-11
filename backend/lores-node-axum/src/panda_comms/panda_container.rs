@@ -4,7 +4,10 @@ use tokio::sync::{mpsc, Mutex};
 
 use lores_p2panda::{
     p2panda_core::{identity::PUBLIC_KEY_LEN, Hash, PrivateKey, PublicKey},
-    panda_node::{LogCount, PandaNode, PandaPublishError, RequiredNodeParams, SubscriptionError},
+    panda_node::{
+        LogCount, OperationCountByAuthorAndTopic, PandaNode, PandaPublishError, RequiredNodeParams,
+        SubscriptionError,
+    },
     IncomingOperation, PandaNodeError, Topic,
 };
 
@@ -272,6 +275,21 @@ impl PandaContainer {
         node.get_log_counts()
             .await
             .map_err(|e| anyhow::anyhow!("Error finding log count: {}", e))
+    }
+
+    pub async fn get_operation_counts_by_topic(
+        &self,
+    ) -> Result<Vec<OperationCountByAuthorAndTopic>, anyhow::Error> {
+        let node_lock = self.node.lock().await;
+        let node = match node_lock.as_ref() {
+            Some(node) => node.clone(),
+            None => return Err(anyhow::anyhow!("Node not started")),
+        };
+        drop(node_lock);
+
+        node.get_operation_counts_by_topic()
+            .await
+            .map_err(|e| anyhow::anyhow!("Error querying operation counts: {}", e))
     }
 
     /// Validates the node ID and saves it to params. The new peer will be

@@ -215,11 +215,39 @@ impl PandaNode {
             })
             .collect())
     }
+
+    pub async fn get_operation_counts_by_topic(
+        &self,
+    ) -> Result<Vec<OperationCountByAuthorAndTopic>, SqliteError> {
+        let rows = sqlx::query(
+            "SELECT lower(hex(substr(t.topic, 3))) AS topic_hex, t.author, COUNT(o.hash) AS total
+             FROM topics_v1 t
+             JOIN operations_v1 o ON o.public_key = t.author AND o.log_id = t.data_id
+             GROUP BY t.topic, t.author",
+        )
+        .fetch_all(&self.pool)
+        .await?;
+
+        Ok(rows
+            .into_iter()
+            .map(|row| OperationCountByAuthorAndTopic {
+                topic_hex: row.get("topic_hex"),
+                author_node_id: row.get("author"),
+                count: row.get("total"),
+            })
+            .collect())
+    }
 }
 
 pub struct LogCount {
     pub node_id: String,
     pub total: i64,
+}
+
+pub struct OperationCountByAuthorAndTopic {
+    pub topic_hex: String,
+    pub author_node_id: String,
+    pub count: i64,
 }
 
 async fn open_pool(database_url: &str) -> Result<SqlitePool, sqlx::Error> {

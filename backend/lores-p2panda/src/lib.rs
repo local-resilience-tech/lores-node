@@ -1,7 +1,10 @@
 pub mod panda_node;
 mod subscription;
 
-pub use panda_node::{LogCount, PandaNode, PandaNodeError, PandaPublishError, RequiredNodeParams};
+pub use panda_node::{
+    LogCount, OperationCountByAuthorAndTopic, PandaNode, PandaNodeError, PandaPublishError,
+    RequiredNodeParams,
+};
 pub use subscription::IncomingOperation;
 pub use subscription::SubscriptionError;
 

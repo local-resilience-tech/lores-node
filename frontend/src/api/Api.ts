@@ -184,6 +184,13 @@ export interface NodeStewardUser {
   name: string;
 }
 
+export interface OperationCountEntry {
+  author_node_id: string;
+  /** @format int64 */
+  count: number;
+  topic: string;
+}
+
 export interface P2PandaLogCount {
   node_id: string;
   /** @format int64 */
@@ -761,6 +768,20 @@ export class Api<
         method: "POST",
         body: data,
         type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @name GetOperationCounts
+     * @request GET:/node_steward_api/network/operations/counts
+     */
+    getOperationCounts: (params: RequestParams = {}) =>
+      this.request<OperationCountEntry[], string>({
+        path: `/node_steward_api/network/operations/counts`,
+        method: "GET",
         format: "json",
         ...params,
       }),

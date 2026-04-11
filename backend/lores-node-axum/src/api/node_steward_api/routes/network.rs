@@ -1,5 +1,6 @@
-use axum::{http::StatusCode, response::IntoResponse, Extension};
+use axum::{http::StatusCode, response::IntoResponse, Extension, Json};
 use serde::Deserialize;
+use serde::Serialize;
 use utoipa::ToSchema;
 use utoipa_axum::{router::OpenApiRouter, routes};
 
@@ -14,6 +15,7 @@ pub fn router() -> OpenApiRouter {
     OpenApiRouter::new()
         .routes(routes!(add_bootstrap_node))
         .routes(routes!(replay_projections))
+        .routes(routes!(get_operation_counts))
 }
 
 #[derive(Deserialize, ToSchema, Debug)]
@@ -116,5 +118,39 @@ async fn replay_projections(
             )
                 .into_response()
         }
+    }
+}
+
+#[derive(Serialize, ToSchema)]
+struct OperationCountEntry {
+    topic: String,
+    author_node_id: String,
+    count: i64,
+}
+
+#[utoipa::path(
+    get,
+    path = "/operations/counts",
+    responses(
+        (status = 200, body = Vec<OperationCountEntry>),
+        (status = 500, body = String),
+    )
+)]
+async fn get_operation_counts(
+    Extension(panda_container): Extension<PandaContainer>,
+) -> impl IntoResponse {
+    match panda_container.get_operation_counts_by_topic().await {
+        Ok(counts) => {
+            let entries: Vec<OperationCountEntry> = counts
+                .into_iter()
+                .map(|c| OperationCountEntry {
+                    topic: c.topic_hex,
+                    author_node_id: c.author_node_id,
+                    count: c.count,
+                })
+                .collect();
+            Json(entries).into_response()
+        }
+        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response(),
     }
 }
