@@ -141,6 +141,56 @@ impl PandaNode {
         Ok(())
     }
 
+    pub async fn get_subscribed_topics(&self) -> Vec<Topic> {
+        self.publishers.read().await.keys().cloned().collect()
+    }
+
+    /// Creates a new `Offset::Start` stream for `topic_id` and forwards every
+    /// `StreamEvent::Processed` operation to `events_tx`.  Unlike
+    /// `subscribe_to_topic` this does not guard against the topic already being
+    /// subscribed, so it can be called while a live frontier subscription is
+    /// active.  The publisher half of the stream is dropped immediately because
+    /// publishing is handled by the existing subscription.
+    pub async fn replay_topic(
+        &self,
+        topic_id: Topic,
+        events_tx: mpsc::Sender<IncomingOperation>,
+    ) -> Result<(), SubscriptionError> {
+        let network = self.network.read().await;
+        let (_publisher, mut subscription) = network
+            .stream_from::<Vec<u8>>(topic_id, Offset::Start)
+            .await?;
+        drop(network);
+
+        tokio::spawn(async move {
+            while let Some(event) = subscription.next().await {
+                match event {
+                    StreamEvent::Processed(op) => {
+                        let incoming = IncomingOperation {
+                            author: op.author(),
+                            topic: op.topic(),
+                            bytes: op.message().clone(),
+                            operation_id: op.id(),
+                            timestamp: op.timestamp(),
+                        };
+                        if events_tx.send(incoming).await.is_err() {
+                            break;
+                        }
+                    }
+                    StreamEvent::DecodingFailed { error, .. } => {
+                        tracing::error!("failed decoding operation during replay: {error}");
+                    }
+                    StreamEvent::ReplayFailed { error, .. } => {
+                        tracing::error!("error during operation replay: {error}");
+                    }
+                    StreamEvent::SyncStarted { .. } | StreamEvent::SyncEnded { .. } => {}
+                }
+            }
+        });
+
+        Ok(())
+    }
+
     pub async fn publish(&self, topic_id: Topic, bytes: Vec<u8>) -> Result<(), PandaPublishError> {
         let publishers = self.publishers.read().await;
         let publisher = publishers
@@ -165,11 +215,39 @@ impl PandaNode {
             })
             .collect())
     }
+
+    pub async fn get_operation_counts_by_topic(
+        &self,
+    ) -> Result<Vec<OperationCountByAuthorAndTopic>, SqliteError> {
+        let rows = sqlx::query(
+            "SELECT lower(hex(substr(t.topic, 3))) AS topic_hex, t.author, COUNT(o.hash) AS total
+             FROM topics_v1 t
+             JOIN operations_v1 o ON o.public_key = t.author AND o.log_id = t.data_id
+             GROUP BY t.topic, t.author",
+        )
+        .fetch_all(&self.pool)
+        .await?;
+
+        Ok(rows
+            .into_iter()
+            .map(|row| OperationCountByAuthorAndTopic {
+                topic_hex: row.get("topic_hex"),
+                author_node_id: row.get("author"),
+                count: row.get("total"),
+            })
+            .collect())
+    }
 }
 
 pub struct LogCount {
     pub node_id: String,
     pub total: i64,
+}
+
+pub struct OperationCountByAuthorAndTopic {
+    pub topic_hex: String,
+    pub author_node_id: String,
+    pub count: i64,
 }
 
 async fn open_pool(database_url: &str) -> Result<SqlitePool, sqlx::Error> {

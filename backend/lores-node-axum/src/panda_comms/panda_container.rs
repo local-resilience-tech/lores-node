@@ -3,10 +3,12 @@ use thiserror::Error;
 use tokio::sync::{mpsc, Mutex};
 
 use lores_p2panda::{
-    IncomingOperation,
     p2panda_core::{identity::PUBLIC_KEY_LEN, Hash, PrivateKey, PublicKey},
-    panda_node::{LogCount, PandaNode, PandaPublishError, RequiredNodeParams, SubscriptionError},
-    PandaNodeError, Topic,
+    panda_node::{
+        LogCount, OperationCountByAuthorAndTopic, PandaNode, PandaPublishError, RequiredNodeParams,
+        SubscriptionError,
+    },
+    IncomingOperation, PandaNodeError, Topic,
 };
 
 use crate::api::auth_api::auth_backend::User;
@@ -147,6 +149,41 @@ impl PandaContainer {
         }
     }
 
+    pub async fn replay_all_regions(&self) -> Result<usize, PandaSubscriptionError> {
+        let node_lock = self.node.lock().await;
+        let node = match node_lock.as_ref() {
+            Some(node) => node.clone(),
+            None => return Err(PandaSubscriptionError::CouldntGetNodeLock()),
+        };
+        drop(node_lock);
+
+        let topics = node.get_subscribed_topics().await;
+        let count = topics.len();
+
+        for topic_id in topics {
+            let (incoming_tx, mut incoming_rx) = mpsc::channel::<IncomingOperation>(32);
+            node.replay_topic(topic_id, incoming_tx).await?;
+
+            let events_tx = self.lores_events_tx.clone();
+            tokio::spawn(async move {
+                while let Some(incoming) = incoming_rx.recv().await {
+                    match Self::decode_incoming_to_lores_event(incoming) {
+                        Ok(lores_event) => {
+                            if events_tx.send(lores_event).await.is_err() {
+                                break;
+                            }
+                        }
+                        Err(e) => {
+                            eprintln!("Failed to decode LoResEvent during replay: {}", e);
+                        }
+                    }
+                }
+            });
+        }
+
+        Ok(count)
+    }
+
     pub async fn join_region(&self, region_id: RegionId) -> Result<Topic, PandaSubscriptionError> {
         let topic_id = Topic::from(<[u8; 32]>::from(region_id));
         self.subscribe(topic_id).await?;
@@ -214,7 +251,9 @@ impl PandaContainer {
         Ok(())
     }
 
-    fn decode_incoming_to_lores_event(incoming: IncomingOperation) -> Result<LoResEvent, anyhow::Error> {
+    fn decode_incoming_to_lores_event(
+        incoming: IncomingOperation,
+    ) -> Result<LoResEvent, anyhow::Error> {
         let lores_header = LoResEventHeader {
             author_node_id: incoming.author.to_hex(),
             region_id: Some(incoming.topic.to_bytes().into()),
@@ -236,6 +275,21 @@ impl PandaContainer {
         node.get_log_counts()
             .await
             .map_err(|e| anyhow::anyhow!("Error finding log count: {}", e))
+    }
+
+    pub async fn get_operation_counts_by_topic(
+        &self,
+    ) -> Result<Vec<OperationCountByAuthorAndTopic>, anyhow::Error> {
+        let node_lock = self.node.lock().await;
+        let node = match node_lock.as_ref() {
+            Some(node) => node.clone(),
+            None => return Err(anyhow::anyhow!("Node not started")),
+        };
+        drop(node_lock);
+
+        node.get_operation_counts_by_topic()
+            .await
+            .map_err(|e| anyhow::anyhow!("Error querying operation counts: {}", e))
     }
 
     /// Validates the node ID and saves it to params. The new peer will be
