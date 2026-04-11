@@ -1,0 +1,68 @@
+# Two-node P2P test environment.
+#
+# Both backends run as separate containers on a shared Docker bridge network.
+# A Linux bridge operates at Layer 2, so mDNS multicast (224.0.0.251:5353)
+# propagates between containers exactly as it would across two machines on
+# the same LAN. Iroh's QUIC/UDP traffic flows freely between container IPs
+# without any special port mapping.
+#
+# Prerequisites:
+#   1. Build the backend binary first:
+#        cd backend && cargo build
+#   2. Add both hostnames to /etc/hosts if not already there:
+#        127.0.0.1 lores.localhost lores2.localhost
+#
+# Usage:
+#   docker compose -f docker-compose-p2p-test.yml up --build
+#
+# Run the two frontends separately (backend procs are handled by Docker):
+#   frontend-1:  cd frontend && npm run dev -- --port 5173
+#   frontend-2:  cd frontend && VITE_API_HOST=http://lores2.localhost:8201/ npm run dev -- --port 5174
+#
+# Node 1:  frontend http://lores.localhost:5173   backend http://lores.localhost:8200
+# Node 2:  frontend http://lores2.localhost:5174  backend http://lores2.localhost:8201
+
+name: lores-p2p-test
+
+services:
+  backend-1:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile-p2p-test
+    networks:
+      - p2p-lan
+    ports:
+      - "8200:8200"
+    environment:
+      CONFIG_PATH: /app/data/config.toml
+      DATABASE_URL: sqlite:/app/data/projections.sqlite
+      NODE_DATA_DATABASE_URL: sqlite:/app/data/node_data.sqlite
+      OPERATION_DATABASE_URL: sqlite:/app/data/operations.sqlite
+      HTTP_PORT: "8200"
+      BASE_URL: http://lores.localhost:5173
+    volumes:
+      - ./backend/data/node_data:/app/data
+      - /var/run/docker.sock:/var/run/docker.sock
+
+  backend-2:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile-p2p-test
+    networks:
+      - p2p-lan
+    ports:
+      - "8201:8200"
+    environment:
+      CONFIG_PATH: /app/data/config.toml
+      DATABASE_URL: sqlite:/app/data/projections.sqlite
+      NODE_DATA_DATABASE_URL: sqlite:/app/data/node_data.sqlite
+      OPERATION_DATABASE_URL: sqlite:/app/data/operations.sqlite
+      HTTP_PORT: "8200"
+      BASE_URL: http://lores2.localhost:5174
+    volumes:
+      - ./backend/data/node2:/app/data
+      - /var/run/docker.sock:/var/run/docker.sock
+
+networks:
+  p2p-lan:
+    driver: bridge
