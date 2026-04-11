@@ -5,6 +5,7 @@ use axum::{
 };
 use axum_login::AuthManagerLayerBuilder;
 use sqlx::SqlitePool;
+use std::env;
 use time::Duration;
 use tokio::sync::mpsc;
 use tower_http::{cors::CorsLayer, trace::TraceLayer};
@@ -136,10 +137,12 @@ async fn main() {
 
     let app = router.into_make_service();
 
-    // run our app with hyper, listening globally on port 8200
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:8200").await.unwrap();
+    let port = env::var("HTTP_PORT").unwrap_or_else(|_| "8200".to_string());
+    let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{}", port))
+        .await
+        .unwrap();
 
-    println!("Listening on http://localhost:8200, Ctrl+C to stop");
+    println!("Listening on http://localhost:{}, Ctrl+C to stop", port);
 
     axum::serve(listener, app).await.unwrap();
 }

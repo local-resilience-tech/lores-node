@@ -63,6 +63,33 @@ To access it in the browser, access the front end at the port that vite uses by 
 
 If you're developing functionality related to installing apps, you're better off running the docker container for developig the backend. To do this, open a terminal in the backend directory and run `sudo docker compose up --build`. This is instead of using "cargo run" directly. If you make changes to the backend code you'll need to stop this (with CONTROL-C) and then run it again.
 
+## Developing with Multiple Nodes (P2P)
+
+To test P2P behaviour locally you can run two full instances on the same machine. A separate mprocs config is provided for this:
+
+```
+mprocs --config mprocs-2node.yaml
+```
+
+This starts four processes:
+
+| Process    | URL                          |
+| ---------- | ---------------------------- |
+| frontend-1 | http://lores.localhost:5173  |
+| backend-1  | http://lores.localhost:8200  |
+| frontend-2 | http://lores2.localhost:5174 |
+| backend-2  | http://lores2.localhost:8201 |
+
+Each node uses a separate set of SQLite databases under `backend/data/node2/` so they maintain independent state.
+
+**Prerequisites:** Both hostnames must resolve to `127.0.0.1`. Add this line to `/etc/hosts` if it is not already there:
+
+```
+127.0.0.1 lores.localhost lores2.localhost
+```
+
+The two nodes will discover each other automatically on the local network via mDNS — no manual bootstrap configuration is needed.
+
 ## Running Local Version in Release Mode
 
 To run the app locally in release mode you can build it and run it using docker.
