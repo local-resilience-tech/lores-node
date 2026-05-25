@@ -115,7 +115,7 @@ impl PandaNode {
         tokio::spawn(async move {
             while let Some(event) = subscription.next().await {
                 match event {
-                    StreamEvent::Processed(op) => {
+                    StreamEvent::Processed { operation: op, .. } => {
                         let incoming = IncomingOperation {
                             author: op.author(),
                             topic: op.topic(),
@@ -127,7 +127,7 @@ impl PandaNode {
                             break;
                         }
                     }
-                    StreamEvent::DecodingFailed { error, .. } => {
+                    StreamEvent::DecodeFailed { error, .. } => {
                         tracing::error!("failed decoding incoming operation: {error}");
                     }
                     StreamEvent::ReplayFailed { error, .. } => {
@@ -165,7 +165,7 @@ impl PandaNode {
         tokio::spawn(async move {
             while let Some(event) = subscription.next().await {
                 match event {
-                    StreamEvent::Processed(op) => {
+                    StreamEvent::Processed { operation: op, .. } => {
                         let incoming = IncomingOperation {
                             author: op.author(),
                             topic: op.topic(),
@@ -177,7 +177,7 @@ impl PandaNode {
                             break;
                         }
                     }
-                    StreamEvent::DecodingFailed { error, .. } => {
+                    StreamEvent::DecodeFailed { error, .. } => {
                         tracing::error!("failed decoding operation during replay: {error}");
                     }
                     StreamEvent::ReplayFailed { error, .. } => {
