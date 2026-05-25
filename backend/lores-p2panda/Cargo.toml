@@ -5,12 +5,10 @@ edition = "2021"
 publish = false
 
 [dependencies]
-p2panda = { git = "https://github.com/p2panda/p2panda", rev = "534363c" }
-p2panda-core = { git = "https://github.com/p2panda/p2panda", rev = "534363c" }
-p2panda-store = { git = "https://github.com/p2panda/p2panda", rev = "534363c", features = [
-  "sqlite",
-] }
-p2panda-net = { git = "https://github.com/p2panda/p2panda", rev = "534363c" }
+p2panda = "0.6.1"
+p2panda-core = "0.6.1"
+p2panda-store = { version = "0.6.1", features = ["sqlite"] }
+p2panda-net = "0.6.1"
 serde = { version = "1.0.219", features = ["derive"] }
 sqlx = { version = "0.8.6", features = [
   "runtime-tokio",

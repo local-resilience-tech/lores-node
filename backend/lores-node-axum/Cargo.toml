@@ -46,6 +46,6 @@ utoipa-swagger-ui = { version = "9.0.2", features = ["axum", "vendored"] }
 uuid = "1.18.1"
 hex = "0.4.3"
 lores-p2panda = { path = "../lores-p2panda" }
-p2panda-core = { git = "https://github.com/p2panda/p2panda", rev = "534363c" }
+p2panda-core = "0.6.1"
 rand = "0.10.0"
 regex = "1.12.3"
