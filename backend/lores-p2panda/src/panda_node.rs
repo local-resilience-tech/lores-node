@@ -2,9 +2,9 @@ use std::collections::HashMap;
 use std::sync::LazyLock;
 
 use p2panda::node::SpawnError;
-use p2panda::streams::{Offset, PublishError, StreamEvent, StreamPublisher};
+use p2panda::streams::{StreamFrom, PublishError, StreamEvent, StreamPublisher};
 use p2panda::Node;
-use p2panda_core::{Hash, PrivateKey, PublicKey, Topic};
+use p2panda_core::{Hash, SigningKey, VerifyingKey, Topic};
 use p2panda_net::iroh_endpoint::RelayUrl;
 use p2panda_store::SqliteError;
 use sqlx::sqlite::{SqliteConnectOptions, SqlitePool, SqlitePoolOptions};
@@ -50,16 +50,16 @@ pub enum SubscriptionError {
 }
 
 pub struct RequiredNodeParams {
-    pub private_key: PrivateKey,
+    pub private_key: SigningKey,
     pub network_id: Hash,
-    pub bootstrap_node_ids: Vec<PublicKey>,
+    pub bootstrap_node_ids: Vec<VerifyingKey>,
 }
 
 pub struct PandaNode {
     network: RwLock<Node>,
     publishers: RwLock<HashMap<Topic, StreamPublisher<Vec<u8>>>>,
     pool: SqlitePool,
-    pub public_key: PublicKey,
+    pub public_key: VerifyingKey,
 }
 
 impl PandaNode {
@@ -67,12 +67,12 @@ impl PandaNode {
         params: &RequiredNodeParams,
         database_url: &str,
     ) -> Result<Self, PandaNodeError> {
-        let public_key = params.private_key.public_key();
+        let public_key = params.private_key.verifying_key();
         let network_id: [u8; 32] = *params.network_id.as_bytes();
 
         let mut builder = Node::builder()
             .network_id(network_id)
-            .private_key(params.private_key.clone())
+            .signing_key(params.private_key.clone())
             .database_url(database_url);
 
         if cfg!(not(test)) {
@@ -106,7 +106,7 @@ impl PandaNode {
 
         let network = self.network.read().await;
         let (publisher, mut subscription) = network
-            .stream_from::<Vec<u8>>(topic_id, Offset::Frontier)
+            .stream_from::<Vec<u8>>(topic_id, StreamFrom::Frontier)
             .await?;
         drop(network);
 
@@ -115,7 +115,7 @@ impl PandaNode {
         tokio::spawn(async move {
             while let Some(event) = subscription.next().await {
                 match event {
-                    StreamEvent::Processed(op) => {
+                    StreamEvent::Processed { operation: op, .. } => {
                         let incoming = IncomingOperation {
                             author: op.author(),
                             topic: op.topic(),
@@ -127,13 +127,21 @@ impl PandaNode {
                             break;
                         }
                     }
-                    StreamEvent::DecodingFailed { error, .. } => {
+                    StreamEvent::DecodeFailed { error, .. } => {
                         tracing::error!("failed decoding incoming operation: {error}");
                     }
                     StreamEvent::ReplayFailed { error, .. } => {
                         tracing::error!("error replaying operation stream: {error}");
                     }
                     StreamEvent::SyncStarted { .. } | StreamEvent::SyncEnded { .. } => {}
+                    StreamEvent::ImportStarted { .. } | StreamEvent::ImportEnded { .. } => {}
+                    StreamEvent::ReplayStarted { .. } | StreamEvent::ReplayEnded => {}
+                    StreamEvent::ProcessingFailed { error, .. } => {
+                        tracing::error!("operation processing failed: {error}");
+                    }
+                    StreamEvent::AckFailed { error, .. } => {
+                        tracing::error!("operation ack failed: {error}");
+                    }
                 }
             }
         });
@@ -145,7 +153,7 @@ impl PandaNode {
         self.publishers.read().await.keys().cloned().collect()
     }
 
-    /// Creates a new `Offset::Start` stream for `topic_id` and forwards every
+    /// Creates a new `StreamFrom::Start` stream for `topic_id` and forwards every
     /// `StreamEvent::Processed` operation to `events_tx`.  Unlike
     /// `subscribe_to_topic` this does not guard against the topic already being
     /// subscribed, so it can be called while a live frontier subscription is
@@ -158,14 +166,14 @@ impl PandaNode {
     ) -> Result<(), SubscriptionError> {
         let network = self.network.read().await;
         let (_publisher, mut subscription) = network
-            .stream_from::<Vec<u8>>(topic_id, Offset::Start)
+            .stream_from::<Vec<u8>>(topic_id, StreamFrom::Start)
             .await?;
         drop(network);
 
         tokio::spawn(async move {
             while let Some(event) = subscription.next().await {
                 match event {
-                    StreamEvent::Processed(op) => {
+                    StreamEvent::Processed { operation: op, .. } => {
                         let incoming = IncomingOperation {
                             author: op.author(),
                             topic: op.topic(),
@@ -177,13 +185,21 @@ impl PandaNode {
                             break;
                         }
                     }
-                    StreamEvent::DecodingFailed { error, .. } => {
+                    StreamEvent::DecodeFailed { error, .. } => {
                         tracing::error!("failed decoding operation during replay: {error}");
                     }
                     StreamEvent::ReplayFailed { error, .. } => {
                         tracing::error!("error during operation replay: {error}");
                     }
                     StreamEvent::SyncStarted { .. } | StreamEvent::SyncEnded { .. } => {}
+                    StreamEvent::ImportStarted { .. } | StreamEvent::ImportEnded { .. } => {}
+                    StreamEvent::ReplayStarted { .. } | StreamEvent::ReplayEnded => {}
+                    StreamEvent::ProcessingFailed { error, .. } => {
+                        tracing::error!("operation processing failed during replay: {error}");
+                    }
+                    StreamEvent::AckFailed { error, .. } => {
+                        tracing::error!("operation ack failed during replay: {error}");
+                    }
                 }
             }
         });

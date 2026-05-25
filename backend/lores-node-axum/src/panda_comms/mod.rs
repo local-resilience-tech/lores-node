@@ -44,7 +44,7 @@ pub async fn start_panda(
         }
     };
 
-    let public_key = private_key.public_key();
+    let public_key = private_key.verifying_key();
 
     NodesWriteRepo::init()
         .upsert_id(projections_pool, &public_key.to_hex())

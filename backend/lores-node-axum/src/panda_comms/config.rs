@@ -1,6 +1,6 @@
 use crate::{config::config_state::LoresNodeConfigState, panda_comms::build_public_key_from_hex};
 use hex;
-use p2panda_core::{identity::PRIVATE_KEY_LEN, PrivateKey, PublicKey};
+use p2panda_core::{identity::SIGNING_KEY_LEN, SigningKey, VerifyingKey};
 
 pub struct ThisP2PandaNodeRepo {}
 
@@ -12,7 +12,7 @@ impl ThisP2PandaNodeRepo {
     pub async fn get_bootstrap_node_ids(
         &self,
         config_state: &LoresNodeConfigState,
-    ) -> Vec<PublicKey> {
+    ) -> Vec<VerifyingKey> {
         let config = config_state.get().await;
 
         config
@@ -26,7 +26,7 @@ impl ThisP2PandaNodeRepo {
     pub async fn get_or_create_private_key(
         &self,
         config_state: &LoresNodeConfigState,
-    ) -> Result<PrivateKey, anyhow::Error> {
+    ) -> Result<SigningKey, anyhow::Error> {
         let private_key = self.get_private_key(config_state).await;
 
         match private_key {
@@ -35,7 +35,7 @@ impl ThisP2PandaNodeRepo {
         }
     }
 
-    async fn get_private_key(&self, config_state: &LoresNodeConfigState) -> Option<PrivateKey> {
+    async fn get_private_key(&self, config_state: &LoresNodeConfigState) -> Option<SigningKey> {
         let config = config_state.get().await;
 
         config
@@ -48,9 +48,9 @@ impl ThisP2PandaNodeRepo {
     async fn create_private_key(
         &self,
         config_state: &LoresNodeConfigState,
-    ) -> Result<PrivateKey, anyhow::Error> {
-        let new_private_key = PrivateKey::new();
-        let public_key = new_private_key.public_key();
+    ) -> Result<SigningKey, anyhow::Error> {
+        let new_private_key = SigningKey::generate();
+        let public_key = new_private_key.verifying_key();
 
         self.set_private_key_hex(config_state, new_private_key.to_hex(), public_key.to_hex())
             .await?;
@@ -76,9 +76,9 @@ impl ThisP2PandaNodeRepo {
     }
 
     // TODO: This should be in p2panda-core, submit a PR
-    fn build_private_key_from_hex(private_key_hex: String) -> Option<PrivateKey> {
+    fn build_private_key_from_hex(private_key_hex: String) -> Option<SigningKey> {
         let private_key_bytes = hex::decode(private_key_hex).ok()?;
-        let private_key_byte_array: [u8; PRIVATE_KEY_LEN] = private_key_bytes.try_into().ok()?;
-        Some(PrivateKey::from_bytes(&private_key_byte_array))
+        let private_key_byte_array: [u8; SIGNING_KEY_LEN] = private_key_bytes.try_into().ok()?;
+        Some(SigningKey::from_bytes(&private_key_byte_array))
     }
 }
