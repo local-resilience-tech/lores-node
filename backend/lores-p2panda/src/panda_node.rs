@@ -4,7 +4,7 @@ use std::sync::LazyLock;
 use p2panda::node::SpawnError;
 use p2panda::streams::{StreamFrom, PublishError, StreamEvent, StreamPublisher};
 use p2panda::Node;
-use p2panda_core::{Hash, PrivateKey, PublicKey, Topic};
+use p2panda_core::{Hash, SigningKey, VerifyingKey, Topic};
 use p2panda_net::iroh_endpoint::RelayUrl;
 use p2panda_store::SqliteError;
 use sqlx::sqlite::{SqliteConnectOptions, SqlitePool, SqlitePoolOptions};
@@ -50,16 +50,16 @@ pub enum SubscriptionError {
 }
 
 pub struct RequiredNodeParams {
-    pub private_key: PrivateKey,
+    pub private_key: SigningKey,
     pub network_id: Hash,
-    pub bootstrap_node_ids: Vec<PublicKey>,
+    pub bootstrap_node_ids: Vec<VerifyingKey>,
 }
 
 pub struct PandaNode {
     network: RwLock<Node>,
     publishers: RwLock<HashMap<Topic, StreamPublisher<Vec<u8>>>>,
     pool: SqlitePool,
-    pub public_key: PublicKey,
+    pub public_key: VerifyingKey,
 }
 
 impl PandaNode {
@@ -67,12 +67,12 @@ impl PandaNode {
         params: &RequiredNodeParams,
         database_url: &str,
     ) -> Result<Self, PandaNodeError> {
-        let public_key = params.private_key.public_key();
+        let public_key = params.private_key.verifying_key();
         let network_id: [u8; 32] = *params.network_id.as_bytes();
 
         let mut builder = Node::builder()
             .network_id(network_id)
-            .private_key(params.private_key.clone())
+            .signing_key(params.private_key.clone())
             .database_url(database_url);
 
         if cfg!(not(test)) {
