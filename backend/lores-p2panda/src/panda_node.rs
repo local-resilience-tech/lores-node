@@ -134,6 +134,14 @@ impl PandaNode {
                         tracing::error!("error replaying operation stream: {error}");
                     }
                     StreamEvent::SyncStarted { .. } | StreamEvent::SyncEnded { .. } => {}
+                    StreamEvent::ImportStarted { .. } | StreamEvent::ImportEnded { .. } => {}
+                    StreamEvent::ReplayStarted { .. } | StreamEvent::ReplayEnded => {}
+                    StreamEvent::ProcessingFailed { error, .. } => {
+                        tracing::error!("operation processing failed: {error}");
+                    }
+                    StreamEvent::AckFailed { error, .. } => {
+                        tracing::error!("operation ack failed: {error}");
+                    }
                 }
             }
         });
@@ -184,6 +192,14 @@ impl PandaNode {
                         tracing::error!("error during operation replay: {error}");
                     }
                     StreamEvent::SyncStarted { .. } | StreamEvent::SyncEnded { .. } => {}
+                    StreamEvent::ImportStarted { .. } | StreamEvent::ImportEnded { .. } => {}
+                    StreamEvent::ReplayStarted { .. } | StreamEvent::ReplayEnded => {}
+                    StreamEvent::ProcessingFailed { error, .. } => {
+                        tracing::error!("operation processing failed during replay: {error}");
+                    }
+                    StreamEvent::AckFailed { error, .. } => {
+                        tracing::error!("operation ack failed during replay: {error}");
+                    }
                 }
             }
         });

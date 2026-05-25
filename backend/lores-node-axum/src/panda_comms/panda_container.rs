@@ -3,7 +3,7 @@ use thiserror::Error;
 use tokio::sync::{mpsc, Mutex};
 
 use lores_p2panda::{
-    p2panda_core::{identity::PUBLIC_KEY_LEN, Hash, PrivateKey, PublicKey},
+    p2panda_core::{identity::VERIFYING_KEY_LEN, Hash, SigningKey, VerifyingKey},
     panda_node::{
         LogCount, OperationCountByAuthorAndTopic, PandaNode, PandaPublishError, RequiredNodeParams,
         SubscriptionError,
@@ -21,9 +21,9 @@ use super::{
 
 #[derive(Default, Clone)]
 pub struct NodeParams {
-    pub private_key: Option<PrivateKey>,
+    pub private_key: Option<SigningKey>,
     pub network_name: Option<String>,
-    pub bootstrap_node_ids: Vec<PublicKey>,
+    pub bootstrap_node_ids: Vec<VerifyingKey>,
 }
 
 #[derive(Debug, Error)]
@@ -68,12 +68,12 @@ impl PandaContainer {
         params_lock.network_name = Some(network_name);
     }
 
-    pub async fn set_private_key(&self, private_key: PrivateKey) {
+    pub async fn set_private_key(&self, private_key: SigningKey) {
         let mut params_lock = self.params.lock().await;
         params_lock.private_key = Some(private_key);
     }
 
-    pub async fn set_bootstrap_node_ids(&self, bootstrap_node_ids: Vec<PublicKey>) {
+    pub async fn set_bootstrap_node_ids(&self, bootstrap_node_ids: Vec<VerifyingKey>) {
         let mut params_lock = self.params.lock().await;
         params_lock.bootstrap_node_ids = bootstrap_node_ids;
     }
@@ -83,9 +83,9 @@ impl PandaContainer {
 
         let params = self.get_params().await;
 
-        let private_key: Option<PrivateKey> = params.private_key;
+        let private_key: Option<SigningKey> = params.private_key;
         let network_name: Option<String> = params.network_name;
-        let boostrap_node_ids: Vec<PublicKey> = params.bootstrap_node_ids;
+        let boostrap_node_ids: Vec<VerifyingKey> = params.bootstrap_node_ids;
 
         if private_key.is_none() {
             println!("P2Panda: No private key found, not starting network");
@@ -113,14 +113,14 @@ impl PandaContainer {
 
     async fn start_for(
         &self,
-        private_key: PrivateKey,
+        private_key: SigningKey,
         network_name: String,
-        boostrap_node_ids: &Vec<PublicKey>,
+        boostrap_node_ids: &Vec<VerifyingKey>,
         operations_database_url: &str,
     ) -> Result<(), PandaNodeError> {
         let required_params = RequiredNodeParams {
             private_key,
-            network_id: Hash::new(network_name.as_bytes()),
+            network_id: Hash::digest(network_name.as_bytes()),
             bootstrap_node_ids: boostrap_node_ids.clone(),
         };
 
@@ -141,10 +141,10 @@ impl PandaContainer {
         node.is_some()
     }
 
-    pub async fn get_public_key(&self) -> Result<PublicKey, Box<dyn std::error::Error>> {
+    pub async fn get_public_key(&self) -> Result<VerifyingKey, Box<dyn std::error::Error>> {
         let params_lock = self.params.lock().await;
         match params_lock.private_key {
-            Some(ref key) => Ok(key.public_key()),
+            Some(ref key) => Ok(key.verifying_key()),
             None => Err("Private key not set".into()),
         }
     }
@@ -305,10 +305,10 @@ impl PandaContainer {
     }
 }
 
-pub fn build_public_key_from_hex(key_hex: &str) -> Result<PublicKey, anyhow::Error> {
+pub fn build_public_key_from_hex(key_hex: &str) -> Result<VerifyingKey, anyhow::Error> {
     let key_bytes = hex::decode(key_hex).map_err(|_| anyhow::anyhow!("Invalid hex string"))?;
-    let key_byte_array: [u8; PUBLIC_KEY_LEN] = key_bytes
+    let key_byte_array: [u8; VERIFYING_KEY_LEN] = key_bytes
         .try_into()
         .map_err(|_| anyhow::anyhow!("Invalid public key length"))?;
-    PublicKey::from_bytes(&key_byte_array).map_err(|_| anyhow::anyhow!("Invalid public key"))
+    VerifyingKey::from_bytes(&key_byte_array).map_err(|_| anyhow::anyhow!("Invalid public key"))
 }

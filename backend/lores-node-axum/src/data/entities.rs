@@ -1,4 +1,4 @@
-use lores_p2panda::p2panda_core::PublicKey;
+use lores_p2panda::p2panda_core::VerifyingKey;
 use serde::{Deserialize, Serialize};
 use sqlx::{
     database::Database,
@@ -143,7 +143,7 @@ pub struct Region {
 }
 
 impl Region {
-    pub fn unnamed(id: RegionId, creator_node_id: PublicKey) -> Self {
+    pub fn unnamed(id: RegionId, creator_node_id: VerifyingKey) -> Self {
         let hex_id = id.to_hex();
 
         Self {
