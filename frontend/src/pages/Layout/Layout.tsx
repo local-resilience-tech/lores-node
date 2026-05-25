@@ -35,7 +35,7 @@ import pangaLogoUrl from "../../assets/deepsea-panda.svg"
 
 import classes from "./Layout.module.css"
 import { handleClientEvent, useAppDispatch, useAppSelector } from "../../store"
-import useWebSocket from "react-use-websocket"
+import useWebSocket from "react-use-websocket-lite"
 import { getSocketUrl } from "../../api"
 import { IfNodeSteward } from "../../contexts/auth/node_steward_auth"
 import { RegionSelector } from "./RegionSelector"
@@ -67,20 +67,19 @@ export default function Layout() {
   const readyForApps = true
   const pandaRunning = !!network
 
-  const {} = useWebSocket(getSocketUrl(), {
-    share: true,
-    onOpen: (event) => {
+  const {} = useWebSocket({
+    url: getSocketUrl(),
+    onOpen: (event: Event) => {
       console.log("WebSocket connection opened", event)
     },
     onClose: () => {
       console.log("WebSocket connection closed")
     },
-    onMessage: (event) => {
+    onMessage: (event: MessageEvent) => {
       console.log("WebSocket message received", event)
 
       handleClientEvent(JSON.parse(event.data))
     },
-    heartbeat: false,
   })
 
   return (

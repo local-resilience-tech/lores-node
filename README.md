@@ -13,7 +13,7 @@ Developed by [Merri-bek Tech](https://www.merri-bek.tech/), but useful for all s
 
 On linux, you'll need the following things to build this:
 
-- nodejs 22.12.0
+- nodejs 24.16.0
   - I recommend that you install [asdf](https://asdf-vm.com/) in which case you can then run `asdf install` in the root of this repo to get the correct version.
 - rust (latest)
   - You can use asdf for rust, but it's not commonly done. It's more common to use [rustup](https://rustup.rs/)
