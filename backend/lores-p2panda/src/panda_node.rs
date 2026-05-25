@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::sync::LazyLock;
 
 use p2panda::node::SpawnError;
-use p2panda::streams::{Offset, PublishError, StreamEvent, StreamPublisher};
+use p2panda::streams::{StreamFrom, PublishError, StreamEvent, StreamPublisher};
 use p2panda::Node;
 use p2panda_core::{Hash, PrivateKey, PublicKey, Topic};
 use p2panda_net::iroh_endpoint::RelayUrl;
@@ -106,7 +106,7 @@ impl PandaNode {
 
         let network = self.network.read().await;
         let (publisher, mut subscription) = network
-            .stream_from::<Vec<u8>>(topic_id, Offset::Frontier)
+            .stream_from::<Vec<u8>>(topic_id, StreamFrom::Frontier)
             .await?;
         drop(network);
 
@@ -145,7 +145,7 @@ impl PandaNode {
         self.publishers.read().await.keys().cloned().collect()
     }
 
-    /// Creates a new `Offset::Start` stream for `topic_id` and forwards every
+    /// Creates a new `StreamFrom::Start` stream for `topic_id` and forwards every
     /// `StreamEvent::Processed` operation to `events_tx`.  Unlike
     /// `subscribe_to_topic` this does not guard against the topic already being
     /// subscribed, so it can be called while a live frontier subscription is
@@ -158,7 +158,7 @@ impl PandaNode {
     ) -> Result<(), SubscriptionError> {
         let network = self.network.read().await;
         let (_publisher, mut subscription) = network
-            .stream_from::<Vec<u8>>(topic_id, Offset::Start)
+            .stream_from::<Vec<u8>>(topic_id, StreamFrom::Start)
             .await?;
         drop(network);
 
