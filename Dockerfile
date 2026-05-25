@@ -14,7 +14,7 @@ RUN --mount=target=/var/lib/apt/lists,type=cache,sharing=locked \
     && apt-get -y install docker-ce-cli docker-compose-plugin
 
 # FRONTEND BUILDER
-FROM --platform=$BUILDPLATFORM node:22 AS vitebuilder
+FROM --platform=$BUILDPLATFORM node:24 AS vitebuilder
 WORKDIR /app
 COPY ./frontend .
 RUN npm install && npm run build
