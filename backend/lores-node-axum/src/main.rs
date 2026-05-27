@@ -8,6 +8,7 @@ use sqlx::SqlitePool;
 use std::env;
 use time::Duration;
 use tokio::sync::mpsc;
+use tonic::transport::Server as GrpcServer;
 use tower_http::{cors::CorsLayer, trace::TraceLayer};
 use tower_sessions::{Expiry, SessionManagerLayer};
 use tracing_subscriber::EnvFilter;
@@ -114,6 +115,21 @@ async fn main() {
     let panda_container = PandaContainer::new(channel_tx);
     start_panda_event_handler(channel_rx, projections_pool.clone(), realtime_state.clone());
     start_panda(&config_state, &panda_container, &projections_pool).await;
+
+    // GRPC SERVER
+    let grpc_port = env::var("GRPC_PORT").unwrap_or_else(|_| "8201".to_string());
+    let grpc_addr = format!("0.0.0.0:{}", grpc_port)
+        .parse()
+        .expect("valid gRPC bind address");
+    let panda_publish = lores_p2panda_server::PandaPublishService::new(panda_container.node_arc());
+    tokio::spawn(async move {
+        println!("gRPC listening on {}", grpc_addr);
+        GrpcServer::builder()
+            .add_service(panda_publish.into_server())
+            .serve(grpc_addr)
+            .await
+            .expect("gRPC server failed");
+    });
 
     // ROUTES
     let (router, api) = OpenApiRouter::with_openapi(ApiDoc::openapi())

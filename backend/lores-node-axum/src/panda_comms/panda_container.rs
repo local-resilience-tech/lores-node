@@ -142,6 +142,12 @@ impl PandaContainer {
         node.is_some()
     }
 
+    /// Returns a clone of the shared node handle, suitable for passing to
+    /// [`lores_p2panda_server::PandaPublishService`].
+    pub fn node_arc(&self) -> Arc<Mutex<Option<Arc<PandaNode>>>> {
+        self.node.clone()
+    }
+
     pub async fn get_public_key(&self) -> Result<VerifyingKey, Box<dyn std::error::Error>> {
         let params_lock = self.params.lock().await;
         match params_lock.private_key {

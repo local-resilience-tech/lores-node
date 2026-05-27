@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package lores.panda.v1;
+
+service PandaPublish {
+  // Publish an operation to a topic. Returns only after the operation has been
+  // persisted by the local p2panda node, guaranteeing it will eventually be
+  // propagated to peers regardless of their current availability.
+  rpc Publish(PublishRequest) returns (PublishResponse);
+}
+
+message PublishRequest {
+  // 32-byte topic identifier.
+  bytes topic_id = 1;
+  // Encoded operation payload (e.g. CBOR).
+  bytes payload = 2;
+}
+
+// An empty response indicates the operation was successfully persisted.
+message PublishResponse {}
