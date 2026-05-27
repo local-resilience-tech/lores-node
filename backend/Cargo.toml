@@ -4,6 +4,6 @@ members = [
   "lores-node-axum",
   "lores-p2panda",
   "lores-p2panda-server",
-  "lores-panda-cli",
+  "lores-example-app-cli",
 ]
 default-members = ["lores-node-axum"]
