@@ -3,45 +3,47 @@ syntax = "proto3";
 package lores.panda.v1;
 
 service Panda {
-  // Publish an operation to a topic. Returns only after the operation has been
+  // Publish an operation to a region. Returns only after the operation has been
   // persisted by the local p2panda node, guaranteeing it will eventually be
   // propagated to peers regardless of their current availability.
   rpc Publish(PublishRequest) returns (PublishResponse);
 
-  // Subscribe to a topic and receive a stream of operations. The stream
-  // delivers only operations that arrive after the subscription is established.
-  // HTTP/2 flow control provides natural backpressure: the server will not
-  // send faster than the client reads.
+  // Subscribe to a region+namespace topic and receive a stream of operations.
+  // The stream delivers only operations that arrive after the subscription is
+  // established. HTTP/2 flow control provides natural backpressure: the server
+  // will not send faster than the client reads.
   rpc Subscribe(SubscribeRequest) returns (stream OperationEvent);
 
-  // List the topics the node is currently subscribed to.
+  // List all regions this node knows about and the app namespaces active within
+  // each one.
+  rpc ListRegions(ListRegionsRequest) returns (ListRegionsResponse);
+
+  // List the raw p2panda topics the node is currently subscribed to.
+  // Useful for debugging.
   rpc ListTopics(ListTopicsRequest) returns (ListTopicsResponse);
 }
 
-message ListTopicsRequest {}
-
-message ListTopicsResponse {
-  // Each entry is a 32-byte topic identifier.
-  repeated bytes topic_ids = 1;
-}
-
 message PublishRequest {
-  // 32-byte topic identifier.
-  bytes topic_id = 1;
+  // 32-byte region identifier.
+  bytes region_id = 1;
+  // Application namespace string (e.g. "lores-axum:v1").
+  string app_namespace = 2;
   // Encoded operation payload (e.g. CBOR).
-  bytes payload = 2;
+  bytes payload = 3;
 }
 
 // An empty response indicates the operation was successfully persisted.
 message PublishResponse {}
 
 message SubscribeRequest {
-  // 32-byte topic identifier to subscribe to.
-  bytes topic_id = 1;
+  // 32-byte region identifier.
+  bytes region_id = 1;
+  // Application namespace string (e.g. "lores-axum:v1").
+  string app_namespace = 2;
 }
 
 message OperationEvent {
-  // 32-byte topic identifier the operation belongs to.
+  // 32-byte p2panda topic identifier the operation belongs to.
   bytes topic_id = 1;
   // 32-byte author public key.
   bytes author = 2;
@@ -51,4 +53,17 @@ message OperationEvent {
   uint64 timestamp = 4;
   // Encoded operation payload (e.g. CBOR).
   bytes payload = 5;
+}
+
+message ListRegionsRequest {}
+
+message ListRegionsResponse {
+  repeated bytes region_ids = 1;
+}
+
+message ListTopicsRequest {}
+
+message ListTopicsResponse {
+  // Each entry is a 32-byte topic identifier.
+  repeated bytes topic_ids = 1;
 }

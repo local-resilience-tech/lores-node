@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::collections::HashSet;
 use std::sync::LazyLock;
 
 use p2panda::node::SpawnError;
@@ -12,6 +13,8 @@ use sqlx::Row;
 use thiserror::Error;
 use tokio::sync::{mpsc, RwLock};
 use tokio_stream::StreamExt;
+
+use crate::region::RegionId;
 
 static DEFAULT_IROH_RELAY_URL: LazyLock<RelayUrl> = LazyLock::new(|| {
     "https://euc1-1.relay.n0.iroh-canary.iroh.link"
@@ -66,6 +69,7 @@ pub struct RequiredNodeParams {
 pub struct PandaNode {
     network: RwLock<Node>,
     publishers: RwLock<HashMap<Topic, StreamPublisher<Vec<u8>>>>,
+    regions: RwLock<HashSet<RegionId>>,
     pool: SqlitePool,
     pub public_key: VerifyingKey,
 }
@@ -103,6 +107,7 @@ impl PandaNode {
         Ok(Self {
             network: RwLock::new(node),
             publishers: RwLock::new(HashMap::new()),
+            regions: RwLock::new(HashSet::new()),
             pool,
             public_key,
         })
@@ -164,6 +169,17 @@ impl PandaNode {
 
     pub async fn get_subscribed_topics(&self) -> Vec<Topic> {
         self.publishers.read().await.keys().cloned().collect()
+    }
+
+    /// Record that this node is participating in `region_id`. Used by
+    /// [`Self::get_regions`] and exposed via the gRPC `ListRegions` RPC.
+    pub async fn register_region(&self, region_id: RegionId) {
+        self.regions.write().await.insert(region_id);
+    }
+
+    /// Returns all registered region IDs.
+    pub async fn get_regions(&self) -> Vec<RegionId> {
+        self.regions.read().await.iter().cloned().collect()
     }
 
     /// Creates a new `StreamFrom::Start` stream for `topic_id` and forwards every

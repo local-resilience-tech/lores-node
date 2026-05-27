@@ -2856,6 +2856,7 @@ dependencies = [
  "p2panda-core",
  "p2panda-net",
  "p2panda-store",
+ "rand 0.9.4",
  "serde",
  "sqlx",
  "thiserror 2.0.18",

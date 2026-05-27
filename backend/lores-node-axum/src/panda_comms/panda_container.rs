@@ -3,12 +3,13 @@ use thiserror::Error;
 use tokio::sync::{mpsc, Mutex};
 
 use lores_p2panda::{
+    derive_topic,
     p2panda_core::{identity::VERIFYING_KEY_LEN, Hash, SigningKey, VerifyingKey},
     panda_node::{
         LogCount, OperationCountByAuthorAndTopic, PandaNode, PandaPublishError, RequiredNodeParams,
         SubscriptionError,
     },
-    IncomingOperation, PandaNodeError, Topic,
+    IncomingOperation, PandaNodeError, RegionId, Topic,
 };
 
 use crate::api::auth_api::auth_backend::User;
@@ -16,7 +17,6 @@ use crate::api::auth_api::auth_backend::User;
 use super::{
     event_encoding::{decode_lores_event, encode_lores_event_payload},
     lores_events::{LoResEvent, LoResEventHeader, LoResEventMetadataV1, LoResEventPayload},
-    RegionId,
 };
 
 #[derive(Default, Clone)]
@@ -192,13 +192,20 @@ impl PandaContainer {
     }
 
     pub async fn join_region(&self, region_id: RegionId) -> Result<Topic, PandaSubscriptionError> {
-        let topic_id = Topic::from(<[u8; 32]>::from(region_id));
+        let topic_id = derive_topic(&region_id, "lores-axum:v1");
         self.subscribe(topic_id).await?;
+
+        let node_lock = self.node.lock().await;
+        if let Some(node) = node_lock.as_ref() {
+            node.register_region(region_id).await;
+        }
+        drop(node_lock);
+
         Ok(topic_id)
     }
 
     pub fn get_region_topic_id(region_id: &RegionId) -> Topic {
-        Topic::from(<[u8; 32]>::from(region_id.clone()))
+        derive_topic(region_id, "lores-axum:v1")
     }
 
     pub async fn subscribe(&self, topic_id: Topic) -> Result<(), PandaSubscriptionError> {

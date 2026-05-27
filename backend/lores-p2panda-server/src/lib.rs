@@ -2,7 +2,10 @@ use std::collections::HashMap;
 use std::pin::Pin;
 use std::sync::Arc;
 
-use lores_p2panda::{IncomingOperation, PandaNode, PandaPublishError, SubscriptionError, Topic};
+use lores_p2panda::{
+    derive_topic, IncomingOperation, PandaNode, PandaPublishError, RegionId, SubscriptionError,
+    Topic,
+};
 use tokio::sync::{broadcast, Mutex, RwLock};
 use tokio_stream::wrappers::BroadcastStream;
 use tokio_stream::StreamExt;
@@ -14,8 +17,8 @@ pub mod proto {
 
 use proto::{
     panda_server::{Panda, PandaServer},
-    ListTopicsRequest, ListTopicsResponse, OperationEvent, PublishRequest, PublishResponse,
-    SubscribeRequest,
+    ListRegionsRequest, ListRegionsResponse, ListTopicsRequest, ListTopicsResponse, OperationEvent,
+    PublishRequest, PublishResponse, SubscribeRequest,
 };
 
 /// gRPC service that exposes [`PandaNode`] publish and subscribe over the
@@ -53,12 +56,12 @@ impl Panda for PandaService {
     ) -> Result<Response<PublishResponse>, Status> {
         let req = request.into_inner();
 
-        let topic_bytes: [u8; 32] = req
-            .topic_id
+        let region_bytes: [u8; 32] = req
+            .region_id
             .try_into()
-            .map_err(|_| Status::invalid_argument("topic_id must be exactly 32 bytes"))?;
+            .map_err(|_| Status::invalid_argument("region_id must be exactly 32 bytes"))?;
 
-        let topic = Topic::from(topic_bytes);
+        let topic = derive_topic(&RegionId::from(region_bytes), &req.app_namespace);
 
         let node_lock = self.node.lock().await;
         let node = node_lock
@@ -83,12 +86,21 @@ impl Panda for PandaService {
     ) -> Result<Response<Self::SubscribeStream>, Status> {
         let req = request.into_inner();
 
-        let topic_bytes: [u8; 32] = req
-            .topic_id
+        let region_bytes: [u8; 32] = req
+            .region_id
             .try_into()
-            .map_err(|_| Status::invalid_argument("topic_id must be exactly 32 bytes"))?;
+            .map_err(|_| Status::invalid_argument("region_id must be exactly 32 bytes"))?;
 
-        let topic = Topic::from(topic_bytes);
+        let region_id = RegionId::from(region_bytes);
+        let app_namespace = req.app_namespace;
+        let topic = derive_topic(&region_id, &app_namespace);
+
+        let node_lock = self.node.lock().await;
+        let node = node_lock
+            .as_ref()
+            .ok_or_else(|| Status::unavailable("p2panda node is not yet started"))?
+            .clone();
+        drop(node_lock);
 
         // Under a write lock, check whether a p2panda subscription exists for
         // this topic yet.  If not, create one and wire it to a broadcast
@@ -99,13 +111,6 @@ impl Panda for PandaService {
             tx.subscribe()
         } else {
             let (broadcast_tx, broadcast_rx) = broadcast::channel::<IncomingOperation>(128);
-
-            let node_lock = self.node.lock().await;
-            let node = node_lock
-                .as_ref()
-                .ok_or_else(|| Status::unavailable("p2panda node is not yet started"))?
-                .clone();
-            drop(node_lock);
 
             let (incoming_tx, mut incoming_rx) =
                 tokio::sync::mpsc::channel::<IncomingOperation>(128);
@@ -132,6 +137,9 @@ impl Panda for PandaService {
 
         drop(subs);
 
+        // Record the region/namespace so ListRegions can report it.
+        node.register_region(region_id).await;
+
         let stream = BroadcastStream::new(receiver).filter_map(|result| match result {
             Ok(op) => Some(Ok(incoming_to_event(op))),
             // Lagged means the consumer fell behind; skip the lost messages.
@@ -141,6 +149,26 @@ impl Panda for PandaService {
         Ok(Response::new(Box::pin(stream)))
     }
 
+    async fn list_regions(
+        &self,
+        _request: Request<ListRegionsRequest>,
+    ) -> Result<Response<ListRegionsResponse>, Status> {
+        let node_lock = self.node.lock().await;
+        let node = node_lock
+            .as_ref()
+            .ok_or_else(|| Status::unavailable("p2panda node is not yet started"))?
+            .clone();
+        drop(node_lock);
+
+        let region_ids = node
+            .get_regions()
+            .await
+            .into_iter()
+            .map(|id| id.to_bytes().to_vec())
+            .collect();
+
+        Ok(Response::new(ListRegionsResponse { region_ids }))
+    }
 
     async fn list_topics(
         &self,

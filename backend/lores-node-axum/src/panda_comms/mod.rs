@@ -2,11 +2,10 @@ mod config;
 mod event_encoding;
 pub mod lores_events;
 mod panda_container;
-use std::fmt::Display;
 
 pub use config::ThisP2PandaNodeRepo;
-use hex::FromHexError;
 use lores_events::LoResEvent;
+pub use lores_p2panda::RegionId;
 pub use panda_container::{build_public_key_from_hex, PandaContainer};
 use sqlx::SqlitePool;
 use tokio::sync::mpsc;
@@ -101,46 +100,4 @@ pub fn start_panda_event_handler(
             handle_event(event, &pool, &realtime_state).await;
         }
     });
-}
-
-#[derive(Debug, Clone, PartialEq)]
-pub struct RegionId {
-    bytes: [u8; 32],
-}
-
-impl From<RegionId> for [u8; 32] {
-    fn from(id: RegionId) -> Self {
-        id.bytes
-    }
-}
-
-impl From<[u8; 32]> for RegionId {
-    fn from(bytes: [u8; 32]) -> Self {
-        Self { bytes }
-    }
-}
-
-impl Display for RegionId {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str(&self.to_hex())
-    }
-}
-
-impl RegionId {
-    pub fn from_hex(value: &str) -> Result<RegionId, FromHexError> {
-        let mut bytes = [0u8; 32];
-        hex::decode_to_slice(value, &mut bytes as &mut [u8])?;
-
-        Ok(RegionId { bytes })
-    }
-
-    pub fn generate() -> Self {
-        let mut arr = [0u8; 32];
-        rand::fill(&mut arr[..]);
-        RegionId { bytes: arr }
-    }
-
-    pub fn to_hex(&self) -> String {
-        hex::encode(&self.bytes)
-    }
 }
