@@ -122,6 +122,7 @@ impl PandaContainer {
             private_key,
             network_id: Hash::digest(network_name.as_bytes()),
             bootstrap_node_ids: boostrap_node_ids.clone(),
+            relay_url: None,
         };
 
         let panda_node = Arc::new(PandaNode::new(&required_params, operations_database_url).await?);

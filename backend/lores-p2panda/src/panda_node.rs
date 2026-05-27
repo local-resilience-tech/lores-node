@@ -13,7 +13,7 @@ use thiserror::Error;
 use tokio::sync::{mpsc, RwLock};
 use tokio_stream::StreamExt;
 
-static RELAY_URL: LazyLock<RelayUrl> = LazyLock::new(|| {
+static DEFAULT_IROH_RELAY_URL: LazyLock<RelayUrl> = LazyLock::new(|| {
     "https://euc1-1.relay.n0.iroh-canary.iroh.link"
         .parse()
         .expect("valid relay URL")
@@ -59,6 +59,7 @@ pub struct RequiredNodeParams {
     pub private_key: SigningKey,
     pub network_id: Hash,
     pub bootstrap_node_ids: Vec<VerifyingKey>,
+    pub relay_url: Option<RelayUrl>,
 }
 
 pub struct PandaNode {
@@ -82,10 +83,15 @@ impl PandaNode {
             .database_url(database_url);
 
         if cfg!(not(test)) {
+            let best_relay_url = params
+                .relay_url
+                .clone()
+                .unwrap_or_else(|| DEFAULT_IROH_RELAY_URL.clone());
+
             for bootstrap_id in &params.bootstrap_node_ids {
-                builder = builder.bootstrap(*bootstrap_id, RELAY_URL.clone());
+                builder = builder.bootstrap(*bootstrap_id, best_relay_url.clone());
             }
-            builder = builder.relay_url(RELAY_URL.clone());
+            builder = builder.relay_url(best_relay_url);
         }
 
         let node = builder.spawn().await?;
