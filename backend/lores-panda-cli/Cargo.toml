@@ -1,0 +1,19 @@
+[package]
+name = "lores-panda-cli"
+version = "0.18.2"
+edition = "2021"
+publish = false
+
+[[bin]]
+name = "lores-panda"
+path = "src/main.rs"
+
+[dependencies]
+clap = { version = "4", features = ["derive"] }
+hex = "0.4"
+prost = "0.13"
+tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
+tonic = "0.12"
+
+[build-dependencies]
+tonic-build = "0.12"
