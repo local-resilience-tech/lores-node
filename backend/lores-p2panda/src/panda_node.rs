@@ -14,7 +14,7 @@ use thiserror::Error;
 use tokio::sync::{mpsc, RwLock};
 use tokio_stream::StreamExt;
 
-use crate::region::RegionId;
+use crate::region::{derive_topic, RegionId};
 
 static DEFAULT_IROH_RELAY_URL: LazyLock<RelayUrl> = LazyLock::new(|| {
     "https://euc1-1.relay.n0.iroh-canary.iroh.link"
@@ -113,7 +113,7 @@ impl PandaNode {
         })
     }
 
-    pub async fn subscribe_to_topic(
+    async fn subscribe_to_topic(
         &self,
         topic_id: Topic,
         events_tx: mpsc::Sender<IncomingOperation>,
@@ -236,7 +236,27 @@ impl PandaNode {
         Ok(())
     }
 
-    pub async fn publish(&self, topic_id: Topic, bytes: Vec<u8>) -> Result<(), PandaPublishError> {
+    pub async fn subscribe_to_app_topic(
+        &self,
+        region_id: RegionId,
+        app_namespace: &str,
+        events_tx: mpsc::Sender<IncomingOperation>,
+    ) -> Result<(), SubscriptionError> {
+        let topic = derive_topic(&region_id, app_namespace);
+        self.subscribe_to_topic(topic, events_tx).await
+    }
+
+    pub async fn publish_to_app_topic(
+        &self,
+        region_id: &RegionId,
+        app_namespace: &str,
+        bytes: Vec<u8>,
+    ) -> Result<(), PandaPublishError> {
+        let topic = derive_topic(region_id, app_namespace);
+        self.publish(topic, bytes).await
+    }
+
+    async fn publish(&self, topic_id: Topic, bytes: Vec<u8>) -> Result<(), PandaPublishError> {
         let publishers = self.publishers.read().await;
         let publisher = publishers
             .get(&topic_id)

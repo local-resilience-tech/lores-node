@@ -79,12 +79,9 @@ async fn create_region(
     };
 
     // Subscribe to the new region
-    let topic_id = match panda_container.join_region(region_id.clone()).await {
-        Ok(topic_id) => topic_id,
-        Err(e) => {
-            return internal_server_error(e).into_response();
-        }
-    };
+    if let Err(e) = panda_container.join_region(region_id.clone()).await {
+        return internal_server_error(e).into_response();
+    }
 
     // Publish the RegionCreated event
     let event_payload = LoResEventPayload::RegionCreated(RegionCreatedDataV1 {
@@ -99,7 +96,7 @@ async fn create_region(
     println!("Prepared event payload: {:?}", event_payload);
 
     if let Err(e) = panda_container
-        .publish_persisted(topic_id, event_payload, auth_session.user)
+        .publish_persisted(&region_id, event_payload, auth_session.user)
         .await
     {
         return internal_server_error(e).into_response();
@@ -166,12 +163,9 @@ async fn join_region(
     }
 
     // Subscribe to the new region
-    let topic_id = match panda_container.join_region(region_id.clone()).await {
-        Ok(topic_id) => topic_id,
-        Err(e) => {
-            return internal_server_error(e).into_response();
-        }
-    };
+    if let Err(e) = panda_container.join_region(region_id.clone()).await {
+        return internal_server_error(e).into_response();
+    }
 
     // Publish the RegionCreated event
     let event_payload = LoResEventPayload::RegionJoinRequested(RegionJoinRequestedDataV1 {
@@ -182,7 +176,7 @@ async fn join_region(
     println!("Prepared event payload: {:?}", event_payload);
 
     if let Err(e) = panda_container
-        .publish_persisted(topic_id, event_payload, auth_session.user)
+        .publish_persisted(&region_id, event_payload, auth_session.user)
         .await
     {
         return internal_server_error(e).into_response();
@@ -250,15 +244,13 @@ async fn approve_join_request(
             .into_response();
     }
 
-    let topic_id = PandaContainer::get_region_topic_id(&region_id);
-
     // Publish the RegionJoinRequestApproved event
     let event_payload =
         LoResEventPayload::RegionJoinRequestApproved(RegionJoinRequestApprovedDataV1 {
             node_id: data.node_id.clone(),
         });
     if let Err(e) = panda_container
-        .publish_persisted(topic_id, event_payload, auth_session.user)
+        .publish_persisted(&region_id, event_payload, auth_session.user)
         .await
     {
         return internal_server_error(e).into_response();
@@ -347,8 +339,6 @@ async fn update_map(
             .into_response();
     }
 
-    let topic_id = PandaContainer::get_region_topic_id(&region_id);
-
     // Publish the event
     let event_payload = LoResEventPayload::RegionMapUpdated(RegionMapUpdatedDataV1 {
         min_latlng: data.min_latlng.clone(),
@@ -356,7 +346,7 @@ async fn update_map(
         image_data_url: data.image_data_url.clone(),
     });
     if let Err(e) = panda_container
-        .publish_persisted(topic_id, event_payload, auth_session.user)
+        .publish_persisted(&region_id, event_payload, auth_session.user)
         .await
     {
         return internal_server_error(e).into_response();

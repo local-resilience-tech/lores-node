@@ -192,23 +192,22 @@ impl PandaContainer {
     }
 
     pub async fn join_region(&self, region_id: RegionId) -> Result<Topic, PandaSubscriptionError> {
-        let topic_id = derive_topic(&region_id, "lores-axum:v1");
-        self.subscribe(topic_id).await?;
+        self.subscribe(region_id.clone(), "lores-axum:v1").await?;
 
         let node_lock = self.node.lock().await;
         if let Some(node) = node_lock.as_ref() {
-            node.register_region(region_id).await;
+            node.register_region(region_id.clone()).await;
         }
         drop(node_lock);
 
-        Ok(topic_id)
+        Ok(derive_topic(&region_id, "lores-axum:v1"))
     }
 
-    pub fn get_region_topic_id(region_id: &RegionId) -> Topic {
-        derive_topic(region_id, "lores-axum:v1")
-    }
-
-    pub async fn subscribe(&self, topic_id: Topic) -> Result<(), PandaSubscriptionError> {
+    pub async fn subscribe(
+        &self,
+        region_id: RegionId,
+        app_namespace: &str,
+    ) -> Result<(), PandaSubscriptionError> {
         let node_lock = self.node.lock().await;
         let node = match node_lock.as_ref() {
             Some(node) => node.clone(),
@@ -218,7 +217,8 @@ impl PandaContainer {
 
         let (incoming_tx, mut incoming_rx) = mpsc::channel::<IncomingOperation>(32);
 
-        node.subscribe_to_topic(topic_id, incoming_tx).await?;
+        node.subscribe_to_app_topic(region_id, app_namespace, incoming_tx)
+            .await?;
 
         let events_tx = self.lores_events_tx.clone();
         tokio::spawn(async move {
@@ -241,7 +241,7 @@ impl PandaContainer {
 
     pub async fn publish_persisted(
         &self,
-        topic_id: Topic,
+        region_id: &RegionId,
         event_payload: LoResEventPayload,
         current_user: Option<User>,
     ) -> Result<(), PandaPublishError> {
@@ -260,7 +260,8 @@ impl PandaContainer {
         let encoded_payload = encode_lores_event_payload(event_payload, metadata)
             .map_err(|e| PandaPublishError::AppError(format!("Encoding error: {e}")))?;
 
-        node.publish(topic_id, encoded_payload).await?;
+        node.publish_to_app_topic(region_id, "lores-axum:v1", encoded_payload)
+            .await?;
 
         Ok(())
     }

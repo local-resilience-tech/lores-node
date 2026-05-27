@@ -46,6 +46,40 @@ impl PandaService {
     pub fn into_server(self) -> PandaServer<Self> {
         PandaServer::new(self)
     }
+
+    /// Returns a broadcast receiver for the topic derived from `region_id` and
+    /// `app_namespace`, creating the underlying p2panda subscription and
+    /// forwarding task the first time this topic is seen.
+    async fn ensure_broadcast_subscription(
+        &self,
+        node: &PandaNode,
+        region_id: RegionId,
+        app_namespace: &str,
+    ) -> Result<broadcast::Receiver<IncomingOperation>, Status> {
+        let topic = derive_topic(&region_id, app_namespace);
+        let mut subs = self.subscriptions.write().await;
+
+        if let Some(tx) = subs.get(&topic) {
+            return Ok(tx.subscribe());
+        }
+
+        let (broadcast_tx, broadcast_rx) = broadcast::channel::<IncomingOperation>(128);
+        let (incoming_tx, mut incoming_rx) = tokio::sync::mpsc::channel::<IncomingOperation>(128);
+
+        node.subscribe_to_app_topic(region_id, app_namespace, incoming_tx)
+            .await
+            .map_err(subscription_error_to_status)?;
+
+        let fwd_tx = broadcast_tx.clone();
+        tokio::spawn(async move {
+            while let Some(op) = incoming_rx.recv().await {
+                let _ = fwd_tx.send(op);
+            }
+        });
+
+        subs.insert(topic, broadcast_tx);
+        Ok(broadcast_rx)
+    }
 }
 
 #[tonic::async_trait]
@@ -61,7 +95,8 @@ impl Panda for PandaService {
             .try_into()
             .map_err(|_| Status::invalid_argument("region_id must be exactly 32 bytes"))?;
 
-        let topic = derive_topic(&RegionId::from(region_bytes), &req.app_namespace);
+        let region_id = RegionId::from(region_bytes);
+        let app_namespace = req.app_namespace;
 
         let node_lock = self.node.lock().await;
         let node = node_lock
@@ -70,7 +105,7 @@ impl Panda for PandaService {
             .clone();
         drop(node_lock);
 
-        node.publish(topic, req.payload)
+        node.publish_to_app_topic(&region_id, &app_namespace, req.payload)
             .await
             .map_err(publish_error_to_status)?;
 
@@ -93,7 +128,6 @@ impl Panda for PandaService {
 
         let region_id = RegionId::from(region_bytes);
         let app_namespace = req.app_namespace;
-        let topic = derive_topic(&region_id, &app_namespace);
 
         let node_lock = self.node.lock().await;
         let node = node_lock
@@ -102,40 +136,11 @@ impl Panda for PandaService {
             .clone();
         drop(node_lock);
 
-        // Under a write lock, check whether a p2panda subscription exists for
-        // this topic yet.  If not, create one and wire it to a broadcast
-        // channel.  Either way, hand the caller a broadcast receiver.
-        let mut subs = self.subscriptions.write().await;
-
-        let receiver = if let Some(tx) = subs.get(&topic) {
-            tx.subscribe()
-        } else {
-            let (broadcast_tx, broadcast_rx) = broadcast::channel::<IncomingOperation>(128);
-
-            let (incoming_tx, mut incoming_rx) =
-                tokio::sync::mpsc::channel::<IncomingOperation>(128);
-
-            node.subscribe_to_topic(topic, incoming_tx)
-                .await
-                .map_err(subscription_error_to_status)?;
-
-            // Forward from the p2panda mpsc channel to the broadcast channel.
-            // Errors from broadcast::Sender::send mean no receivers are
-            // currently listening, which is harmless — we keep forwarding so
-            // that new subscribers receive future messages without requiring
-            // a fresh p2panda subscription.
-            let fwd_tx = broadcast_tx.clone();
-            tokio::spawn(async move {
-                while let Some(op) = incoming_rx.recv().await {
-                    let _ = fwd_tx.send(op);
-                }
-            });
-
-            subs.insert(topic, broadcast_tx);
-            broadcast_rx
-        };
-
-        drop(subs);
+        // Under a write lock, ensure a p2panda subscription exists for this
+        // topic and return a broadcast receiver for it.
+        let receiver = self
+            .ensure_broadcast_subscription(&node, region_id.clone(), &app_namespace)
+            .await?;
 
         // Record the region/namespace so ListRegions can report it.
         node.register_region(region_id).await;
