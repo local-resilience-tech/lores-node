@@ -13,7 +13,7 @@ use crate::{
             LoResEventPayload, RegionCreatedDataV1, RegionJoinRequestApprovedDataV1,
             RegionJoinRequestedDataV1, RegionMapUpdatedDataV1,
         },
-        PandaContainer, RegionId,
+        PandaContainer, RegionAppTopic, RegionId,
     },
     DatabaseState,
 };
@@ -96,7 +96,11 @@ async fn create_region(
     println!("Prepared event payload: {:?}", event_payload);
 
     if let Err(e) = panda_container
-        .publish_persisted(&region_id, event_payload, auth_session.user)
+        .publish_persisted(
+            &RegionAppTopic::new(region_id.clone(), "lores-axum:v1"),
+            event_payload,
+            auth_session.user,
+        )
         .await
     {
         return internal_server_error(e).into_response();
@@ -176,7 +180,11 @@ async fn join_region(
     println!("Prepared event payload: {:?}", event_payload);
 
     if let Err(e) = panda_container
-        .publish_persisted(&region_id, event_payload, auth_session.user)
+        .publish_persisted(
+            &RegionAppTopic::new(region_id, "lores-axum:v1"),
+            event_payload,
+            auth_session.user,
+        )
         .await
     {
         return internal_server_error(e).into_response();
@@ -250,7 +258,11 @@ async fn approve_join_request(
             node_id: data.node_id.clone(),
         });
     if let Err(e) = panda_container
-        .publish_persisted(&region_id, event_payload, auth_session.user)
+        .publish_persisted(
+            &RegionAppTopic::new(region_id, "lores-axum:v1"),
+            event_payload,
+            auth_session.user,
+        )
         .await
     {
         return internal_server_error(e).into_response();
@@ -346,7 +358,11 @@ async fn update_map(
         image_data_url: data.image_data_url.clone(),
     });
     if let Err(e) = panda_container
-        .publish_persisted(&region_id, event_payload, auth_session.user)
+        .publish_persisted(
+            &RegionAppTopic::new(region_id, "lores-axum:v1"),
+            event_payload,
+            auth_session.user,
+        )
         .await
     {
         return internal_server_error(e).into_response();

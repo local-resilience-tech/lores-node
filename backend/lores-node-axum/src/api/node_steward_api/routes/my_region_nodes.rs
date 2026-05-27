@@ -11,7 +11,7 @@ use crate::{
     data::entities::{LatLng, NodeState},
     panda_comms::{
         lores_events::{LoResEventPayload, NodeStatusPostedDataV1, RegionNodeUpdatedDataV1},
-        PandaContainer, RegionId,
+        PandaContainer, RegionAppTopic, RegionId,
     },
 };
 
@@ -101,7 +101,11 @@ async fn update_this_region_node(
 
     // Publish the operation
     if let Err(e) = panda_container
-        .publish_persisted(&region_id, event_payload, auth_session.user)
+        .publish_persisted(
+            &RegionAppTopic::new(region_id, "lores-axum:v1"),
+            event_payload,
+            auth_session.user,
+        )
         .await
     {
         return internal_server_error(e).into_response();
@@ -150,7 +154,11 @@ async fn post_region_node_status(
     println!("Created event payload: {:?}", event_payload);
 
     if let Err(e) = panda_container
-        .publish_persisted(&region_id, event_payload, auth_session.user)
+        .publish_persisted(
+            &RegionAppTopic::new(region_id, "lores-axum:v1"),
+            event_payload,
+            auth_session.user,
+        )
         .await
     {
         return internal_server_error(e).into_response();

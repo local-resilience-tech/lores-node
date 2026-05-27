@@ -67,3 +67,24 @@ pub fn derive_topic(region_id: &RegionId, app_namespace: &str) -> Topic {
     data.extend_from_slice(app_namespace.as_bytes());
     Topic::from(*Hash::digest(&data).as_bytes())
 }
+
+/// Pairs a [`RegionId`] with an application namespace to fully identify a
+/// p2panda topic.
+///
+/// Both pieces of data are required together whenever subscribing to or
+/// publishing on a topic, so grouping them reduces the chance of accidentally
+/// passing them in the wrong order or omitting one.
+#[derive(Clone)]
+pub struct RegionAppTopic {
+    pub region_id: RegionId,
+    pub app_namespace: String,
+}
+
+impl RegionAppTopic {
+    pub fn new(region_id: RegionId, app_namespace: impl Into<String>) -> Self {
+        Self {
+            region_id,
+            app_namespace: app_namespace.into(),
+        }
+    }
+}

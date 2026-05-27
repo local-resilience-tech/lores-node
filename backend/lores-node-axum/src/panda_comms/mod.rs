@@ -5,6 +5,7 @@ mod panda_container;
 
 pub use config::ThisP2PandaNodeRepo;
 use lores_events::LoResEvent;
+pub use lores_p2panda::RegionAppTopic;
 pub use lores_p2panda::RegionId;
 pub use panda_container::{build_public_key_from_hex, PandaContainer};
 use sqlx::SqlitePool;

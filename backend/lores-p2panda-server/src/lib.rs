@@ -3,8 +3,8 @@ use std::pin::Pin;
 use std::sync::Arc;
 
 use lores_p2panda::{
-    derive_topic, IncomingOperation, PandaNode, PandaPublishError, RegionId, SubscriptionError,
-    Topic,
+    derive_topic, IncomingOperation, PandaNode, PandaPublishError, RegionAppTopic, RegionId,
+    SubscriptionError, Topic,
 };
 use tokio::sync::{broadcast, Mutex, RwLock};
 use tokio_stream::wrappers::BroadcastStream;
@@ -53,10 +53,9 @@ impl PandaService {
     async fn ensure_broadcast_subscription(
         &self,
         node: &PandaNode,
-        region_id: RegionId,
-        app_namespace: &str,
+        region_app_topic: &RegionAppTopic,
     ) -> Result<broadcast::Receiver<IncomingOperation>, Status> {
-        let topic = derive_topic(&region_id, app_namespace);
+        let topic = derive_topic(&region_app_topic.region_id, &region_app_topic.app_namespace);
         let mut subs = self.subscriptions.write().await;
 
         if let Some(tx) = subs.get(&topic) {
@@ -66,7 +65,7 @@ impl PandaService {
         let (broadcast_tx, broadcast_rx) = broadcast::channel::<IncomingOperation>(128);
         let (incoming_tx, mut incoming_rx) = tokio::sync::mpsc::channel::<IncomingOperation>(128);
 
-        node.subscribe_to_app_topic(region_id, app_namespace, incoming_tx)
+        node.subscribe_to_app_topic(region_app_topic, incoming_tx)
             .await
             .map_err(subscription_error_to_status)?;
 
@@ -105,7 +104,7 @@ impl Panda for PandaService {
             .clone();
         drop(node_lock);
 
-        node.publish_to_app_topic(&region_id, &app_namespace, req.payload)
+        node.publish_to_app_topic(&RegionAppTopic::new(region_id, app_namespace), req.payload)
             .await
             .map_err(publish_error_to_status)?;
 
@@ -136,14 +135,16 @@ impl Panda for PandaService {
             .clone();
         drop(node_lock);
 
+        let region_app_topic = RegionAppTopic::new(region_id, app_namespace);
+
         // Under a write lock, ensure a p2panda subscription exists for this
         // topic and return a broadcast receiver for it.
         let receiver = self
-            .ensure_broadcast_subscription(&node, region_id.clone(), &app_namespace)
+            .ensure_broadcast_subscription(&node, &region_app_topic)
             .await?;
 
         // Record the region/namespace so ListRegions can report it.
-        node.register_region(region_id).await;
+        node.register_region(region_app_topic.region_id).await;
 
         let stream = BroadcastStream::new(receiver).filter_map(|result| match result {
             Ok(op) => Some(Ok(incoming_to_event(op))),

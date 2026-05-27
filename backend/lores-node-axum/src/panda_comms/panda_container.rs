@@ -9,7 +9,7 @@ use lores_p2panda::{
         LogCount, OperationCountByAuthorAndTopic, PandaNode, PandaPublishError, RequiredNodeParams,
         SubscriptionError,
     },
-    IncomingOperation, PandaNodeError, RegionId, Topic,
+    IncomingOperation, PandaNodeError, RegionAppTopic, RegionId, Topic,
 };
 
 use crate::api::auth_api::auth_backend::User;
@@ -192,21 +192,25 @@ impl PandaContainer {
     }
 
     pub async fn join_region(&self, region_id: RegionId) -> Result<Topic, PandaSubscriptionError> {
-        self.subscribe(region_id.clone(), "lores-axum:v1").await?;
+        let region_app_topic = RegionAppTopic::new(region_id, "lores-axum:v1");
+        self.subscribe(&region_app_topic).await?;
 
         let node_lock = self.node.lock().await;
         if let Some(node) = node_lock.as_ref() {
-            node.register_region(region_id.clone()).await;
+            node.register_region(region_app_topic.region_id.clone())
+                .await;
         }
         drop(node_lock);
 
-        Ok(derive_topic(&region_id, "lores-axum:v1"))
+        Ok(derive_topic(
+            &region_app_topic.region_id,
+            &region_app_topic.app_namespace,
+        ))
     }
 
     pub async fn subscribe(
         &self,
-        region_id: RegionId,
-        app_namespace: &str,
+        region_app_topic: &RegionAppTopic,
     ) -> Result<(), PandaSubscriptionError> {
         let node_lock = self.node.lock().await;
         let node = match node_lock.as_ref() {
@@ -217,7 +221,7 @@ impl PandaContainer {
 
         let (incoming_tx, mut incoming_rx) = mpsc::channel::<IncomingOperation>(32);
 
-        node.subscribe_to_app_topic(region_id, app_namespace, incoming_tx)
+        node.subscribe_to_app_topic(region_app_topic, incoming_tx)
             .await?;
 
         let events_tx = self.lores_events_tx.clone();
@@ -241,7 +245,7 @@ impl PandaContainer {
 
     pub async fn publish_persisted(
         &self,
-        region_id: &RegionId,
+        region_app_topic: &RegionAppTopic,
         event_payload: LoResEventPayload,
         current_user: Option<User>,
     ) -> Result<(), PandaPublishError> {
@@ -260,7 +264,7 @@ impl PandaContainer {
         let encoded_payload = encode_lores_event_payload(event_payload, metadata)
             .map_err(|e| PandaPublishError::AppError(format!("Encoding error: {e}")))?;
 
-        node.publish_to_app_topic(region_id, "lores-axum:v1", encoded_payload)
+        node.publish_to_app_topic(region_app_topic, encoded_payload)
             .await?;
 
         Ok(())
