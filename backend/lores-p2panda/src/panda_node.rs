@@ -2,9 +2,9 @@ use std::collections::HashMap;
 use std::sync::LazyLock;
 
 use p2panda::node::SpawnError;
-use p2panda::streams::{StreamFrom, PublishError, StreamEvent, StreamPublisher};
+use p2panda::streams::{PublishError, StreamEvent, StreamFrom, StreamPublisher};
 use p2panda::Node;
-use p2panda_core::{Hash, SigningKey, VerifyingKey, Topic};
+use p2panda_core::{Hash, SigningKey, Topic, VerifyingKey};
 use p2panda_net::iroh_endpoint::RelayUrl;
 use p2panda_store::SqliteError;
 use sqlx::sqlite::{SqliteConnectOptions, SqlitePool, SqlitePoolOptions};
@@ -13,13 +13,19 @@ use thiserror::Error;
 use tokio::sync::{mpsc, RwLock};
 use tokio_stream::StreamExt;
 
-use crate::IncomingOperation;
-
 static RELAY_URL: LazyLock<RelayUrl> = LazyLock::new(|| {
     "https://euc1-1.relay.n0.iroh-canary.iroh.link"
         .parse()
         .expect("valid relay URL")
 });
+
+pub struct IncomingOperation {
+    pub author: VerifyingKey,
+    pub topic: Topic,
+    pub bytes: Vec<u8>,
+    pub operation_id: Hash,
+    pub timestamp: u64,
+}
 
 #[derive(Debug, Error)]
 pub enum PandaNodeError {

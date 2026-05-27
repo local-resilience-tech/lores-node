@@ -11,7 +11,10 @@ use crate::{
 };
 
 pub fn find_deployed_local_apps() -> Vec<LocalApp> {
-    let deployed_stacks = docker_stack_ls().unwrap_or_default();
+    let deployed_stacks = docker_stack_ls().unwrap_or_else(|e| {
+        eprintln!("Error listing docker stacks: {:?}", e);
+        vec![]
+    });
 
     let local_apps = deployed_stacks
         .into_iter()
@@ -35,7 +38,10 @@ fn build_app_details(stack: &DockerStack) -> Result<LocalApp, anyhow::Error> {
 }
 
 fn get_app_service_labels(stack_name: &str) -> Result<CoopCloudServiceLabels, anyhow::Error> {
-    let services = docker_stack_services(stack_name)?;
+    let services = docker_stack_services(stack_name).map_err(|e| {
+        eprintln!("Error listing services for stack {}: {:?}", stack_name, e);
+        e
+    })?;
     let service = get_app_service_from_list(&services).ok_or_else(|| {
         anyhow::anyhow!(
             "App service not found in stack services for stack: {}",
