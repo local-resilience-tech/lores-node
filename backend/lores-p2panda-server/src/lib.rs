@@ -14,7 +14,8 @@ pub mod proto {
 
 use proto::{
     panda_server::{Panda, PandaServer},
-    OperationEvent, PublishRequest, PublishResponse, SubscribeRequest,
+    ListTopicsRequest, ListTopicsResponse, OperationEvent, PublishRequest, PublishResponse,
+    SubscribeRequest,
 };
 
 /// gRPC service that exposes [`PandaNode`] publish and subscribe over the
@@ -138,6 +139,28 @@ impl Panda for PandaService {
         });
 
         Ok(Response::new(Box::pin(stream)))
+    }
+
+
+    async fn list_topics(
+        &self,
+        _request: Request<ListTopicsRequest>,
+    ) -> Result<Response<ListTopicsResponse>, Status> {
+        let node_lock = self.node.lock().await;
+        let node = node_lock
+            .as_ref()
+            .ok_or_else(|| Status::unavailable("p2panda node is not yet started"))?
+            .clone();
+        drop(node_lock);
+
+        let topic_ids = node
+            .get_subscribed_topics()
+            .await
+            .into_iter()
+            .map(|t| t.to_bytes().to_vec())
+            .collect();
+
+        Ok(Response::new(ListTopicsResponse { topic_ids }))
     }
 }
 

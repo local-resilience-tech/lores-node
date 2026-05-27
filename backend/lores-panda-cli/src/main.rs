@@ -3,7 +3,7 @@ mod proto {
 }
 
 use clap::{Parser, Subcommand};
-use proto::{panda_client::PandaClient, PublishRequest};
+use proto::{panda_client::PandaClient, ListTopicsRequest, PublishRequest};
 
 #[derive(Parser)]
 #[command(name = "lores-panda", about = "CLI for the lores p2panda gRPC server")]
@@ -25,6 +25,9 @@ enum Command {
         /// Payload to publish (sent as UTF-8 bytes)
         payload: String,
     },
+
+    /// List the topics the node is currently subscribed to
+    ListTopics,
 }
 
 #[tokio::main]
@@ -38,11 +41,12 @@ async fn main() {
 }
 
 async fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
+    let server = cli.server.clone();
     match cli.command {
         Command::Publish { topic, payload } => {
             let topic_bytes = parse_topic_hex(&topic)?;
 
-            let mut client = PandaClient::connect(cli.server).await?;
+            let mut client = connect(&server).await?;
 
             client
                 .publish(PublishRequest {
@@ -53,9 +57,29 @@ async fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
 
             println!("published");
         }
+        Command::ListTopics => {
+            let mut client = connect(&server).await?;
+
+            let response = client.list_topics(ListTopicsRequest {}).await?;
+
+            let topics = response.into_inner().topic_ids;
+            if topics.is_empty() {
+                println!("no subscribed topics");
+            } else {
+                for id in topics {
+                    println!("{}", hex::encode(id));
+                }
+            }
+        }
     }
 
     Ok(())
+}
+
+async fn connect(server: &str) -> Result<PandaClient<tonic::transport::Channel>, Box<dyn std::error::Error>> {
+    PandaClient::connect(server.to_string())
+        .await
+        .map_err(|e| format!("could not connect to gRPC server at {server}: {e}").into())
 }
 
 fn parse_topic_hex(s: &str) -> Result<[u8; 32], Box<dyn std::error::Error>> {

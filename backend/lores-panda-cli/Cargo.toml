@@ -5,7 +5,7 @@ edition = "2021"
 publish = false
 
 [[bin]]
-name = "lores-panda"
+name = "lores-panda-cli"
 path = "src/main.rs"
 
 [dependencies]

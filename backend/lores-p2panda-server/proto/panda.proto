@@ -13,6 +13,16 @@ service Panda {
   // HTTP/2 flow control provides natural backpressure: the server will not
   // send faster than the client reads.
   rpc Subscribe(SubscribeRequest) returns (stream OperationEvent);
+
+  // List the topics the node is currently subscribed to.
+  rpc ListTopics(ListTopicsRequest) returns (ListTopicsResponse);
+}
+
+message ListTopicsRequest {}
+
+message ListTopicsResponse {
+  // Each entry is a 32-byte topic identifier.
+  repeated bytes topic_ids = 1;
 }
 
 message PublishRequest {
