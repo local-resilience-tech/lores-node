@@ -2,11 +2,17 @@ syntax = "proto3";
 
 package lores.panda.v1;
 
-service PandaPublish {
+service Panda {
   // Publish an operation to a topic. Returns only after the operation has been
   // persisted by the local p2panda node, guaranteeing it will eventually be
   // propagated to peers regardless of their current availability.
   rpc Publish(PublishRequest) returns (PublishResponse);
+
+  // Subscribe to a topic and receive a stream of operations. The stream
+  // delivers only operations that arrive after the subscription is established.
+  // HTTP/2 flow control provides natural backpressure: the server will not
+  // send faster than the client reads.
+  rpc Subscribe(SubscribeRequest) returns (stream OperationEvent);
 }
 
 message PublishRequest {
@@ -18,3 +24,21 @@ message PublishRequest {
 
 // An empty response indicates the operation was successfully persisted.
 message PublishResponse {}
+
+message SubscribeRequest {
+  // 32-byte topic identifier to subscribe to.
+  bytes topic_id = 1;
+}
+
+message OperationEvent {
+  // 32-byte topic identifier the operation belongs to.
+  bytes topic_id = 1;
+  // 32-byte author public key.
+  bytes author = 2;
+  // 32-byte operation hash used as a unique identifier.
+  bytes operation_id = 3;
+  // Unix timestamp in milliseconds.
+  uint64 timestamp = 4;
+  // Encoded operation payload (e.g. CBOR).
+  bytes payload = 5;
+}

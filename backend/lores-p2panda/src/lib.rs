@@ -2,7 +2,7 @@ pub mod panda_node;
 
 pub use panda_node::{
     IncomingOperation, LogCount, OperationCountByAuthorAndTopic, PandaNode, PandaNodeError,
-    PandaPublishError, RequiredNodeParams,
+    PandaPublishError, RequiredNodeParams, SubscriptionError,
 };
 
 pub use p2panda_core;

@@ -19,6 +19,7 @@ static DEFAULT_IROH_RELAY_URL: LazyLock<RelayUrl> = LazyLock::new(|| {
         .expect("valid relay URL")
 });
 
+#[derive(Clone)]
 pub struct IncomingOperation {
     pub author: VerifyingKey,
     pub topic: Topic,
