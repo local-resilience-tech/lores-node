@@ -3,8 +3,8 @@ use std::pin::Pin;
 use std::sync::Arc;
 
 use lores_p2panda::{
-    IncomingOperation, PandaNode, PandaPublishError, RegionAppTopic, RegionId, SubscriptionError,
-    Topic,
+    IncomingOperation, PandaNode, PandaPublishError, RegionAppTopic, RegionId, RegionTopic,
+    SubscriptionError, Topic,
 };
 use tokio::sync::{broadcast, Mutex, RwLock};
 use tokio_stream::wrappers::BroadcastStream;
@@ -65,7 +65,7 @@ impl PandaService {
         let (broadcast_tx, broadcast_rx) = broadcast::channel::<IncomingOperation>(128);
         let (incoming_tx, mut incoming_rx) = tokio::sync::mpsc::channel::<IncomingOperation>(128);
 
-        node.subscribe_to_app_topic(region_app_topic, incoming_tx)
+        node.subscribe_to_region_topic(region_app_topic, incoming_tx)
             .await
             .map_err(subscription_error_to_status)?;
 
@@ -104,7 +104,7 @@ impl Panda for PandaService {
             .clone();
         drop(node_lock);
 
-        node.publish_to_app_topic(&RegionAppTopic::new(region_id, app_namespace), req.payload)
+        node.publish_to_region_topic(&RegionAppTopic::new(region_id, app_namespace), req.payload)
             .await
             .map_err(publish_error_to_status)?;
 

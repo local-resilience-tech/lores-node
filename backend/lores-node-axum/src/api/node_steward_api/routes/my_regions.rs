@@ -13,7 +13,7 @@ use crate::{
             LoResEventPayload, RegionCreatedDataV1, RegionJoinRequestApprovedDataV1,
             RegionJoinRequestedDataV1, RegionMapUpdatedDataV1,
         },
-        PandaContainer, RegionAppTopic, RegionId,
+        PandaContainer, RegionAdminTopic, RegionId,
     },
     DatabaseState,
 };
@@ -97,7 +97,7 @@ async fn create_region(
 
     if let Err(e) = panda_container
         .publish_persisted(
-            &RegionAppTopic::new(region_id.clone(), "lores-axum:v1"),
+            &RegionAdminTopic::new(region_id.clone()),
             event_payload,
             auth_session.user,
         )
@@ -181,7 +181,7 @@ async fn join_region(
 
     if let Err(e) = panda_container
         .publish_persisted(
-            &RegionAppTopic::new(region_id, "lores-axum:v1"),
+            &RegionAdminTopic::new(region_id),
             event_payload,
             auth_session.user,
         )
@@ -259,7 +259,7 @@ async fn approve_join_request(
         });
     if let Err(e) = panda_container
         .publish_persisted(
-            &RegionAppTopic::new(region_id, "lores-axum:v1"),
+            &RegionAdminTopic::new(region_id),
             event_payload,
             auth_session.user,
         )
@@ -359,7 +359,7 @@ async fn update_map(
     });
     if let Err(e) = panda_container
         .publish_persisted(
-            &RegionAppTopic::new(region_id, "lores-axum:v1"),
+            &RegionAdminTopic::new(region_id),
             event_payload,
             auth_session.user,
         )

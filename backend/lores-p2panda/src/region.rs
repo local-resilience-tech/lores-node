@@ -52,12 +52,27 @@ impl fmt::Display for RegionId {
     }
 }
 
-/// Pairs a [`RegionId`] with an application namespace to fully identify a
-/// p2panda topic.
-///
-/// Both pieces of data are required together whenever subscribing to or
-/// publishing on a topic, so grouping them reduces the chance of accidentally
-/// passing them in the wrong order or omitting one.
+pub trait RegionTopic {
+    fn p2panda_topic(&self) -> Topic;
+}
+
+#[derive(Clone)]
+pub struct RegionAdminTopic {
+    pub region_id: RegionId,
+}
+
+impl RegionAdminTopic {
+    pub fn new(region_id: RegionId) -> Self {
+        Self { region_id }
+    }
+}
+
+impl RegionTopic for RegionAdminTopic {
+    fn p2panda_topic(&self) -> Topic {
+        Topic::from(<[u8; 32]>::from(self.region_id.clone()))
+    }
+}
+
 #[derive(Clone)]
 pub struct RegionAppTopic {
     pub region_id: RegionId,
@@ -71,9 +86,10 @@ impl RegionAppTopic {
             app_namespace: app_namespace.into(),
         }
     }
+}
 
-    /// Derive the p2panda [`Topic`] for this region + application namespace.
-    pub fn p2panda_topic(&self) -> Topic {
+impl RegionTopic for RegionAppTopic {
+    fn p2panda_topic(&self) -> Topic {
         let mut data = Vec::with_capacity(32 + self.app_namespace.len());
         data.extend_from_slice(&self.region_id.bytes);
         data.extend_from_slice(self.app_namespace.as_bytes());

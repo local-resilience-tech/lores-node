@@ -11,7 +11,7 @@ use crate::{
     data::entities::LocalApp,
     panda_comms::{
         lores_events::{AppRegisteredDataV1, LoResEventPayload},
-        PandaContainer, RegionAppTopic, RegionId,
+        PandaContainer, RegionAdminTopic, RegionId,
     },
 };
 
@@ -53,7 +53,7 @@ async fn register_app(
     // Publish the operation
     if let Err(e) = panda_container
         .publish_persisted(
-            &RegionAppTopic::new(region_id, "lores-axum:v1"),
+            &RegionAdminTopic::new(region_id),
             event_payload,
             auth_session.user,
         )

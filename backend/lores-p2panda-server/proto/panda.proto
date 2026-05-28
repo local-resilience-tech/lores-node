@@ -26,7 +26,7 @@ service Panda {
 message PublishRequest {
   // 32-byte region identifier.
   bytes region_id = 1;
-  // Application namespace string (e.g. "lores-axum:v1").
+  // Application namespace string (e.g. "my-app:v1").
   string app_namespace = 2;
   // Encoded operation payload (e.g. CBOR).
   bytes payload = 3;
@@ -38,7 +38,7 @@ message PublishResponse {}
 message SubscribeRequest {
   // 32-byte region identifier.
   bytes region_id = 1;
-  // Application namespace string (e.g. "lores-axum:v1").
+  // Application namespace string (e.g. "my-app:v1").
   string app_namespace = 2;
 }
 

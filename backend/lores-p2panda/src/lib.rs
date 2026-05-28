@@ -5,7 +5,7 @@ pub use panda_node::{
     IncomingOperation, LogCount, OperationCountByAuthorAndTopic, PandaNode, PandaNodeError,
     PandaPublishError, RequiredNodeParams, SubscriptionError,
 };
-pub use region::{RegionAppTopic, RegionId};
+pub use region::{RegionAdminTopic, RegionAppTopic, RegionId, RegionTopic};
 
 pub use p2panda_core;
 pub use p2panda_core::Topic;
