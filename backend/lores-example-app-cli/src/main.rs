@@ -33,6 +33,8 @@ enum Command {
     ListTopics,
 }
 
+const APP_NAMESPACE: &str = "lores-example-app-cli:v1";
+
 #[tokio::main]
 async fn main() {
     let cli = Cli::parse();
@@ -54,7 +56,7 @@ async fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
             client
                 .publish(PublishRequest {
                     region_id: region_bytes.to_vec(),
-                    app_namespace: "lores-panda-cli:v1".to_string(),
+                    app_namespace: APP_NAMESPACE.to_string(),
                     payload: payload.into_bytes(),
                 })
                 .await?;
