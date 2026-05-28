@@ -9,9 +9,11 @@ name = "lores-panda-cli"
 path = "src/main.rs"
 
 [dependencies]
+ciborium = "0.2"
 clap = { version = "4", features = ["derive"] }
 hex = "0.4"
 prost = "0.13"
+serde = { version = "1", features = ["derive"] }
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
 tonic = "0.12"
 

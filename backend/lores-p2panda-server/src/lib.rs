@@ -189,12 +189,23 @@ fn incoming_to_event(op: IncomingOperation) -> OperationEvent {
 
 fn publish_error_to_status(e: PandaPublishError) -> Status {
     match e {
-        PandaPublishError::NodeNotStarted => Status::unavailable("p2panda node not started"),
-        PandaPublishError::NoSubscription(t) => {
-            Status::failed_precondition(format!("no subscription for topic {:?}", t))
+        PandaPublishError::NodeNotStarted => {
+            eprintln!("publish error: p2panda node not started");
+            Status::unavailable("p2panda node not started")
         }
-        PandaPublishError::Publish(e) => Status::internal(e.to_string()),
-        PandaPublishError::AppError(msg) => Status::internal(msg),
+        PandaPublishError::NoSubscription(t) => {
+            let msg = format!("no subscription for topic {}", t.to_hex());
+            eprintln!("publish error: {msg}");
+            Status::failed_precondition(msg)
+        }
+        PandaPublishError::Publish(e) => {
+            eprintln!("publish error: {e}");
+            Status::internal(e.to_string())
+        }
+        PandaPublishError::AppError(msg) => {
+            eprintln!("publish error: {msg}");
+            Status::internal(msg)
+        }
     }
 }
 

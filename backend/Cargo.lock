@@ -2882,9 +2882,11 @@ dependencies = [
 name = "lores-panda-cli"
 version = "0.18.2"
 dependencies = [
+ "ciborium",
  "clap",
  "hex",
  "prost",
+ "serde",
  "tokio",
  "tonic",
  "tonic-build",

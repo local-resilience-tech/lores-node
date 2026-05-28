@@ -4,6 +4,12 @@ mod proto {
 
 use clap::{Parser, Subcommand};
 use proto::{panda_client::PandaClient, ListRegionsRequest, PublishRequest};
+use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Serialize, Deserialize)]
+struct MessagePayload {
+    message: String,
+}
 
 #[derive(Parser)]
 #[command(name = "lores-panda", about = "CLI for the lores p2panda gRPC server")]
@@ -18,12 +24,12 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Command {
-    /// Publish a payload to a region
+    /// Publish a message to a region
     Publish {
         /// Region ID as 64 hex characters (32 bytes)
         region: String,
-        /// Payload to publish (sent as UTF-8 bytes)
-        payload: String,
+        /// Message to publish (comma-delimited string)
+        message: String,
     },
 
     /// List the regions and app namespaces the node is participating in
@@ -45,8 +51,13 @@ async fn main() {
 async fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
     let server = cli.server.clone();
     match cli.command {
-        Command::Publish { region, payload } => {
+        Command::Publish { region, message } => {
             let region_bytes = parse_region_hex(&region)?;
+
+            let payload_struct = MessagePayload { message };
+            let mut payload_bytes: Vec<u8> = Vec::new();
+            ciborium::into_writer(&payload_struct, &mut payload_bytes)
+                .map_err(|e| format!("failed to encode payload as CBOR: {e}"))?;
 
             let mut client = connect(&server).await?;
 
@@ -54,7 +65,7 @@ async fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
                 .publish(PublishRequest {
                     region_id: region_bytes.to_vec(),
                     app_namespace: APP_NAMESPACE.to_string(),
-                    payload: payload.into_bytes(),
+                    payload: payload_bytes,
                 })
                 .await?;
 
