@@ -104,7 +104,16 @@ impl Panda for PandaService {
             .clone();
         drop(node_lock);
 
-        node.publish_to_region_topic(&RegionAppTopic::new(region_id, app_namespace), req.payload)
+        let region_app_topic = RegionAppTopic::new(region_id, app_namespace);
+
+        // Ensure a subscription exists for this topic so the publisher is
+        // available. This is idempotent: if already subscribed the existing
+        // broadcast channel is reused.
+        let _rx = self
+            .ensure_broadcast_subscription(&node, &region_app_topic)
+            .await?;
+
+        node.publish_to_region_topic(&region_app_topic, req.payload)
             .await
             .map_err(publish_error_to_status)?;
 
