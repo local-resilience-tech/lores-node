@@ -4,8 +4,8 @@ mod proto {
 
 use clap::{Parser, Subcommand};
 use proto::{panda_client::PandaClient, ListRegionsRequest, PublishRequest, SubscribeRequest};
-use tokio::io::AsyncBufReadExt as _;
 use serde::{Deserialize, Serialize};
+use tokio::io::AsyncBufReadExt as _;
 
 #[derive(Debug, Serialize, Deserialize)]
 struct MessagePayload {
