@@ -3,7 +3,6 @@ use thiserror::Error;
 use tokio::sync::{mpsc, Mutex};
 
 use lores_p2panda::{
-    derive_topic,
     p2panda_core::{identity::VERIFYING_KEY_LEN, Hash, SigningKey, VerifyingKey},
     panda_node::{
         LogCount, OperationCountByAuthorAndTopic, PandaNode, PandaPublishError, RequiredNodeParams,
@@ -202,10 +201,7 @@ impl PandaContainer {
         }
         drop(node_lock);
 
-        Ok(derive_topic(
-            &region_app_topic.region_id,
-            &region_app_topic.app_namespace,
-        ))
+        Ok(region_app_topic.p2panda_topic())
     }
 
     pub async fn subscribe(

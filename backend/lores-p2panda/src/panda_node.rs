@@ -14,7 +14,7 @@ use thiserror::Error;
 use tokio::sync::{mpsc, RwLock};
 use tokio_stream::StreamExt;
 
-use crate::region::{derive_topic, RegionAppTopic, RegionId};
+use crate::region::{RegionAppTopic, RegionId};
 
 static DEFAULT_IROH_RELAY_URL: LazyLock<RelayUrl> = LazyLock::new(|| {
     "https://euc1-1.relay.n0.iroh-canary.iroh.link"
@@ -241,7 +241,7 @@ impl PandaNode {
         region_app_topic: &RegionAppTopic,
         events_tx: mpsc::Sender<IncomingOperation>,
     ) -> Result<(), SubscriptionError> {
-        let topic = derive_topic(&region_app_topic.region_id, &region_app_topic.app_namespace);
+        let topic = region_app_topic.p2panda_topic();
         self.subscribe_to_topic(topic, events_tx).await
     }
 
@@ -250,7 +250,7 @@ impl PandaNode {
         region_app_topic: &RegionAppTopic,
         bytes: Vec<u8>,
     ) -> Result<(), PandaPublishError> {
-        let topic = derive_topic(&region_app_topic.region_id, &region_app_topic.app_namespace);
+        let topic = region_app_topic.p2panda_topic();
         self.publish(topic, bytes).await
     }
 

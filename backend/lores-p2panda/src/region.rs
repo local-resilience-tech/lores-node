@@ -52,22 +52,6 @@ impl fmt::Display for RegionId {
     }
 }
 
-/// Derive a p2panda topic from a region and an application namespace.
-///
-/// The region ID is the base, and the app namespace further shards it so that
-/// different applications sharing the same region do not receive each other's
-/// operations.
-///
-/// ```text
-/// topic = Hash(region_id_bytes || app_namespace_utf8)
-/// ```
-pub fn derive_topic(region_id: &RegionId, app_namespace: &str) -> Topic {
-    let mut data = Vec::with_capacity(32 + app_namespace.len());
-    data.extend_from_slice(&region_id.bytes);
-    data.extend_from_slice(app_namespace.as_bytes());
-    Topic::from(*Hash::digest(&data).as_bytes())
-}
-
 /// Pairs a [`RegionId`] with an application namespace to fully identify a
 /// p2panda topic.
 ///
@@ -86,5 +70,13 @@ impl RegionAppTopic {
             region_id,
             app_namespace: app_namespace.into(),
         }
+    }
+
+    /// Derive the p2panda [`Topic`] for this region + application namespace.
+    pub fn p2panda_topic(&self) -> Topic {
+        let mut data = Vec::with_capacity(32 + self.app_namespace.len());
+        data.extend_from_slice(&self.region_id.bytes);
+        data.extend_from_slice(self.app_namespace.as_bytes());
+        Topic::from(*Hash::digest(&data).as_bytes())
     }
 }
