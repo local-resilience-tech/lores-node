@@ -3,7 +3,7 @@ mod proto {
 }
 
 use clap::{Parser, Subcommand};
-use proto::{panda_client::PandaClient, ListRegionsRequest, ListTopicsRequest, PublishRequest};
+use proto::{panda_client::PandaClient, ListRegionsRequest, PublishRequest};
 
 #[derive(Parser)]
 #[command(name = "lores-panda", about = "CLI for the lores p2panda gRPC server")]
@@ -28,9 +28,6 @@ enum Command {
 
     /// List the regions and app namespaces the node is participating in
     ListRegions,
-
-    /// List the raw p2panda topics the node is subscribed to (debug)
-    ListTopics,
 }
 
 const APP_NAMESPACE: &str = "lores-example-app-cli:v1";
@@ -74,20 +71,6 @@ async fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
             } else {
                 for id in ids {
                     println!("{}", hex::encode(&id));
-                }
-            }
-        }
-        Command::ListTopics => {
-            let mut client = connect(&server).await?;
-
-            let response = client.list_topics(ListTopicsRequest {}).await?;
-
-            let topics = response.into_inner().topic_ids;
-            if topics.is_empty() {
-                println!("no subscribed topics");
-            } else {
-                for id in topics {
-                    println!("{}", hex::encode(id));
                 }
             }
         }
