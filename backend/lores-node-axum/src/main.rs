@@ -117,7 +117,7 @@ async fn main() {
     start_panda(&config_state, &panda_container, &projections_pool).await;
 
     // GRPC SERVER
-    let grpc_port = env::var("GRPC_PORT").unwrap_or_else(|_| "8201".to_string());
+    let grpc_port = env::var("GRPC_PORT").unwrap_or_else(|_| "50051".to_string());
     let grpc_addr = format!("0.0.0.0:{}", grpc_port)
         .parse()
         .expect("valid gRPC bind address");

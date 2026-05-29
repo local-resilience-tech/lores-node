@@ -16,7 +16,7 @@ struct MessagePayload {
 #[command(name = "lores-panda", about = "CLI for the lores p2panda gRPC server")]
 struct Cli {
     /// gRPC server address
-    #[arg(long, default_value = "http://localhost:8201")]
+    #[arg(long, default_value = "http://localhost:50051")]
     server: String,
 
     #[command(subcommand)]
