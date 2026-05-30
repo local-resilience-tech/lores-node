@@ -1,7 +1,7 @@
 {
   "name": "lores-node",
   "private": true,
-  "version": "0.19.0",
+  "version": "0.19.1",
   "devDependencies": {
     "@j-ulrich/release-it-regex-bumper": "^5.4.0",
     "release-it": "^20.0.1"
