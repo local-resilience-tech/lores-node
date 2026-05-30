@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::collections::HashSet;
 use std::sync::LazyLock;
 
 use p2panda::node::SpawnError;
@@ -13,12 +14,15 @@ use thiserror::Error;
 use tokio::sync::{mpsc, RwLock};
 use tokio_stream::StreamExt;
 
+use crate::region::{RegionId, RegionTopic};
+
 static DEFAULT_IROH_RELAY_URL: LazyLock<RelayUrl> = LazyLock::new(|| {
     "https://euc1-1.relay.n0.iroh-canary.iroh.link"
         .parse()
         .expect("valid relay URL")
 });
 
+#[derive(Clone)]
 pub struct IncomingOperation {
     pub author: VerifyingKey,
     pub topic: Topic,
@@ -65,6 +69,7 @@ pub struct RequiredNodeParams {
 pub struct PandaNode {
     network: RwLock<Node>,
     publishers: RwLock<HashMap<Topic, StreamPublisher<Vec<u8>>>>,
+    regions: RwLock<HashSet<RegionId>>,
     pool: SqlitePool,
     pub public_key: VerifyingKey,
 }
@@ -102,12 +107,13 @@ impl PandaNode {
         Ok(Self {
             network: RwLock::new(node),
             publishers: RwLock::new(HashMap::new()),
+            regions: RwLock::new(HashSet::new()),
             pool,
             public_key,
         })
     }
 
-    pub async fn subscribe_to_topic(
+    async fn subscribe_to_topic(
         &self,
         topic_id: Topic,
         events_tx: mpsc::Sender<IncomingOperation>,
@@ -165,6 +171,17 @@ impl PandaNode {
         self.publishers.read().await.keys().cloned().collect()
     }
 
+    /// Record that this node is participating in `region_id`. Used by
+    /// [`Self::get_regions`] and exposed via the gRPC `ListRegions` RPC.
+    pub async fn register_region(&self, region_id: RegionId) {
+        self.regions.write().await.insert(region_id);
+    }
+
+    /// Returns all registered region IDs.
+    pub async fn get_regions(&self) -> Vec<RegionId> {
+        self.regions.read().await.iter().cloned().collect()
+    }
+
     /// Creates a new `StreamFrom::Start` stream for `topic_id` and forwards every
     /// `StreamEvent::Processed` operation to `events_tx`.  Unlike
     /// `subscribe_to_topic` this does not guard against the topic already being
@@ -219,7 +236,25 @@ impl PandaNode {
         Ok(())
     }
 
-    pub async fn publish(&self, topic_id: Topic, bytes: Vec<u8>) -> Result<(), PandaPublishError> {
+    pub async fn subscribe_to_region_topic<T: RegionTopic>(
+        &self,
+        region_topic: &T,
+        events_tx: mpsc::Sender<IncomingOperation>,
+    ) -> Result<(), SubscriptionError> {
+        let topic = region_topic.p2panda_topic();
+        self.subscribe_to_topic(topic, events_tx).await
+    }
+
+    pub async fn publish_to_region_topic<T: RegionTopic>(
+        &self,
+        region_topic: &T,
+        bytes: Vec<u8>,
+    ) -> Result<(), PandaPublishError> {
+        let topic = region_topic.p2panda_topic();
+        self.publish(topic, bytes).await
+    }
+
+    async fn publish(&self, topic_id: Topic, bytes: Vec<u8>) -> Result<(), PandaPublishError> {
         let publishers = self.publishers.read().await;
         let publisher = publishers
             .get(&topic_id)

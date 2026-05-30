@@ -8,7 +8,7 @@ use lores_p2panda::{
         LogCount, OperationCountByAuthorAndTopic, PandaNode, PandaPublishError, RequiredNodeParams,
         SubscriptionError,
     },
-    IncomingOperation, PandaNodeError, Topic,
+    IncomingOperation, PandaNodeError, RegionAdminTopic, RegionId, RegionTopic, Topic,
 };
 
 use crate::api::auth_api::auth_backend::User;
@@ -16,7 +16,6 @@ use crate::api::auth_api::auth_backend::User;
 use super::{
     event_encoding::{decode_lores_event, encode_lores_event_payload},
     lores_events::{LoResEvent, LoResEventHeader, LoResEventMetadataV1, LoResEventPayload},
-    RegionId,
 };
 
 #[derive(Default, Clone)]
@@ -142,6 +141,12 @@ impl PandaContainer {
         node.is_some()
     }
 
+    /// Returns a clone of the shared node handle, suitable for passing to
+    /// [`lores_p2panda_server::PandaPublishService`].
+    pub fn node_arc(&self) -> Arc<Mutex<Option<Arc<PandaNode>>>> {
+        self.node.clone()
+    }
+
     pub async fn get_public_key(&self) -> Result<VerifyingKey, Box<dyn std::error::Error>> {
         let params_lock = self.params.lock().await;
         match params_lock.private_key {
@@ -186,16 +191,22 @@ impl PandaContainer {
     }
 
     pub async fn join_region(&self, region_id: RegionId) -> Result<Topic, PandaSubscriptionError> {
-        let topic_id = Topic::from(<[u8; 32]>::from(region_id));
-        self.subscribe(topic_id).await?;
-        Ok(topic_id)
+        let admin_topic = RegionAdminTopic::new(region_id.clone());
+        self.subscribe(&admin_topic).await?;
+
+        let node_lock = self.node.lock().await;
+        if let Some(node) = node_lock.as_ref() {
+            node.register_region(region_id).await;
+        }
+        drop(node_lock);
+
+        Ok(admin_topic.p2panda_topic())
     }
 
-    pub fn get_region_topic_id(region_id: &RegionId) -> Topic {
-        Topic::from(<[u8; 32]>::from(region_id.clone()))
-    }
-
-    pub async fn subscribe(&self, topic_id: Topic) -> Result<(), PandaSubscriptionError> {
+    pub async fn subscribe<T: RegionTopic>(
+        &self,
+        region_topic: &T,
+    ) -> Result<(), PandaSubscriptionError> {
         let node_lock = self.node.lock().await;
         let node = match node_lock.as_ref() {
             Some(node) => node.clone(),
@@ -205,7 +216,8 @@ impl PandaContainer {
 
         let (incoming_tx, mut incoming_rx) = mpsc::channel::<IncomingOperation>(32);
 
-        node.subscribe_to_topic(topic_id, incoming_tx).await?;
+        node.subscribe_to_region_topic(region_topic, incoming_tx)
+            .await?;
 
         let events_tx = self.lores_events_tx.clone();
         tokio::spawn(async move {
@@ -228,7 +240,7 @@ impl PandaContainer {
 
     pub async fn publish_persisted(
         &self,
-        topic_id: Topic,
+        region_topic: &RegionAdminTopic,
         event_payload: LoResEventPayload,
         current_user: Option<User>,
     ) -> Result<(), PandaPublishError> {
@@ -247,7 +259,8 @@ impl PandaContainer {
         let encoded_payload = encode_lores_event_payload(event_payload, metadata)
             .map_err(|e| PandaPublishError::AppError(format!("Encoding error: {e}")))?;
 
-        node.publish(topic_id, encoded_payload).await?;
+        node.publish_to_region_topic(region_topic, encoded_payload)
+            .await?;
 
         Ok(())
     }

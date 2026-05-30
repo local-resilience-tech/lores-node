@@ -11,7 +11,7 @@ use crate::{
     data::entities::LocalApp,
     panda_comms::{
         lores_events::{AppRegisteredDataV1, LoResEventPayload},
-        PandaContainer, RegionId,
+        PandaContainer, RegionAdminTopic, RegionId,
     },
 };
 
@@ -51,9 +51,12 @@ async fn register_app(
     println!("Prepared event payload: {:?}", event_payload);
 
     // Publish the operation
-    let topic_id = PandaContainer::get_region_topic_id(&region_id);
     if let Err(e) = panda_container
-        .publish_persisted(topic_id, event_payload, auth_session.user)
+        .publish_persisted(
+            &RegionAdminTopic::new(region_id),
+            event_payload,
+            auth_session.user,
+        )
         .await
     {
         return internal_server_error(e).into_response();
