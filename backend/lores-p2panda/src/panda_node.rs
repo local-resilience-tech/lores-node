@@ -285,7 +285,7 @@ impl PandaNode {
         let rows = sqlx::query(
             "SELECT lower(hex(substr(t.topic, 3))) AS topic_hex, t.author, COUNT(o.hash) AS total
              FROM topics_v1 t
-             JOIN operations_v1 o ON o.public_key = t.author AND o.log_id = t.data_id
+             JOIN operations_v1 o ON o.verifying_key = t.author AND o.log_id = t.data_id
              GROUP BY t.topic, t.author",
         )
         .fetch_all(&self.pool)
