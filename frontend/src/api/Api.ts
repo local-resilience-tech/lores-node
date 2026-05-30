@@ -15,6 +15,11 @@ export enum RegionNodeStatus {
   Member = "Member",
 }
 
+export enum PeerConnectionStatus {
+  Unknown = "Unknown",
+  Syncing = "Syncing",
+}
+
 export enum NodeStewardStatus {
   Enabled = "Enabled",
   Disabled = "Disabled",
@@ -152,6 +157,10 @@ export interface NodeAppUrl {
   local_network_url?: string | null;
 }
 
+export interface NodeStatusResponse {
+  topics: TopicStatusEntry[];
+}
+
 export interface NodeSteward {
   created_at: string;
   id: string;
@@ -205,6 +214,11 @@ export interface P2PandaNodeDetails {
   panda_node_id: string;
 }
 
+export interface PeerConnectionEntry {
+  node_id: string;
+  status: PeerConnectionStatus;
+}
+
 export interface Region {
   creator_node_id?: string | null;
   id: string;
@@ -255,6 +269,11 @@ export interface RegionNodeStatusData {
 export interface RegionWithNodes {
   nodes: RegionNodeDetails[];
   region: Region;
+}
+
+export interface TopicStatusEntry {
+  connections: PeerConnectionEntry[];
+  topic_hex: string;
 }
 
 export interface UpdateMapData {
@@ -453,7 +472,7 @@ export class HttpClient<SecurityDataType = unknown> {
 
 /**
  * @title lores-node
- * @version 0.18.1
+ * @version 0.19.1
  * @license
  */
 export class Api<
@@ -907,6 +926,20 @@ export class Api<
     p2PandaLogCounts: (params: RequestParams = {}) =>
       this.request<P2PandaLogCounts, any>({
         path: `/public_api/this_p2panda_node/event_log`,
+        method: "GET",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @name NodeStatus
+     * @request GET:/public_api/this_p2panda_node/status
+     */
+    nodeStatus: (params: RequestParams = {}) =>
+      this.request<NodeStatusResponse, string>({
+        path: `/public_api/this_p2panda_node/status`,
         method: "GET",
         format: "json",
         ...params,
