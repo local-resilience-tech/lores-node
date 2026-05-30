@@ -14,8 +14,8 @@ use thiserror::Error;
 use tokio::sync::{mpsc, RwLock};
 use tokio_stream::StreamExt;
 
+use crate::node_status::NodeStatus;
 use crate::region::{RegionId, RegionTopic};
-use crate::topic_status::TopicStatus;
 
 static DEFAULT_IROH_RELAY_URL: LazyLock<RelayUrl> = LazyLock::new(|| {
     "https://euc1-1.relay.n0.iroh-canary.iroh.link"
@@ -71,7 +71,7 @@ pub struct PandaNode {
     network: RwLock<Node>,
     publishers: RwLock<HashMap<Topic, StreamPublisher<Vec<u8>>>>,
     regions: RwLock<HashSet<RegionId>>,
-    topic_statuses: RwLock<HashMap<Topic, Arc<RwLock<TopicStatus>>>>,
+    node_status: Arc<RwLock<NodeStatus>>,
     pool: SqlitePool,
     pub public_key: VerifyingKey,
 }
@@ -110,7 +110,7 @@ impl PandaNode {
             network: RwLock::new(node),
             publishers: RwLock::new(HashMap::new()),
             regions: RwLock::new(HashSet::new()),
-            topic_statuses: RwLock::new(HashMap::new()),
+            node_status: Arc::new(RwLock::new(NodeStatus::new())),
             pool,
             public_key,
         })
@@ -131,11 +131,7 @@ impl PandaNode {
             .await?;
         drop(network);
 
-        let topic_status = Arc::new(RwLock::new(TopicStatus::new()));
-        self.topic_statuses
-            .write()
-            .await
-            .insert(topic_id, topic_status.clone());
+        let topic_status = self.node_status.write().await.register_topic(topic_id);
         self.publishers.write().await.insert(topic_id, publisher);
 
         tokio::spawn(async move {
@@ -181,9 +177,9 @@ impl PandaNode {
         self.publishers.read().await.keys().cloned().collect()
     }
 
-    /// Returns the shared [`TopicStatus`] for the given topic, or `None` if not subscribed.
-    pub async fn get_topic_status(&self, topic: &Topic) -> Option<Arc<RwLock<TopicStatus>>> {
-        self.topic_statuses.read().await.get(topic).cloned()
+    /// Returns the shared [`NodeStatus`] covering all subscribed topics.
+    pub async fn get_node_status(&self) -> Arc<RwLock<NodeStatus>> {
+        self.node_status.clone()
     }
 
     /// Record that this node is participating in `region_id`. Used by

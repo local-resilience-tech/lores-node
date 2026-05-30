@@ -1,7 +1,9 @@
+pub mod node_status;
 pub mod panda_node;
 pub mod region;
 pub mod topic_status;
 
+pub use node_status::NodeStatus;
 pub use panda_node::{
     IncomingOperation, LogCount, OperationCountByAuthorAndTopic, PandaNode, PandaNodeError,
     PandaPublishError, RequiredNodeParams, SubscriptionError,
