@@ -15,6 +15,7 @@
     "restart": "npm run down; npm run waitdown; npm run up",
     "logs": "sudo docker logs -f $(npm run backend_cid --silent)",
     "backend_cid": "sudo docker ps -aqf \"ancestor=lores-node-dev:latest\"",
-    "waitdown": "timeout 30 bash -c 'while [ $(npm run backend_cid --silent) ]; do echo \"waiting for backend to stop...\"; sleep 2; done'"
+    "waitdown": "timeout 30 bash -c 'while [ $(npm run backend_cid --silent) ]; do echo \"waiting for backend to stop...\"; sleep 2; done'",
+    "clean_ops": "bash scripts/clean_ops.sh"
   }
 }
