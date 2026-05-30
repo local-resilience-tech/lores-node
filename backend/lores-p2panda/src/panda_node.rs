@@ -159,17 +159,8 @@ impl PandaNode {
                     StreamEvent::ReplayFailed { error, .. } => {
                         tracing::error!("error replaying operation stream: {error}");
                     }
-                    StreamEvent::SyncStarted { remote_node_id, .. } => {
-                        topic_status
-                            .write()
-                            .await
-                            .handle_sync_started(remote_node_id);
-                    }
-                    StreamEvent::SyncEnded { remote_node_id, .. } => {
-                        topic_status
-                            .write()
-                            .await
-                            .handle_sync_ended(remote_node_id);
+                    event @ (StreamEvent::SyncStarted { .. } | StreamEvent::SyncEnded { .. }) => {
+                        topic_status.write().await.handle_stream_event(&event);
                     }
                     StreamEvent::ImportStarted { .. } | StreamEvent::ImportEnded { .. } => {}
                     StreamEvent::ReplayStarted { .. } | StreamEvent::ReplayEnded => {}

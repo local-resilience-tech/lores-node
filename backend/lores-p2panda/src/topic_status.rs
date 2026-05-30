@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use p2panda::streams::StreamEvent;
 use p2panda_core::VerifyingKey;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -19,15 +20,19 @@ impl TopicStatus {
         Self::default()
     }
 
-    pub fn handle_sync_started(&mut self, remote_node_id: VerifyingKey) {
-        self.connections
-            .insert(remote_node_id, ConnectionStatus::Syncing);
-    }
-
-    pub fn handle_sync_ended(&mut self, remote_node_id: VerifyingKey) {
-        self.connections
-            .entry(remote_node_id)
-            .and_modify(|s| *s = ConnectionStatus::Unknown);
+    pub fn handle_stream_event<M>(&mut self, event: &StreamEvent<M>) {
+        match event {
+            StreamEvent::SyncStarted { remote_node_id, .. } => {
+                self.connections
+                    .insert(*remote_node_id, ConnectionStatus::Syncing);
+            }
+            StreamEvent::SyncEnded { remote_node_id, .. } => {
+                self.connections
+                    .entry(*remote_node_id)
+                    .and_modify(|s| *s = ConnectionStatus::Unknown);
+            }
+            _ => {}
+        }
     }
 
     pub fn connections(&self) -> &HashMap<VerifyingKey, ConnectionStatus> {
