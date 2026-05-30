@@ -8,10 +8,25 @@ use lores_p2panda::{
         LogCount, OperationCountByAuthorAndTopic, PandaNode, PandaPublishError, RequiredNodeParams,
         SubscriptionError,
     },
+    topic_status::ConnectionStatus,
     IncomingOperation, PandaNodeError, RegionAdminTopic, RegionId, RegionTopic, Topic,
 };
 
 use crate::api::auth_api::auth_backend::User;
+
+pub struct NodeStatusSnapshot {
+    pub topics: Vec<TopicStatusSnapshot>,
+}
+
+pub struct TopicStatusSnapshot {
+    pub topic_hex: String,
+    pub connections: Vec<PeerConnectionSnapshot>,
+}
+
+pub struct PeerConnectionSnapshot {
+    pub node_id: String,
+    pub status: &'static str,
+}
 
 use super::{
     event_encoding::{decode_lores_event, encode_lores_event_payload},
@@ -304,6 +319,39 @@ impl PandaContainer {
         node.get_operation_counts_by_topic()
             .await
             .map_err(|e| anyhow::anyhow!("Error querying operation counts: {}", e))
+    }
+
+    pub async fn get_node_status(&self) -> Option<NodeStatusSnapshot> {
+        let node_lock = self.node.lock().await;
+        let node = node_lock.as_ref()?.clone();
+        drop(node_lock);
+
+        let node_status = node.get_node_status().await;
+        let node_status = node_status.read().await;
+
+        let mut topics = Vec::new();
+        for (topic, topic_status) in node_status.topics() {
+            let topic_status = topic_status.read().await;
+            let connections = topic_status
+                .connections()
+                .iter()
+                .map(|(key, status)| PeerConnectionSnapshot {
+                    node_id: key.to_hex(),
+                    status: match status {
+                        ConnectionStatus::Unknown => "Unknown",
+                        ConnectionStatus::Syncing => "Syncing",
+                        ConnectionStatus::Connected => "Connected",
+                        ConnectionStatus::SyncFailed => "SyncFailed",
+                    },
+                })
+                .collect();
+            topics.push(TopicStatusSnapshot {
+                topic_hex: topic.to_hex(),
+                connections,
+            });
+        }
+
+        Some(NodeStatusSnapshot { topics })
     }
 
     /// Validates the node ID and saves it to params. The new peer will be

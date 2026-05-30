@@ -9,6 +9,7 @@ pub fn router() -> OpenApiRouter {
     OpenApiRouter::new()
         .routes(routes!(show_this_panda_node))
         .routes(routes!(p2panda_log_counts))
+        .routes(routes!(node_status))
 }
 
 #[derive(sqlx::FromRow, Serialize, ToSchema)]
@@ -68,4 +69,64 @@ async fn p2panda_log_counts(
         .collect();
 
     (StatusCode::OK, Json(P2PandaLogCounts { counts })).into_response()
+}
+
+#[derive(Serialize, ToSchema)]
+struct NodeStatusResponse {
+    topics: Vec<TopicStatusEntry>,
+}
+
+#[derive(Serialize, ToSchema)]
+struct TopicStatusEntry {
+    topic_hex: String,
+    connections: Vec<PeerConnectionEntry>,
+}
+
+#[derive(Serialize, ToSchema)]
+struct PeerConnectionEntry {
+    node_id: String,
+    status: PeerConnectionStatus,
+}
+
+#[derive(Serialize, ToSchema)]
+enum PeerConnectionStatus {
+    Unknown,
+    Syncing,
+    Connected,
+    SyncFailed,
+}
+
+#[utoipa::path(get, path = "/status", responses(
+    (status = 200, body = NodeStatusResponse),
+    (status = 503, description = "Network not started", body = String),
+),)]
+async fn node_status(Extension(panda_container): Extension<PandaContainer>) -> impl IntoResponse {
+    match panda_container.get_node_status().await {
+        None => (StatusCode::SERVICE_UNAVAILABLE, Json("Network not started")).into_response(),
+        Some(snapshot) => {
+            let response = NodeStatusResponse {
+                topics: snapshot
+                    .topics
+                    .into_iter()
+                    .map(|t| TopicStatusEntry {
+                        topic_hex: t.topic_hex,
+                        connections: t
+                            .connections
+                            .into_iter()
+                            .map(|c| PeerConnectionEntry {
+                                node_id: c.node_id,
+                                status: match c.status {
+                                    "Syncing" => PeerConnectionStatus::Syncing,
+                                    "Connected" => PeerConnectionStatus::Connected,
+                                    "SyncFailed" => PeerConnectionStatus::SyncFailed,
+                                    _ => PeerConnectionStatus::Unknown,
+                                },
+                            })
+                            .collect(),
+                    })
+                    .collect(),
+            };
+            (StatusCode::OK, Json(response)).into_response()
+        }
+    }
 }

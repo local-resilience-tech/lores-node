@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 use std::collections::HashSet;
-use std::sync::LazyLock;
+use std::sync::{Arc, LazyLock};
 
 use p2panda::node::SpawnError;
 use p2panda::streams::{PublishError, StreamEvent, StreamFrom, StreamPublisher};
@@ -14,6 +14,7 @@ use thiserror::Error;
 use tokio::sync::{mpsc, RwLock};
 use tokio_stream::StreamExt;
 
+use crate::node_status::NodeStatus;
 use crate::region::{RegionId, RegionTopic};
 
 static DEFAULT_IROH_RELAY_URL: LazyLock<RelayUrl> = LazyLock::new(|| {
@@ -70,6 +71,7 @@ pub struct PandaNode {
     network: RwLock<Node>,
     publishers: RwLock<HashMap<Topic, StreamPublisher<Vec<u8>>>>,
     regions: RwLock<HashSet<RegionId>>,
+    node_status: Arc<RwLock<NodeStatus>>,
     pool: SqlitePool,
     pub public_key: VerifyingKey,
 }
@@ -108,6 +110,7 @@ impl PandaNode {
             network: RwLock::new(node),
             publishers: RwLock::new(HashMap::new()),
             regions: RwLock::new(HashSet::new()),
+            node_status: Arc::new(RwLock::new(NodeStatus::new())),
             pool,
             public_key,
         })
@@ -128,6 +131,7 @@ impl PandaNode {
             .await?;
         drop(network);
 
+        let topic_status = self.node_status.write().await.register_topic(topic_id);
         self.publishers.write().await.insert(topic_id, publisher);
 
         tokio::spawn(async move {
@@ -151,7 +155,9 @@ impl PandaNode {
                     StreamEvent::ReplayFailed { error, .. } => {
                         tracing::error!("error replaying operation stream: {error}");
                     }
-                    StreamEvent::SyncStarted { .. } | StreamEvent::SyncEnded { .. } => {}
+                    event @ (StreamEvent::SyncStarted { .. } | StreamEvent::SyncEnded { .. }) => {
+                        topic_status.write().await.handle_stream_event(&event);
+                    }
                     StreamEvent::ImportStarted { .. } | StreamEvent::ImportEnded { .. } => {}
                     StreamEvent::ReplayStarted { .. } | StreamEvent::ReplayEnded => {}
                     StreamEvent::ProcessingFailed { error, .. } => {
@@ -169,6 +175,11 @@ impl PandaNode {
 
     pub async fn get_subscribed_topics(&self) -> Vec<Topic> {
         self.publishers.read().await.keys().cloned().collect()
+    }
+
+    /// Returns the shared [`NodeStatus`] covering all subscribed topics.
+    pub async fn get_node_status(&self) -> Arc<RwLock<NodeStatus>> {
+        self.node_status.clone()
     }
 
     /// Record that this node is participating in `region_id`. Used by

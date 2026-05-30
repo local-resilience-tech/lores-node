@@ -1,12 +1,24 @@
-import { Stack, Title, Container, Table, Button, Collapse } from "@mantine/core"
+import { Stack, Title, Container, Button, Collapse, Table } from "@mantine/core"
 import { useAppSelector } from "../../../store"
 import { IconPlug } from "@tabler/icons-react"
 import { useDisclosure } from "@mantine/hooks"
 import AddBootstrapNode from "../components/AddBootstrapNode"
+import NodeConnectionStatus from "../components/NodeConnectionStatus"
+import { useEffect, useState } from "react"
+import { getApi } from "../../../api"
+import { NodeStatusResponse } from "../../../api/Api"
 
 export default function P2PandaNode() {
   const node = useAppSelector((state) => state.network?.node)
   const [openedBootstrap, { toggle: toggleBootstrap }] = useDisclosure(false)
+  const [nodeStatus, setNodeStatus] = useState<NodeStatusResponse | null>(null)
+
+  useEffect(() => {
+    getApi()
+      .publicApi.nodeStatus()
+      .then((response) => setNodeStatus(response.data))
+      .catch(console.error)
+  }, [])
 
   if (!node) {
     return <></>
@@ -51,6 +63,9 @@ export default function P2PandaNode() {
         <Collapse expanded={openedBootstrap}>
           <AddBootstrapNode onSuccess={toggleBootstrap} />
         </Collapse>
+
+        <Title order={2}>Connection Status</Title>
+        <NodeConnectionStatus nodeStatus={nodeStatus} />
       </Stack>
     </Container>
   )
