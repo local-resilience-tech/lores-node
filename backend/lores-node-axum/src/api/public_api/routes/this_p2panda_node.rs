@@ -92,6 +92,8 @@ struct PeerConnectionEntry {
 enum PeerConnectionStatus {
     Unknown,
     Syncing,
+    Connected,
+    SyncFailed,
 }
 
 #[utoipa::path(get, path = "/status", responses(
@@ -115,6 +117,8 @@ async fn node_status(Extension(panda_container): Extension<PandaContainer>) -> i
                                 node_id: c.node_id,
                                 status: match c.status {
                                     "Syncing" => PeerConnectionStatus::Syncing,
+                                    "Connected" => PeerConnectionStatus::Connected,
+                                    "SyncFailed" => PeerConnectionStatus::SyncFailed,
                                     _ => PeerConnectionStatus::Unknown,
                                 },
                             })

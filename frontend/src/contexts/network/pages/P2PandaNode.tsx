@@ -1,4 +1,13 @@
-import { Stack, Title, Container, Table, Button, Collapse, Text, Badge } from "@mantine/core"
+import {
+  Stack,
+  Title,
+  Container,
+  Table,
+  Button,
+  Collapse,
+  Text,
+  Badge,
+} from "@mantine/core"
 import { useAppSelector } from "../../../store"
 import { IconPlug } from "@tabler/icons-react"
 import { useDisclosure } from "@mantine/hooks"

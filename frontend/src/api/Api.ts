@@ -18,6 +18,8 @@ export enum RegionNodeStatus {
 export enum PeerConnectionStatus {
   Unknown = "Unknown",
   Syncing = "Syncing",
+  Connected = "Connected",
+  SyncFailed = "SyncFailed",
 }
 
 export enum NodeStewardStatus {

@@ -340,6 +340,8 @@ impl PandaContainer {
                     status: match status {
                         ConnectionStatus::Unknown => "Unknown",
                         ConnectionStatus::Syncing => "Syncing",
+                        ConnectionStatus::Connected => "Connected",
+                        ConnectionStatus::SyncFailed => "SyncFailed",
                     },
                 })
                 .collect();
