@@ -46,6 +46,20 @@ pub(crate) async fn prepare_database(
 
     let pool = SqlitePool::connect_with(options).await?;
 
+    // Fail fast if the SQLite file is read-only. This backend cannot operate
+    // correctly without write access to its databases.
+    {
+        let mut conn = pool.acquire().await?;
+        sqlx::query("BEGIN IMMEDIATE").execute(&mut *conn).await.map_err(|e| {
+            anyhow::anyhow!(
+                "database is not writable ({}): {}. Check file ownership/permissions and mount mode",
+                db_url,
+                e
+            )
+        })?;
+        sqlx::query("ROLLBACK").execute(&mut *conn).await?;
+    }
+
     if let Some(migrations_path) = migrations {
         println!("Running migrations");
         let migrator = Migrator::new(std::path::Path::new(migrations_path)).await?;

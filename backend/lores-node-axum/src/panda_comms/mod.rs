@@ -50,7 +50,7 @@ pub async fn start_panda(
         .upsert_id(projections_pool, &public_key.to_hex())
         .await
         .unwrap_or_else(|e| {
-            println!("Failed to upsert node id: {:?}", e);
+            panic!("failed to upsert node id; backend cannot continue: {:?}", e);
         });
 
     container.set_private_key(private_key).await;
