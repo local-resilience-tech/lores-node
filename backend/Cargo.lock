@@ -2866,6 +2866,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "lores-p2panda-client"
+version = "0.1.0"
+dependencies = [
+ "prost",
+ "tokio",
+ "tokio-stream",
+ "tonic",
+ "tonic-build",
+]
+
+[[package]]
 name = "lores-p2panda-server"
 version = "0.18.2"
 dependencies = [
