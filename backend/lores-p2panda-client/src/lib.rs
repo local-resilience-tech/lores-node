@@ -1,12 +1,12 @@
 use tonic::transport::Channel;
 
 pub mod proto {
-    tonic::include_proto!("lores.panda.v1");
+    include!("lores.panda.v1.rs");
 }
 
 use proto::{
-    panda_client::PandaClient as TonicPandaClient, ListRegionsRequest, ListRegionsResponse,
-    OperationEvent, PublishRequest, PublishResponse, SubscribeRequest,
+    ListRegionsRequest, ListRegionsResponse, OperationEvent, PublishRequest, PublishResponse,
+    SubscribeRequest, panda_client::PandaClient as TonicPandaClient,
 };
 use tonic::{Response, Status, Streaming};
 

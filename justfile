@@ -15,3 +15,11 @@ docker:
 
 two-node:
     mprocs --config mprocs-2node.yaml
+
+[working-directory: 'backend']
+p2panda-client-generate:
+    #!/usr/bin/env bash
+    set -e
+    cargo clean -p lores-p2panda-server
+    cargo build -p lores-p2panda-server
+    cp target/debug/build/lores-p2panda-server-*/out/lores.panda.v1.rs lores-p2panda-client/src/lores.panda.v1.rs

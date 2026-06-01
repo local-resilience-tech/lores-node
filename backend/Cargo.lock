@@ -2873,7 +2873,6 @@ dependencies = [
  "tokio",
  "tokio-stream",
  "tonic",
- "tonic-build",
 ]
 
 [[package]]
