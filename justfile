@@ -23,3 +23,7 @@ p2panda-client-generate:
     cargo clean -p lores-p2panda-server
     cargo build -p lores-p2panda-server
     cp target/debug/build/lores-p2panda-server-*/out/lores.panda.v1.rs lores-p2panda-client/src/lores.panda.v1.rs
+
+[working-directory: 'backend/lores-p2panda-client']
+p2panda-client-publish:
+    cargo publish

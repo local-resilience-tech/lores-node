@@ -18,11 +18,11 @@ Proto definitions for this server can be found in [panda.proto](https://github.c
 
 This library is a thin wrapper around a generated client for these protos.
 
-## Licence
+## License
 
-This library is licenced under [The Anti-Capitalist Software License](https://anticapitalist.software/). This is intended to be a provocation to get us discussing the fact that open source software licencing has not stopped our software from enabling wealth extraction by corporations and billionaires, or from being used to enable wars and genocide.
+This library is licensed under [The Anti-Capitalist Software License](https://anticapitalist.software/). This is intended to be a provocation to get us discussing the fact that open source software licencing has not stopped our software from enabling wealth extraction by corporations and billionaires, or from being used to enable wars and genocide.
 
-The Anti-Capitalist license is one example of a licence which makes restrictions on use inline with values describing a better world. There are other example licenses that limit other important things, such as harming humans, or use by AI. This one has been picked for this project because it aligned with the values of [Co-op Cloud](https://coopcloud.tech/).
+The Anti-Capitalist license is one example of a license which makes restrictions on use inline with values describing a better world. There are other example licenses that limit other important things, such as harming humans, or use by AI. This one has been picked for this project because it aligned with the values of [Co-op Cloud](https://coopcloud.tech/).
 
 Obviously using the Anti-Capitalist license in a library like this intended to be used in other software is almost certainly going to clash with whatever license you need for your application, even potentially with other licenses with more detailed values-based protections against misuse.
 
