@@ -106,6 +106,13 @@ impl Panda for PandaService {
 
         let region_app_topic = RegionAppTopic::new(region_id, app_namespace);
 
+        println!(
+            "[publish] region={} app_namespace={} payload_bytes={}",
+            region_app_topic.region_id,
+            region_app_topic.app_namespace,
+            req.payload.len()
+        );
+
         // Ensure a subscription exists for this topic so the publisher is
         // available. This is idempotent: if already subscribed the existing
         // broadcast channel is reused.
@@ -145,6 +152,12 @@ impl Panda for PandaService {
         drop(node_lock);
 
         let region_app_topic = RegionAppTopic::new(region_id, app_namespace);
+
+        println!(
+            "[subscribe] region={} app_namespace={}",
+            region_app_topic.region_id,
+            region_app_topic.app_namespace
+        );
 
         // Under a write lock, ensure a p2panda subscription exists for this
         // topic and return a broadcast receiver for it.
@@ -221,8 +234,13 @@ fn publish_error_to_status(e: PandaPublishError) -> Status {
 fn subscription_error_to_status(e: SubscriptionError) -> Status {
     match e {
         SubscriptionError::AlreadySubscribed(t) => {
-            Status::already_exists(format!("already subscribed to topic {:?}", t))
+            let msg = format!("already subscribed to topic {:?}", t);
+            eprintln!("subscription error: {msg}");
+            Status::already_exists(msg)
         }
-        SubscriptionError::CreateStream(e) => Status::internal(e.to_string()),
+        SubscriptionError::CreateStream(e) => {
+            eprintln!("subscription error: failed to create stream: {e}");
+            Status::internal(e.to_string())
+        }
     }
 }
