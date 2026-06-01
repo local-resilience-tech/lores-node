@@ -44,40 +44,29 @@ We use [Release it](https://github.com/release-it/release-it). For the first tim
 
 # Running
 
-## Running Local Version in Development Mode
+For running in development mode, we recommend using the run commands located in the [justfile](./justfile). To run these, install [Just](https://github.com/casey/just) and then execute the following to get started:
 
-When developing, it is recommended that you run the backend and frontend seperately. This is most easily done using mprocs, but can be done manually.
+To fetch needed dependencies:
 
-### Using mprocs
+```bash
+just setup
+```
 
-Install mprocs using `cargo install mprocs`
+To run:
 
-Then, run `mprocs` and it should open both front and backend.
-
-### Manually
-
-Front End: Open a terminal in the frontend directory and run `npm run dev`. This will hot-reload any changes.
-Back End: Open a terminal in the backend directory and run `cargo run`. If you make changes to the backend, you'll need to halt it with CTRL-C and re-run.
-
-To access it in the browser, access the front end at the port that vite uses by default, which is http://localhost:5173/. The backend is at http://localhost:8200/.
-
-If you're developing functionality related to installing apps, you're better off running the docker container for developig the backend. To do this, open a terminal in the backend directory and run `sudo docker compose up --build`. This is instead of using "cargo run" directly. If you make changes to the backend code you'll need to stop this (with CONTROL-C) and then run it again.
+```bash
+just dev
+```
 
 ## Developing with Multiple Nodes (P2P)
 
-To test P2P behaviour locally you can run two full instances on the same machine. A separate mprocs config is provided for this:
+To test P2P behaviour locally you can run two full instances on the same machine using docker. To execute, run:
 
 ```
-mprocs --config mprocs-2node.yaml
+just two-node
 ```
 
 The two backends run as separate Docker containers on a shared bridge network. This gives each node its own IP address, which is necessary for mDNS multicast discovery and Iroh's QUIC/UDP traffic to work correctly between them — something that isn't possible when both processes share the same loopback interface.
-
-Build the backend binary before starting (and rebuild it after any backend code changes):
-
-```
-cd backend && cargo build
-```
 
 This starts three processes:
 
@@ -101,7 +90,9 @@ Each node uses a separate set of SQLite databases under `backend/data/node_data/
 Both hostnames must resolve to `127.0.0.1`. Add this line to `/etc/hosts` if it is not already there:
 
 ```
+
 127.0.0.1 lores.localhost lores2.localhost
+
 ```
 
 Docker must be running. The two nodes will discover each other automatically via mDNS once they are on the same bridge network.
@@ -111,12 +102,12 @@ Docker must be running. The two nodes will discover each other automatically via
 To run the app locally in release mode you can build it and run it using docker.
 
 ```
-sudo docker build -t dev/lores-node:latest . && sudo docker run -p 8000:80 dev/lores-node:latest
+just docker
 ```
 
 In release mode, the front end is not rendered, it's just built and placed in the docker container at the dir `/app/frontend`. The backend rust app builds an executable in `/app/backend` which is the command run by docker.
 
-The backend will serve up the frontend, which only happens because the environment variable `ROCKET_FRONTEND_ASSET_PATH` is set in the docker container. The rust app is running on port 80 in the container, which is why, when running it, you may want to map that to a custom port.
+The backend will serve up the frontend, which only happens because the environment variable `ROCKET_FRONTEND_ASSET_PATH` is set in the docker container.
 
 ## Running Published Version
 
