@@ -11,7 +11,13 @@ DATA_DIRS=(
 
 for DIR in "${DATA_DIRS[@]}"; do
     echo "Cleaning $DIR..."
-    rm -f "$DIR/operations.sqlite" "$DIR/projections.sqlite"
+    rm -f \
+        "$DIR/operations.sqlite" \
+        "$DIR/operations.sqlite-wal" \
+        "$DIR/operations.sqlite-shm" \
+        "$DIR/projections.sqlite" \
+        "$DIR/projections.sqlite-wal" \
+        "$DIR/projections.sqlite-shm"
     sed -i '/^region_ids = \[/,/^\]/d' "$DIR/config.toml"
 done
 

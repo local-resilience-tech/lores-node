@@ -3,7 +3,7 @@ procs:
   # enabling mDNS discovery and p2p UDP traffic between them.
   # Build the backend binary first: cd backend && cargo build
   backends:
-    shell: "docker compose -f docker-compose-p2p-test.yml up --build"
+    shell: "UID=$(id -u) GID=$(id -g) docker compose -f docker-compose-p2p-test.yml up --build"
     stop:
       send-keys: ["<C-c>"]
 

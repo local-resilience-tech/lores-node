@@ -26,6 +26,7 @@ name: lores-p2p-test
 
 services:
   backend-1:
+    user: "${UID}:${GID}"
     build:
       context: ./backend
       dockerfile: Dockerfile-p2p-test
@@ -45,6 +46,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
 
   backend-2:
+    user: "${UID}:${GID}"
     build:
       context: ./backend
       dockerfile: Dockerfile-p2p-test
