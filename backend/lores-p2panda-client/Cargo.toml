@@ -3,7 +3,13 @@ name = "lores-p2panda-client"
 version = "0.1.0"
 authors = ["Jade Ambrose", "Merri-bek Tech Inc."]
 edition = "2024"
+rust-version = "1.85.0"
 description = "Rust client for the lores-p2panda-server gRPC API."
+readme = "README.md"
+homepage = "https://lores.tech/"
+repository = "https://github.com/local-resilience-tech/lores-node/"
+keywords = ["p2p", "grpc", "lores", "p2panda", "coop-cloud"]
+categories = ["api-bindings"]
 publish = true
 license-file = "LICENSE.txt"
 
