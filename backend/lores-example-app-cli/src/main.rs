@@ -1,9 +1,5 @@
-mod proto {
-    tonic::include_proto!("lores.panda.v1");
-}
-
 use clap::{Parser, Subcommand};
-use proto::{panda_client::PandaClient, ListRegionsRequest, PublishRequest, SubscribeRequest};
+use lores_p2panda_client::PandaClient;
 use serde::{Deserialize, Serialize};
 use tokio::io::AsyncBufReadExt as _;
 
@@ -70,11 +66,7 @@ async fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
             let mut client = connect(&server).await?;
 
             client
-                .publish(PublishRequest {
-                    region_id: region_bytes.to_vec(),
-                    app_namespace: APP_NAMESPACE.to_string(),
-                    payload: payload_bytes,
-                })
+                .publish(region_bytes, APP_NAMESPACE, payload_bytes)
                 .await?;
 
             println!("published");
@@ -82,7 +74,7 @@ async fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
         Command::ListRegions => {
             let mut client = connect(&server).await?;
 
-            let response = client.list_regions(ListRegionsRequest {}).await?;
+            let response = client.list_regions().await?;
 
             let ids = response.into_inner().region_ids;
             if ids.is_empty() {
@@ -101,10 +93,7 @@ async fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
             let mut publish_client = connect(&server).await?;
 
             let stream_response = subscribe_client
-                .subscribe(SubscribeRequest {
-                    region_id: region_bytes.to_vec(),
-                    app_namespace: APP_NAMESPACE.to_string(),
-                })
+                .subscribe(region_bytes, APP_NAMESPACE)
                 .await?;
             let mut stream = stream_response.into_inner();
 
@@ -151,11 +140,7 @@ async fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
                                     .map_err(|e| format!("failed to encode payload as CBOR: {e}"))?;
 
                                 publish_client
-                                    .publish(PublishRequest {
-                                        region_id: region_bytes.to_vec(),
-                                        app_namespace: APP_NAMESPACE.to_string(),
-                                        payload: payload_bytes,
-                                    })
+                                    .publish(region_bytes, APP_NAMESPACE, payload_bytes)
                                     .await?;
                             }
                             Some(_) => {} // blank line, ignore
@@ -174,9 +159,7 @@ async fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-async fn connect(
-    server: &str,
-) -> Result<PandaClient<tonic::transport::Channel>, Box<dyn std::error::Error>> {
+async fn connect(server: &str) -> Result<PandaClient, Box<dyn std::error::Error>> {
     PandaClient::connect(server.to_string())
         .await
         .map_err(|e| format!("could not connect to gRPC server at {server}: {e}").into())

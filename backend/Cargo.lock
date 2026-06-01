@@ -2878,7 +2878,7 @@ dependencies = [
 
 [[package]]
 name = "lores-p2panda-server"
-version = "0.18.2"
+version = "0.1.0"
 dependencies = [
  "lores-p2panda",
  "prost",
@@ -2891,16 +2891,14 @@ dependencies = [
 
 [[package]]
 name = "lores-panda-cli"
-version = "0.18.2"
+version = "0.1.0"
 dependencies = [
  "ciborium",
  "clap",
  "hex",
- "prost",
+ "lores-p2panda-client",
  "serde",
  "tokio",
- "tonic",
- "tonic-build",
 ]
 
 [[package]]

@@ -1,6 +1,6 @@
 [package]
 name = "lores-panda-cli"
-version = "0.18.2"
+version = "0.1.0"
 edition = "2021"
 publish = false
 
@@ -12,7 +12,7 @@ path = "src/main.rs"
 ciborium = "0.2"
 clap = { version = "4", features = ["derive"] }
 hex = "0.4"
-prost = "0.13"
+lores-p2panda-client = { path = "../lores-p2panda-client" }
 serde = { version = "1", features = ["derive"] }
 tokio = { version = "1", features = [
   "macros",
@@ -20,7 +20,3 @@ tokio = { version = "1", features = [
   "io-util",
   "signal",
 ] }
-tonic = "0.12"
-
-[build-dependencies]
-tonic-build = "0.12"
