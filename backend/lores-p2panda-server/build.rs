@@ -1,4 +1,4 @@
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    tonic_build::compile_protos("proto/panda.proto")?;
+    tonic_prost_build::compile_protos("../lores-p2panda-client/proto/panda.proto")?;
     Ok(())
 }

@@ -1,7 +1,7 @@
 use tonic::transport::Channel;
 
 pub mod proto {
-    include!("lores.panda.v1.rs");
+    tonic::include_proto!("lores.panda.v1");
 }
 
 use proto::{
@@ -30,6 +30,19 @@ impl PandaClient {
         D::Error: Into<Box<dyn std::error::Error + Send + Sync>>,
     {
         let inner = TonicPandaClient::connect(dst).await?;
+        Ok(Self { inner })
+    }
+
+    /// Create a client with a lazy channel — no connection is made until the
+    /// first RPC call, so the process starts cleanly even if the gRPC server
+    /// is not yet available.
+    pub fn connect_lazy<D>(dst: D) -> Result<Self, tonic::transport::Error>
+    where
+        D: TryInto<tonic::transport::Endpoint>,
+        D::Error: Into<Box<dyn std::error::Error + Send + Sync>>,
+    {
+        let endpoint = tonic::transport::Endpoint::new(dst)?;
+        let inner = TonicPandaClient::new(endpoint.connect_lazy());
         Ok(Self { inner })
     }
 

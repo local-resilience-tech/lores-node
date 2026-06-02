@@ -6,11 +6,12 @@ publish = false
 
 [dependencies]
 lores-p2panda = { path = "../lores-p2panda" }
-prost = "0.13"
+prost = "0.14"
 thiserror = "2"
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
 tokio-stream = { version = "0.1", features = ["sync"] }
-tonic = "0.12"
+tonic = "0.14"
+tonic-prost = "0.14"
 
 [build-dependencies]
-tonic-build = "0.12"
+tonic-prost-build = "0.14"
