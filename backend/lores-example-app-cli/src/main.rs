@@ -63,7 +63,7 @@ async fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
             ciborium::into_writer(&payload_struct, &mut payload_bytes)
                 .map_err(|e| format!("failed to encode payload as CBOR: {e}"))?;
 
-            let mut client = connect(&server).await?;
+            let mut client = connect(&server)?;
 
             client
                 .publish(region_bytes, APP_NAMESPACE, payload_bytes)
@@ -72,7 +72,7 @@ async fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
             println!("published");
         }
         Command::ListRegions => {
-            let mut client = connect(&server).await?;
+            let mut client = connect(&server)?;
 
             let response = client.list_regions().await?;
 
@@ -89,8 +89,8 @@ async fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
             let region_bytes = parse_region_hex(&region)?;
 
             // Two separate connections: one for subscribe, one for publish.
-            let mut subscribe_client = connect(&server).await?;
-            let mut publish_client = connect(&server).await?;
+            let mut subscribe_client = connect(&server)?;
+            let mut publish_client = connect(&server)?;
 
             let stream_response = subscribe_client
                 .subscribe(region_bytes, APP_NAMESPACE)
@@ -159,9 +159,8 @@ async fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-async fn connect(server: &str) -> Result<PandaClient, Box<dyn std::error::Error>> {
-    PandaClient::connect(server.to_string())
-        .await
+fn connect(server: &str) -> Result<PandaClient, Box<dyn std::error::Error>> {
+    PandaClient::connect_lazy(server.to_string())
         .map_err(|e| format!("could not connect to gRPC server at {server}: {e}").into())
 }
 
