@@ -53,5 +53,6 @@ ENV CONFIG_PATH=/app/config.toml
 EXPOSE 8200
 EXPOSE 2022/udp
 EXPOSE 2023/udp
+EXPOSE 50051
 WORKDIR /app/backend
 CMD ["./lores-node"]
