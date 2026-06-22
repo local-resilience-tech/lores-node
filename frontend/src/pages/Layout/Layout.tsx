@@ -1,5 +1,4 @@
 import {
-  ActionIcon,
   AppShell,
   Avatar,
   Badge,
@@ -11,21 +10,16 @@ import {
   Text,
 } from "@mantine/core"
 import { Anchor, NavLink } from "../../components"
-import { Link, Outlet, useNavigate } from "react-router-dom"
+import { Outlet, useNavigate } from "react-router-dom"
 import { useDisclosure } from "@mantine/hooks"
 import {
   IconAffiliate,
   IconApps,
   IconBrandDocker,
-  IconBrandGit,
   IconBrandGithub,
-  IconChevronDown,
-  IconExternalLink,
   IconGhost,
   IconHome,
   IconMap,
-  IconMapPlus,
-  IconPlus,
   IconSquarePlus,
   IconTimelineEventText,
   IconUser,
@@ -98,7 +92,7 @@ export default function Layout() {
             color="var(--lores-burnt-orange8)"
           />
           <Anchor href="/">LoRes Mesh</Anchor>
-          <Breadcrumbs>
+          <Breadcrumbs className={classes.header_breadcrumbs}>
             {region && (
               <Text className={classes.header_text}>{region.region.name}</Text>
             )}
