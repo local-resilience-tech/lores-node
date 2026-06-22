@@ -30,6 +30,31 @@ const loresOrange: [
   "#af5a00", // orange9
 ]
 
+// Lores website burnt-orange palette (--burnt-orange0 through --burnt-orange9)
+const loresBurntOrange: [
+  string,
+  string,
+  string,
+  string,
+  string,
+  string,
+  string,
+  string,
+  string,
+  string,
+] = [
+  "#fdf0ed", // burnt-orange0
+  "#f6bfb2", // burnt-orange1
+  "#ee8e77", // burnt-orange2
+  "#e65e3c", // burnt-orange3
+  "#c63c1a", // burnt-orange4
+  "#8b2b13", // burnt-orange5
+  "#6e2114", // burnt-orange6
+  "#521812", // burnt-orange7
+  "#36100c", // burnt-orange8
+  "#1e0400", // burnt-orange9
+]
+
 // Lores website blue palette (--blue0 through --blue9)
 const loresBlue: [
   string,
@@ -55,11 +80,14 @@ const loresBlue: [
   "#04212f", // blue9
 ]
 
+const paletteVars = (name: string, shades: readonly string[]) =>
+  Object.fromEntries(shades.map((value, i) => [`--lores-${name}${i}`, value]))
+
 const cssVariablesResolver: CSSVariablesResolver = (theme) => ({
   variables: {
-    "--lores-burnt-orange6": "#6e2114",
-    "--lores-burnt-orange8": "#36100c",
-    "--lores-header-gradient": `linear-gradient(to bottom, ${theme.colors.loresOrange[3]}, ${theme.colors.loresOrange[5]})`,
+    ...paletteVars("orange", theme.colors.loresOrange),
+    ...paletteVars("blue", theme.colors.loresBlue),
+    ...paletteVars("burnt-orange", theme.colors.loresBurntOrange),
   },
   light: {},
   dark: {
@@ -74,6 +102,7 @@ export const theme = createTheme({
   colors: {
     loresBlue,
     loresOrange,
+    loresBurntOrange,
   },
   components: {
     InputWrapper: InputWrapper.extend({

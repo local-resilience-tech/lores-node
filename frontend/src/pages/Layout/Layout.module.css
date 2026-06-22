@@ -1,5 +1,9 @@
 .header {
-  background: var(--lores-header-gradient);
+  background: linear-gradient(
+    to bottom,
+    var(--lores-orange3),
+    var(--lores-orange5)
+  );
   border: none;
 }
 
@@ -11,6 +15,33 @@
 .header_text {
   color: var(--lores-burnt-orange8);
   font-weight: bold;
+}
+
+.navbar {
+  background: linear-gradient(
+    to bottom,
+    var(--lores-burnt-orange6) 0%,
+    var(--lores-burnt-orange5) 100px,
+    var(--lores-burnt-orange5) 100%
+  );
+  border: none;
+}
+
+/* NavLink items inside navbar */
+.navbar :global([data-active="true"]) {
+  background-color: var(--lores-burnt-orange8) !important;
+}
+
+.navbar :global(.mantine-NavLink-root):hover {
+  background-color: var(--lores-burnt-orange4);
+}
+
+.navbar :global(.mantine-NavLink-label) {
+  color: var(--lores-orange5);
+}
+
+.navbar :global(.mantine-NavLink-root):hover :global(.mantine-NavLink-label) {
+  color: var(--lores-orange3);
 }
 
 .user_section {

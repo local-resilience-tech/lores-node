@@ -110,7 +110,7 @@ export default function Layout() {
           </Breadcrumbs>
         </Group>
       </AppShell.Header>
-      <AppShell.Navbar p={0}>
+      <AppShell.Navbar p={0} className={classes.navbar}>
         <AppShell.Section className={classes.user_section}>
           {me ? (
             <Group justify="center" gap="sm">
