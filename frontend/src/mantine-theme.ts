@@ -92,6 +92,8 @@ const cssVariablesResolver: CSSVariablesResolver = (theme) => ({
   light: {},
   dark: {
     "--mantine-color-body": theme.colors["loresBlue"][5],
+    "--mantine-color-text": "#eeeeee",
+    "--mantine-color-dimmed": theme.colors["loresBlue"][1],
   },
 })
 
