@@ -1,7 +1,11 @@
 import {
+  Card,
+  Combobox,
   createTheme,
   Input,
   InputWrapper,
+  Paper,
+  Tabs,
   CSSVariablesResolver,
 } from "@mantine/core"
 
@@ -94,6 +98,12 @@ const cssVariablesResolver: CSSVariablesResolver = (theme) => ({
     "--mantine-color-body": theme.colors["loresBlue"][5],
     "--mantine-color-text": "#eeeeee",
     "--mantine-color-dimmed": theme.colors["loresBlue"][1],
+    "--mantine-color-dark-2": theme.colors["loresBlue"][2],
+    "--mantine-color-dark-3": theme.colors["loresBlue"][3],
+    "--mantine-color-dark-4": theme.colors["loresBlue"][4],
+    "--mantine-color-dark-5": theme.colors["loresBlue"][6],
+    "--mantine-color-dark-6": theme.colors["loresBlue"][7],
+    "--mantine-color-dark-7": theme.colors["loresBlue"][9],
   },
 })
 
@@ -137,6 +147,36 @@ export const theme = createTheme({
           },
         }
       },
+    }),
+    Card: Card.extend({
+      styles: (theme) => ({
+        root: {
+          "--paper-border-color": theme.colors.loresBlue[8],
+          "border-width": "2px",
+        } as any,
+      }),
+    }),
+    Paper: Paper.extend({
+      styles: (theme) => ({
+        root: {
+          "--paper-border-color": theme.colors.loresBlue[8],
+          "border-width": "2px",
+        } as any,
+      }),
+    }),
+    Combobox: Combobox.extend({
+      styles: (theme) => ({
+        dropdown: {
+          "--popover-border-color": theme.colors.loresBlue[8],
+        } as any,
+      }),
+    }),
+    Tabs: Tabs.extend({
+      styles: (theme) => ({
+        root: {
+          "--tab-border-color": theme.colors.loresBlue[8],
+        },
+      }),
     }),
   },
 })
