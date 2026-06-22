@@ -82,6 +82,15 @@ a.navlink_to_setup span {
   background-color: var(--lores-burnt-orange8);
 }
 
+.main {
+  background: linear-gradient(
+    to bottom,
+    var(--lores-blue6) 0%,
+    var(--lores-blue5) 100px,
+    var(--lores-blue5) 100%
+  );
+}
+
 .section_title {
   font-weight: bold;
   font-size: var(--mantine-font-size-lg);

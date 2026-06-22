@@ -291,7 +291,7 @@ export default function Layout() {
           </AppShell.Section>
         )}
       </AppShell.Navbar>
-      <AppShell.Main>
+      <AppShell.Main className={classes.main}>
         <Container p={0}>
           <Outlet />
         </Container>
