@@ -17,7 +17,7 @@ import { MantineProvider } from "@mantine/core"
 import { ModalsProvider } from "@mantine/modals"
 import { Notifications } from "@mantine/notifications"
 import { Provider as ReduxProvider } from "react-redux"
-import { theme } from "./mantine-theme"
+import { theme, cssVariablesResolver } from "./mantine-theme"
 import store, { AppStore, loadInitialData } from "./store"
 import { Stacks } from "./contexts/stacks"
 import { AdminLogin, AuthLayout, SetupAdmin } from "./contexts/auth/admin_auth"
@@ -185,7 +185,11 @@ const router = createBrowserRouter([
 
 function App() {
   return (
-    <MantineProvider defaultColorScheme="dark" theme={theme}>
+    <MantineProvider
+      defaultColorScheme="dark"
+      theme={theme}
+      cssVariablesResolver={cssVariablesResolver}
+    >
       <ModalsProvider>
         <Notifications />
         <ReduxProvider store={store}>
