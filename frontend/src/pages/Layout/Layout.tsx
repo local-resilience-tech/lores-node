@@ -88,13 +88,25 @@ export default function Layout() {
       navbar={{ width: 300, breakpoint: "sm", collapsed: { mobile: !opened } }}
       padding="md"
     >
-      <AppShell.Header>
+      <AppShell.Header className={classes.header}>
         <Group h="100%" px="md">
-          <Burger opened={opened} onClick={toggle} hiddenFrom="sm" size="sm" />
+          <Burger
+            opened={opened}
+            onClick={toggle}
+            hiddenFrom="sm"
+            size="sm"
+            color="var(--lores-burnt-orange8)"
+          />
           <Anchor href="/">LoRes Mesh</Anchor>
           <Breadcrumbs>
-            {region && <Text>{region.region.name}</Text>}
-            {regionNode && <Text>{nodeName(regionNode)}</Text>}
+            {region && (
+              <Text className={classes.header_text}>{region.region.name}</Text>
+            )}
+            {regionNode && (
+              <Text className={classes.header_text}>
+                {nodeName(regionNode)}
+              </Text>
+            )}
           </Breadcrumbs>
         </Group>
       </AppShell.Header>

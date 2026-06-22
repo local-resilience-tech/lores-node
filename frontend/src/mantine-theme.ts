@@ -56,7 +56,11 @@ const loresBlue: [
 ]
 
 const cssVariablesResolver: CSSVariablesResolver = (theme) => ({
-  variables: {},
+  variables: {
+    "--lores-burnt-orange6": "#6e2114",
+    "--lores-burnt-orange8": "#36100c",
+    "--lores-header-gradient": `linear-gradient(to bottom, ${theme.colors.loresOrange[3]}, ${theme.colors.loresOrange[5]})`,
+  },
   light: {},
   dark: {
     "--mantine-color-body": theme.colors["loresBlue"][5],
