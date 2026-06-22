@@ -2,6 +2,7 @@
   "name": "lores-node",
   "private": true,
   "version": "0.19.4",
+  "license": "ANTI-CAPITALIST SOFTWARE LICENSE (v 1.4)",
   "devDependencies": {
     "@j-ulrich/release-it-regex-bumper": "^5.4.0",
     "release-it": "^20.0.1"
