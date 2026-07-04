@@ -5,7 +5,7 @@ import { useAppSelector } from "../../../store"
 import LocalAppDetails from "../components/LocalAppDetails"
 import { getApi } from "../../../api"
 import { LocalApp } from "../../../api/Api"
-import LocalAppActions, { LocalAppAction } from "../components/LocalAppActions"
+import ActionButton from "../../../components/ActionButton"
 import { IfNodeSteward } from "../../auth/node_steward_auth"
 import { activeRegion } from "../../../store/my_regions"
 
@@ -24,24 +24,15 @@ export default function ShowLocalApp() {
     return <Container>Error: App not found</Container>
   }
 
-  const actions: LocalAppAction[] = []
-
-  if (region) {
-    const onAppRegister = async (app: LocalApp) => {
-      console.log("Registering app:", app)
-      return getApi()
-        .nodeStewardApi.registerApp({ app: app, region_id: region.id })
-        .then((_) => actionSuccess())
-        .catch(actionFailure)
-    }
-
-    actions.push({
-      type: "register",
-      buttonColor: "blue",
-      handler: onAppRegister,
-      buildName: (app, type) => `Register with ${region.slug}`,
-    })
-  }
+  const onRegister = region
+    ? async (app: LocalApp) => {
+        console.log("Registering app:", app)
+        return getApi()
+          .nodeStewardApi.registerApp({ app: app, region_id: region.id })
+          .then((_) => actionSuccess())
+          .catch(actionFailure)
+      }
+    : undefined
 
   return (
     <Container>
@@ -68,12 +59,16 @@ export default function ShowLocalApp() {
           </Card>
         </Stack>
 
-        <IfNodeSteward>
-          <Stack>
-            <Title order={2}>Actions</Title>
-            <LocalAppActions actions={actions} app={app} />
-          </Stack>
-        </IfNodeSteward>
+        {onRegister && region && (
+          <IfNodeSteward>
+            <Stack>
+              <Title order={2}>Actions</Title>
+              <ActionButton size="sm" onClick={() => onRegister(app)}>
+                Register with {region.slug}
+              </ActionButton>
+            </Stack>
+          </IfNodeSteward>
+        )}
       </Stack>
     </Container>
   )
