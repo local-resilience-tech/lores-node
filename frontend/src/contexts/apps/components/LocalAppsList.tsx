@@ -1,6 +1,5 @@
 import { Table } from "@mantine/core"
 import { LocalAppInstallation } from "../../../api/Api"
-import { useLoading } from "../../shared"
 import { Anchor } from "../../../components"
 
 interface AppsListProps {
@@ -14,6 +13,7 @@ export default function LocalAppsList({ apps }: AppsListProps) {
         <Table.Tr>
           <Table.Th>Name</Table.Th>
           <Table.Th>Version</Table.Th>
+          <Table.Th>Region</Table.Th>
         </Table.Tr>
       </Table.Thead>
       <Table.Tbody>
@@ -40,6 +40,7 @@ function LocalAppRow({ installation }: LocalAppRowProps) {
         <Anchor href={`app/${app.name}`}>{app.name}</Anchor>
       </Table.Td>
       <Table.Td>{app.version}</Table.Td>
+      <Table.Td>{installation.region_id ?? "N/A"}</Table.Td>
     </Table.Tr>
   )
 }

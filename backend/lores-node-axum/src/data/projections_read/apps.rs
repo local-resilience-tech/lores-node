@@ -75,4 +75,41 @@ impl AppsReadRepo {
 
         Ok(Some(region_app))
     }
+
+    pub async fn find_region_ids_for_apps(
+        &self,
+        pool: &SqlitePool,
+        app_names: &[String],
+        node_id: &str,
+    ) -> Result<HashMap<String, String>, sqlx::Error> {
+        if app_names.is_empty() {
+            return Ok(HashMap::new());
+        }
+
+        let placeholders = app_names.iter().map(|_| "?").collect::<Vec<_>>().join(", ");
+        let sql = format!(
+            "SELECT ai.app_name, rn.region_id
+            FROM app_installations ai
+            INNER JOIN region_nodes rn ON ai.region_node_id = rn.id
+            WHERE ai.app_name IN ({placeholders}) AND rn.node_id = ?"
+        );
+
+        let mut query = sqlx::query(&sql);
+        for name in app_names {
+            query = query.bind(name);
+        }
+        query = query.bind(node_id);
+
+        let rows = query.fetch_all(pool).await?;
+
+        let mut map = HashMap::new();
+        for row in rows {
+            use sqlx::Row;
+            let app_name: String = row.try_get("app_name")?;
+            let region_id: String = row.try_get("region_id")?;
+            map.insert(app_name, region_id);
+        }
+
+        Ok(map)
+    }
 }

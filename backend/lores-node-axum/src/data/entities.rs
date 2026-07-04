@@ -183,7 +183,7 @@ pub struct LocalApp {
 #[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
 pub struct LocalAppInstallation {
     pub app: LocalApp,
-    pub region_id: Option<i64>,
+    pub region_id: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
