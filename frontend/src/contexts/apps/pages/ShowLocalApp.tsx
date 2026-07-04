@@ -4,15 +4,14 @@ import { useParams } from "react-router-dom"
 import { useAppSelector } from "../../../store"
 import LocalAppDetails from "../components/LocalAppDetails"
 import { getApi } from "../../../api"
-import { LocalApp } from "../../../api/Api"
 import ActionButton from "../../../components/ActionButton"
 import { IfNodeSteward } from "../../auth/node_steward_auth"
 import { activeRegion } from "../../../store/my_regions"
 
 export default function ShowLocalApp() {
   const { appName } = useParams<{ appName: string }>()
-  const app = useAppSelector((state) =>
-    (state.localApps || []).find((a) => a.name === appName),
+  const installation = useAppSelector((state) =>
+    (state.localApps || []).find((i) => i.app.name === appName),
   )
   const region = useAppSelector((state) => activeRegion(state.my_regions))
 
@@ -20,12 +19,14 @@ export default function ShowLocalApp() {
     return <Container>Error: App name is required</Container>
   }
 
-  if (!app) {
+  if (!installation) {
     return <Container>Error: App not found</Container>
   }
 
+  const app = installation.app
+
   const onRegister = region
-    ? async (app: LocalApp) => {
+    ? async () => {
         console.log("Registering app:", app)
         return getApi()
           .nodeStewardApi.registerApp({ app: app, region_id: region.id })
@@ -63,7 +64,7 @@ export default function ShowLocalApp() {
           <IfNodeSteward>
             <Stack>
               <Title order={2}>Actions</Title>
-              <ActionButton size="sm" onClick={() => onRegister(app)}>
+              <ActionButton size="sm" onClick={() => onRegister()}>
                 Register with {region.slug}
               </ActionButton>
             </Stack>

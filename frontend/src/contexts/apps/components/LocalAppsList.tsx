@@ -1,10 +1,10 @@
 import { Table } from "@mantine/core"
-import { LocalApp } from "../../../api/Api"
+import { LocalAppInstallation } from "../../../api/Api"
 import { useLoading } from "../../shared"
 import { Anchor } from "../../../components"
 
 interface AppsListProps {
-  apps: LocalApp[]
+  apps: LocalAppInstallation[]
 }
 
 export default function LocalAppsList({ apps }: AppsListProps) {
@@ -17,8 +17,11 @@ export default function LocalAppsList({ apps }: AppsListProps) {
         </Table.Tr>
       </Table.Thead>
       <Table.Tbody>
-        {apps.map((app) => (
-          <LocalAppRow key={app.name} app={app} />
+        {apps.map((installation) => (
+          <LocalAppRow
+            key={installation.app.name}
+            installation={installation}
+          />
         ))}
       </Table.Tbody>
     </Table>
@@ -26,10 +29,11 @@ export default function LocalAppsList({ apps }: AppsListProps) {
 }
 
 interface LocalAppRowProps {
-  app: LocalApp
+  installation: LocalAppInstallation
 }
 
-function LocalAppRow({ app }: LocalAppRowProps) {
+function LocalAppRow({ installation }: LocalAppRowProps) {
+  const { app } = installation
   return (
     <Table.Tr key={app.name}>
       <Table.Td>

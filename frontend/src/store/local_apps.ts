@@ -1,13 +1,16 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit"
-import type { LocalApp } from "../api/Api"
+import type { LocalAppInstallation } from "../api/Api"
 
-export type AppsState = LocalApp[] | null
+export type AppsState = LocalAppInstallation[] | null
 
 const localAppsSlice = createSlice({
   name: "local_apps",
   initialState: null as AppsState,
   reducers: {
-    localAppsLoaded: (_state, action: PayloadAction<AppsState>) => {
+    localAppsLoaded: (
+      _state,
+      action: PayloadAction<LocalAppInstallation[]>,
+    ) => {
       return action.payload
     },
   },
