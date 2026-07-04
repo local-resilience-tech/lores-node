@@ -2798,6 +2798,7 @@ version = "0.1.0"
 dependencies = [
  "lores-p2panda",
  "prost",
+ "sqlx",
  "thiserror 2.0.18",
  "tokio",
  "tokio-stream",

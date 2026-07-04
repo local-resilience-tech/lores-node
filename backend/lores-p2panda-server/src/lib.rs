@@ -6,9 +6,12 @@ use lores_p2panda::{
     IncomingOperation, PandaNode, PandaPublishError, RegionAppTopic, RegionId, RegionTopic,
     SubscriptionError, Topic,
 };
-use tokio::sync::{broadcast, Mutex, RwLock};
-use tokio_stream::wrappers::BroadcastStream;
+use sqlx::SqlitePool;
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
+use tokio::sync::{Mutex, RwLock, broadcast};
+use tokio::time::interval;
 use tokio_stream::StreamExt;
+use tokio_stream::wrappers::BroadcastStream;
 use tonic::{Request, Response, Status};
 
 pub mod proto {
@@ -16,9 +19,9 @@ pub mod proto {
 }
 
 use proto::{
-    panda_server::{Panda, PandaServer},
     ListRegionsRequest, ListRegionsResponse, OperationEvent, PublishRequest, PublishResponse,
     SubscribeRequest,
+    panda_server::{Panda, PandaServer},
 };
 
 /// gRPC service that exposes [`PandaNode`] publish and subscribe over the
@@ -33,14 +36,59 @@ pub struct PandaService {
     /// One broadcast sender per subscribed topic.  Shared across all gRPC
     /// connections so the p2panda-level subscription is created only once.
     subscriptions: Arc<RwLock<HashMap<Topic, broadcast::Sender<IncomingOperation>>>>,
+    idempotency_db: SqlitePool,
 }
 
 impl PandaService {
-    pub fn new(node: Arc<Mutex<Option<Arc<PandaNode>>>>) -> Self {
-        Self {
+    pub async fn new(
+        node: Arc<Mutex<Option<Arc<PandaNode>>>>,
+        idempotency_db: SqlitePool,
+    ) -> Result<Self, sqlx::Error> {
+        Self::setup_idempotency_table(&idempotency_db).await?;
+        Self::spawn_idempotency_cleanup(&idempotency_db);
+        Ok(Self {
             node,
             subscriptions: Arc::new(RwLock::new(HashMap::new())),
-        }
+            idempotency_db,
+        })
+    }
+
+    async fn setup_idempotency_table(db: &SqlitePool) -> Result<(), sqlx::Error> {
+        sqlx::query(
+            "CREATE TABLE IF NOT EXISTS publish_idempotency_keys (
+                topic   BLOB    NOT NULL,
+                key     BLOB    NOT NULL,
+                seen_at INTEGER NOT NULL,
+                PRIMARY KEY (topic, key)
+            );
+            CREATE INDEX IF NOT EXISTS idx_pik_seen_at
+                ON publish_idempotency_keys(seen_at);",
+        )
+        .execute(db)
+        .await?;
+        Ok(())
+    }
+
+    fn spawn_idempotency_cleanup(db: &SqlitePool) {
+        let db = db.clone();
+        const CLEANUP_FREQUENCY: Duration = Duration::from_hours(12);
+        const RETENTION_SECS: i64 = Duration::from_hours(48).as_secs() as i64;
+
+        tokio::spawn(async move {
+            let mut timer = interval(CLEANUP_FREQUENCY);
+            loop {
+                timer.tick().await;
+                let cutoff = SystemTime::now()
+                    .duration_since(UNIX_EPOCH)
+                    .unwrap()
+                    .as_secs() as i64
+                    - RETENTION_SECS;
+                let _ = sqlx::query("DELETE FROM publish_idempotency_keys WHERE seen_at < ?")
+                    .bind(cutoff)
+                    .execute(&db)
+                    .await;
+            }
+        });
     }
 
     pub fn into_server(self) -> PandaServer<Self> {
@@ -155,8 +203,7 @@ impl Panda for PandaService {
 
         println!(
             "[subscribe] region={} app_namespace={}",
-            region_app_topic.region_id,
-            region_app_topic.app_namespace
+            region_app_topic.region_id, region_app_topic.app_namespace
         );
 
         // Under a write lock, ensure a p2panda subscription exists for this
