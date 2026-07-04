@@ -110,3 +110,106 @@ impl IdempotencyStore {
         });
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use lores_p2panda::{RegionAppTopic, RegionId};
+    use sqlx::SqlitePool;
+
+    async fn test_store() -> IdempotencyStore {
+        let db = SqlitePool::connect("sqlite::memory:").await.unwrap();
+        // Use a very long cleanup frequency so the background task never fires during tests.
+        IdempotencyStore::new(
+            db,
+            Duration::from_secs(u64::MAX / 2),
+            Duration::from_hours(48),
+        )
+        .await
+        .unwrap()
+    }
+
+    fn topic(namespace: &str) -> RegionAppTopic {
+        RegionAppTopic::new(RegionId::from([1u8; 32]), namespace)
+    }
+
+    // 1. is_duplicate returns false when key has not been recorded.
+    #[tokio::test]
+    async fn test_unknown_key_is_not_duplicate() {
+        let store = test_store().await;
+        let result = store.is_duplicate(&topic("app"), b"key-1").await.unwrap();
+        assert!(!result);
+    }
+
+    // 2. is_duplicate returns false when no key is supplied.
+    #[tokio::test]
+    async fn test_empty_key_is_not_duplicate() {
+        let store = test_store().await;
+        let result = store.is_duplicate(&topic("app"), b"").await.unwrap();
+        assert!(!result);
+    }
+
+    // 3. After record, is_duplicate returns true for the same key and topic.
+    #[tokio::test]
+    async fn test_recorded_key_is_duplicate() {
+        let store = test_store().await;
+        store.record(&topic("app"), b"key-1").await.unwrap();
+        let result = store.is_duplicate(&topic("app"), b"key-1").await.unwrap();
+        assert!(result);
+    }
+
+    // 4. Calling record twice with the same key does not error.
+    #[tokio::test]
+    async fn test_record_is_idempotent() {
+        let store = test_store().await;
+        store.record(&topic("app"), b"key-1").await.unwrap();
+        store.record(&topic("app"), b"key-1").await.unwrap();
+    }
+
+    // 5. After manual cleanup removes an expired row, is_duplicate returns false.
+    #[tokio::test]
+    async fn test_expired_key_removed_by_cleanup() {
+        let store = test_store().await;
+
+        // Insert a row with seen_at in the distant past.
+        let topic = topic("app");
+        let topic_bytes = topic.p2panda_topic().to_bytes().to_vec();
+        sqlx::query("INSERT INTO publish_idempotency_keys (topic, key, seen_at) VALUES (?, ?, ?)")
+            .bind(&topic_bytes)
+            .bind(b"old-key".as_slice())
+            .bind(0i64) // epoch — definitely expired
+            .execute(&store.db)
+            .await
+            .unwrap();
+
+        // Confirm it looks like a duplicate before cleanup.
+        assert!(store.is_duplicate(&topic, b"old-key").await.unwrap());
+
+        // Run cleanup with a cutoff of now (removes anything seen_at < now).
+        let cutoff = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_secs() as i64;
+        sqlx::query("DELETE FROM publish_idempotency_keys WHERE seen_at < ?")
+            .bind(cutoff)
+            .execute(&store.db)
+            .await
+            .unwrap();
+
+        // Now the key should be gone.
+        assert!(!store.is_duplicate(&topic, b"old-key").await.unwrap());
+    }
+
+    // 6. Keys are scoped by topic: the same key on different topics is independent.
+    #[tokio::test]
+    async fn test_keys_are_scoped_by_topic() {
+        let store = test_store().await;
+        let topic_a = topic("app-a");
+        let topic_b = topic("app-b");
+
+        store.record(&topic_a, b"key-1").await.unwrap();
+
+        assert!(store.is_duplicate(&topic_a, b"key-1").await.unwrap());
+        assert!(!store.is_duplicate(&topic_b, b"key-1").await.unwrap());
+    }
+}
