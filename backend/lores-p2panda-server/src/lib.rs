@@ -7,12 +7,13 @@ use lores_p2panda::{
     SubscriptionError, Topic,
 };
 use sqlx::SqlitePool;
-use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use tokio::sync::{Mutex, RwLock, broadcast};
-use tokio::time::interval;
 use tokio_stream::StreamExt;
 use tokio_stream::wrappers::BroadcastStream;
 use tonic::{Request, Response, Status};
+
+mod idempotency_store;
+use idempotency_store::IdempotencyStore;
 
 pub mod proto {
     tonic::include_proto!("lores.panda.v1");
@@ -36,59 +37,19 @@ pub struct PandaService {
     /// One broadcast sender per subscribed topic.  Shared across all gRPC
     /// connections so the p2panda-level subscription is created only once.
     subscriptions: Arc<RwLock<HashMap<Topic, broadcast::Sender<IncomingOperation>>>>,
-    idempotency_db: SqlitePool,
+    idempotency: IdempotencyStore,
 }
 
 impl PandaService {
     pub async fn new(
         node: Arc<Mutex<Option<Arc<PandaNode>>>>,
-        idempotency_db: SqlitePool,
+        db: SqlitePool,
     ) -> Result<Self, sqlx::Error> {
-        Self::setup_idempotency_table(&idempotency_db).await?;
-        Self::spawn_idempotency_cleanup(&idempotency_db);
         Ok(Self {
             node,
             subscriptions: Arc::new(RwLock::new(HashMap::new())),
-            idempotency_db,
+            idempotency: IdempotencyStore::new(db).await?,
         })
-    }
-
-    async fn setup_idempotency_table(db: &SqlitePool) -> Result<(), sqlx::Error> {
-        sqlx::query(
-            "CREATE TABLE IF NOT EXISTS publish_idempotency_keys (
-                topic   BLOB    NOT NULL,
-                key     BLOB    NOT NULL,
-                seen_at INTEGER NOT NULL,
-                PRIMARY KEY (topic, key)
-            );
-            CREATE INDEX IF NOT EXISTS idx_pik_seen_at
-                ON publish_idempotency_keys(seen_at);",
-        )
-        .execute(db)
-        .await?;
-        Ok(())
-    }
-
-    fn spawn_idempotency_cleanup(db: &SqlitePool) {
-        let db = db.clone();
-        const CLEANUP_FREQUENCY: Duration = Duration::from_hours(12);
-        const RETENTION_SECS: i64 = Duration::from_hours(48).as_secs() as i64;
-
-        tokio::spawn(async move {
-            let mut timer = interval(CLEANUP_FREQUENCY);
-            loop {
-                timer.tick().await;
-                let cutoff = SystemTime::now()
-                    .duration_since(UNIX_EPOCH)
-                    .unwrap()
-                    .as_secs() as i64
-                    - RETENTION_SECS;
-                let _ = sqlx::query("DELETE FROM publish_idempotency_keys WHERE seen_at < ?")
-                    .bind(cutoff)
-                    .execute(&db)
-                    .await;
-            }
-        });
     }
 
     pub fn into_server(self) -> PandaServer<Self> {
@@ -161,6 +122,16 @@ impl Panda for PandaService {
             req.payload.len()
         );
 
+        // If the client supplied an idempotency key, return early on duplicate.
+        if self
+            .idempotency
+            .is_duplicate(&region_app_topic, &req.idempotency_key)
+            .await?
+        {
+            println!("[publish] duplicate idempotency key, skipping re-insert");
+            return Ok(Response::new(PublishResponse {}));
+        }
+
         // Ensure a subscription exists for this topic so the publisher is
         // available. This is idempotent: if already subscribed the existing
         // broadcast channel is reused.
@@ -171,6 +142,12 @@ impl Panda for PandaService {
         node.publish_to_region_topic(&region_app_topic, req.payload)
             .await
             .map_err(publish_error_to_status)?;
+
+        // Record the key only after a successful publish so a publish failure
+        // does not burn the key — the client can safely retry.
+        self.idempotency
+            .record(&region_app_topic, &req.idempotency_key)
+            .await?;
 
         Ok(Response::new(PublishResponse {}))
     }

@@ -10,7 +10,10 @@ p2panda-core = { workspace = true }
 p2panda-store = { version = "0.6.1", features = ["sqlite"] }
 p2panda-net = "0.6.1"
 serde = { workspace = true, features = ["derive"] }
-sqlx = { workspace = true, default-features = false, features = ["runtime-tokio", "sqlite"] }
+sqlx = { workspace = true, default-features = false, features = [
+  "runtime-tokio",
+  "sqlite",
+] }
 thiserror = { workspace = true }
 tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
 tokio-stream = { workspace = true }
