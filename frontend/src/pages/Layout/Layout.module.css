@@ -6,6 +6,7 @@
   );
   border: none;
   --mantine-color-dimmed: var(--lores-orange1);
+  border-color: var(--lores-orange6) !important;
 }
 
 .header a {
@@ -29,7 +30,7 @@
     var(--lores-burnt-orange5) 100px,
     var(--lores-burnt-orange5) 100%
   );
-  border: none;
+  border: none !important;
   --mantine-color-dimmed: var(--lores-burnt-orange1);
 }
 
