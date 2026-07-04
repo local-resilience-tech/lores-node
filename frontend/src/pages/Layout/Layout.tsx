@@ -1,5 +1,4 @@
 import {
-  ActionIcon,
   AppShell,
   Avatar,
   Badge,
@@ -11,21 +10,16 @@ import {
   Text,
 } from "@mantine/core"
 import { Anchor, NavLink } from "../../components"
-import { Link, Outlet, useNavigate } from "react-router-dom"
+import { Outlet, useNavigate } from "react-router-dom"
 import { useDisclosure } from "@mantine/hooks"
 import {
   IconAffiliate,
   IconApps,
   IconBrandDocker,
-  IconBrandGit,
   IconBrandGithub,
-  IconChevronDown,
-  IconExternalLink,
   IconGhost,
   IconHome,
   IconMap,
-  IconMapPlus,
-  IconPlus,
   IconSquarePlus,
   IconTimelineEventText,
   IconUser,
@@ -88,17 +82,29 @@ export default function Layout() {
       navbar={{ width: 300, breakpoint: "sm", collapsed: { mobile: !opened } }}
       padding="md"
     >
-      <AppShell.Header>
+      <AppShell.Header className={classes.header}>
         <Group h="100%" px="md">
-          <Burger opened={opened} onClick={toggle} hiddenFrom="sm" size="sm" />
+          <Burger
+            opened={opened}
+            onClick={toggle}
+            hiddenFrom="sm"
+            size="sm"
+            color="var(--lores-burnt-orange8)"
+          />
           <Anchor href="/">LoRes Mesh</Anchor>
-          <Breadcrumbs>
-            {region && <Text>{region.region.name}</Text>}
-            {regionNode && <Text>{nodeName(regionNode)}</Text>}
+          <Breadcrumbs className={classes.header_breadcrumbs}>
+            {region && (
+              <Text className={classes.header_text}>{region.region.name}</Text>
+            )}
+            {regionNode && (
+              <Text className={classes.header_text}>
+                {nodeName(regionNode)}
+              </Text>
+            )}
           </Breadcrumbs>
         </Group>
       </AppShell.Header>
-      <AppShell.Navbar p={0}>
+      <AppShell.Navbar p={0} className={classes.navbar}>
         <AppShell.Section className={classes.user_section}>
           {me ? (
             <Group justify="center" gap="sm">
@@ -279,7 +285,7 @@ export default function Layout() {
           </AppShell.Section>
         )}
       </AppShell.Navbar>
-      <AppShell.Main>
+      <AppShell.Main className={classes.main}>
         <Container p={0}>
           <Outlet />
         </Container>

@@ -1,9 +1,61 @@
+.header {
+  background: linear-gradient(
+    to bottom,
+    var(--lores-orange3),
+    var(--lores-orange5)
+  );
+  border: none;
+  --mantine-color-dimmed: var(--lores-orange1);
+}
+
+.header a {
+  color: var(--lores-burnt-orange8);
+  font-weight: bold;
+}
+
+.header_breadcrumbs :global(.mantine-Breadcrumbs-separator) {
+  color: var(--lores-burnt-orange6);
+}
+
+.header_text {
+  color: var(--lores-burnt-orange8);
+  font-weight: bold;
+}
+
+.navbar {
+  background: linear-gradient(
+    to bottom,
+    var(--lores-burnt-orange6) 0%,
+    var(--lores-burnt-orange5) 100px,
+    var(--lores-burnt-orange5) 100%
+  );
+  border: none;
+  --mantine-color-dimmed: var(--lores-burnt-orange1);
+}
+
+/* NavLink items inside navbar */
+.navbar :global([data-active="true"]) {
+  background-color: var(--lores-burnt-orange8) !important;
+}
+
+.navbar :global(.mantine-NavLink-root):hover {
+  background-color: var(--lores-burnt-orange4);
+}
+
+.navbar :global(.mantine-NavLink-label) {
+  color: var(--lores-orange5);
+}
+
+.navbar :global(.mantine-NavLink-root):hover :global(.mantine-NavLink-label) {
+  color: var(--lores-orange3);
+}
+
 .user_section {
   padding: var(--mantine-spacing-md) 0;
 }
 
 .menu_section {
-  border-top: 1px solid var(--mantine-color-dark-4);
+  border-top: 1px solid var(--lores-burnt-orange8);
   padding-top: 0;
   padding-bottom: var(--mantine-spacing-md);
 }
@@ -13,7 +65,7 @@
 }
 
 .section_to_setup {
-  border-top: 1px solid var(--mantine-color-dark-4);
+  border-top: 1px solid var(--lores-burnt-orange8);
   padding-top: 0;
   padding-bottom: 0;
 }
@@ -24,14 +76,23 @@ a.navlink_to_setup span {
 }
 
 .footer_section {
-  border-top: 1px solid var(--mantine-color-dark-4);
+  border-top: 1px solid var(--lores-burnt-orange8);
   padding-top: var(--mantine-spacing-md);
 }
 
 .section_header {
   padding: 5px var(--mantine-spacing-md);
   margin: 0;
-  background-color: var(--mantine-color-dark-6);
+  background-color: var(--lores-burnt-orange8);
+}
+
+.main {
+  background: linear-gradient(
+    to bottom,
+    var(--lores-blue6) 0%,
+    var(--lores-blue5) 100px,
+    var(--lores-blue5) 100%
+  );
 }
 
 .section_title {
