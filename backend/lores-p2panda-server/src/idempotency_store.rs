@@ -10,9 +10,13 @@ pub struct IdempotencyStore {
 }
 
 impl IdempotencyStore {
-    pub async fn new(db: SqlitePool) -> Result<Self, sqlx::Error> {
+    pub async fn new(
+        db: SqlitePool,
+        cleanup_frequency: Duration,
+        retention: Duration,
+    ) -> Result<Self, sqlx::Error> {
         Self::setup_table(&db).await?;
-        Self::spawn_cleanup(&db);
+        Self::spawn_cleanup(&db, cleanup_frequency, retention);
         Ok(Self { db })
     }
 
@@ -85,20 +89,19 @@ impl IdempotencyStore {
         Ok(())
     }
 
-    fn spawn_cleanup(db: &SqlitePool) {
+    fn spawn_cleanup(db: &SqlitePool, cleanup_frequency: Duration, retention: Duration) {
         let db = db.clone();
-        const CLEANUP_FREQUENCY: Duration = Duration::from_hours(12);
-        const RETENTION_SECS: i64 = Duration::from_hours(48).as_secs() as i64;
+        let retention_secs = retention.as_secs() as i64;
 
         tokio::spawn(async move {
-            let mut timer = interval(CLEANUP_FREQUENCY);
+            let mut timer = interval(cleanup_frequency);
             loop {
                 timer.tick().await;
                 let cutoff = SystemTime::now()
                     .duration_since(UNIX_EPOCH)
                     .unwrap()
                     .as_secs() as i64
-                    - RETENTION_SECS;
+                    - retention_secs;
                 let _ = sqlx::query("DELETE FROM publish_idempotency_keys WHERE seen_at < ?")
                     .bind(cutoff)
                     .execute(&db)

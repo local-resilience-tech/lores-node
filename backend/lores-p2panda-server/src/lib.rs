@@ -7,6 +7,7 @@ use lores_p2panda::{
     SubscriptionError, Topic,
 };
 use sqlx::SqlitePool;
+use std::time::Duration;
 use tokio::sync::{Mutex, RwLock, broadcast};
 use tokio_stream::StreamExt;
 use tokio_stream::wrappers::BroadcastStream;
@@ -14,6 +15,23 @@ use tonic::{Request, Response, Status};
 
 mod idempotency_store;
 use idempotency_store::IdempotencyStore;
+
+/// Configuration for the publish idempotency deduplication store.
+pub struct IdempotencyConfig {
+    /// How often the cleanup task runs to remove expired keys.
+    pub cleanup_frequency: Duration,
+    /// How long keys are retained before being eligible for cleanup.
+    pub retention: Duration,
+}
+
+impl Default for IdempotencyConfig {
+    fn default() -> Self {
+        Self {
+            cleanup_frequency: Duration::from_hours(12),
+            retention: Duration::from_hours(48),
+        }
+    }
+}
 
 pub mod proto {
     tonic::include_proto!("lores.panda.v1");
@@ -44,11 +62,14 @@ impl PandaService {
     pub async fn new(
         node: Arc<Mutex<Option<Arc<PandaNode>>>>,
         db: SqlitePool,
+        idempotency_config: Option<IdempotencyConfig>,
     ) -> Result<Self, sqlx::Error> {
+        let config = idempotency_config.unwrap_or_default();
         Ok(Self {
             node,
             subscriptions: Arc::new(RwLock::new(HashMap::new())),
-            idempotency: IdempotencyStore::new(db).await?,
+            idempotency: IdempotencyStore::new(db, config.cleanup_frequency, config.retention)
+                .await?,
         })
     }
 
