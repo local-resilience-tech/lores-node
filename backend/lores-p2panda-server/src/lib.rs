@@ -6,19 +6,41 @@ use lores_p2panda::{
     IncomingOperation, PandaNode, PandaPublishError, RegionAppTopic, RegionId, RegionTopic,
     SubscriptionError, Topic,
 };
-use tokio::sync::{broadcast, Mutex, RwLock};
-use tokio_stream::wrappers::BroadcastStream;
+use sqlx::SqlitePool;
+use std::time::Duration;
+use tokio::sync::{Mutex, RwLock, broadcast};
 use tokio_stream::StreamExt;
+use tokio_stream::wrappers::BroadcastStream;
 use tonic::{Request, Response, Status};
+
+mod idempotency_store;
+use idempotency_store::IdempotencyStore;
+
+/// Configuration for the publish idempotency deduplication store.
+pub struct IdempotencyConfig {
+    /// How often the cleanup task runs to remove expired keys.
+    pub cleanup_frequency: Duration,
+    /// How long keys are retained before being eligible for cleanup.
+    pub retention: Duration,
+}
+
+impl Default for IdempotencyConfig {
+    fn default() -> Self {
+        Self {
+            cleanup_frequency: Duration::from_hours(12),
+            retention: Duration::from_hours(48),
+        }
+    }
+}
 
 pub mod proto {
     tonic::include_proto!("lores.panda.v1");
 }
 
 use proto::{
-    panda_server::{Panda, PandaServer},
     ListRegionsRequest, ListRegionsResponse, OperationEvent, PublishRequest, PublishResponse,
     SubscribeRequest,
+    panda_server::{Panda, PandaServer},
 };
 
 /// gRPC service that exposes [`PandaNode`] publish and subscribe over the
@@ -33,14 +55,22 @@ pub struct PandaService {
     /// One broadcast sender per subscribed topic.  Shared across all gRPC
     /// connections so the p2panda-level subscription is created only once.
     subscriptions: Arc<RwLock<HashMap<Topic, broadcast::Sender<IncomingOperation>>>>,
+    idempotency: IdempotencyStore,
 }
 
 impl PandaService {
-    pub fn new(node: Arc<Mutex<Option<Arc<PandaNode>>>>) -> Self {
-        Self {
+    pub async fn new(
+        node: Arc<Mutex<Option<Arc<PandaNode>>>>,
+        db: SqlitePool,
+        idempotency_config: Option<IdempotencyConfig>,
+    ) -> Result<Self, sqlx::Error> {
+        let config = idempotency_config.unwrap_or_default();
+        Ok(Self {
             node,
             subscriptions: Arc::new(RwLock::new(HashMap::new())),
-        }
+            idempotency: IdempotencyStore::new(db, config.cleanup_frequency, config.retention)
+                .await?,
+        })
     }
 
     pub fn into_server(self) -> PandaServer<Self> {
@@ -113,6 +143,16 @@ impl Panda for PandaService {
             req.payload.len()
         );
 
+        // If the client supplied an idempotency key, return early on duplicate.
+        if self
+            .idempotency
+            .is_duplicate(&region_app_topic, &req.idempotency_key)
+            .await?
+        {
+            println!("[publish] duplicate idempotency key, skipping re-insert");
+            return Ok(Response::new(PublishResponse {}));
+        }
+
         // Ensure a subscription exists for this topic so the publisher is
         // available. This is idempotent: if already subscribed the existing
         // broadcast channel is reused.
@@ -123,6 +163,12 @@ impl Panda for PandaService {
         node.publish_to_region_topic(&region_app_topic, req.payload)
             .await
             .map_err(publish_error_to_status)?;
+
+        // Record the key only after a successful publish so a publish failure
+        // does not burn the key — the client can safely retry.
+        self.idempotency
+            .record(&region_app_topic, &req.idempotency_key)
+            .await?;
 
         Ok(Response::new(PublishResponse {}))
     }
@@ -155,8 +201,7 @@ impl Panda for PandaService {
 
         println!(
             "[subscribe] region={} app_namespace={}",
-            region_app_topic.region_id,
-            region_app_topic.app_namespace
+            region_app_topic.region_id, region_app_topic.app_namespace
         );
 
         // Under a write lock, ensure a p2panda subscription exists for this

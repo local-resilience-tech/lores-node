@@ -50,16 +50,22 @@ impl PandaClient {
     ///
     /// Returns only after the operation has been persisted by the remote
     /// p2panda node, guaranteeing eventual propagation to peers.
+    ///
+    /// If `idempotency_key` is `Some`, the server will deduplicate within its
+    /// retention window: retrying with the same key returns success without
+    /// re-inserting the operation.
     pub async fn publish(
         &mut self,
         region_id: [u8; 32],
         app_namespace: impl Into<String>,
         payload: impl Into<Vec<u8>>,
+        idempotency_key: Option<Vec<u8>>,
     ) -> Result<Response<PublishResponse>, Status> {
         let request = PublishRequest {
             region_id: region_id.to_vec(),
             app_namespace: app_namespace.into(),
             payload: payload.into(),
+            idempotency_key: idempotency_key.unwrap_or_default(),
         };
         self.inner.publish(request).await
     }

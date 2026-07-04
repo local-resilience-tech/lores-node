@@ -6,17 +6,17 @@ publish = false
 
 [dependencies]
 p2panda = "0.6.1"
-p2panda-core = "0.6.1"
+p2panda-core = { workspace = true }
 p2panda-store = { version = "0.6.1", features = ["sqlite"] }
 p2panda-net = "0.6.1"
-serde = { version = "1.0.219", features = ["derive"] }
-sqlx = { version = "0.8.6", features = [
+serde = { workspace = true, features = ["derive"] }
+sqlx = { workspace = true, default-features = false, features = [
   "runtime-tokio",
   "sqlite",
-], default-features = false }
-thiserror = "2.0.17"
-tokio = { version = "1.46.1", features = ["macros", "rt-multi-thread"] }
-tokio-stream = "0.1.18"
+] }
+thiserror = { workspace = true }
+tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
+tokio-stream = { workspace = true }
 tracing = "0.1"
-hex = "0.4.3"
+hex = { workspace = true }
 rand = "0.9"

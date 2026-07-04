@@ -27,6 +27,11 @@ message PublishRequest {
   string app_namespace = 2;
   // Encoded operation payload (e.g. CBOR).
   bytes payload = 3;
+  // Optional client-assigned idempotency key. If present, the server will
+  // deduplicate within the retention window: a second Publish with the same
+  // (region_id, app_namespace, idempotency_key) returns success without
+  // re-inserting the operation.
+  bytes idempotency_key = 4;
 }
 
 // An empty response indicates the operation was successfully persisted.

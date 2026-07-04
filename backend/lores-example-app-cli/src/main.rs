@@ -66,7 +66,7 @@ async fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
             let mut client = connect(&server)?;
 
             client
-                .publish(region_bytes, APP_NAMESPACE, payload_bytes)
+                .publish(region_bytes, APP_NAMESPACE, payload_bytes, None)
                 .await?;
 
             println!("published");
@@ -140,7 +140,7 @@ async fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
                                     .map_err(|e| format!("failed to encode payload as CBOR: {e}"))?;
 
                                 publish_client
-                                    .publish(region_bytes, APP_NAMESPACE, payload_bytes)
+                                    .publish(region_bytes, APP_NAMESPACE, payload_bytes, None)
                                     .await?;
                             }
                             Some(_) => {} // blank line, ignore

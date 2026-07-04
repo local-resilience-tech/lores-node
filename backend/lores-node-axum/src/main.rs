@@ -1,7 +1,7 @@
 use axum::{
-    http::{header, Method},
-    routing::get,
     Extension,
+    http::{Method, header},
+    routing::get,
 };
 use axum_login::AuthManagerLayerBuilder;
 use sqlx::SqlitePool;
@@ -25,7 +25,7 @@ use crate::{
     },
     config::{config::LoresNodeConfig, config_state::LoresNodeConfigState},
     panda_comms::{
-        lores_events::LoResEvent, start_panda, start_panda_event_handler, PandaContainer,
+        PandaContainer, lores_events::LoResEvent, start_panda, start_panda_event_handler,
     },
     static_server::frontend_handler,
 };
@@ -121,7 +121,13 @@ async fn main() {
     let grpc_addr = format!("0.0.0.0:{}", grpc_port)
         .parse()
         .expect("valid gRPC bind address");
-    let panda_publish = lores_p2panda_server::PandaService::new(panda_container.node_arc());
+    let panda_publish = lores_p2panda_server::PandaService::new(
+        panda_container.node_arc(),
+        node_data_pool.clone(),
+        None,
+    )
+    .await
+    .expect("Failed to initialise PandaService");
     tokio::spawn(async move {
         println!("gRPC listening on {}", grpc_addr);
         GrpcServer::builder()

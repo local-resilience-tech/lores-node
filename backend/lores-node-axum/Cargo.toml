@@ -20,20 +20,20 @@ openssl = { version = "0.10.73", features = ["vendored"] }
 password-auth = "1.0.0"
 pwgen2 = "0.7.3"
 semver = "1.0.27"
-serde = { version = "1.0.219", features = ["derive"] }
+serde = { workspace = true, features = ["derive"] }
 serde_json = "1.0.145"
 serde_yaml = "0.9.34"
 short-uuid = "0.2.0"
-sqlx = { version = "0.8.6", features = [
+sqlx = { workspace = true, features = [
   "runtime-tokio-native-tls",
   "sqlite",
   "chrono",
 ] }
 tempfile = "3.23.0"
-thiserror = "2.0.17"
+thiserror = { workspace = true }
 time = "0.3.44"
-tokio = { version = "1.46.1", features = ["macros", "rt-multi-thread"] }
-tokio-stream = "0.1.18"
+tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
+tokio-stream = { workspace = true }
 tower = "0.5.2"
 tower-http = { version = "0.6.6", features = ["cors", "fs", "trace"] }
 tower-sessions = { version = "0.14.0", features = ["signed"] }
@@ -44,10 +44,10 @@ utoipa = "5.3.1"
 utoipa-axum = "0.2.0"
 utoipa-swagger-ui = { version = "9.0.2", features = ["axum", "vendored"] }
 uuid = "1.18.1"
-hex = "0.4.3"
+hex = { workspace = true }
 lores-p2panda = { path = "../lores-p2panda" }
 lores-p2panda-server = { path = "../lores-p2panda-server" }
-tonic = "0.14"
-p2panda-core = "0.6.1"
+p2panda-core = { workspace = true }
+tonic = { workspace = true }
 rand = "0.10.0"
 regex = "1.12.3"
