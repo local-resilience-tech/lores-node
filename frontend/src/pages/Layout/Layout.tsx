@@ -32,7 +32,7 @@ import { handleClientEvent, useAppDispatch, useAppSelector } from "../../store"
 import useWebSocket from "react-use-websocket-lite"
 import { getSocketUrl } from "../../api"
 import { IfNodeSteward } from "../../contexts/auth/node_steward_auth"
-import { RegionSelector } from "./RegionSelector"
+import { RegionSelector } from "../../contexts/regions"
 import {
   activeRegionWithNodes,
   activeRegionChanged,

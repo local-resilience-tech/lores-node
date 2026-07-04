@@ -1,12 +1,20 @@
 import { Table } from "@mantine/core"
-import { LocalAppInstallation } from "../../../api/Api"
+import {
+  LocalApp,
+  LocalAppInstallation,
+  RegionWithNodes,
+} from "../../../api/Api"
 import { Anchor } from "../../../components"
+import { useAppSelector } from "../../../store"
+import { regionDisplayName } from "../../regions"
 
 interface AppsListProps {
   apps: LocalAppInstallation[]
 }
 
 export default function LocalAppsList({ apps }: AppsListProps) {
+  const regions = useAppSelector((state) => state.my_regions.all)
+
   return (
     <Table>
       <Table.Thead>
@@ -17,30 +25,37 @@ export default function LocalAppsList({ apps }: AppsListProps) {
         </Table.Tr>
       </Table.Thead>
       <Table.Tbody>
-        {apps.map((installation) => (
-          <LocalAppRow
-            key={installation.app.name}
-            installation={installation}
-          />
-        ))}
+        {apps.map((installation) => {
+          const region = regions?.find(
+            (r) => r.region.id === installation.region_id,
+          )
+          return (
+            <LocalAppRow
+              key={installation.app.name}
+              app={installation.app}
+              region={region}
+            />
+          )
+        })}
       </Table.Tbody>
     </Table>
   )
 }
 
 interface LocalAppRowProps {
-  installation: LocalAppInstallation
+  app: LocalApp
+  region?: RegionWithNodes
 }
 
-function LocalAppRow({ installation }: LocalAppRowProps) {
-  const { app } = installation
+function LocalAppRow({ app, region }: LocalAppRowProps) {
+  const regionName = region ? regionDisplayName(region.region) : ""
   return (
     <Table.Tr key={app.name}>
       <Table.Td>
         <Anchor href={`app/${app.name}`}>{app.name}</Anchor>
       </Table.Td>
       <Table.Td>{app.version}</Table.Td>
-      <Table.Td>{installation.region_id ?? "N/A"}</Table.Td>
+      <Table.Td>{regionName}</Table.Td>
     </Table.Tr>
   )
 }

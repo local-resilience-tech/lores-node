@@ -147,8 +147,7 @@ export interface LocalApp {
 
 export interface LocalAppInstallation {
   app: LocalApp;
-  /** @format int64 */
-  region_id?: number | null;
+  region_id?: string | null;
 }
 
 export interface Network {
