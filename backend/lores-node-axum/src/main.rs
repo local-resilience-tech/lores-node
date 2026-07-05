@@ -121,17 +121,24 @@ async fn main() {
     let grpc_addr = format!("0.0.0.0:{}", grpc_port)
         .parse()
         .expect("valid gRPC bind address");
-    let panda_publish = lores_p2panda_server::PandaService::new(
-        panda_container.node_arc(),
-        node_data_pool.clone(),
-        None,
-    )
-    .await
-    .expect("Failed to initialise PandaService");
+    let panda_service = {
+        let on_installation_seen =
+            local_apps::local_app_installations::make_installation_seen_callback(
+                node_data_pool.clone(),
+            );
+        lores_p2panda_server::PandaService::new(
+            panda_container.node_arc(),
+            node_data_pool.clone(),
+            None,
+            on_installation_seen,
+        )
+        .await
+        .expect("Failed to initialise PandaService")
+    };
     tokio::spawn(async move {
         println!("gRPC listening on {}", grpc_addr);
         GrpcServer::builder()
-            .add_service(panda_publish.into_server())
+            .add_service(panda_service.into_server())
             .serve(grpc_addr)
             .await
             .expect("gRPC server failed");

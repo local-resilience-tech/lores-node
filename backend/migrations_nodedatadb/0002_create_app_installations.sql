@@ -1,4 +1,4 @@
-CREATE TABLE app_region_bindings (
+CREATE TABLE app_installations (
     app_name        TEXT NOT NULL,
     installation_id BLOB NOT NULL,
     region_id       TEXT NOT NULL,
