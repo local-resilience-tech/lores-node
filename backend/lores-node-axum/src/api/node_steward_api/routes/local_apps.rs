@@ -77,6 +77,7 @@ impl LocalAppFormData {
 async fn register_app(
     Extension(panda_container): Extension<PandaContainer>,
     Extension(db): Extension<DatabaseState>,
+    Extension(realtime_state): Extension<RealtimeState>,
     auth_session: AuthSession,
     Json(payload): Json<AppRegionReference>,
 ) -> impl IntoResponse {
@@ -111,7 +112,7 @@ async fn register_app(
     };
 
     // Persist the binding in node_data before announcing to the network
-    if !already_bound {
+    let binding_event = if !already_bound {
         if let Err(e) = LocalAppsRepo::init()
             .bind_to_region(
                 &db.node_data_pool,
@@ -123,7 +124,13 @@ async fn register_app(
         {
             return internal_server_error(e).into_response();
         }
-    }
+
+        let mut updated_app = existing_app;
+        updated_app.bound_to_region_id = Some(payload.region_id.clone());
+        Some(ClientEvent::LocalAppUpdated(updated_app))
+    } else {
+        None
+    };
 
     let event_payload = LoResEventPayload::AppRegistered(AppRegisteredDataV1 {
         name: payload.app.name.clone(),
@@ -141,6 +148,10 @@ async fn register_app(
         .await
     {
         return internal_server_error(e).into_response();
+    }
+
+    if let Some(event) = binding_event {
+        realtime_state.broadcast_app_event(event).await;
     }
 
     (StatusCode::OK, ()).into_response()
