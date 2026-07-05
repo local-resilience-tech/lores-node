@@ -178,6 +178,9 @@ pub struct LocalApp {
     pub name: String,
     pub version: String,
     pub url: Option<NodeAppUrl>,
+    /// Instance ID declared via the `lores.instance_id` Docker service label.
+    /// `None` means the app did not declare one;
+    pub instance_id: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]

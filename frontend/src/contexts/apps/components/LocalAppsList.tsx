@@ -23,6 +23,7 @@ export default function LocalAppsList({ apps }: AppsListProps) {
       <Table.Thead>
         <Table.Tr>
           <Table.Th>Name</Table.Th>
+          <Table.Th>Instance ID</Table.Th>
           <Table.Th>Version</Table.Th>
           <Table.Th>Region</Table.Th>
         </Table.Tr>
@@ -58,6 +59,17 @@ function LocalAppRow({ app, region, isActiveRegion }: LocalAppRowProps) {
     <Table.Tr key={app.name}>
       <Table.Td>
         <Anchor href={`app/${app.name}`}>{app.name}</Anchor>
+      </Table.Td>
+      <Table.Td>
+        {app.instance_id ? (
+          <Text size="xs" ff="monospace" truncate="end">
+            {app.instance_id}
+          </Text>
+        ) : (
+          <Text c="dimmed" size="xs" ff="monospace">
+            [singleton]
+          </Text>
+        )}
       </Table.Td>
       <Table.Td>{app.version}</Table.Td>
       <Table.Td>

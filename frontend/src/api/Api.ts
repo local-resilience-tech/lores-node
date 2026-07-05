@@ -140,6 +140,11 @@ export interface LatLng {
 }
 
 export interface LocalApp {
+  /**
+   * Instance ID declared via the `lores.instance_id` Docker service label.
+   * `None` means the app did not declare one;
+   */
+  instance_id?: string | null;
   name: string;
   url?: null | NodeAppUrl;
   version: string;

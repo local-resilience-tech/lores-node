@@ -34,6 +34,7 @@ fn build_app_details(stack: &DockerStack) -> Result<LocalApp, anyhow::Error> {
             internet_url: app_url(labels.host()),
             local_network_url: None,
         }),
+        instance_id: labels.lores_instance_id(),
     })
 }
 
