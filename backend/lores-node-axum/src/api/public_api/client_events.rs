@@ -2,7 +2,7 @@ use serde::Serialize;
 use utoipa::ToSchema;
 
 use crate::data::entities::{
-    Region, RegionAppWithInstallations, RegionNodeDetails, RegionWithNodes,
+    LocalApp, Region, RegionAppWithInstallations, RegionNodeDetails, RegionWithNodes,
 };
 
 #[derive(Debug, Clone, Serialize, ToSchema)]
@@ -11,4 +11,6 @@ pub enum ClientEvent {
     RegionNodeUpdated(RegionNodeDetails),
     RegionAppUpdated(RegionAppWithInstallations),
     RegionUpdated(Region),
+    LocalAppCreated(LocalApp),
+    LocalAppUpdated(LocalApp),
 }

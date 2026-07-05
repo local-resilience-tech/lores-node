@@ -1,4 +1,4 @@
-import { Container, Stack, Title } from "@mantine/core"
+import { Breadcrumbs, Container, Stack, Title, Text } from "@mantine/core"
 import { useNavigate } from "react-router-dom"
 import { getApi } from "../../../api"
 import { LocalAppFormData } from "../../../api/Api"
@@ -6,10 +6,11 @@ import {
   actionFailure,
   ActionPromiseResult,
   actionSuccess,
+  Anchor,
 } from "../../../components"
 import LocalAppForm from "../components/LocalAppForm"
 
-export default function CreateLocalApp() {
+export default function NewLocalApp() {
   const navigate = useNavigate()
 
   const onSubmit = async (
@@ -27,7 +28,14 @@ export default function CreateLocalApp() {
   return (
     <Container>
       <Stack gap="lg">
-        <Title order={1}>Create local app</Title>
+        <Stack gap="xs">
+          <Breadcrumbs>
+            <Anchor href="/node/apps">Local apps</Anchor>
+            <Text c="dimmed">new</Text>
+          </Breadcrumbs>
+          <Title order={1}>New local app</Title>
+        </Stack>
+
         <LocalAppForm
           onSubmit={onSubmit}
           submitLabel="Create app"

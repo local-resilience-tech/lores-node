@@ -8,6 +8,7 @@ use crate::{
     api::{
         auth_api::auth_backend::AuthSession,
         helpers::{bad_request, internal_server_error},
+        public_api::{client_events::ClientEvent, realtime::RealtimeState},
     },
     data::{
         entities::{LocalApp, LocalAppSource},
@@ -23,6 +24,7 @@ pub fn router() -> OpenApiRouter {
     OpenApiRouter::new()
         .routes(routes!(register_app))
         .routes(routes!(create_local_app))
+        .routes(routes!(update_local_app))
 }
 
 #[derive(Deserialize, ToSchema, Debug, Clone)]
@@ -113,6 +115,7 @@ async fn register_app(
 async fn create_local_app(
     _auth_session: AuthSession,
     Extension(db): Extension<DatabaseState>,
+    Extension(realtime_state): Extension<RealtimeState>,
     Json(payload): Json<LocalAppFormData>,
 ) -> impl IntoResponse {
     if let Err(error) = payload.validate() {
@@ -124,11 +127,53 @@ async fn create_local_app(
     let created = match LocalAppsRepo::init().create(&db.node_data_pool, &app).await {
         Ok(app) => app,
         Err(sqlx::Error::Database(e)) => {
-            // Treat uniqueness and similar DB constraint errors as bad request.
-            return bad_request(e).into_response();
+            eprintln!("Database error creating local app: {e}");
+            if e.code().as_deref() == Some("2067") {
+                return bad_request("Name and instance ID must be unique").into_response();
+            }
+            return internal_server_error("A database error occurred").into_response();
         }
         Err(e) => return internal_server_error(e).into_response(),
     };
 
+    realtime_state
+        .broadcast_app_event(ClientEvent::LocalAppCreated(created.clone()))
+        .await;
+
     (StatusCode::CREATED, Json(created)).into_response()
+}
+
+#[utoipa::path(
+    put, path = "/update",
+    request_body(content = LocalAppFormData, content_type = "application/json"),
+    responses(
+        (status = 200, body = LocalApp),
+        (status = BAD_REQUEST, body = String),
+        (status = NOT_FOUND, body = String),
+        (status = INTERNAL_SERVER_ERROR, body = String),
+    )
+)]
+async fn update_local_app(
+    _auth_session: AuthSession,
+    Extension(db): Extension<DatabaseState>,
+    Extension(realtime_state): Extension<RealtimeState>,
+    Json(payload): Json<LocalAppFormData>,
+) -> impl IntoResponse {
+    if let Err(error) = payload.validate() {
+        return bad_request(error).into_response();
+    }
+
+    let app = payload.to_local_app();
+
+    let updated = match LocalAppsRepo::init().update(&db.node_data_pool, &app).await {
+        Ok(Some(app)) => app,
+        Ok(None) => return (StatusCode::NOT_FOUND, Json("App not found")).into_response(),
+        Err(e) => return internal_server_error(e).into_response(),
+    };
+
+    realtime_state
+        .broadcast_app_event(ClientEvent::LocalAppUpdated(updated.clone()))
+        .await;
+
+    (StatusCode::OK, Json(updated)).into_response()
 }

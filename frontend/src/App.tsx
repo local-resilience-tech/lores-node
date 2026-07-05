@@ -15,7 +15,7 @@ import {
   ShowLocalApp,
   LocalApps,
   RegionApps,
-  CreateLocalApp,
+  NewLocalApp,
 } from "./contexts/apps"
 import { Nodes } from "./contexts/region_nodes"
 import { MantineProvider } from "@mantine/core"
@@ -108,8 +108,8 @@ const router = createBrowserRouter([
             path: "apps",
             children: [
               { path: "", element: <LocalApps /> },
-              { path: "edit", element: <CreateLocalApp /> },
-              { path: "app/:appName", element: <ShowLocalApp /> },
+              { path: "new", element: <NewLocalApp /> },
+              { path: "app/:appName/:instanceId", element: <ShowLocalApp /> },
             ],
           },
         ],

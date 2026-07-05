@@ -20,7 +20,7 @@ export default function LocalApps() {
         <Group justify="space-between">
           <Title order={1}>Local Apps</Title>
           <IfNodeSteward>
-            <ActionIcon size="lg" onClick={() => navigate("./edit")}>
+            <ActionIcon size="lg" onClick={() => navigate("./new")}>
               <IconPlus />
             </ActionIcon>
           </IfNodeSteward>

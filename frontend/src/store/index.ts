@@ -6,7 +6,7 @@ import regionsReducer, {
   regionNodeUpdated,
   regionUpdated,
 } from "./my_regions"
-import localAppsReducer from "./local_apps"
+import localAppsReducer, { localAppCreated } from "./local_apps"
 import regionAppsReducer, { regionAppUpdated } from "./region_apps"
 import meReducer from "./me"
 import { ClientEvent } from "../api/Api"
@@ -44,6 +44,10 @@ export async function handleClientEvent(event: ClientEvent) {
     store.dispatch(nodeJoinedRegion(event.NodeJoinedRegion))
   } else if ("RegionUpdated" in event) {
     store.dispatch(regionUpdated(event.RegionUpdated))
+  } else if ("LocalAppCreated" in event) {
+    store.dispatch(
+      localAppCreated({ app: event.LocalAppCreated, region_id: null }),
+    )
   } else {
     console.warn("Unhandled event type:", event)
   }

@@ -104,6 +104,12 @@ export type ClientEvent =
     }
   | {
       RegionUpdated: Region;
+    }
+  | {
+      LocalAppCreated: LocalApp;
+    }
+  | {
+      LocalAppUpdated: LocalApp;
     };
 
 export interface CreateRegionData {
@@ -701,6 +707,22 @@ export class Api<
       this.request<any, any>({
         path: `/node_steward_api/local_apps/register`,
         method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @name UpdateLocalApp
+     * @request PUT:/node_steward_api/local_apps/update
+     */
+    updateLocalApp: (data: LocalAppFormData, params: RequestParams = {}) =>
+      this.request<LocalApp, string>({
+        path: `/node_steward_api/local_apps/update`,
+        method: "PUT",
         body: data,
         type: ContentType.Json,
         format: "json",

@@ -86,7 +86,9 @@ function LocalAppRow({ app, region, isActiveRegion }: LocalAppRowProps) {
         </span>
       </Table.Td>
       <Table.Td>
-        <Anchor href={`app/${app.name}`}>{app.name}</Anchor>
+        <Anchor href={`app/${app.name}/${app.instance_id || "-"}`}>
+          {app.name}
+        </Anchor>
       </Table.Td>
       <Table.Td>
         {app.instance_id ? (

@@ -14,6 +14,10 @@ const localAppsSlice = createSlice({
     ) => {
       return action.payload
     },
+    localAppCreated: (state, action: PayloadAction<LocalAppInstallation>) => {
+      if (!state) return [action.payload]
+      state.push(action.payload)
+    },
   },
   extraReducers: (builder) => {
     builder.addCase(regionAppUpdated, (state, action) => {
@@ -28,5 +32,5 @@ const localAppsSlice = createSlice({
   },
 })
 
-export const { localAppsLoaded } = localAppsSlice.actions
+export const { localAppsLoaded, localAppCreated } = localAppsSlice.actions
 export default localAppsSlice.reducer
