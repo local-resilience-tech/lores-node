@@ -16,6 +16,9 @@ use tonic::{Request, Response, Status};
 mod idempotency_store;
 use idempotency_store::IdempotencyStore;
 
+mod installation_notifier;
+use installation_notifier::InstallationNotifier;
+
 /// Configuration for the publish idempotency deduplication store.
 pub struct IdempotencyConfig {
     /// How often the cleanup task runs to remove expired keys.
@@ -56,6 +59,7 @@ pub struct PandaService {
     /// connections so the p2panda-level subscription is created only once.
     subscriptions: Arc<RwLock<HashMap<Topic, broadcast::Sender<IncomingOperation>>>>,
     idempotency: IdempotencyStore,
+    installation_notifier: InstallationNotifier,
 }
 
 impl PandaService {
@@ -63,13 +67,16 @@ impl PandaService {
         node: Arc<Mutex<Option<Arc<PandaNode>>>>,
         db: SqlitePool,
         idempotency_config: Option<IdempotencyConfig>,
+        on_installation_seen: Arc<dyn Fn(String, Vec<u8>, RegionId) + Send + Sync>,
     ) -> Result<Self, sqlx::Error> {
         let config = idempotency_config.unwrap_or_default();
+        let idempotency =
+            IdempotencyStore::new(db, config.cleanup_frequency, config.retention).await?;
         Ok(Self {
             node,
             subscriptions: Arc::new(RwLock::new(HashMap::new())),
-            idempotency: IdempotencyStore::new(db, config.cleanup_frequency, config.retention)
-                .await?,
+            idempotency,
+            installation_notifier: InstallationNotifier::new(on_installation_seen),
         })
     }
 
@@ -170,6 +177,14 @@ impl Panda for PandaService {
             .record(&region_app_topic, &req.idempotency_key)
             .await?;
 
+        self.installation_notifier
+            .notify(
+                &region_app_topic.app_namespace,
+                &req.installation_id,
+                &region_app_topic.region_id,
+            )
+            .await;
+
         Ok(Response::new(PublishResponse {}))
     }
 
@@ -203,6 +218,14 @@ impl Panda for PandaService {
             "[subscribe] region={} app_namespace={}",
             region_app_topic.region_id, region_app_topic.app_namespace
         );
+
+        self.installation_notifier
+            .notify(
+                &region_app_topic.app_namespace,
+                &req.installation_id,
+                &region_app_topic.region_id,
+            )
+            .await;
 
         // Under a write lock, ensure a p2panda subscription exists for this
         // topic and return a broadcast receiver for it.
