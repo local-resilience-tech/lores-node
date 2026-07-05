@@ -151,6 +151,7 @@ export interface LatLng {
 }
 
 export interface LocalApp {
+  bound_to_region_id?: string | null;
   /**
    * Instance ID declared via the `lores.instance_id` Docker service label.
    * `None` means the app did not declare one;
@@ -166,11 +167,6 @@ export interface LocalAppFormData {
   instance_id?: string | null;
   name: string;
   version: string;
-}
-
-export interface LocalAppInstallation {
-  app: LocalApp;
-  region_id?: string | null;
 }
 
 export interface Network {
@@ -903,7 +899,7 @@ export class Api<
      * @request GET:/public_api/local_apps
      */
     listLocalApps: (params: RequestParams = {}) =>
-      this.request<LocalAppInstallation[], any>({
+      this.request<LocalApp[], any>({
         path: `/public_api/local_apps`,
         method: "GET",
         format: "json",

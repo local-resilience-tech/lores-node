@@ -1,17 +1,12 @@
 import { Table, Text } from "@mantine/core"
 import { IconBrandDocker, IconDatabase } from "@tabler/icons-react"
-import {
-  LocalApp,
-  LocalAppInstallation,
-  LocalAppSource,
-  RegionWithNodes,
-} from "../../../api/Api"
+import { LocalApp, LocalAppSource, RegionWithNodes } from "../../../api/Api"
 import { Anchor } from "../../../components"
 import { useAppSelector } from "../../../store"
 import { regionDisplayName } from "../../regions"
 
 interface AppsListProps {
-  apps: LocalAppInstallation[]
+  apps: LocalApp[]
 }
 
 export default function LocalAppsList({ apps }: AppsListProps) {
@@ -32,14 +27,14 @@ export default function LocalAppsList({ apps }: AppsListProps) {
         </Table.Tr>
       </Table.Thead>
       <Table.Tbody>
-        {apps.map((installation) => {
+        {apps.map((app) => {
           const region = regions?.find(
-            (r) => r.region.id === installation.region_id,
+            (r) => r.region.id === app.bound_to_region_id,
           )
           return (
             <LocalAppRow
-              key={`${installation.app.name}-${installation.app.instance_id}`}
-              app={installation.app}
+              key={`${app.name}-${app.instance_id}`}
+              app={app}
               region={region}
               isActiveRegion={region?.region.id === activeRegionId}
             />

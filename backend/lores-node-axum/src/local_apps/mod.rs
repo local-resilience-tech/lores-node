@@ -7,7 +7,6 @@ use crate::{
 
 pub mod app_instances;
 mod coop_cloud;
-pub mod local_app_installations;
 pub mod stack_apps;
 
 pub async fn find_local_apps(pool: &SqlitePool) -> Result<Vec<LocalApp>, sqlx::Error> {

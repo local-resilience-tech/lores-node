@@ -21,9 +21,9 @@ export default function EditLocalApp() {
     appName: string
     instanceId: string
   }>()
-  const installation = useAppSelector((state) =>
+  const app = useAppSelector((state) =>
     (state.localApps || []).find(
-      (i) => i.app.name === appName && i.app.instance_id === instanceId,
+      (app) => app.name === appName && app.instance_id === instanceId,
     ),
   )
 
@@ -57,11 +57,11 @@ export default function EditLocalApp() {
           cancelPath={appPath(appName, instanceId)}
           disableKeyFields
           initialValues={
-            installation
+            app
               ? {
-                  instance_id: installation.app.instance_id,
-                  name: installation.app.name,
-                  version: installation.app.version,
+                  instance_id: app.instance_id,
+                  name: app.name,
+                  version: app.version,
                 }
               : undefined
           }

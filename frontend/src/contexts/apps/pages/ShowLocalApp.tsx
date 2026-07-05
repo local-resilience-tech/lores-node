@@ -24,16 +24,16 @@ export default function ShowLocalApp() {
     appName: string
     instanceId: string
   }>()
-  const installation = useAppSelector((state) =>
+  const app = useAppSelector((state) =>
     (state.localApps || []).find(
-      (i) => i.app.name === appName && i.app.instance_id === instanceId,
+      (app) => app.name === appName && app.instance_id === instanceId,
     ),
   )
   const region = useAppSelector((state) => activeRegion(state.my_regions))
   const appRegion = useAppSelector((state) =>
-    installation
+    app
       ? state.my_regions.all?.find(
-          (r) => r.region.id === installation.region_id,
+          (r) => r.region.id === app.bound_to_region_id,
         )
       : undefined,
   )
@@ -43,11 +43,9 @@ export default function ShowLocalApp() {
     return <Container>Error: App name is required</Container>
   }
 
-  if (!installation) {
+  if (!app) {
     return <Container>Error: App not found</Container>
   }
-
-  const app = installation.app
 
   const onRegister = region
     ? async () => {

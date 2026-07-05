@@ -4,8 +4,8 @@ use utoipa_axum::{router::OpenApiRouter, routes};
 use crate::{
     DatabaseState,
     api::helpers::internal_server_error,
-    data::entities::LocalAppInstallation,
-    local_apps::{find_local_apps, local_app_installations::build_local_app_installations},
+    data::entities::LocalApp,
+    local_apps::find_local_apps,
 };
 
 pub fn router() -> OpenApiRouter {
@@ -13,16 +13,12 @@ pub fn router() -> OpenApiRouter {
 }
 
 #[utoipa::path(get, path = "/", responses(
-    (status = 200, body = Vec<LocalAppInstallation>),
+    (status = 200, body = Vec<LocalApp>),
     (status = INTERNAL_SERVER_ERROR, body = ()),
 ),)]
 async fn list_local_apps(Extension(db): Extension<DatabaseState>) -> impl IntoResponse {
-    let local_apps = match find_local_apps(&db.node_data_pool).await {
-        Ok(apps) => apps,
-        Err(e) => return internal_server_error(e).into_response(),
-    };
-
-    let result = build_local_app_installations(local_apps);
-
-    (StatusCode::OK, Json(result)).into_response()
+    match find_local_apps(&db.node_data_pool).await {
+        Ok(apps) => (StatusCode::OK, Json(apps)).into_response(),
+        Err(e) => internal_server_error(e).into_response(),
+    }
 }
