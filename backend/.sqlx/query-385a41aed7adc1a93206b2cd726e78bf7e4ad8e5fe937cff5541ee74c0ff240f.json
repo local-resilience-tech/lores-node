@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT app_name, region_node_id, version\n            FROM app_installations",
+  "query": "SELECT app_installations.app_name, app_installations.region_node_id, app_installations.version, region_nodes.region_id\n            FROM app_installations\n            INNER JOIN region_nodes ON app_installations.region_node_id = region_nodes.id",
   "describe": {
     "columns": [
       {
@@ -17,6 +17,11 @@
         "name": "version",
         "ordinal": 2,
         "type_info": "Text"
+      },
+      {
+        "name": "region_id",
+        "ordinal": 3,
+        "type_info": "Text"
       }
     ],
     "parameters": {
@@ -25,8 +30,9 @@
     "nullable": [
       false,
       false,
+      false,
       false
     ]
   },
-  "hash": "d31ecb506407dff3d5c5b21a6b632ed4cb6695566bf0d30506510ef7069c26b3"
+  "hash": "385a41aed7adc1a93206b2cd726e78bf7e4ad8e5fe937cff5541ee74c0ff240f"
 }
