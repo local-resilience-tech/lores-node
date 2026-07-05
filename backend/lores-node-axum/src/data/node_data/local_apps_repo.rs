@@ -9,6 +9,7 @@ struct LocalAppRow {
     internet_url: Option<String>,
     local_network_url: Option<String>,
     instance_id: Option<String>,
+    bound_to_region_id: Option<String>,
 }
 
 impl From<LocalAppRow> for LocalApp {
@@ -28,6 +29,7 @@ impl From<LocalAppRow> for LocalApp {
             url,
             source: LocalAppSource::Db,
             instance_id: row.instance_id,
+            bound_to_region_id: row.bound_to_region_id,
         }
     }
 }
@@ -42,7 +44,7 @@ impl LocalAppsRepo {
     pub async fn all(&self, pool: &SqlitePool) -> Result<Vec<LocalApp>, sqlx::Error> {
         let rows = sqlx::query_as::<Sqlite, LocalAppRow>(
             "
-            SELECT name, version, internet_url, local_network_url, instance_id
+            SELECT name, version, internet_url, local_network_url, instance_id, bound_to_region_id
             FROM local_apps
             ORDER BY name ASC
             ",
@@ -51,6 +53,28 @@ impl LocalAppsRepo {
         .await?;
 
         Ok(rows.into_iter().map(LocalApp::from).collect())
+    }
+
+    pub async fn find(
+        &self,
+        pool: &SqlitePool,
+        name: &str,
+        instance_id: &Option<String>,
+    ) -> Result<Option<LocalApp>, sqlx::Error> {
+        let row = sqlx::query_as::<Sqlite, LocalAppRow>(
+            "
+            SELECT name, version, internet_url, local_network_url, instance_id, bound_to_region_id
+            FROM local_apps
+            WHERE name = ? AND (instance_id = ? OR (instance_id IS NULL AND ? IS NULL))
+            ",
+        )
+        .bind(name)
+        .bind(instance_id)
+        .bind(instance_id)
+        .fetch_optional(pool)
+        .await?;
+
+        Ok(row.map(LocalApp::from))
     }
 
     pub async fn update(
@@ -91,6 +115,7 @@ impl LocalAppsRepo {
             url: app.url.clone(),
             source: LocalAppSource::Db,
             instance_id: app.instance_id.clone(),
+            bound_to_region_id: app.bound_to_region_id.clone(),
         }))
     }
 
@@ -103,8 +128,8 @@ impl LocalAppsRepo {
 
         sqlx::query::<Sqlite>(
             "
-            INSERT INTO local_apps (name, version, internet_url, local_network_url, instance_id)
-            VALUES (?, ?, ?, ?, ?)
+            INSERT INTO local_apps (name, version, internet_url, local_network_url, instance_id, bound_to_region_id)
+            VALUES (?, ?, ?, ?, ?, ?)
             ",
         )
         .bind(&app.name)
@@ -112,6 +137,7 @@ impl LocalAppsRepo {
         .bind(internet_url)
         .bind(local_network_url)
         .bind(&app.instance_id)
+        .bind(&app.bound_to_region_id)
         .execute(pool)
         .await?;
 
@@ -121,6 +147,30 @@ impl LocalAppsRepo {
             url: app.url.clone(),
             source: LocalAppSource::Db,
             instance_id: app.instance_id.clone(),
+            bound_to_region_id: app.bound_to_region_id.clone(),
         })
+    }
+
+    pub async fn bind_to_region(
+        &self,
+        pool: &SqlitePool,
+        name: &str,
+        instance_id: &Option<String>,
+        region_id: &str,
+    ) -> Result<(), sqlx::Error> {
+        sqlx::query::<Sqlite>(
+            "
+            INSERT INTO local_apps (name, version, instance_id, bound_to_region_id)
+            VALUES (?, '', ?, ?)
+            ON CONFLICT(name, instance_id) DO UPDATE SET bound_to_region_id = excluded.bound_to_region_id
+            ",
+        )
+        .bind(name)
+        .bind(instance_id)
+        .bind(region_id)
+        .execute(pool)
+        .await?;
+
+        Ok(())
     }
 }

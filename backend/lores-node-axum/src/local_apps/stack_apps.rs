@@ -36,6 +36,7 @@ fn build_app_details(stack: &DockerStack) -> Result<LocalApp, anyhow::Error> {
         }),
         source: LocalAppSource::Docker,
         instance_id: labels.lores_instance_id(),
+        bound_to_region_id: None,
     })
 }
 

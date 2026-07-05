@@ -38,7 +38,7 @@ export default function LocalAppsList({ apps }: AppsListProps) {
           )
           return (
             <LocalAppRow
-              key={installation.app.name}
+              key={`${installation.app.name}-${installation.app.instance_id}`}
               app={installation.app}
               region={region}
               isActiveRegion={region?.region.id === activeRegionId}

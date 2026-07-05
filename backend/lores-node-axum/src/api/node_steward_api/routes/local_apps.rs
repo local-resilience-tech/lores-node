@@ -13,7 +13,9 @@ use crate::{
     data::{
         entities::{LocalApp, LocalAppSource},
         node_data::local_apps_repo::LocalAppsRepo,
+        projections_read::regions::RegionsReadRepo,
     },
+    local_apps::find_local_app,
     panda_comms::{
         PandaContainer, RegionAdminTopic, RegionId,
         lores_events::{AppRegisteredDataV1, LoResEventPayload},
@@ -59,6 +61,7 @@ impl LocalAppFormData {
             url: None,
             source: LocalAppSource::Db,
             instance_id: self.instance_id.clone(),
+            bound_to_region_id: None,
         }
     }
 }
@@ -73,6 +76,7 @@ impl LocalAppFormData {
 )]
 async fn register_app(
     Extension(panda_container): Extension<PandaContainer>,
+    Extension(db): Extension<DatabaseState>,
     auth_session: AuthSession,
     Json(payload): Json<AppRegionReference>,
 ) -> impl IntoResponse {
@@ -81,6 +85,45 @@ async fn register_app(
         Ok(id) => id,
         Err(e) => return bad_request(e).into_response(),
     };
+
+    // Verify the region is known to this node
+    match RegionsReadRepo::init()
+        .find(&db.projections_pool, &payload.region_id)
+        .await
+    {
+        Ok(Some(_)) => {}
+        Ok(None) => return bad_request("Region not found").into_response(),
+        Err(e) => return internal_server_error(e).into_response(),
+    }
+
+    // Verify the app exists locally (Docker or DB)
+    let existing_app = match find_local_app(&db.node_data_pool, &payload.app.name, &payload.app.instance_id).await {
+        Ok(Some(app)) => app,
+        Ok(None) => return bad_request("App not found").into_response(),
+        Err(e) => return internal_server_error(e).into_response(),
+    };
+
+    // Check if already bound to a region
+    let already_bound = match &existing_app.bound_to_region_id {
+        Some(bound_id) if bound_id == &payload.region_id => true,
+        Some(_) => return bad_request("App is already bound to a different region").into_response(),
+        None => false,
+    };
+
+    // Persist the binding in node_data before announcing to the network
+    if !already_bound {
+        if let Err(e) = LocalAppsRepo::init()
+            .bind_to_region(
+                &db.node_data_pool,
+                &payload.app.name,
+                &payload.app.instance_id,
+                &payload.region_id,
+            )
+            .await
+        {
+            return internal_server_error(e).into_response();
+        }
+    }
 
     let event_payload = LoResEventPayload::AppRegistered(AppRegisteredDataV1 {
         name: payload.app.name.clone(),

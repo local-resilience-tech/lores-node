@@ -5,6 +5,7 @@ CREATE TABLE local_apps (
     internet_url        TEXT,
     local_network_url   TEXT,
     instance_id         TEXT,
+    bound_to_region_id  TEXT,
     created_at          INTEGER NOT NULL DEFAULT (unixepoch()),
     UNIQUE (name, instance_id)
 );
