@@ -156,6 +156,12 @@ export interface LocalApp {
   version: string;
 }
 
+export interface LocalAppFormData {
+  instance_id?: string | null;
+  name: string;
+  version: string;
+}
+
 export interface LocalAppInstallation {
   app: LocalApp;
   region_id?: string | null;
@@ -669,6 +675,22 @@ export class Api<
       }),
   };
   nodeStewardApi = {
+    /**
+     * No description
+     *
+     * @name CreateLocalApp
+     * @request POST:/node_steward_api/local_apps/create
+     */
+    createLocalApp: (data: LocalAppFormData, params: RequestParams = {}) =>
+      this.request<LocalApp, string>({
+        path: `/node_steward_api/local_apps/create`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
     /**
      * No description
      *

@@ -52,4 +52,34 @@ impl LocalAppsRepo {
 
         Ok(rows.into_iter().map(LocalApp::from).collect())
     }
+
+    pub async fn create(&self, pool: &SqlitePool, app: &LocalApp) -> Result<LocalApp, sqlx::Error> {
+        let internet_url = app.url.as_ref().and_then(|url| url.internet_url.clone());
+        let local_network_url = app
+            .url
+            .as_ref()
+            .and_then(|url| url.local_network_url.clone());
+
+        sqlx::query::<Sqlite>(
+            "
+            INSERT INTO local_apps (name, version, internet_url, local_network_url, instance_id)
+            VALUES (?, ?, ?, ?, ?)
+            ",
+        )
+        .bind(&app.name)
+        .bind(&app.version)
+        .bind(internet_url)
+        .bind(local_network_url)
+        .bind(&app.instance_id)
+        .execute(pool)
+        .await?;
+
+        Ok(LocalApp {
+            name: app.name.clone(),
+            version: app.version.clone(),
+            url: app.url.clone(),
+            source: LocalAppSource::Db,
+            instance_id: app.instance_id.clone(),
+        })
+    }
 }

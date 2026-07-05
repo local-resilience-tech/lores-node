@@ -24,7 +24,7 @@ export default function LocalAppsList({ apps }: AppsListProps) {
     <Table>
       <Table.Thead>
         <Table.Tr>
-            <Table.Th w={1} style={{ whiteSpace: "nowrap" }} />
+          <Table.Th w={1} style={{ whiteSpace: "nowrap" }} />
           <Table.Th>Name</Table.Th>
           <Table.Th>Instance ID</Table.Th>
           <Table.Th>Version</Table.Th>
@@ -72,7 +72,7 @@ function LocalAppRow({ app, region, isActiveRegion }: LocalAppRowProps) {
 
   return (
     <Table.Tr key={app.name}>
-        <Table.Td w={1} style={{ whiteSpace: "nowrap" }} px="xs">
+      <Table.Td w={1} style={{ whiteSpace: "nowrap" }} px="xs">
         <span role="img" aria-label={sourceAltText}>
           {sourceIcon}
         </span>
