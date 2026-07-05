@@ -7,6 +7,7 @@ import { getApi } from "../../../api"
 import ActionButton from "../../../components/ActionButton"
 import { IfNodeSteward } from "../../auth/node_steward_auth"
 import { activeRegion } from "../../../store/my_regions"
+import { regionDisplayName } from "../../regions"
 
 export default function ShowLocalApp() {
   const { appName } = useParams<{ appName: string }>()
@@ -14,6 +15,13 @@ export default function ShowLocalApp() {
     (state.localApps || []).find((i) => i.app.name === appName),
   )
   const region = useAppSelector((state) => activeRegion(state.my_regions))
+  const appRegion = useAppSelector((state) =>
+    installation
+      ? state.my_regions.all?.find(
+          (r) => r.region.id === installation.region_id,
+        )
+      : undefined,
+  )
 
   if (!appName) {
     return <Container>Error: App name is required</Container>
@@ -60,16 +68,26 @@ export default function ShowLocalApp() {
           </Card>
         </Stack>
 
-        {onRegister && region && (
-          <IfNodeSteward>
-            <Stack>
-              <Title order={2}>Actions</Title>
-              <ActionButton size="sm" onClick={() => onRegister()}>
-                Register with {region.slug}
-              </ActionButton>
-            </Stack>
-          </IfNodeSteward>
+        {appRegion && (
+          <Card>
+            <Text>
+              <Text c="dimmed" span>
+                Region:
+              </Text>{" "}
+              {regionDisplayName(appRegion.region)}
+            </Text>
+          </Card>
         )}
+
+        {onRegister &&
+          region &&
+          (!appRegion || appRegion.region.id !== region.id) && (
+            <IfNodeSteward>
+              <ActionButton size="sm" onClick={() => onRegister()}>
+                {appRegion ? "Change to" : "Register with"} {region.slug}
+              </ActionButton>
+            </IfNodeSteward>
+          )}
       </Stack>
     </Container>
   )
