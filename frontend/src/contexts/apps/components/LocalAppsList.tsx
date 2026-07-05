@@ -1,7 +1,9 @@
 import { Table, Text } from "@mantine/core"
+import { IconBrandDocker, IconDatabase } from "@tabler/icons-react"
 import {
   LocalApp,
   LocalAppInstallation,
+  LocalAppSource,
   RegionWithNodes,
 } from "../../../api/Api"
 import { Anchor } from "../../../components"
@@ -22,6 +24,7 @@ export default function LocalAppsList({ apps }: AppsListProps) {
     <Table>
       <Table.Thead>
         <Table.Tr>
+            <Table.Th w={1} style={{ whiteSpace: "nowrap" }} />
           <Table.Th>Name</Table.Th>
           <Table.Th>Instance ID</Table.Th>
           <Table.Th>Version</Table.Th>
@@ -55,8 +58,25 @@ interface LocalAppRowProps {
 
 function LocalAppRow({ app, region, isActiveRegion }: LocalAppRowProps) {
   const regionName = region ? regionDisplayName(region.region) : ""
+  const source = app.source ?? LocalAppSource.Docker
+
+  const sourceIcon =
+    source === LocalAppSource.Db ? (
+      <IconDatabase size={18} stroke={1.8} aria-hidden="true" />
+    ) : (
+      <IconBrandDocker size={18} stroke={1.8} aria-hidden="true" />
+    )
+
+  const sourceAltText =
+    source === LocalAppSource.Db ? "Database app" : "Docker app"
+
   return (
     <Table.Tr key={app.name}>
+        <Table.Td w={1} style={{ whiteSpace: "nowrap" }} px="xs">
+        <span role="img" aria-label={sourceAltText}>
+          {sourceIcon}
+        </span>
+      </Table.Td>
       <Table.Td>
         <Anchor href={`app/${app.name}`}>{app.name}</Anchor>
       </Table.Td>

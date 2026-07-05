@@ -6,8 +6,8 @@ use crate::{
     api::helpers::internal_server_error,
     data::entities::LocalAppInstallation,
     local_apps::{
+        find_local_apps,
         local_app_installations::build_local_app_installations,
-        stack_apps::find_deployed_local_apps,
     },
     panda_comms::PandaContainer,
 };
@@ -30,7 +30,10 @@ async fn list_local_apps(
     };
     let node_id_hex = node_id.to_hex();
 
-    let local_apps = find_deployed_local_apps();
+    let local_apps = match find_local_apps(&db.node_data_pool).await {
+        Ok(apps) => apps,
+        Err(e) => return internal_server_error(e).into_response(),
+    };
 
     let result =
         match build_local_app_installations(&db.projections_pool, &node_id_hex, local_apps).await {

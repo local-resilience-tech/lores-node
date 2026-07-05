@@ -51,6 +51,11 @@ export enum NodeState {
   Development = "development",
 }
 
+export enum LocalAppSource {
+  Docker = "docker",
+  Db = "db",
+}
+
 export enum GetCurrentNodeStewardError {
   InternalServerError = "InternalServerError",
   AdminNotFound = "AdminNotFound",
@@ -146,6 +151,7 @@ export interface LocalApp {
    */
   instance_id?: string | null;
   name: string;
+  source?: LocalAppSource;
   url?: null | NodeAppUrl;
   version: string;
 }
