@@ -242,6 +242,7 @@ export interface Region {
 export interface RegionAppWithInstallations {
   installations: AppInstallation[];
   name: string;
+  region_id: string;
 }
 
 export interface RegionMap {
