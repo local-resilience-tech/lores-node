@@ -1,4 +1,4 @@
-import { Table } from "@mantine/core"
+import { Table, Text } from "@mantine/core"
 import {
   LocalApp,
   LocalAppInstallation,
@@ -14,6 +14,9 @@ interface AppsListProps {
 
 export default function LocalAppsList({ apps }: AppsListProps) {
   const regions = useAppSelector((state) => state.my_regions.all)
+  const activeRegionId = useAppSelector(
+    (state) => state.my_regions.activeRegionId,
+  )
 
   return (
     <Table>
@@ -34,6 +37,7 @@ export default function LocalAppsList({ apps }: AppsListProps) {
               key={installation.app.name}
               app={installation.app}
               region={region}
+              isActiveRegion={region?.region.id === activeRegionId}
             />
           )
         })}
@@ -45,9 +49,10 @@ export default function LocalAppsList({ apps }: AppsListProps) {
 interface LocalAppRowProps {
   app: LocalApp
   region?: RegionWithNodes
+  isActiveRegion?: boolean
 }
 
-function LocalAppRow({ app, region }: LocalAppRowProps) {
+function LocalAppRow({ app, region, isActiveRegion }: LocalAppRowProps) {
   const regionName = region ? regionDisplayName(region.region) : ""
   return (
     <Table.Tr key={app.name}>
@@ -55,7 +60,9 @@ function LocalAppRow({ app, region }: LocalAppRowProps) {
         <Anchor href={`app/${app.name}`}>{app.name}</Anchor>
       </Table.Td>
       <Table.Td>{app.version}</Table.Td>
-      <Table.Td>{regionName}</Table.Td>
+      <Table.Td>
+        <Text fw={isActiveRegion ? 700 : undefined}>{regionName}</Text>
+      </Table.Td>
     </Table.Tr>
   )
 }
