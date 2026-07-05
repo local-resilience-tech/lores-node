@@ -3,6 +3,23 @@ use std::collections::HashMap;
 
 use crate::data::entities::{AppInstallation, RegionAppWithInstallations};
 
+struct InstallationRow {
+    app_name: String,
+    region_node_id: i64,
+    version: String,
+    region_id: String,
+}
+
+impl InstallationRow {
+    fn into_installation(self) -> AppInstallation {
+        AppInstallation {
+            app_name: self.app_name,
+            region_node_id: self.region_node_id,
+            version: self.version,
+        }
+    }
+}
+
 pub struct AppsReadRepo {}
 
 impl AppsReadRepo {
@@ -20,30 +37,32 @@ impl AppsReadRepo {
         &self,
         pool: &SqlitePool,
     ) -> Result<Vec<RegionAppWithInstallations>, sqlx::Error> {
-        let installations = sqlx::query_as!(
-            AppInstallation,
-            "SELECT app_name, region_node_id, version
-            FROM app_installations"
+        let rows = sqlx::query_as!(
+            InstallationRow,
+            "SELECT app_installations.app_name, app_installations.region_node_id, app_installations.version, region_nodes.region_id
+            FROM app_installations
+            INNER JOIN region_nodes ON app_installations.region_node_id = region_nodes.id"
         )
         .fetch_all(pool)
         .await?;
 
-        // Group installations by app name
-        let mut app_map: HashMap<String, Vec<AppInstallation>> = HashMap::new();
-        for installation in installations {
-            app_map
-                .entry(installation.app_name.clone())
-                .or_insert_with(Vec::new)
-                .push(installation);
+        let mut app_map: HashMap<String, (String, Vec<AppInstallation>)> = HashMap::new();
+        for row in rows {
+            let (_, installations) = app_map
+                .entry(row.app_name.clone())
+                .or_insert_with(|| (row.region_id.clone(), Vec::new()));
+            installations.push(row.into_installation());
         }
 
-        // Convert to RegionAppWithInstallations
-        let region_apps: Vec<RegionAppWithInstallations> = app_map
+        let region_apps = app_map
             .into_iter()
-            .map(|(name, installations)| RegionAppWithInstallations {
-                name,
-                installations,
-            })
+            .map(
+                |(name, (region_id, installations))| RegionAppWithInstallations {
+                    name,
+                    region_id,
+                    installations,
+                },
+            )
             .collect();
 
         Ok(region_apps)
@@ -54,22 +73,27 @@ impl AppsReadRepo {
         pool: &SqlitePool,
         name: String,
     ) -> Result<Option<RegionAppWithInstallations>, sqlx::Error> {
-        let installations = sqlx::query_as!(
-            AppInstallation,
-            "SELECT app_name, region_node_id, version
+        let rows = sqlx::query_as!(
+            InstallationRow,
+            "SELECT app_installations.app_name, app_installations.region_node_id, app_installations.version, region_nodes.region_id
             FROM app_installations
-            WHERE app_name = ?",
+            INNER JOIN region_nodes ON app_installations.region_node_id = region_nodes.id
+            WHERE app_installations.app_name = ?",
             name
         )
         .fetch_all(pool)
         .await?;
 
-        if installations.is_empty() {
+        if rows.is_empty() {
             return Ok(None);
         }
 
+        let region_id = rows[0].region_id.clone();
+        let installations = rows.into_iter().map(|r| r.into_installation()).collect();
+
         let region_app = RegionAppWithInstallations {
-            name: name.clone(),
+            name,
+            region_id,
             installations,
         };
 
