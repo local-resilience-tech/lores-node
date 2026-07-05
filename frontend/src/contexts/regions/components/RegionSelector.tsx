@@ -1,7 +1,8 @@
 import { ActionIcon, Combobox, Group, Text, useCombobox } from "@mantine/core"
 import { IconChevronDown } from "@tabler/icons-react"
-import { Region } from "../../api/Api"
+import { Region } from "../../../api/Api"
 import { useNavigate } from "react-router-dom"
+import { regionDisplayName } from "../"
 
 interface RegionSelectorProps {
   regions: Region[]
@@ -28,8 +29,7 @@ export function RegionSelector({
 
   const options = regions.map((region) => (
     <Combobox.Option value={region.id} key={region.id}>
-      {[region.name, region.slug, region.id.slice(0, 12)].filter(Boolean)[0] ||
-        "Unnamed"}
+      {regionDisplayName(region)}
     </Combobox.Option>
   ))
 

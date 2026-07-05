@@ -32,7 +32,7 @@ import { handleClientEvent, useAppDispatch, useAppSelector } from "../../store"
 import useWebSocket from "react-use-websocket-lite"
 import { getSocketUrl } from "../../api"
 import { IfNodeSteward } from "../../contexts/auth/node_steward_auth"
-import { RegionSelector } from "./RegionSelector"
+import { changeRegionInPath, RegionSelector } from "../../contexts/regions"
 import {
   activeRegionWithNodes,
   activeRegionChanged,
@@ -199,7 +199,13 @@ export default function Layout() {
                   onChange={(region) => {
                     if (region) {
                       dispatch(activeRegionChanged(region.id))
-                      navigate(`/regions/${region.slug}`)
+                      const newPath = changeRegionInPath(
+                        region.slug,
+                        window.location.pathname,
+                      )
+                      if (newPath !== window.location.pathname) {
+                        navigate(newPath)
+                      }
                     }
                   }}
                   addNewPath={me ? "/regions/setup" : undefined}

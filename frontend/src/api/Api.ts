@@ -145,6 +145,11 @@ export interface LocalApp {
   version: string;
 }
 
+export interface LocalAppInstallation {
+  app: LocalApp;
+  region_id?: string | null;
+}
+
 export interface Network {
   name: string;
   node: NetworkNode;
@@ -237,6 +242,7 @@ export interface Region {
 export interface RegionAppWithInstallations {
   installations: AppInstallation[];
   name: string;
+  region_id: string;
 }
 
 export interface RegionMap {
@@ -474,7 +480,7 @@ export class HttpClient<SecurityDataType = unknown> {
 
 /**
  * @title lores-node
- * @version 0.19.1
+ * @version 0.20.0
  * @license
  */
 export class Api<
@@ -842,7 +848,7 @@ export class Api<
      * @request GET:/public_api/local_apps
      */
     listLocalApps: (params: RequestParams = {}) =>
-      this.request<LocalApp[], any>({
+      this.request<LocalAppInstallation[], any>({
         path: `/public_api/local_apps`,
         method: "GET",
         format: "json",

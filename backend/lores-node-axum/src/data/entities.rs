@@ -1,11 +1,11 @@
 use lores_p2panda::p2panda_core::VerifyingKey;
 use serde::{Deserialize, Serialize};
 use sqlx::{
+    Decode, Encode, Sqlite, Type,
     database::Database,
     encode::IsNull,
     error::BoxDynError,
     sqlite::{SqliteTypeInfo, SqliteValueRef},
-    Decode, Encode, Sqlite, Type,
 };
 use utoipa::ToSchema;
 
@@ -181,8 +181,15 @@ pub struct LocalApp {
 }
 
 #[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
+pub struct LocalAppInstallation {
+    pub app: LocalApp,
+    pub region_id: Option<String>,
+}
+
+#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
 pub struct RegionAppWithInstallations {
     pub name: String,
+    pub region_id: String,
     pub installations: Vec<AppInstallation>,
 }
 
