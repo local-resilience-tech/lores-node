@@ -13,6 +13,7 @@ interface LocalAppFormProps {
   submitLabel: string
   cancelPath: string
   initialValues?: Partial<LocalAppFormData>
+  disableKeyFields?: boolean
 }
 
 export default function LocalAppForm({
@@ -20,6 +21,7 @@ export default function LocalAppForm({
   submitLabel,
   cancelPath,
   initialValues,
+  disableKeyFields,
 }: LocalAppFormProps) {
   const [actionResult, onSubmitWithResult] =
     useOnSubmitWithResult<LocalAppFormData>(onSubmit)
@@ -46,8 +48,18 @@ export default function LocalAppForm({
           description="A unique name for this app"
           placeholder="eg my-app"
           withAsterisk
+          disabled={disableKeyFields}
           key={form.key("name")}
           {...form.getInputProps("name")}
+        />
+
+        <TextInput
+          label="Instance ID"
+          description="Optional instance identifier"
+          placeholder="eg my-app-instance"
+          disabled={disableKeyFields}
+          key={form.key("instance_id")}
+          {...form.getInputProps("instance_id")}
         />
 
         <TextInput
@@ -57,14 +69,6 @@ export default function LocalAppForm({
           withAsterisk
           key={form.key("version")}
           {...form.getInputProps("version")}
-        />
-
-        <TextInput
-          label="Instance ID"
-          description="Optional instance identifier"
-          placeholder="eg my-app-instance"
-          key={form.key("instance_id")}
-          {...form.getInputProps("instance_id")}
         />
 
         <DisplayActionResult result={actionResult} />

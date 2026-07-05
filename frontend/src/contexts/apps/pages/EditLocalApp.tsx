@@ -12,7 +12,7 @@ import LocalAppForm from "../components/LocalAppForm"
 import { useAppSelector } from "../../../store"
 
 function appPath(appName: string | undefined, instanceId: string | undefined) {
-  return `/node/apps/${encodeURIComponent(appName || "-")}/${encodeURIComponent(instanceId || "-")}`
+  return `/node/apps/app/${encodeURIComponent(appName || "-")}/${encodeURIComponent(instanceId || "-")}`
 }
 
 export default function EditLocalApp() {
@@ -55,6 +55,7 @@ export default function EditLocalApp() {
           onSubmit={onSubmit}
           submitLabel="Save changes"
           cancelPath={appPath(appName, instanceId)}
+          disableKeyFields
           initialValues={
             installation
               ? {
