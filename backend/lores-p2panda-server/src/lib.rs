@@ -16,8 +16,8 @@ use tonic::{Request, Response, Status};
 mod idempotency_store;
 use idempotency_store::IdempotencyStore;
 
-mod installation_notifier;
-use installation_notifier::InstallationNotifier;
+mod instance_notifier;
+use instance_notifier::InstanceNotifier;
 
 /// Configuration for the publish idempotency deduplication store.
 pub struct IdempotencyConfig {
@@ -59,7 +59,7 @@ pub struct PandaService {
     /// connections so the p2panda-level subscription is created only once.
     subscriptions: Arc<RwLock<HashMap<Topic, broadcast::Sender<IncomingOperation>>>>,
     idempotency: IdempotencyStore,
-    installation_notifier: InstallationNotifier,
+    instance_notifier: InstanceNotifier,
 }
 
 impl PandaService {
@@ -67,7 +67,7 @@ impl PandaService {
         node: Arc<Mutex<Option<Arc<PandaNode>>>>,
         db: SqlitePool,
         idempotency_config: Option<IdempotencyConfig>,
-        on_installation_seen: Arc<dyn Fn(String, Vec<u8>, RegionId) + Send + Sync>,
+        on_instance_seen: Arc<dyn Fn(String, Vec<u8>, RegionId) + Send + Sync>,
     ) -> Result<Self, sqlx::Error> {
         let config = idempotency_config.unwrap_or_default();
         let idempotency =
@@ -76,7 +76,7 @@ impl PandaService {
             node,
             subscriptions: Arc::new(RwLock::new(HashMap::new())),
             idempotency,
-            installation_notifier: InstallationNotifier::new(on_installation_seen),
+            instance_notifier: InstanceNotifier::new(on_instance_seen),
         })
     }
 
@@ -177,10 +177,10 @@ impl Panda for PandaService {
             .record(&region_app_topic, &req.idempotency_key)
             .await?;
 
-        self.installation_notifier
+        self.instance_notifier
             .notify(
                 &region_app_topic.app_namespace,
-                &req.installation_id,
+                &req.instance_id,
                 &region_app_topic.region_id,
             )
             .await;
@@ -219,10 +219,10 @@ impl Panda for PandaService {
             region_app_topic.region_id, region_app_topic.app_namespace
         );
 
-        self.installation_notifier
+        self.instance_notifier
             .notify(
                 &region_app_topic.app_namespace,
-                &req.installation_id,
+                &req.instance_id,
                 &region_app_topic.region_id,
             )
             .await;

@@ -21,9 +21,9 @@ service Panda {
 }
 
 message PublishRequest {
-  // 16-byte UUID identifying this specific app installation. Generated once
+  // 16-byte UUID identifying this specific app instance. Generated once
   // when the app starts with a fresh database and persisted locally.
-  bytes installation_id = 1;
+  bytes instance_id = 1;
   // 32-byte region identifier.
   bytes region_id = 2;
   // Application namespace string (e.g. "my-app:v1").
@@ -41,9 +41,9 @@ message PublishRequest {
 message PublishResponse {}
 
 message SubscribeRequest {
-  // 16-byte UUID identifying this specific app installation. Generated once
+  // 16-byte UUID identifying this specific app instance. Generated once
   // when the app starts with a fresh database and persisted locally.
-  bytes installation_id = 1;
+  bytes instance_id = 1;
   // 32-byte region identifier.
   bytes region_id = 2;
   // Application namespace string (e.g. "my-app:v1").

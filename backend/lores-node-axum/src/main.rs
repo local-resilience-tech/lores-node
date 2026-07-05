@@ -122,15 +122,15 @@ async fn main() {
         .parse()
         .expect("valid gRPC bind address");
     let panda_service = {
-        let on_installation_seen =
-            local_apps::local_app_installations::make_installation_seen_callback(
+        let on_instance_seen =
+            local_apps::app_instances::make_instance_seen_callback(
                 node_data_pool.clone(),
             );
         lores_p2panda_server::PandaService::new(
             panda_container.node_arc(),
             node_data_pool.clone(),
             None,
-            on_installation_seen,
+            on_instance_seen,
         )
         .await
         .expect("Failed to initialise PandaService")

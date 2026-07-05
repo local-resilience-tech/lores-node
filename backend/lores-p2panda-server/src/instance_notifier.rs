@@ -8,12 +8,12 @@ use tokio::sync::RwLock;
 /// (app_namespace, installation_id, region_id) combination is seen within
 /// this process lifetime. Subsequent calls for the same combination are
 /// silently ignored.
-pub struct InstallationNotifier {
+pub struct InstanceNotifier {
     callback: Arc<dyn Fn(String, Vec<u8>, RegionId) + Send + Sync>,
     seen: RwLock<HashSet<(String, Vec<u8>, Vec<u8>)>>,
 }
 
-impl InstallationNotifier {
+impl InstanceNotifier {
     pub fn new(callback: Arc<dyn Fn(String, Vec<u8>, RegionId) + Send + Sync>) -> Self {
         Self {
             callback,

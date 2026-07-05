@@ -1,15 +1,15 @@
 use sqlx::SqlitePool;
 
-pub struct AppInstallationsRepo {}
+pub struct AppInstancesRepo {}
 
-impl AppInstallationsRepo {
+impl AppInstancesRepo {
     pub fn init() -> Self {
-        AppInstallationsRepo {}
+        AppInstancesRepo {}
     }
 
     /// Record an app installation binding to a region. Silently ignores rows
     /// that already exist (PRIMARY KEY conflict on app_name + installation_id).
-    pub async fn record_app_installation(
+    pub async fn record_app_instance(
         &self,
         pool: &SqlitePool,
         app_name: &str,
@@ -17,7 +17,7 @@ impl AppInstallationsRepo {
         region_id: &str,
     ) -> Result<(), sqlx::Error> {
         sqlx::query(
-            "INSERT OR IGNORE INTO app_installations (app_name, installation_id, region_id)
+            "INSERT OR IGNORE INTO app_instances (app_name, installation_id, region_id)
              VALUES (?, ?, ?)",
         )
         .bind(app_name)

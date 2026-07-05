@@ -1,11 +1,7 @@
-use std::sync::Arc;
-
-use lores_p2panda::RegionId;
 use sqlx::SqlitePool;
 
 use crate::data::{
     entities::{LocalApp, LocalAppInstallation},
-    node_data::app_installations_repo::AppInstallationsRepo,
     projections_read::apps::AppsReadRepo,
 };
 
@@ -29,25 +25,4 @@ pub async fn build_local_app_installations(
         .collect();
 
     Ok(installations)
-}
-
-/// Returns a callback suitable for passing to `PandaService::new` that records
-/// each newly-seen app installation into the node_data database.
-pub fn make_installation_seen_callback(
-    pool: SqlitePool,
-) -> Arc<dyn Fn(String, Vec<u8>, RegionId) + Send + Sync> {
-    Arc::new(
-        move |app_namespace: String, installation_id: Vec<u8>, region_id: RegionId| {
-            let pool = pool.clone();
-            let region_hex = region_id.to_string();
-            tokio::spawn(async move {
-                if let Err(e) = AppInstallationsRepo::init()
-                    .record_app_installation(&pool, &app_namespace, &installation_id, &region_hex)
-                    .await
-                {
-                    eprintln!("[app_installations] failed to record installation: {}", e);
-                }
-            });
-        },
-    )
 }
