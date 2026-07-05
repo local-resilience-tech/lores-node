@@ -11,7 +11,13 @@ import {
   ThisRegionNode,
 } from "./contexts/this_region_node"
 import { EventLog } from "./contexts/this_p2panda_node"
-import { ShowLocalApp, LocalApps, RegionApps } from "./contexts/apps"
+import {
+  ShowLocalApp,
+  LocalApps,
+  RegionApps,
+  NewLocalApp,
+  EditLocalApp,
+} from "./contexts/apps"
 import { Nodes } from "./contexts/region_nodes"
 import { MantineProvider } from "@mantine/core"
 import { ModalsProvider } from "@mantine/modals"
@@ -103,7 +109,12 @@ const router = createBrowserRouter([
             path: "apps",
             children: [
               { path: "", element: <LocalApps /> },
-              { path: "app/:appName", element: <ShowLocalApp /> },
+              { path: "new", element: <NewLocalApp /> },
+              { path: "app/:appName/:instanceId", element: <ShowLocalApp /> },
+              {
+                path: "app/:appName/:instanceId/edit",
+                element: <EditLocalApp />,
+              },
             ],
           },
         ],

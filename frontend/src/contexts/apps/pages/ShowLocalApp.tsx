@@ -1,6 +1,15 @@
-import { Breadcrumbs, Container, Stack, Title, Text, Card } from "@mantine/core"
+import {
+  Breadcrumbs,
+  Container,
+  Stack,
+  Title,
+  Text,
+  Card,
+  Group,
+  ActionIcon,
+} from "@mantine/core"
 import { actionFailure, actionSuccess, Anchor } from "../../../components"
-import { useParams } from "react-router-dom"
+import { useNavigate, useParams } from "react-router-dom"
 import { useAppSelector } from "../../../store"
 import LocalAppDetails from "../components/LocalAppDetails"
 import { getApi } from "../../../api"
@@ -8,30 +17,35 @@ import ActionButton from "../../../components/ActionButton"
 import { IfNodeSteward } from "../../auth/node_steward_auth"
 import { activeRegion } from "../../../store/my_regions"
 import { regionDisplayName } from "../../regions"
+import { IconEdit } from "@tabler/icons-react"
 
 export default function ShowLocalApp() {
-  const { appName } = useParams<{ appName: string }>()
-  const installation = useAppSelector((state) =>
-    (state.localApps || []).find((i) => i.app.name === appName),
+  const { appName, instanceId } = useParams<{
+    appName: string
+    instanceId: string
+  }>()
+  const app = useAppSelector((state) =>
+    (state.localApps || []).find(
+      (app) => app.name === appName && app.instance_id === instanceId,
+    ),
   )
   const region = useAppSelector((state) => activeRegion(state.my_regions))
   const appRegion = useAppSelector((state) =>
-    installation
+    app
       ? state.my_regions.all?.find(
-          (r) => r.region.id === installation.region_id,
+          (r) => r.region.id === app.bound_to_region_id,
         )
       : undefined,
   )
+  const navigate = useNavigate()
 
   if (!appName) {
     return <Container>Error: App name is required</Container>
   }
 
-  if (!installation) {
+  if (!app) {
     return <Container>Error: App not found</Container>
   }
-
-  const app = installation.app
 
   const onRegister = region
     ? async () => {
@@ -48,15 +62,22 @@ export default function ShowLocalApp() {
       <Stack gap="lg">
         <Stack gap="xs">
           <Breadcrumbs>
-            <Anchor href="/node/apps">Local Apps</Anchor>
+            <Anchor href="/node/apps">Local apps</Anchor>
             <Text c="dimmed">{app.name}</Text>
           </Breadcrumbs>
-          <Title order={1}>
-            <Text span inherit c="dimmed">
-              Local App:{" "}
-            </Text>
-            {app.name}
-          </Title>
+          <Group justify="space-between" align="center">
+            <Title order={1}>
+              <Text span inherit c="dimmed">
+                Local App:{" "}
+              </Text>
+              {app.name}
+            </Title>
+            <IfNodeSteward>
+              <ActionIcon size="lg" onClick={() => navigate("./edit")}>
+                <IconEdit />
+              </ActionIcon>
+            </IfNodeSteward>
+          </Group>
         </Stack>
 
         <Stack gap="xs">

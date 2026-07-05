@@ -10,6 +10,14 @@ export default function LocalAppDetails({ app }: { app: LocalApp }) {
           <Table.Td>{app.name}</Table.Td>
         </Table.Tr>
         <Table.Tr>
+          <Table.Th>Instance ID</Table.Th>
+          <Table.Td>{app.instance_id}</Table.Td>
+        </Table.Tr>
+        <Table.Tr>
+          <Table.Th>Source</Table.Th>
+          <Table.Td>{app.source}</Table.Td>
+        </Table.Tr>
+        <Table.Tr>
           <Table.Th>Version</Table.Th>
           <Table.Td>{app.version}</Table.Td>
         </Table.Tr>

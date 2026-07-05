@@ -51,6 +51,11 @@ export enum NodeState {
   Development = "development",
 }
 
+export enum LocalAppSource {
+  Docker = "docker",
+  Db = "db",
+}
+
 export enum GetCurrentNodeStewardError {
   InternalServerError = "InternalServerError",
   AdminNotFound = "AdminNotFound",
@@ -99,6 +104,12 @@ export type ClientEvent =
     }
   | {
       RegionUpdated: Region;
+    }
+  | {
+      LocalAppCreated: LocalApp;
+    }
+  | {
+      LocalAppUpdated: LocalApp;
     };
 
 export interface CreateRegionData {
@@ -140,14 +151,22 @@ export interface LatLng {
 }
 
 export interface LocalApp {
+  bound_to_region_id?: string | null;
+  /**
+   * Instance ID declared via the `lores.instance_id` Docker service label.
+   * `None` means the app did not declare one;
+   */
+  instance_id?: string | null;
   name: string;
+  source?: LocalAppSource;
   url?: null | NodeAppUrl;
   version: string;
 }
 
-export interface LocalAppInstallation {
-  app: LocalApp;
-  region_id?: string | null;
+export interface LocalAppFormData {
+  instance_id?: string | null;
+  name: string;
+  version: string;
 }
 
 export interface Network {
@@ -661,6 +680,22 @@ export class Api<
     /**
      * No description
      *
+     * @name CreateLocalApp
+     * @request POST:/node_steward_api/local_apps/create
+     */
+    createLocalApp: (data: LocalAppFormData, params: RequestParams = {}) =>
+      this.request<LocalApp, string>({
+        path: `/node_steward_api/local_apps/create`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
      * @name RegisterApp
      * @request POST:/node_steward_api/local_apps/register
      */
@@ -668,6 +703,22 @@ export class Api<
       this.request<any, any>({
         path: `/node_steward_api/local_apps/register`,
         method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @name UpdateLocalApp
+     * @request PUT:/node_steward_api/local_apps/update
+     */
+    updateLocalApp: (data: LocalAppFormData, params: RequestParams = {}) =>
+      this.request<LocalApp, string>({
+        path: `/node_steward_api/local_apps/update`,
+        method: "PUT",
         body: data,
         type: ContentType.Json,
         format: "json",
@@ -848,7 +899,7 @@ export class Api<
      * @request GET:/public_api/local_apps
      */
     listLocalApps: (params: RequestParams = {}) =>
-      this.request<LocalAppInstallation[], any>({
+      this.request<LocalApp[], any>({
         path: `/public_api/local_apps`,
         method: "GET",
         format: "json",

@@ -40,7 +40,10 @@ enum Command {
     },
 }
 
-const APP_NAMESPACE: &str = "lores-example-app-cli:v1";
+const APP_ID: &str = "lores-example-app-cli";
+/// Fixed instance ID for this CLI tool. A real app would use the `lores.instance_id`
+/// Docker service label value.
+const INSTANCE_ID: &str = "test-instance";
 
 #[tokio::main]
 async fn main() {
@@ -66,7 +69,7 @@ async fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
             let mut client = connect(&server)?;
 
             client
-                .publish(region_bytes, APP_NAMESPACE, payload_bytes, None)
+                .publish(region_bytes, APP_ID, payload_bytes, None, INSTANCE_ID)
                 .await?;
 
             println!("published");
@@ -93,7 +96,7 @@ async fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
             let mut publish_client = connect(&server)?;
 
             let stream_response = subscribe_client
-                .subscribe(region_bytes, APP_NAMESPACE)
+                .subscribe(region_bytes, APP_ID, INSTANCE_ID)
                 .await?;
             let mut stream = stream_response.into_inner();
 
@@ -140,7 +143,7 @@ async fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
                                     .map_err(|e| format!("failed to encode payload as CBOR: {e}"))?;
 
                                 publish_client
-                                    .publish(region_bytes, APP_NAMESPACE, payload_bytes, None)
+                                    .publish(region_bytes, APP_ID, payload_bytes, None, INSTANCE_ID)
                                     .await?;
                             }
                             Some(_) => {} // blank line, ignore

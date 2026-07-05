@@ -4,12 +4,8 @@ use utoipa_axum::{router::OpenApiRouter, routes};
 use crate::{
     DatabaseState,
     api::helpers::internal_server_error,
-    data::entities::LocalAppInstallation,
-    local_apps::{
-        local_app_installations::build_local_app_installations,
-        stack_apps::find_deployed_local_apps,
-    },
-    panda_comms::PandaContainer,
+    data::entities::LocalApp,
+    local_apps::find_local_apps,
 };
 
 pub fn router() -> OpenApiRouter {
@@ -17,26 +13,12 @@ pub fn router() -> OpenApiRouter {
 }
 
 #[utoipa::path(get, path = "/", responses(
-    (status = 200, body = Vec<LocalAppInstallation>),
+    (status = 200, body = Vec<LocalApp>),
     (status = INTERNAL_SERVER_ERROR, body = ()),
 ),)]
-async fn list_local_apps(
-    Extension(panda_container): Extension<PandaContainer>,
-    Extension(db): Extension<DatabaseState>,
-) -> impl IntoResponse {
-    let node_id = match panda_container.get_public_key().await {
-        Ok(id) => id,
-        Err(e) => return internal_server_error(e).into_response(),
-    };
-    let node_id_hex = node_id.to_hex();
-
-    let local_apps = find_deployed_local_apps();
-
-    let result =
-        match build_local_app_installations(&db.projections_pool, &node_id_hex, local_apps).await {
-            Ok(installations) => installations,
-            Err(e) => return internal_server_error(e).into_response(),
-        };
-
-    (StatusCode::OK, Json(result)).into_response()
+async fn list_local_apps(Extension(db): Extension<DatabaseState>) -> impl IntoResponse {
+    match find_local_apps(&db.node_data_pool).await {
+        Ok(apps) => (StatusCode::OK, Json(apps)).into_response(),
+        Err(e) => internal_server_error(e).into_response(),
+    }
 }

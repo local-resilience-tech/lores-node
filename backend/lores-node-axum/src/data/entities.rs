@@ -173,17 +173,30 @@ pub struct NodeAppUrl {
     pub local_network_url: Option<String>,
 }
 
+#[derive(Serialize, Deserialize, ToSchema, Debug, Clone, PartialEq, Eq)]
+#[serde(rename_all = "lowercase")]
+pub enum LocalAppSource {
+    Docker,
+    Db,
+}
+
+impl Default for LocalAppSource {
+    fn default() -> Self {
+        Self::Docker
+    }
+}
+
 #[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
 pub struct LocalApp {
     pub name: String,
     pub version: String,
     pub url: Option<NodeAppUrl>,
-}
-
-#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
-pub struct LocalAppInstallation {
-    pub app: LocalApp,
-    pub region_id: Option<String>,
+    #[serde(default)]
+    pub source: LocalAppSource,
+    /// Instance ID declared via the `lores.instance_id` Docker service label.
+    /// `None` means the app did not declare one;
+    pub instance_id: Option<String>,
+    pub bound_to_region_id: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]

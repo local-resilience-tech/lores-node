@@ -21,27 +21,33 @@ service Panda {
 }
 
 message PublishRequest {
+  // String identifying this application consistantly across all nodes in the region.
+  string app_id = 1;
   // 32-byte region identifier.
-  bytes region_id = 1;
-  // Application namespace string (e.g. "my-app:v1").
-  string app_namespace = 2;
+  bytes region_id = 2;
+  // String identifying this specific app instance on this server. Use something that
+  // can be rotated if you want to reset the app's state (e.g. a fresh database).
+  string instance_id = 3;
   // Encoded operation payload (e.g. CBOR).
-  bytes payload = 3;
+  bytes payload = 4;
   // Optional client-assigned idempotency key. If present, the server will
   // deduplicate within the retention window: a second Publish with the same
-  // (region_id, app_namespace, idempotency_key) returns success without
+  // (region_id, app_id, idempotency_key) returns success without
   // re-inserting the operation.
-  bytes idempotency_key = 4;
+  bytes idempotency_key = 5;
 }
 
 // An empty response indicates the operation was successfully persisted.
 message PublishResponse {}
 
 message SubscribeRequest {
+  // String identifying this application consistantly across all nodes in the region.
+  string app_id = 1;
   // 32-byte region identifier.
-  bytes region_id = 1;
-  // Application namespace string (e.g. "my-app:v1").
-  string app_namespace = 2;
+  bytes region_id = 2;
+  // String identifying this specific app instance on this server. Use something that
+  // can be rotated if you want to reset the app's state (e.g. a fresh database).
+  string instance_id = 3;
 }
 
 message OperationEvent {

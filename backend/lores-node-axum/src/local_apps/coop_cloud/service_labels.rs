@@ -5,6 +5,7 @@ pub struct CoopCloudServiceLabels {
     stack_namespace: String,
     namespace_labels: HashMap<String, String>,
     traefik_labels: HashMap<String, String>,
+    lores_instance_id: Option<String>,
 }
 
 impl CoopCloudServiceLabels {
@@ -42,6 +43,7 @@ impl CoopCloudServiceLabels {
             stack_namespace,
             namespace_labels,
             traefik_labels,
+            lores_instance_id: labels.get("lores.instance_id").cloned(),
         })
     }
 
@@ -64,6 +66,10 @@ impl CoopCloudServiceLabels {
             Some(rule) => host_from_host_rule(&rule),
             None => None,
         }
+    }
+
+    pub fn lores_instance_id(&self) -> Option<String> {
+        self.lores_instance_id.clone()
     }
 }
 
