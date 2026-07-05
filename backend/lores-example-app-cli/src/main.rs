@@ -41,6 +41,9 @@ enum Command {
 }
 
 const APP_NAMESPACE: &str = "lores-example-app-cli:v1";
+/// Fixed instance ID for this CLI tool. A real app would generate this once
+/// and persist it alongside its database.
+const INSTANCE_ID: &[u8] = b"lores-panda-cli-";
 
 #[tokio::main]
 async fn main() {
@@ -66,7 +69,13 @@ async fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
             let mut client = connect(&server)?;
 
             client
-                .publish(region_bytes, APP_NAMESPACE, payload_bytes, None)
+                .publish(
+                    region_bytes,
+                    APP_NAMESPACE,
+                    payload_bytes,
+                    None,
+                    INSTANCE_ID.to_vec(),
+                )
                 .await?;
 
             println!("published");
@@ -93,7 +102,7 @@ async fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
             let mut publish_client = connect(&server)?;
 
             let stream_response = subscribe_client
-                .subscribe(region_bytes, APP_NAMESPACE)
+                .subscribe(region_bytes, APP_NAMESPACE, INSTANCE_ID.to_vec())
                 .await?;
             let mut stream = stream_response.into_inner();
 
@@ -140,7 +149,7 @@ async fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
                                     .map_err(|e| format!("failed to encode payload as CBOR: {e}"))?;
 
                                 publish_client
-                                    .publish(region_bytes, APP_NAMESPACE, payload_bytes, None)
+                                    .publish(region_bytes, APP_NAMESPACE, payload_bytes, None, INSTANCE_ID.to_vec())
                                     .await?;
                             }
                             Some(_) => {} // blank line, ignore
