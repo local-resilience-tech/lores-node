@@ -13,3 +13,20 @@ export function regionDisplayName(region: Region): string {
     "Unnamed"
   )
 }
+
+export function changeRegionInPath(
+  newRegionSlug: string | null | undefined,
+  currentPath: string,
+): string {
+  if (!newRegionSlug) return currentPath
+
+  // If path starts with /regions/<slug>, replace the slug with newRegionSlug
+  const regionPathRegex = /^\/regions\/([^/]+)(\/.*)?$/
+  const match = currentPath.match(regionPathRegex)
+  if (match) {
+    const [, , restOfPath] = match
+    return `/regions/${newRegionSlug}${restOfPath || ""}`
+  }
+  // If path does not start with /regions/<slug>, return the current path unchanged
+  return currentPath
+}

@@ -3,6 +3,17 @@ import type { RegionAppWithInstallations } from "../api/Api"
 
 export type AppsState = RegionAppWithInstallations[] | null
 
+export function regionAppsForRegion(
+  state: AppsState,
+  regionId: string | null | undefined,
+): RegionAppWithInstallations[] {
+  if (!state || !regionId) {
+    return [] as RegionAppWithInstallations[]
+  }
+
+  return state.filter((app) => app.region_id === regionId)
+}
+
 const regionAppsSlice = createSlice({
   name: "region_apps",
   initialState: null as AppsState,
