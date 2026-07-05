@@ -60,12 +60,14 @@ impl PandaClient {
         app_namespace: impl Into<String>,
         payload: impl Into<Vec<u8>>,
         idempotency_key: Option<Vec<u8>>,
+        installation_id: Vec<u8>,
     ) -> Result<Response<PublishResponse>, Status> {
         let request = PublishRequest {
             region_id: region_id.to_vec(),
             app_namespace: app_namespace.into(),
             payload: payload.into(),
             idempotency_key: idempotency_key.unwrap_or_default(),
+            installation_id,
         };
         self.inner.publish(request).await
     }
@@ -78,10 +80,12 @@ impl PandaClient {
         &mut self,
         region_id: [u8; 32],
         app_namespace: impl Into<String>,
+        installation_id: Vec<u8>,
     ) -> Result<Response<Streaming<OperationEvent>>, Status> {
         let request = SubscribeRequest {
             region_id: region_id.to_vec(),
             app_namespace: app_namespace.into(),
+            installation_id,
         };
         self.inner.subscribe(request).await
     }

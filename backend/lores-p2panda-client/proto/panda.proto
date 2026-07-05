@@ -21,27 +21,33 @@ service Panda {
 }
 
 message PublishRequest {
+  // 16-byte UUID identifying this specific app installation. Generated once
+  // when the app starts with a fresh database and persisted locally.
+  bytes installation_id = 1;
   // 32-byte region identifier.
-  bytes region_id = 1;
+  bytes region_id = 2;
   // Application namespace string (e.g. "my-app:v1").
-  string app_namespace = 2;
+  string app_namespace = 3;
   // Encoded operation payload (e.g. CBOR).
-  bytes payload = 3;
+  bytes payload = 4;
   // Optional client-assigned idempotency key. If present, the server will
   // deduplicate within the retention window: a second Publish with the same
   // (region_id, app_namespace, idempotency_key) returns success without
   // re-inserting the operation.
-  bytes idempotency_key = 4;
+  bytes idempotency_key = 5;
 }
 
 // An empty response indicates the operation was successfully persisted.
 message PublishResponse {}
 
 message SubscribeRequest {
+  // 16-byte UUID identifying this specific app installation. Generated once
+  // when the app starts with a fresh database and persisted locally.
+  bytes installation_id = 1;
   // 32-byte region identifier.
-  bytes region_id = 1;
+  bytes region_id = 2;
   // Application namespace string (e.g. "my-app:v1").
-  string app_namespace = 2;
+  string app_namespace = 3;
 }
 
 message OperationEvent {
