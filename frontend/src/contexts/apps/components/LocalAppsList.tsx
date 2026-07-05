@@ -72,8 +72,16 @@ function LocalAppRow({ app, region, isActiveRegion }: LocalAppRowProps) {
 
   return (
     <Table.Tr key={app.name}>
-      <Table.Td w={1} style={{ whiteSpace: "nowrap" }} px="xs">
-        <span role="img" aria-label={sourceAltText}>
+      <Table.Td
+        w={1}
+        style={{ whiteSpace: "nowrap", verticalAlign: "middle" }}
+        px="xs"
+      >
+        <span
+          role="img"
+          aria-label={sourceAltText}
+          style={{ display: "inline-flex", verticalAlign: "middle" }}
+        >
           {sourceIcon}
         </span>
       </Table.Td>
