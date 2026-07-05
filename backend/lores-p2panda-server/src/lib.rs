@@ -67,7 +67,7 @@ impl PandaService {
         node: Arc<Mutex<Option<Arc<PandaNode>>>>,
         db: SqlitePool,
         idempotency_config: Option<IdempotencyConfig>,
-        on_instance_seen: Arc<dyn Fn(String, Vec<u8>, RegionId) + Send + Sync>,
+        on_instance_seen: Arc<dyn Fn(String, String) + Send + Sync>,
     ) -> Result<Self, sqlx::Error> {
         let config = idempotency_config.unwrap_or_default();
         let idempotency =
@@ -85,7 +85,7 @@ impl PandaService {
     }
 
     /// Returns a broadcast receiver for the topic derived from `region_id` and
-    /// `app_namespace`, creating the underlying p2panda subscription and
+    /// `app_id`, creating the underlying p2panda subscription and
     /// forwarding task the first time this topic is seen.
     async fn ensure_broadcast_subscription(
         &self,
@@ -132,7 +132,7 @@ impl Panda for PandaService {
             .map_err(|_| Status::invalid_argument("region_id must be exactly 32 bytes"))?;
 
         let region_id = RegionId::from(region_bytes);
-        let app_namespace = req.app_namespace;
+        let app_id = req.app_id;
 
         let node_lock = self.node.lock().await;
         let node = node_lock
@@ -141,12 +141,12 @@ impl Panda for PandaService {
             .clone();
         drop(node_lock);
 
-        let region_app_topic = RegionAppTopic::new(region_id, app_namespace);
+        let region_app_topic = RegionAppTopic::new(region_id, app_id);
 
         println!(
-            "[publish] region={} app_namespace={} payload_bytes={}",
+            "[publish] region={} app_id={} payload_bytes={}",
             region_app_topic.region_id,
-            region_app_topic.app_namespace,
+            region_app_topic.app_id,
             req.payload.len()
         );
 
@@ -178,11 +178,7 @@ impl Panda for PandaService {
             .await?;
 
         self.instance_notifier
-            .notify(
-                &region_app_topic.app_namespace,
-                &req.instance_id,
-                &region_app_topic.region_id,
-            )
+            .notify(&region_app_topic.app_id, &req.instance_id)
             .await;
 
         Ok(Response::new(PublishResponse {}))
@@ -203,7 +199,7 @@ impl Panda for PandaService {
             .map_err(|_| Status::invalid_argument("region_id must be exactly 32 bytes"))?;
 
         let region_id = RegionId::from(region_bytes);
-        let app_namespace = req.app_namespace;
+        let app_id = req.app_id;
 
         let node_lock = self.node.lock().await;
         let node = node_lock
@@ -212,19 +208,15 @@ impl Panda for PandaService {
             .clone();
         drop(node_lock);
 
-        let region_app_topic = RegionAppTopic::new(region_id, app_namespace);
+        let region_app_topic = RegionAppTopic::new(region_id, app_id);
 
         println!(
-            "[subscribe] region={} app_namespace={}",
-            region_app_topic.region_id, region_app_topic.app_namespace
+            "[subscribe] region={} app_id={}",
+            region_app_topic.region_id, region_app_topic.app_id
         );
 
         self.instance_notifier
-            .notify(
-                &region_app_topic.app_namespace,
-                &req.instance_id,
-                &region_app_topic.region_id,
-            )
+            .notify(&region_app_topic.app_id, &req.instance_id)
             .await;
 
         // Under a write lock, ensure a p2panda subscription exists for this

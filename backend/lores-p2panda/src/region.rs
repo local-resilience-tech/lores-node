@@ -76,23 +76,23 @@ impl RegionTopic for RegionAdminTopic {
 #[derive(Clone)]
 pub struct RegionAppTopic {
     pub region_id: RegionId,
-    pub app_namespace: String,
+    pub app_id: String,
 }
 
 impl RegionAppTopic {
-    pub fn new(region_id: RegionId, app_namespace: impl Into<String>) -> Self {
+    pub fn new(region_id: RegionId, app_id: impl Into<String>) -> Self {
         Self {
             region_id,
-            app_namespace: app_namespace.into(),
+            app_id: app_id.into(),
         }
     }
 }
 
 impl RegionTopic for RegionAppTopic {
     fn p2panda_topic(&self) -> Topic {
-        let mut data = Vec::with_capacity(32 + self.app_namespace.len());
+        let mut data = Vec::with_capacity(32 + self.app_id.len());
         data.extend_from_slice(&self.region_id.bytes);
-        data.extend_from_slice(self.app_namespace.as_bytes());
+        data.extend_from_slice(self.app_id.as_bytes());
         Topic::from(*Hash::digest(&data).as_bytes())
     }
 }
