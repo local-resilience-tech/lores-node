@@ -1,10 +1,13 @@
 use tonic::transport::Channel;
 
 pub mod proto {
-    tonic::include_proto!("lores.panda.v1");
+    tonic::include_proto!("lores.panda.v2");
 }
 
-use proto::{OperationEvent, PublishRequest, PublishResponse, SubscribeRequest, panda_client::PandaClient as TonicPandaClient};
+use proto::{
+    OperationEvent, PublishRequest, PublishResponse, SubscribeRequest,
+    panda_client::PandaClient as TonicPandaClient,
+};
 use tonic::{Response, Status, Streaming};
 
 /// Client for the lores-p2panda-server gRPC API.

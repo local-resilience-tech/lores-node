@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package lores.panda.v1;
+package lores.panda.v2;
 
 service Panda {
   // Publish an operation to a region. Returns only after the operation has been
