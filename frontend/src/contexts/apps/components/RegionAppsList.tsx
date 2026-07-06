@@ -1,4 +1,5 @@
 import { Badge, Group, Table, Text } from "@mantine/core"
+import orderBy from "lodash.orderby"
 import { RegionAppWithInstallations, RegionNodeDetails } from "../../../api/Api"
 import { NodesMap } from "../../../store/my_regions"
 
@@ -12,6 +13,7 @@ function NodeName({ node }: { node: RegionNodeDetails }) {
 }
 
 export default function RegionAppsList({ apps, nodes }: AppsListProps) {
+  const sortedApps = orderBy(apps, ["name"])
   return (
     <Table>
       <Table.Thead>
@@ -21,7 +23,7 @@ export default function RegionAppsList({ apps, nodes }: AppsListProps) {
         </Table.Tr>
       </Table.Thead>
       <Table.Tbody>
-        {apps.map((app) => (
+        {sortedApps.map((app) => (
           <Table.Tr key={app.name}>
             <Table.Td>{app.name}</Table.Td>
             <Table.Td>

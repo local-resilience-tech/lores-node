@@ -13,7 +13,7 @@ function NodeStewardMissing() {
         <Text size="xl" c="dimmed">
           403: Forbidden
         </Text>
-        <Title order={1}>This page is for Node Stewards</Title>
+        <Title order={1}>This page is for node stewards</Title>
       </Stack>
       <Text>
         You must be a Node Steward to view this page. If that's you, please{" "}

@@ -18,7 +18,7 @@ export default function LocalApps() {
     <Container>
       <Stack>
         <Group justify="space-between">
-          <Title order={1}>Local Apps</Title>
+          <Title order={1}>Local apps</Title>
           <IfNodeSteward>
             <ActionIcon size="lg" onClick={() => navigate("./new")}>
               <IconPlus />

@@ -28,7 +28,7 @@ export default function Stacks() {
     <Container>
       <Stack>
         <Group justify="space-between">
-          <Title order={1}>Docker Stacks</Title>
+          <Title order={1}>Docker stacks</Title>
           <ActionIcon onClick={loadStacks}>
             <IconRefresh />
           </ActionIcon>

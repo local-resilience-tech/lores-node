@@ -13,7 +13,7 @@ export default function SetupRegion() {
     <Container>
       <Stack gap="lg">
         <Stack>
-          <Title order={1}>Join a Region</Title>
+          <Title order={1}>Join a region</Title>
 
           <Text>
             A Region is a cluster of Nodes that are in regular communication,

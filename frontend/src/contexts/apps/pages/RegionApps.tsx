@@ -21,7 +21,7 @@ export default function RegionApps() {
   return (
     <Container>
       <Stack>
-        <Title order={1}>All Apps</Title>
+        <Title order={1}>All apps</Title>
 
         {apps && <RegionAppsList apps={apps} nodes={nodes} />}
       </Stack>
