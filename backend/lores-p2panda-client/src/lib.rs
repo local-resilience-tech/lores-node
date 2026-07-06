@@ -56,18 +56,16 @@ impl PandaClient {
     /// re-inserting the operation.
     pub async fn publish(
         &mut self,
-        region_id: [u8; 32],
         app_id: impl Into<String>,
+        instance_id: impl Into<String>,
         payload: impl Into<Vec<u8>>,
         idempotency_key: Option<Vec<u8>>,
-        instance_id: impl Into<String>,
     ) -> Result<Response<PublishResponse>, Status> {
         let request = PublishRequest {
-            region_id: region_id.to_vec(),
             app_id: app_id.into(),
+            instance_id: instance_id.into(),
             payload: payload.into(),
             idempotency_key: idempotency_key.unwrap_or_default(),
-            instance_id: instance_id.into(),
         };
         self.inner.publish(request).await
     }
@@ -78,12 +76,10 @@ impl PandaClient {
     /// HTTP/2 flow control provides natural backpressure.
     pub async fn subscribe(
         &mut self,
-        region_id: [u8; 32],
         app_id: impl Into<String>,
         instance_id: impl Into<String>,
     ) -> Result<Response<Streaming<OperationEvent>>, Status> {
         let request = SubscribeRequest {
-            region_id: region_id.to_vec(),
             app_id: app_id.into(),
             instance_id: instance_id.into(),
         };

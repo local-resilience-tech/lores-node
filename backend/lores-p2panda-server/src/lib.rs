@@ -157,13 +157,14 @@ impl Panda for PandaService {
     ) -> Result<Response<PublishResponse>, Status> {
         let req = request.into_inner();
 
-        let region_bytes: [u8; 32] = req
-            .region_id
-            .try_into()
-            .map_err(|_| Status::invalid_argument("region_id must be exactly 32 bytes"))?;
+        let ids = AppInstanceIds {
+            app_id: req.app_id,
+            instance_id: req.instance_id,
+        };
 
-        let region_id = RegionId::from(region_bytes);
-        let app_id = req.app_id;
+        let region_id = (self.resolve_region_id)(ids.clone())
+            .await
+            .map_err(resolve_region_error_to_status)?;
 
         let node_lock = self.node.lock().await;
         let node = node_lock
@@ -172,7 +173,7 @@ impl Panda for PandaService {
             .clone();
         drop(node_lock);
 
-        let region_app_topic = RegionAppTopic::new(region_id, app_id);
+        let region_app_topic = RegionAppTopic::new(region_id, ids.app_id);
 
         println!(
             "[publish] region={} app_id={} payload_bytes={}",
@@ -209,7 +210,7 @@ impl Panda for PandaService {
             .await?;
 
         self.instance_notifier
-            .notify(&region_app_topic.app_id, &req.instance_id)
+            .notify(&region_app_topic.app_id, &ids.instance_id)
             .await;
 
         Ok(Response::new(PublishResponse {}))
@@ -224,13 +225,14 @@ impl Panda for PandaService {
     ) -> Result<Response<Self::SubscribeStream>, Status> {
         let req = request.into_inner();
 
-        let region_bytes: [u8; 32] = req
-            .region_id
-            .try_into()
-            .map_err(|_| Status::invalid_argument("region_id must be exactly 32 bytes"))?;
+        let ids = AppInstanceIds {
+            app_id: req.app_id,
+            instance_id: req.instance_id,
+        };
 
-        let region_id = RegionId::from(region_bytes);
-        let app_id = req.app_id;
+        let region_id = (self.resolve_region_id)(ids.clone())
+            .await
+            .map_err(resolve_region_error_to_status)?;
 
         let node_lock = self.node.lock().await;
         let node = node_lock
@@ -239,7 +241,7 @@ impl Panda for PandaService {
             .clone();
         drop(node_lock);
 
-        let region_app_topic = RegionAppTopic::new(region_id, app_id);
+        let region_app_topic = RegionAppTopic::new(region_id, ids.app_id);
 
         println!(
             "[subscribe] region={} app_id={}",
@@ -247,7 +249,7 @@ impl Panda for PandaService {
         );
 
         self.instance_notifier
-            .notify(&region_app_topic.app_id, &req.instance_id)
+            .notify(&region_app_topic.app_id, &ids.instance_id)
             .await;
 
         // Under a write lock, ensure a p2panda subscription exists for this
