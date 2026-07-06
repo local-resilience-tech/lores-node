@@ -6,7 +6,6 @@ use axum::{
 use axum_login::AuthManagerLayerBuilder;
 use sqlx::SqlitePool;
 use std::env;
-use std::sync::Arc;
 use time::Duration;
 use tokio::sync::mpsc;
 use tonic::transport::Server as GrpcServer;
