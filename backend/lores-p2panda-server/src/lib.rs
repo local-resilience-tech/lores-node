@@ -41,7 +41,10 @@ pub mod proto {
     tonic::include_proto!("lores.panda.v1");
 }
 
-use proto::{OperationEvent, PublishRequest, PublishResponse, SubscribeRequest, panda_server::{Panda, PandaServer}};
+use proto::{
+    OperationEvent, PublishRequest, PublishResponse, SubscribeRequest,
+    panda_server::{Panda, PandaServer},
+};
 
 /// Error returned by the [`ResolveRegionId`] callback.
 #[derive(Debug)]
@@ -160,7 +163,7 @@ impl Panda for PandaService {
 
         let region_id = (self.resolve_region_id)(ids.clone())
             .await
-            .map_err(resolve_region_error_to_status)?;
+            .map_err(|e| resolve_region_error_to_status(e, &ids))?;
 
         let node_lock = self.node.lock().await;
         let node = node_lock
@@ -228,7 +231,7 @@ impl Panda for PandaService {
 
         let region_id = (self.resolve_region_id)(ids.clone())
             .await
-            .map_err(resolve_region_error_to_status)?;
+            .map_err(|e| resolve_region_error_to_status(e, &ids))?;
 
         let node_lock = self.node.lock().await;
         let node = node_lock
@@ -313,11 +316,14 @@ fn subscription_error_to_status(e: SubscriptionError) -> Status {
     }
 }
 
-fn resolve_region_error_to_status(e: ResolveRegionIdError) -> Status {
+fn resolve_region_error_to_status(e: ResolveRegionIdError, ids: &AppInstanceIds) -> Status {
     match e {
-        ResolveRegionIdError::NotFound => Status::not_found("no region bound to this app instance"),
-        ResolveRegionIdError::Internal => {
-            Status::internal("failed to resolve region for app instance")
-        }
+        ResolveRegionIdError::NotFound => Status::not_found(format!(
+            "No region bound to app '{}' instance '{}'. Use your lores-node installation to bind this app to a region, matching both the app name and instance ID.",
+            ids.app_id, ids.instance_id,
+        )),
+        ResolveRegionIdError::Internal => Status::internal(format!(
+            "Failed to resolve region for app instance. This may be an internal server issue with lores-node.",
+        )),
     }
 }

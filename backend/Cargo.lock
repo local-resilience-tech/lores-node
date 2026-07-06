@@ -2715,6 +2715,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "lores-example-app-cli"
+version = "0.1.0"
+dependencies = [
+ "ciborium",
+ "clap",
+ "hex",
+ "lores-p2panda-client",
+ "serde",
+ "tokio",
+]
+
+[[package]]
 name = "lores-node"
 version = "0.20.0"
 dependencies = [
@@ -2805,18 +2817,6 @@ dependencies = [
  "tonic",
  "tonic-prost",
  "tonic-prost-build",
-]
-
-[[package]]
-name = "lores-panda-cli"
-version = "0.1.0"
-dependencies = [
- "ciborium",
- "clap",
- "hex",
- "lores-p2panda-client",
- "serde",
- "tokio",
 ]
 
 [[package]]
