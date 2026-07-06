@@ -1,12 +1,12 @@
 use tonic::transport::Channel;
 
 pub mod proto {
-    tonic::include_proto!("lores.panda.v1");
+    tonic::include_proto!("lores.panda.v2");
 }
 
 use proto::{
-    ListRegionsRequest, ListRegionsResponse, OperationEvent, PublishRequest, PublishResponse,
-    SubscribeRequest, panda_client::PandaClient as TonicPandaClient,
+    OperationEvent, PublishRequest, PublishResponse, SubscribeRequest,
+    panda_client::PandaClient as TonicPandaClient,
 };
 use tonic::{Response, Status, Streaming};
 
@@ -56,18 +56,16 @@ impl PandaClient {
     /// re-inserting the operation.
     pub async fn publish(
         &mut self,
-        region_id: [u8; 32],
         app_id: impl Into<String>,
+        instance_id: impl Into<String>,
         payload: impl Into<Vec<u8>>,
         idempotency_key: Option<Vec<u8>>,
-        instance_id: impl Into<String>,
     ) -> Result<Response<PublishResponse>, Status> {
         let request = PublishRequest {
-            region_id: region_id.to_vec(),
             app_id: app_id.into(),
+            instance_id: instance_id.into(),
             payload: payload.into(),
             idempotency_key: idempotency_key.unwrap_or_default(),
-            instance_id: instance_id.into(),
         };
         self.inner.publish(request).await
     }
@@ -78,20 +76,13 @@ impl PandaClient {
     /// HTTP/2 flow control provides natural backpressure.
     pub async fn subscribe(
         &mut self,
-        region_id: [u8; 32],
         app_id: impl Into<String>,
         instance_id: impl Into<String>,
     ) -> Result<Response<Streaming<OperationEvent>>, Status> {
         let request = SubscribeRequest {
-            region_id: region_id.to_vec(),
             app_id: app_id.into(),
             instance_id: instance_id.into(),
         };
         self.inner.subscribe(request).await
-    }
-
-    /// List all regions the remote node knows about.
-    pub async fn list_regions(&mut self) -> Result<Response<ListRegionsResponse>, Status> {
-        self.inner.list_regions(ListRegionsRequest {}).await
     }
 }

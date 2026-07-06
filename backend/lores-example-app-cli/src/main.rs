@@ -23,21 +23,13 @@ struct Cli {
 enum Command {
     /// Publish a message to a region
     Publish {
-        /// Region ID as 64 hex characters (32 bytes)
-        region: String,
         /// Message to publish (comma-delimited string)
         message: String,
     },
 
-    /// List the regions and app namespaces the node is participating in
-    ListRegions,
-
     /// Enter interactive live mode: publish messages line by line and print incoming messages.
     /// Press Ctrl+C to exit.
-    Live {
-        /// Region ID as 64 hex characters (32 bytes)
-        region: String,
-    },
+    Live,
 }
 
 const APP_ID: &str = "lores-example-app-cli";
@@ -58,9 +50,7 @@ async fn main() {
 async fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
     let server = cli.server.clone();
     match cli.command {
-        Command::Publish { region, message } => {
-            let region_bytes = parse_region_hex(&region)?;
-
+        Command::Publish { message } => {
             let payload_struct = MessagePayload { message };
             let mut payload_bytes: Vec<u8> = Vec::new();
             ciborium::into_writer(&payload_struct, &mut payload_bytes)
@@ -69,34 +59,18 @@ async fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
             let mut client = connect(&server)?;
 
             client
-                .publish(region_bytes, APP_ID, payload_bytes, None, INSTANCE_ID)
+                .publish(APP_ID, INSTANCE_ID, payload_bytes, None)
                 .await?;
 
             println!("published");
         }
-        Command::ListRegions => {
-            let mut client = connect(&server)?;
-
-            let response = client.list_regions().await?;
-
-            let ids = response.into_inner().region_ids;
-            if ids.is_empty() {
-                println!("no registered regions");
-            } else {
-                for id in ids {
-                    println!("{}", hex::encode(&id));
-                }
-            }
-        }
-        Command::Live { region } => {
-            let region_bytes = parse_region_hex(&region)?;
-
+        Command::Live => {
             // Two separate connections: one for subscribe, one for publish.
             let mut subscribe_client = connect(&server)?;
             let mut publish_client = connect(&server)?;
 
             let stream_response = subscribe_client
-                .subscribe(region_bytes, APP_ID, INSTANCE_ID)
+                .subscribe(APP_ID, INSTANCE_ID)
                 .await?;
             let mut stream = stream_response.into_inner();
 
@@ -125,8 +99,7 @@ async fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
             });
 
             println!(
-                "Live mode on region {}...\nType a message and press Enter to publish. Press Ctrl+C to exit.\n",
-                &region[..8]
+                "Live mode — type a message and press Enter to publish. Press Ctrl+C to exit.\n",
             );
 
             let stdin = tokio::io::BufReader::new(tokio::io::stdin());
@@ -143,7 +116,7 @@ async fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
                                     .map_err(|e| format!("failed to encode payload as CBOR: {e}"))?;
 
                                 publish_client
-                                    .publish(region_bytes, APP_ID, payload_bytes, None, INSTANCE_ID)
+                                    .publish(APP_ID, INSTANCE_ID, payload_bytes, None)
                                     .await?;
                             }
                             Some(_) => {} // blank line, ignore
@@ -165,12 +138,4 @@ async fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
 fn connect(server: &str) -> Result<PandaClient, Box<dyn std::error::Error>> {
     PandaClient::connect_lazy(server.to_string())
         .map_err(|e| format!("could not connect to gRPC server at {server}: {e}").into())
-}
-
-fn parse_region_hex(s: &str) -> Result<[u8; 32], Box<dyn std::error::Error>> {
-    let bytes = hex::decode(s).map_err(|e| format!("invalid region hex: {e}"))?;
-    let arr: [u8; 32] = bytes
-        .try_into()
-        .map_err(|_| "region must be exactly 32 bytes (64 hex characters)")?;
-    Ok(arr)
 }

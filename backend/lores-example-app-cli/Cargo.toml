@@ -1,5 +1,5 @@
 [package]
-name = "lores-panda-cli"
+name = "lores-example-app-cli"
 version = "0.1.0"
 edition = "2024"
 publish = false

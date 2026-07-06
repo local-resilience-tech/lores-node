@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::future::Future;
 use std::pin::Pin;
 use std::sync::Arc;
 
@@ -37,14 +38,40 @@ impl Default for IdempotencyConfig {
 }
 
 pub mod proto {
-    tonic::include_proto!("lores.panda.v1");
+    tonic::include_proto!("lores.panda.v2");
 }
 
 use proto::{
-    ListRegionsRequest, ListRegionsResponse, OperationEvent, PublishRequest, PublishResponse,
-    SubscribeRequest,
+    OperationEvent, PublishRequest, PublishResponse, SubscribeRequest,
     panda_server::{Panda, PandaServer},
 };
+
+/// Error returned by the [`ResolveRegionId`] callback.
+#[derive(Debug)]
+pub enum ResolveRegionIdError {
+    /// No region is bound to the given app/instance.
+    NotFound,
+    /// The stored binding is corrupt or otherwise unusable.
+    Internal,
+}
+
+/// Identifies the app and instance making a gRPC request.
+#[derive(Debug, Clone)]
+pub struct AppInstanceIds {
+    pub app_id: String,
+    pub instance_id: String,
+}
+
+/// Async callback type for resolving a [`RegionId`] from an [`AppInstanceIds`].
+/// The owner (e.g. `lores-node-axum`) supplies this when constructing
+/// [`PandaService`].
+pub type ResolveRegionId = Arc<
+    dyn Fn(
+            AppInstanceIds,
+        ) -> Pin<Box<dyn Future<Output = Result<RegionId, ResolveRegionIdError>> + Send>>
+        + Send
+        + Sync,
+>;
 
 /// gRPC service that exposes [`PandaNode`] publish and subscribe over the
 /// network.
@@ -60,6 +87,7 @@ pub struct PandaService {
     subscriptions: Arc<RwLock<HashMap<Topic, broadcast::Sender<IncomingOperation>>>>,
     idempotency: IdempotencyStore,
     instance_notifier: InstanceNotifier,
+    resolve_region_id: ResolveRegionId,
 }
 
 impl PandaService {
@@ -68,6 +96,7 @@ impl PandaService {
         db: SqlitePool,
         idempotency_config: Option<IdempotencyConfig>,
         on_instance_seen: Arc<dyn Fn(String, String) + Send + Sync>,
+        resolve_region_id: ResolveRegionId,
     ) -> Result<Self, sqlx::Error> {
         let config = idempotency_config.unwrap_or_default();
         let idempotency =
@@ -77,6 +106,7 @@ impl PandaService {
             subscriptions: Arc::new(RwLock::new(HashMap::new())),
             idempotency,
             instance_notifier: InstanceNotifier::new(on_instance_seen),
+            resolve_region_id,
         })
     }
 
@@ -126,13 +156,14 @@ impl Panda for PandaService {
     ) -> Result<Response<PublishResponse>, Status> {
         let req = request.into_inner();
 
-        let region_bytes: [u8; 32] = req
-            .region_id
-            .try_into()
-            .map_err(|_| Status::invalid_argument("region_id must be exactly 32 bytes"))?;
+        let ids = AppInstanceIds {
+            app_id: req.app_id,
+            instance_id: req.instance_id,
+        };
 
-        let region_id = RegionId::from(region_bytes);
-        let app_id = req.app_id;
+        let region_id = (self.resolve_region_id)(ids.clone())
+            .await
+            .map_err(|e| resolve_region_error_to_status(e, &ids))?;
 
         let node_lock = self.node.lock().await;
         let node = node_lock
@@ -141,7 +172,7 @@ impl Panda for PandaService {
             .clone();
         drop(node_lock);
 
-        let region_app_topic = RegionAppTopic::new(region_id, app_id);
+        let region_app_topic = RegionAppTopic::new(region_id, ids.app_id);
 
         println!(
             "[publish] region={} app_id={} payload_bytes={}",
@@ -178,7 +209,7 @@ impl Panda for PandaService {
             .await?;
 
         self.instance_notifier
-            .notify(&region_app_topic.app_id, &req.instance_id)
+            .notify(&region_app_topic.app_id, &ids.instance_id)
             .await;
 
         Ok(Response::new(PublishResponse {}))
@@ -193,13 +224,14 @@ impl Panda for PandaService {
     ) -> Result<Response<Self::SubscribeStream>, Status> {
         let req = request.into_inner();
 
-        let region_bytes: [u8; 32] = req
-            .region_id
-            .try_into()
-            .map_err(|_| Status::invalid_argument("region_id must be exactly 32 bytes"))?;
+        let ids = AppInstanceIds {
+            app_id: req.app_id,
+            instance_id: req.instance_id,
+        };
 
-        let region_id = RegionId::from(region_bytes);
-        let app_id = req.app_id;
+        let region_id = (self.resolve_region_id)(ids.clone())
+            .await
+            .map_err(|e| resolve_region_error_to_status(e, &ids))?;
 
         let node_lock = self.node.lock().await;
         let node = node_lock
@@ -208,7 +240,7 @@ impl Panda for PandaService {
             .clone();
         drop(node_lock);
 
-        let region_app_topic = RegionAppTopic::new(region_id, app_id);
+        let region_app_topic = RegionAppTopic::new(region_id, ids.app_id);
 
         println!(
             "[subscribe] region={} app_id={}",
@@ -216,7 +248,7 @@ impl Panda for PandaService {
         );
 
         self.instance_notifier
-            .notify(&region_app_topic.app_id, &req.instance_id)
+            .notify(&region_app_topic.app_id, &ids.instance_id)
             .await;
 
         // Under a write lock, ensure a p2panda subscription exists for this
@@ -235,27 +267,6 @@ impl Panda for PandaService {
         });
 
         Ok(Response::new(Box::pin(stream)))
-    }
-
-    async fn list_regions(
-        &self,
-        _request: Request<ListRegionsRequest>,
-    ) -> Result<Response<ListRegionsResponse>, Status> {
-        let node_lock = self.node.lock().await;
-        let node = node_lock
-            .as_ref()
-            .ok_or_else(|| Status::unavailable("p2panda node is not yet started"))?
-            .clone();
-        drop(node_lock);
-
-        let region_ids = node
-            .get_regions()
-            .await
-            .into_iter()
-            .map(|id| id.to_bytes().to_vec())
-            .collect();
-
-        Ok(Response::new(ListRegionsResponse { region_ids }))
     }
 }
 
@@ -302,5 +313,17 @@ fn subscription_error_to_status(e: SubscriptionError) -> Status {
             eprintln!("subscription error: failed to create stream: {e}");
             Status::internal(e.to_string())
         }
+    }
+}
+
+fn resolve_region_error_to_status(e: ResolveRegionIdError, ids: &AppInstanceIds) -> Status {
+    match e {
+        ResolveRegionIdError::NotFound => Status::not_found(format!(
+            "No region bound to app '{}' instance '{}'. Use your lores-node installation to bind this app to a region, matching both the app name and instance ID.",
+            ids.app_id, ids.instance_id,
+        )),
+        ResolveRegionIdError::Internal => Status::internal(format!(
+            "Failed to resolve region for app instance. This may be an internal server issue with lores-node.",
+        )),
     }
 }

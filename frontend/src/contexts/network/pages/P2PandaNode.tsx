@@ -33,7 +33,7 @@ export default function P2PandaNode() {
   return (
     <Container>
       <Stack align="flex-start">
-        <Title order={1}>This P2Panda Node</Title>
+        <Title order={1}>This P2Panda node</Title>
         {/* <Box mb={4}>
         <Button onClick={restartNode()}>Restart Node</Button>
       </Box> */}

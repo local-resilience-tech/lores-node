@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package lores.panda.v1;
+package lores.panda.v2;
 
 service Panda {
   // Publish an operation to a region. Returns only after the operation has been
@@ -14,27 +14,21 @@ service Panda {
   // will not send faster than the client reads.
   rpc Subscribe(SubscribeRequest) returns (stream OperationEvent);
 
-  // List all regions this node knows about and the app namespaces active within
-  // each one.
-  rpc ListRegions(ListRegionsRequest) returns (ListRegionsResponse);
-
 }
 
 message PublishRequest {
   // String identifying this application consistantly across all nodes in the region.
   string app_id = 1;
-  // 32-byte region identifier.
-  bytes region_id = 2;
   // String identifying this specific app instance on this server. Use something that
   // can be rotated if you want to reset the app's state (e.g. a fresh database).
-  string instance_id = 3;
+  string instance_id = 2;
   // Encoded operation payload (e.g. CBOR).
-  bytes payload = 4;
+  bytes payload = 3;
   // Optional client-assigned idempotency key. If present, the server will
   // deduplicate within the retention window: a second Publish with the same
-  // (region_id, app_id, idempotency_key) returns success without
+  // (app_id, instance_id, idempotency_key) returns success without
   // re-inserting the operation.
-  bytes idempotency_key = 5;
+  bytes idempotency_key = 4;
 }
 
 // An empty response indicates the operation was successfully persisted.
@@ -43,11 +37,9 @@ message PublishResponse {}
 message SubscribeRequest {
   // String identifying this application consistantly across all nodes in the region.
   string app_id = 1;
-  // 32-byte region identifier.
-  bytes region_id = 2;
   // String identifying this specific app instance on this server. Use something that
   // can be rotated if you want to reset the app's state (e.g. a fresh database).
-  string instance_id = 3;
+  string instance_id = 2;
 }
 
 message OperationEvent {
@@ -61,12 +53,6 @@ message OperationEvent {
   uint64 timestamp = 4;
   // Encoded operation payload (e.g. CBOR).
   bytes payload = 5;
-}
-
-message ListRegionsRequest {}
-
-message ListRegionsResponse {
-  repeated bytes region_ids = 1;
 }
 
 
