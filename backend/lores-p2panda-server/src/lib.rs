@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::future::Future;
 use std::pin::Pin;
 use std::sync::Arc;
 
@@ -46,6 +47,33 @@ use proto::{
     panda_server::{Panda, PandaServer},
 };
 
+/// Error returned by the [`ResolveRegionId`] callback.
+#[derive(Debug)]
+pub enum ResolveRegionIdError {
+    /// No region is bound to the given app/instance.
+    NotFound,
+    /// The stored binding is corrupt or otherwise unusable.
+    Internal,
+}
+
+/// Identifies the app and instance making a gRPC request.
+#[derive(Debug, Clone)]
+pub struct AppInstanceIds {
+    pub app_id: String,
+    pub instance_id: String,
+}
+
+/// Async callback type for resolving a [`RegionId`] from an [`AppInstanceIds`].
+/// The owner (e.g. `lores-node-axum`) supplies this when constructing
+/// [`PandaService`].
+pub type ResolveRegionId = Arc<
+    dyn Fn(
+            AppInstanceIds,
+        ) -> Pin<Box<dyn Future<Output = Result<RegionId, ResolveRegionIdError>> + Send>>
+        + Send
+        + Sync,
+>;
+
 /// gRPC service that exposes [`PandaNode`] publish and subscribe over the
 /// network.
 ///
@@ -60,6 +88,7 @@ pub struct PandaService {
     subscriptions: Arc<RwLock<HashMap<Topic, broadcast::Sender<IncomingOperation>>>>,
     idempotency: IdempotencyStore,
     instance_notifier: InstanceNotifier,
+    resolve_region_id: ResolveRegionId,
 }
 
 impl PandaService {
@@ -68,6 +97,7 @@ impl PandaService {
         db: SqlitePool,
         idempotency_config: Option<IdempotencyConfig>,
         on_instance_seen: Arc<dyn Fn(String, String) + Send + Sync>,
+        resolve_region_id: ResolveRegionId,
     ) -> Result<Self, sqlx::Error> {
         let config = idempotency_config.unwrap_or_default();
         let idempotency =
@@ -77,6 +107,7 @@ impl PandaService {
             subscriptions: Arc::new(RwLock::new(HashMap::new())),
             idempotency,
             instance_notifier: InstanceNotifier::new(on_instance_seen),
+            resolve_region_id,
         })
     }
 
@@ -301,6 +332,15 @@ fn subscription_error_to_status(e: SubscriptionError) -> Status {
         SubscriptionError::CreateStream(e) => {
             eprintln!("subscription error: failed to create stream: {e}");
             Status::internal(e.to_string())
+        }
+    }
+}
+
+fn resolve_region_error_to_status(e: ResolveRegionIdError) -> Status {
+    match e {
+        ResolveRegionIdError::NotFound => Status::not_found("no region bound to this app instance"),
+        ResolveRegionIdError::Internal => {
+            Status::internal("failed to resolve region for app instance")
         }
     }
 }

@@ -6,6 +6,7 @@ use axum::{
 use axum_login::AuthManagerLayerBuilder;
 use sqlx::SqlitePool;
 use std::env;
+use std::sync::Arc;
 use time::Duration;
 use tokio::sync::mpsc;
 use tonic::transport::Server as GrpcServer;
@@ -123,14 +124,15 @@ async fn main() {
         .expect("valid gRPC bind address");
     let panda_service = {
         let on_instance_seen =
-            local_apps::app_instances::make_instance_seen_callback(
-                node_data_pool.clone(),
-            );
+            local_apps::app_instances::make_instance_seen_callback(node_data_pool.clone());
+        let resolve_region_id =
+            local_apps::region_resolver::make_region_resolver(node_data_pool.clone());
         lores_p2panda_server::PandaService::new(
             panda_container.node_arc(),
             node_data_pool.clone(),
             None,
             on_instance_seen,
+            resolve_region_id,
         )
         .await
         .expect("Failed to initialise PandaService")
