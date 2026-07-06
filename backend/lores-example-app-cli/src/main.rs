@@ -27,9 +27,6 @@ enum Command {
         message: String,
     },
 
-    /// List the regions and app namespaces the node is participating in
-    ListRegions,
-
     /// Enter interactive live mode: publish messages line by line and print incoming messages.
     /// Press Ctrl+C to exit.
     Live,
@@ -66,20 +63,6 @@ async fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
                 .await?;
 
             println!("published");
-        }
-        Command::ListRegions => {
-            let mut client = connect(&server)?;
-
-            let response = client.list_regions().await?;
-
-            let ids = response.into_inner().region_ids;
-            if ids.is_empty() {
-                println!("no registered regions");
-            } else {
-                for id in ids {
-                    println!("{}", hex::encode(&id));
-                }
-            }
         }
         Command::Live => {
             // Two separate connections: one for subscribe, one for publish.

@@ -41,11 +41,7 @@ pub mod proto {
     tonic::include_proto!("lores.panda.v1");
 }
 
-use proto::{
-    ListRegionsRequest, ListRegionsResponse, OperationEvent, PublishRequest, PublishResponse,
-    SubscribeRequest,
-    panda_server::{Panda, PandaServer},
-};
+use proto::{OperationEvent, PublishRequest, PublishResponse, SubscribeRequest, panda_server::{Panda, PandaServer}};
 
 /// Error returned by the [`ResolveRegionId`] callback.
 #[derive(Debug)]
@@ -268,27 +264,6 @@ impl Panda for PandaService {
         });
 
         Ok(Response::new(Box::pin(stream)))
-    }
-
-    async fn list_regions(
-        &self,
-        _request: Request<ListRegionsRequest>,
-    ) -> Result<Response<ListRegionsResponse>, Status> {
-        let node_lock = self.node.lock().await;
-        let node = node_lock
-            .as_ref()
-            .ok_or_else(|| Status::unavailable("p2panda node is not yet started"))?
-            .clone();
-        drop(node_lock);
-
-        let region_ids = node
-            .get_regions()
-            .await
-            .into_iter()
-            .map(|id| id.to_bytes().to_vec())
-            .collect();
-
-        Ok(Response::new(ListRegionsResponse { region_ids }))
     }
 }
 

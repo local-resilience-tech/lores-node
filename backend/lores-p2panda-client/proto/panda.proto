@@ -14,10 +14,6 @@ service Panda {
   // will not send faster than the client reads.
   rpc Subscribe(SubscribeRequest) returns (stream OperationEvent);
 
-  // List all regions this node knows about and the app namespaces active within
-  // each one.
-  rpc ListRegions(ListRegionsRequest) returns (ListRegionsResponse);
-
 }
 
 message PublishRequest {
@@ -57,12 +53,6 @@ message OperationEvent {
   uint64 timestamp = 4;
   // Encoded operation payload (e.g. CBOR).
   bytes payload = 5;
-}
-
-message ListRegionsRequest {}
-
-message ListRegionsResponse {
-  repeated bytes region_ids = 1;
 }
 
 

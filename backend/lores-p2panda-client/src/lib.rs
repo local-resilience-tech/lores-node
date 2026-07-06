@@ -4,10 +4,7 @@ pub mod proto {
     tonic::include_proto!("lores.panda.v1");
 }
 
-use proto::{
-    ListRegionsRequest, ListRegionsResponse, OperationEvent, PublishRequest, PublishResponse,
-    SubscribeRequest, panda_client::PandaClient as TonicPandaClient,
-};
+use proto::{OperationEvent, PublishRequest, PublishResponse, SubscribeRequest, panda_client::PandaClient as TonicPandaClient};
 use tonic::{Response, Status, Streaming};
 
 /// Client for the lores-p2panda-server gRPC API.
@@ -84,10 +81,5 @@ impl PandaClient {
             instance_id: instance_id.into(),
         };
         self.inner.subscribe(request).await
-    }
-
-    /// List all regions the remote node knows about.
-    pub async fn list_regions(&mut self) -> Result<Response<ListRegionsResponse>, Status> {
-        self.inner.list_regions(ListRegionsRequest {}).await
     }
 }
