@@ -69,9 +69,7 @@ async fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
             let mut subscribe_client = connect(&server)?;
             let mut publish_client = connect(&server)?;
 
-            let stream_response = subscribe_client
-                .subscribe(APP_ID, INSTANCE_ID)
-                .await?;
+            let stream_response = subscribe_client.subscribe(APP_ID, INSTANCE_ID).await?;
             let mut stream = stream_response.into_inner();
 
             // Spawn a task that prints every incoming operation.

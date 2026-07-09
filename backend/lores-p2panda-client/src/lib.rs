@@ -8,7 +8,39 @@ use proto::{
     OperationEvent, PublishRequest, PublishResponse, SubscribeRequest,
     panda_client::PandaClient as TonicPandaClient,
 };
-use tonic::{Response, Status, Streaming};
+use tonic::{Code, Response, Status, Streaming};
+
+/// Errors returned by [`PandaClient`] methods.
+#[derive(Debug)]
+pub enum PandaError {
+    /// No region has been bound to the given app/instance on the server.
+    /// Use your lores-node installation to bind the app to a region.
+    /// The inner string is the human-readable message from the server.
+    RegionNotBound(String),
+    /// Any other gRPC-level error.
+    Rpc(Status),
+}
+
+impl std::fmt::Display for PandaError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            PandaError::RegionNotBound(msg) => write!(f, "{msg}"),
+            PandaError::Rpc(s) => write!(f, "RPC error: {s}"),
+        }
+    }
+}
+
+impl std::error::Error for PandaError {}
+
+impl From<Status> for PandaError {
+    fn from(s: Status) -> Self {
+        if s.code() == Code::NotFound {
+            PandaError::RegionNotBound(s.message().to_string())
+        } else {
+            PandaError::Rpc(s)
+        }
+    }
+}
 
 /// Client for the lores-p2panda-server gRPC API.
 pub struct PandaClient {
@@ -60,14 +92,14 @@ impl PandaClient {
         instance_id: impl Into<String>,
         payload: impl Into<Vec<u8>>,
         idempotency_key: Option<Vec<u8>>,
-    ) -> Result<Response<PublishResponse>, Status> {
+    ) -> Result<Response<PublishResponse>, PandaError> {
         let request = PublishRequest {
             app_id: app_id.into(),
             instance_id: instance_id.into(),
             payload: payload.into(),
             idempotency_key: idempotency_key.unwrap_or_default(),
         };
-        self.inner.publish(request).await
+        self.inner.publish(request).await.map_err(PandaError::from)
     }
 
     /// Subscribe to a region+namespace topic and receive a stream of
@@ -78,11 +110,14 @@ impl PandaClient {
         &mut self,
         app_id: impl Into<String>,
         instance_id: impl Into<String>,
-    ) -> Result<Response<Streaming<OperationEvent>>, Status> {
+    ) -> Result<Response<Streaming<OperationEvent>>, PandaError> {
         let request = SubscribeRequest {
             app_id: app_id.into(),
             instance_id: instance_id.into(),
         };
-        self.inner.subscribe(request).await
+        self.inner
+            .subscribe(request)
+            .await
+            .map_err(PandaError::from)
     }
 }
