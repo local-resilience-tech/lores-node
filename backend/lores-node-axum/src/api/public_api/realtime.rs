@@ -1,19 +1,19 @@
 use axum::{
+    Extension,
     extract::{
-        ws::{Message, WebSocket},
         WebSocketUpgrade,
+        ws::{Message, WebSocket},
     },
     response::Response,
-    Extension,
 };
 use futures_util::{
-    stream::{SplitSink, SplitStream},
     SinkExt, StreamExt,
+    stream::{SplitSink, SplitStream},
 };
 use std::sync::Arc;
 use tokio::sync::{
-    broadcast::{self, Receiver, Sender},
     Mutex,
+    broadcast::{self, Receiver, Sender},
 };
 
 use super::client_events::ClientEvent;
@@ -39,8 +39,8 @@ impl RealtimeState {
     pub async fn broadcast_app_event(&self, event: ClientEvent) {
         match self.broadcast_tx.lock().await.send(event.clone()) {
             Ok(_) => {}
-            Err(_) => {
-                eprintln!("Failed to send event: {:?}", event);
+            Err(e) => {
+                eprintln!("Failed to send event: {:?}, error: {:?}", event, e);
             }
         }
     }
