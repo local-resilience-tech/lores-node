@@ -106,6 +106,9 @@ export type ClientEvent =
       RegionUpdated: Region;
     }
   | {
+      RegionForgotten: string;
+    }
+  | {
       LocalAppCreated: LocalApp;
     }
   | {
@@ -134,6 +137,10 @@ export interface DockerService {
 export interface DockerStackWithServices {
   name: string;
   services: DockerService[];
+}
+
+export interface ForgetRegionData {
+  region_id: string;
 }
 
 export interface JoinRegionRequestData {
@@ -499,7 +506,7 @@ export class HttpClient<SecurityDataType = unknown> {
 
 /**
  * @title lores-node
- * @version 0.20.0
+ * @version 0.20.2
  * @license
  */
 export class Api<
@@ -793,6 +800,22 @@ export class Api<
       this.request<any, string>({
         path: `/node_steward_api/my_regions/create`,
         method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @name ForgetRegion
+     * @request DELETE:/node_steward_api/my_regions/forget
+     */
+    forgetRegion: (data: ForgetRegionData, params: RequestParams = {}) =>
+      this.request<any, string>({
+        path: `/node_steward_api/my_regions/forget`,
+        method: "DELETE",
         body: data,
         type: ContentType.Json,
         format: "json",
