@@ -16,15 +16,14 @@ fn db_url(name: &str, version: Option<u32>) -> String {
     format!("sqlite:{}/{}.sqlite", *DATA_DIR, file_basename)
 }
 
+const OPERATIONS_DATABASE_VERSION: u32 = 1;
+
 fn database_url() -> String {
-    db_url("projections", None)
+    db_url("projections", Some(OPERATIONS_DATABASE_VERSION))
 }
 fn node_data_database_url() -> String {
     db_url("node_data", None)
 }
-
-const OPERATIONS_DATABASE_VERSION: u32 = 1;
-
 pub fn operation_database_url() -> String {
     db_url("operations", Some(OPERATIONS_DATABASE_VERSION))
 }
