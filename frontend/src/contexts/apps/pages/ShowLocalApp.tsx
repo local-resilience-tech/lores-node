@@ -20,10 +20,13 @@ import { regionDisplayName } from "../../regions"
 import { IconEdit } from "@tabler/icons-react"
 
 export default function ShowLocalApp() {
-  const { appName, instanceId } = useParams<{
+  const { appName, instanceIdString } = useParams<{
     appName: string
-    instanceId: string
+    instanceIdString: string
   }>()
+  const instanceId: string | null =
+    instanceIdString === "-" ? null : instanceIdString || null
+
   const app = useAppSelector((state) =>
     (state.localApps || []).find(
       (app) => app.name === appName && app.instance_id === instanceId,
