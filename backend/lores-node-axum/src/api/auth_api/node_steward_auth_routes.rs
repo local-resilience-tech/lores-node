@@ -1,4 +1,5 @@
 use axum::{http::StatusCode, response::IntoResponse, Extension, Json};
+use tracing::warn;
 use password_auth::generate_hash;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
@@ -60,7 +61,7 @@ async fn get_current_user(
     let auth_user = match auth_session.user {
         Some(user) => user,
         None => {
-            eprintln!("Failed to get current user");
+            warn!("Failed to get current user");
             return (StatusCode::OK, Json(Option::<NodeStewardUser>::None)).into_response();
         }
     };
@@ -77,7 +78,7 @@ async fn get_current_user(
             return (StatusCode::OK, Json(Option::<NodeStewardUser>::None)).into_response();
         }
         Err(e) => {
-            eprintln!("Error finding node steward: {:?}", e);
+            warn!("Error finding node steward: {:?}", e);
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(GetCurrentNodeStewardError::InternalServerError),
@@ -128,7 +129,7 @@ async fn node_steward_login(
         }
 
         Err(e) => {
-            eprintln!("Authentication failed: {:?}", e);
+            warn!("Authentication failed: {:?}", e);
             let status = match e {
                 axum_login::Error::Backend(AuthError::InvalidCredentials) => (
                     StatusCode::UNAUTHORIZED,
@@ -210,7 +211,7 @@ async fn node_steward_set_password(
                 .into_response();
         }
         Err(e) => {
-            eprintln!("Failed to find node steward: {:?}", e);
+            warn!("Failed to find node steward: {:?}", e);
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(NodeStewardSetPasswordError::InternalServerError),
@@ -255,7 +256,7 @@ async fn node_steward_set_password(
     match result {
         Ok(_) => (StatusCode::OK, ()).into_response(),
         Err(e) => {
-            eprintln!("Failed to update node steward password: {:?}", e);
+            warn!("Failed to update node steward password: {:?}", e);
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(NodeStewardSetPasswordError::InternalServerError),

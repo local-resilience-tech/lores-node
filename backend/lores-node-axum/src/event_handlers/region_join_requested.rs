@@ -1,4 +1,5 @@
 use sqlx::SqlitePool;
+use tracing::warn;
 
 use crate::{
     api::public_api::client_events::ClientEvent,
@@ -60,7 +61,7 @@ impl RegionJoinRequestedHandler {
         let region = match regions_read_repo.find(pool, &region_id.to_hex()).await? {
             Some(region) => region,
             None => {
-                eprintln!("Region not found after upsert: {}", region_id);
+                warn!("Region not found after upsert: {}", region_id);
                 return Err(sqlx::Error::RowNotFound);
             }
         };

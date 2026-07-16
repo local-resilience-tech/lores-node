@@ -1,4 +1,5 @@
 use sqlx::SqlitePool;
+use tracing::warn;
 
 use crate::panda_comms::lores_events::LoResEventHeader;
 
@@ -29,7 +30,7 @@ pub async fn region_already_projected(
             Err(())
         }
         Err(e) => {
-            eprintln!("Database error while checking region projection: {}", e);
+            warn!("Database error while checking region projection: {}", e);
             Err(())
         }
     }

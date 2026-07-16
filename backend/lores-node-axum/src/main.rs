@@ -66,7 +66,7 @@ async fn main() {
         // when running the app to set log levels.
         .with_env_filter(
             EnvFilter::try_from_default_env()
-                .or_else(|_| EnvFilter::try_new("axum_tracing_example=error,tower_http=warn"))
+                .or_else(|_| EnvFilter::try_new("info"))
                 .unwrap(),
         )
         .init();

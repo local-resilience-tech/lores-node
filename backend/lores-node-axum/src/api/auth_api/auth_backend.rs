@@ -1,4 +1,5 @@
 use std::collections::HashSet;
+use tracing::warn;
 
 use async_trait::async_trait;
 use axum_login::{AuthUser, AuthnBackend, AuthzBackend, UserId};
@@ -33,9 +34,9 @@ impl AuthUser for User {
 
     fn session_auth_hash(&self) -> &[u8] {
         self.password_hash.as_bytes() // We use the password hash as the auth
-                                      // hash--what this means
-                                      // is when the user changes their password the
-                                      // auth session becomes invalid.
+        // hash--what this means
+        // is when the user changes their password the
+        // auth session becomes invalid.
     }
 }
 
@@ -158,11 +159,11 @@ impl AppAuthBackend {
         let steward = match repo.find(&self.node_data_pool, &id).await {
             Ok(Some(steward)) => steward,
             Ok(None) => {
-                eprintln!("AUTH FAILED: Node steward not found");
+                warn!("AUTH FAILED: Node steward not found");
                 return Err(AuthError::UserNotFound);
             }
             Err(e) => {
-                eprintln!("AUTH FAILED: Failed to find node steward: {:?}", e);
+                warn!("AUTH FAILED: Failed to find node steward: {:?}", e);
                 return Err(AuthError::ServerError);
             }
         };
@@ -175,7 +176,7 @@ impl AppAuthBackend {
 
         // Check if disabled
         if !steward.enabled {
-            eprintln!("AUTH FAILED: The specified node steward account is disabled");
+            warn!("AUTH FAILED: The specified node steward account is disabled");
             return Err(AuthError::AccountDisabled);
         }
 
@@ -199,17 +200,17 @@ impl AppAuthBackend {
         let steward = match repo.find(&self.node_data_pool, &id).await {
             Ok(Some(steward)) => steward,
             Ok(None) => {
-                eprintln!("RETRIEVE USER FAILED: Node steward not found");
+                warn!("RETRIEVE USER FAILED: Node steward not found");
                 return Err(AuthError::UserNotFound);
             }
             Err(e) => {
-                eprintln!("RETRIEVE USER FAILED: Failed to find node steward: {:?}", e);
+                warn!("RETRIEVE USER FAILED: Failed to find node steward: {:?}", e);
                 return Err(AuthError::ServerError);
             }
         };
 
         if !steward.enabled {
-            eprintln!("RETRIEVE USER FAILED: The specified node steward account is disabled");
+            warn!("RETRIEVE USER FAILED: The specified node steward account is disabled");
             return Err(AuthError::AccountDisabled);
         }
 
@@ -238,12 +239,12 @@ impl AppAuthBackend {
         let verification_result = task::spawn_blocking(move || verify_password(&password, &hashed))
             .await
             .map_err(|_| {
-                eprintln!("Spawn blocking error when trying to verify password");
+                warn!("Spawn blocking error when trying to verify password");
                 AuthError::ServerError
             })?;
 
         verification_result.map_err(|_| {
-            eprintln!("AUTH FAILED: Failed to verify password");
+            warn!("AUTH FAILED: Failed to verify password");
             AuthError::InvalidCredentials
         })?;
 

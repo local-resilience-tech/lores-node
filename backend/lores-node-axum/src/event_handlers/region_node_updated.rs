@@ -1,4 +1,5 @@
 use sqlx::{Sqlite, SqlitePool};
+use tracing::warn;
 
 use crate::{
     data::projections_write::region_nodes::RegionNodesWriteRepo,
@@ -47,7 +48,7 @@ impl EventHandler for RegionNodeUpdatedHandler {
         let region_id: RegionId = match header.region_id.clone() {
             Some(id) => id,
             None => {
-                eprintln!("Region ID is missing");
+                warn!("Region ID is missing");
                 return HandlerResult::default();
             }
         };

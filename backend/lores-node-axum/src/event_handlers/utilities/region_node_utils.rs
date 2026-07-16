@@ -1,4 +1,5 @@
 use sqlx::SqlitePool;
+use tracing::warn;
 
 use crate::{
     api::public_api::client_events::ClientEvent,
@@ -20,7 +21,7 @@ pub async fn read_node_updated_event(
             vec![]
         }
         Err(e) => {
-            eprintln!("Error reading node details: {}", e);
+            warn!("Error reading node details: {}", e);
             vec![]
         }
     }

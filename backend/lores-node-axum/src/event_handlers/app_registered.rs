@@ -1,4 +1,5 @@
 use sqlx::{Sqlite, SqlitePool};
+use tracing::warn;
 
 use crate::{
     api::public_api::client_events::ClientEvent,
@@ -70,7 +71,7 @@ impl AppRegisteredHandler {
                 vec![]
             }
             Err(e) => {
-                eprintln!("Error reading node details: {}", e);
+                warn!("Error reading node details: {}", e);
                 vec![]
             }
         }

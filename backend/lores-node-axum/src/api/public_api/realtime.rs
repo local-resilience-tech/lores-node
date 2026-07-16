@@ -16,6 +16,8 @@ use tokio::sync::{
     broadcast::{self, Receiver, Sender},
 };
 
+use tracing::warn;
+
 use super::client_events::ClientEvent;
 
 #[derive(Debug, Clone)]
@@ -40,7 +42,7 @@ impl RealtimeState {
         match self.broadcast_tx.lock().await.send(event.clone()) {
             Ok(_) => {}
             Err(e) => {
-                eprintln!("Failed to send event: {:?}, error: {:?}", event, e);
+                warn!("Failed to send event: {:?}, error: {:?}", event, e);
             }
         }
     }

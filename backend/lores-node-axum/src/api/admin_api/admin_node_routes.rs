@@ -1,11 +1,12 @@
-use axum::{http::StatusCode, response::IntoResponse, Extension, Json};
+use axum::{Extension, Json, http::StatusCode, response::IntoResponse};
+use tracing::warn;
 
 use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::{
+    DatabaseState,
     config::config_state::LoresNodeConfigState,
     data::{entities::RegionNode, projections_read::region_nodes::RegionNodesReadRepo},
-    DatabaseState,
 };
 
 pub fn router() -> OpenApiRouter {
@@ -36,13 +37,13 @@ pub async fn show_this_node(
             match node {
                 Ok(node) => (StatusCode::OK, Json(node)).into_response(),
                 Err(err) => {
-                    eprintln!("Error fetching node: {}", err);
+                    warn!("Error fetching node: {}", err);
                     (StatusCode::INTERNAL_SERVER_ERROR, "Internal Server Error").into_response()
                 }
             }
         }
         None => {
-            eprintln!("No public key hex found in config");
+            warn!("No public key hex found in config");
             return (StatusCode::INTERNAL_SERVER_ERROR, "Public key not found").into_response();
         }
     }

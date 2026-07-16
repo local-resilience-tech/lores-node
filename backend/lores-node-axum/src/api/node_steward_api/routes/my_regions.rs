@@ -1,4 +1,5 @@
 use axum::{http::StatusCode, response::IntoResponse, Extension, Json};
+use tracing::warn;
 use serde::Deserialize;
 use sqlx::SqlitePool;
 use utoipa::ToSchema;
@@ -152,7 +153,7 @@ async fn join_region(
     let region_id = match RegionId::from_hex(data.region_id.as_str()) {
         Ok(id) => id,
         Err(e) => {
-            eprintln!("Invalid region ID: {:?}", e);
+            warn!("Invalid region ID: {:?}", e);
             return (
                 StatusCode::BAD_REQUEST,
                 Json("Invalid region ID".to_string()),
@@ -232,7 +233,7 @@ async fn approve_join_request(
     let region_id = match RegionId::from_hex(data.region_id.as_str()) {
         Ok(id) => id,
         Err(e) => {
-            eprintln!("Invalid region ID: {:?}", e);
+            warn!("Invalid region ID: {:?}", e);
             return (
                 StatusCode::BAD_REQUEST,
                 Json("Invalid region ID".to_string()),
@@ -244,7 +245,7 @@ async fn approve_join_request(
     // Check that I am the controller node for this region
     if let Err(e) = ensure_controller_node(&db.projections_pool, &region_id, &panda_container).await
     {
-        eprintln!("Controller node check failed: {:?}", e);
+        warn!("Controller node check failed: {:?}", e);
         return (
             StatusCode::BAD_REQUEST,
             Json(format!("Controller node check failed: {}", e)),
@@ -331,7 +332,7 @@ async fn update_map(
     let region_id = match RegionId::from_hex(data.region_id.as_str()) {
         Ok(id) => id,
         Err(e) => {
-            eprintln!("Invalid region ID: {:?}", e);
+            warn!("Invalid region ID: {:?}", e);
             return (
                 StatusCode::BAD_REQUEST,
                 Json("Invalid region ID".to_string()),
@@ -343,7 +344,7 @@ async fn update_map(
     // Ensure I am the controller node for this region
     if let Err(e) = ensure_controller_node(&db.projections_pool, &region_id, &panda_container).await
     {
-        eprintln!("Controller node check failed: {:?}", e);
+        warn!("Controller node check failed: {:?}", e);
         return (
             StatusCode::BAD_REQUEST,
             Json(format!("Controller node check failed: {}", e)),

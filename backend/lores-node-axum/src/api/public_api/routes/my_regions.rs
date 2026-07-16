@@ -1,4 +1,5 @@
 use axum::{http::StatusCode, response::IntoResponse, Extension, Json};
+use tracing::warn;
 
 use utoipa_axum::{router::OpenApiRouter, routes};
 
@@ -76,7 +77,7 @@ async fn list_regions(
         let region = match db_region {
             Some(region) => region.clone(),
             None => {
-                eprintln!("Region {} not found in database", id);
+                warn!("Region {} not found in database", id);
                 Region::unnamed(id, node_id)
             }
         };

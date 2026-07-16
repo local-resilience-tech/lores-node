@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use tracing::warn;
 
 use crate::{
     data::entities::{LocalApp, LocalAppSource, NodeAppUrl},
@@ -12,7 +13,7 @@ use crate::{
 
 pub fn find_deployed_local_apps() -> Vec<LocalApp> {
     let deployed_stacks = docker_stack_ls().unwrap_or_else(|e| {
-        eprintln!("Error listing docker stacks: {:?}", e);
+        warn!("Error listing docker stacks: {:?}", e);
         vec![]
     });
 
@@ -42,7 +43,7 @@ fn build_app_details(stack: &DockerStack) -> Result<LocalApp, anyhow::Error> {
 
 fn get_app_service_labels(stack_name: &str) -> Result<CoopCloudServiceLabels, anyhow::Error> {
     let services = docker_stack_services(stack_name).map_err(|e| {
-        eprintln!("Error listing services for stack {}: {:?}", stack_name, e);
+        warn!("Error listing services for stack {}: {:?}", stack_name, e);
         e
     })?;
     let service = get_app_service_from_list(&services).ok_or_else(|| {
@@ -57,7 +58,7 @@ fn get_app_service_labels(stack_name: &str) -> Result<CoopCloudServiceLabels, an
 
 fn get_service_lablels(service_id: &str) -> Result<CoopCloudServiceLabels, anyhow::Error> {
     let properties = docker_service_inspect(service_id).map_err(|e| {
-        eprintln!("Error inspecting service {}: {:?}", service_id, e);
+        warn!("Error inspecting service {}: {:?}", service_id, e);
         e
     })?;
 

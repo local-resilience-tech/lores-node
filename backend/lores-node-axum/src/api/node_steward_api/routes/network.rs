@@ -1,4 +1,5 @@
 use axum::{http::StatusCode, response::IntoResponse, Extension, Json};
+use tracing::warn;
 use serde::Deserialize;
 use serde::Serialize;
 use utoipa::ToSchema;
@@ -96,7 +97,7 @@ async fn replay_projections(
     Extension(panda_container): Extension<PandaContainer>,
 ) -> impl IntoResponse {
     if let Err(e) = truncate_all(&db.projections_pool).await {
-        eprintln!("Failed to truncate projection tables: {e}");
+        warn!("Failed to truncate projection tables: {e}");
         return (
             StatusCode::INTERNAL_SERVER_ERROR,
             format!("Failed to truncate projection tables: {e}"),
@@ -111,7 +112,7 @@ async fn replay_projections(
         )
             .into_response(),
         Err(e) => {
-            eprintln!("Failed to start replay: {e}");
+            warn!("Failed to start replay: {e}");
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 format!("Failed to start replay: {e}"),

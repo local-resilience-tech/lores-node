@@ -1,4 +1,5 @@
 use sqlx::SqlitePool;
+use tracing::warn;
 use std::sync::Arc;
 
 use crate::data::node_data::app_instances_repo::AppInstancesRepo;
@@ -13,7 +14,7 @@ pub fn make_instance_seen_callback(pool: SqlitePool) -> Arc<dyn Fn(String, Strin
                 .record_app_instance(&pool, &app_id, &instance_id)
                 .await
             {
-                eprintln!("[app_instances] failed to record instance: {}", e);
+                warn!("[app_instances] failed to record instance: {}", e);
             }
         });
     })

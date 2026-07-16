@@ -1,4 +1,5 @@
 use std::sync::Arc;
+use tracing::warn;
 use thiserror::Error;
 use tokio::sync::{mpsc, Mutex};
 
@@ -195,7 +196,7 @@ impl PandaContainer {
                             }
                         }
                         Err(e) => {
-                            eprintln!("Failed to decode LoResEvent during replay: {}", e);
+                            warn!("Failed to decode LoResEvent during replay: {}", e);
                         }
                     }
                 }
@@ -244,7 +245,7 @@ impl PandaContainer {
                         }
                     }
                     Err(e) => {
-                        eprintln!("Failed to decode LoResEvent from operation: {}", e);
+                        warn!("Failed to decode LoResEvent from operation: {}", e);
                     }
                 }
             }

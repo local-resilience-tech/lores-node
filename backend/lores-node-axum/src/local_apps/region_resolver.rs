@@ -1,4 +1,5 @@
 use lores_p2panda_server::{AppInstanceIds, ResolveRegionId, ResolveRegionIdError};
+use tracing::warn;
 use sqlx::SqlitePool;
 use std::sync::Arc;
 
@@ -16,7 +17,7 @@ pub fn make_region_resolver(pool: SqlitePool) -> ResolveRegionId {
                 .find(&pool, &ids.app_id, &Some(ids.instance_id.clone()))
                 .await
                 .map_err(|e| {
-                    eprintln!("[region_resolver] database error: {e}");
+                    warn!("[region_resolver] database error: {e}");
                     ResolveRegionIdError::Internal
                 })?;
 
@@ -26,7 +27,7 @@ pub fn make_region_resolver(pool: SqlitePool) -> ResolveRegionId {
 
             lores_p2panda::RegionId::from_hex(&region_id_hex)
                 .map_err(|_| {
-                    eprintln!(
+                    warn!(
                         "[region_resolver] invalid region_id hex in database for app '{}' instance '{}': '{}'",
                         ids.app_id, ids.instance_id, region_id_hex
                     );

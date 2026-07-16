@@ -1,4 +1,5 @@
 use anyhow::Result;
+use tracing::warn;
 use p2panda_core::cbor::{decode_cbor, encode_cbor, DecodeError, EncodeError};
 
 use super::lores_events::{
@@ -32,7 +33,7 @@ fn decode_lores_wire_event(encoded_payload: &[u8]) -> Result<LoResWirePayload, D
         }
         Err(e) => {
             // Handle the error
-            eprintln!("Failed to decode payload: {}", e);
+            warn!("Failed to decode payload: {}", e);
             return Err(e);
         }
     }

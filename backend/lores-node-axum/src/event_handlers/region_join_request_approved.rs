@@ -1,4 +1,5 @@
 use sqlx::SqlitePool;
+use tracing::warn;
 
 use crate::{
     api::public_api::client_events::ClientEvent,
@@ -56,7 +57,7 @@ impl RegionJoinRequestApprovedHandler {
         {
             Some(region_node) => region_node,
             None => {
-                eprintln!("Region node not found after upsert: {}", region_id);
+                warn!("Region node not found after upsert: {}", region_id);
                 return Err(sqlx::Error::RowNotFound);
             }
         };
@@ -97,7 +98,7 @@ impl EventHandler for RegionJoinRequestApprovedHandler {
                 return Err(());
             }
             Err(e) => {
-                eprintln!("Database error during validation: {}", e);
+                warn!("Database error during validation: {}", e);
                 return Err(());
             }
         };

@@ -1,4 +1,5 @@
 use confy::load_path;
+use tracing::warn;
 use serde::{Deserialize, Serialize};
 
 use std::{env, path::Path};
@@ -36,14 +37,14 @@ impl ::std::default::Default for LoresNodeConfig {
 impl LoresNodeConfig {
     pub fn load() -> Self {
         load_path(Path::new(&*CONFIG_PATH)).unwrap_or_else(|e| {
-            eprintln!("Failed to load config: {}", e);
+            warn!("Failed to load config: {}", e);
             LoresNodeConfig::default()
         })
     }
 
     pub fn save(&self) -> Result<(), anyhow::Error> {
         confy::store_path(Path::new(&*CONFIG_PATH), self).map_err(|e| {
-            eprintln!("Failed to save config: {}", e);
+            warn!("Failed to save config: {}", e);
             anyhow::anyhow!("Failed to save config: {}", e)
         })
     }

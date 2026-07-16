@@ -1,5 +1,6 @@
 use password_auth::generate_hash;
-use pwgen2::pwgen::{generate_password, PasswordConfig};
+use pwgen2::pwgen::{PasswordConfig, generate_password};
+use tracing::warn;
 
 use crate::config::config_state::LoresNodeConfigState;
 
@@ -37,7 +38,7 @@ impl AdminUserRepo {
             })
             .await
             .map_err(|e| {
-                eprintln!("Error storing admin password in config: {}", e);
+                warn!("Error storing admin password in config: {}", e);
                 GeneratePasswordError::ServerError
             })?;
 

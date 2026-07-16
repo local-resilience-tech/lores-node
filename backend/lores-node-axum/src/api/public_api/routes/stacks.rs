@@ -1,4 +1,5 @@
 use axum::{http::StatusCode, response::IntoResponse, Json};
+use tracing::warn;
 use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::docker::{docker_stacks_with_services, DockerStackWithServices};
@@ -17,7 +18,7 @@ async fn list_stacks() -> impl IntoResponse {
     match result {
         Ok(stacks) => (StatusCode::OK, Json(stacks)).into_response(),
         Err(e) => {
-            eprintln!("Error fetching Docker stacks: {}", e);
+            warn!("Error fetching Docker stacks: {}", e);
             return (StatusCode::INTERNAL_SERVER_ERROR, Json(())).into_response();
         }
     }

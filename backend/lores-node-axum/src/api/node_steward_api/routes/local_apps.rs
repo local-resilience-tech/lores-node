@@ -1,4 +1,5 @@
 use axum::{Extension, Json, http::StatusCode, response::IntoResponse};
+use tracing::warn;
 use serde::Deserialize;
 use utoipa::ToSchema;
 use utoipa_axum::{router::OpenApiRouter, routes};
@@ -181,7 +182,7 @@ async fn create_local_app(
     let created = match LocalAppsRepo::init().create(&db.node_data_pool, &app).await {
         Ok(app) => app,
         Err(sqlx::Error::Database(e)) => {
-            eprintln!("Database error creating local app: {e}");
+            warn!("Database error creating local app: {e}");
             if e.code().as_deref() == Some("2067") {
                 return bad_request("Name and instance ID must be unique").into_response();
             }
