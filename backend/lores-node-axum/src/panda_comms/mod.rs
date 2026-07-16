@@ -8,14 +8,14 @@ pub use config::ThisP2PandaNodeRepo;
 use lores_events::LoResEvent;
 pub use lores_p2panda::RegionAdminTopic;
 pub use lores_p2panda::RegionId;
-pub use panda_container::{build_public_key_from_hex, PandaContainer};
+pub use panda_container::{PandaContainer, build_public_key_from_hex};
 use sqlx::SqlitePool;
 use tokio::sync::mpsc;
 
 use crate::{
     api::public_api::realtime::RealtimeState,
     config::config_state::LoresNodeConfigState,
-    data::{projections_write::nodes::NodesWriteRepo, setup::OPERATION_DATABASE_URL},
+    data::{projections_write::nodes::NodesWriteRepo, setup::operation_database_url},
     event_handlers::handle_event,
 };
 
@@ -59,7 +59,7 @@ pub async fn start_panda(
     let bootstrap_node_ids = repo.get_bootstrap_node_ids(config_state).await;
     container.set_bootstrap_node_ids(bootstrap_node_ids).await;
 
-    if let Err(e) = container.start(OPERATION_DATABASE_URL.as_str()).await {
+    if let Err(e) = container.start(&operation_database_url()).await {
         info!("Failed to start P2PandaContainer on liftoff: {:?}", e);
     }
 
