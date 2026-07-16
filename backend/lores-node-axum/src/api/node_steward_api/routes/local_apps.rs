@@ -1,5 +1,5 @@
 use axum::{Extension, Json, http::StatusCode, response::IntoResponse};
-use tracing::warn;
+use tracing::{info, warn};
 use serde::Deserialize;
 use utoipa::ToSchema;
 use utoipa_axum::{router::OpenApiRouter, routes};
@@ -137,7 +137,7 @@ async fn register_app(
         name: payload.app.name.clone(),
         version: payload.app.version.clone(),
     });
-    println!("Prepared event payload: {:?}", event_payload);
+    info!("Prepared event payload: {:?}", event_payload);
 
     // Publish the operation
     if let Err(e) = panda_container

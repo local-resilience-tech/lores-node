@@ -1,5 +1,5 @@
 use sqlx::SqlitePool;
-use tracing::warn;
+use tracing::{info, warn};
 
 use crate::{
     api::public_api::client_events::ClientEvent,
@@ -73,7 +73,7 @@ impl RegionJoinRequestedHandler {
 
 impl EventHandler for RegionJoinRequestedHandler {
     async fn handle(&self, header: LoResEventHeader, pool: &SqlitePool) -> HandlerResult {
-        println!("Region join requested: {:?}", self.payload);
+        info!("Region join requested: {:?}", self.payload);
 
         let region_id: RegionId = header.region_id.clone().unwrap();
 

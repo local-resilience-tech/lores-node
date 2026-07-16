@@ -1,3 +1,4 @@
+use tracing::info;
 mod config;
 mod event_encoding;
 pub mod lores_events;
@@ -28,18 +29,18 @@ pub async fn start_panda(
 
     match config.network_name.clone() {
         Some(network_name) => {
-            println!("Using network name: {:?}", network_name);
+            info!("Using network name: {:?}", network_name);
             container.set_network_name(network_name.clone()).await;
         }
         None => {
-            println!("No network name set");
+            info!("No network name set");
         }
     }
 
     let private_key = match repo.get_or_create_private_key(config_state).await {
         Ok(key) => key,
         Err(e) => {
-            println!("Failed to get or create private key: {:?}", e);
+            info!("Failed to get or create private key: {:?}", e);
             return;
         }
     };
@@ -59,7 +60,7 @@ pub async fn start_panda(
     container.set_bootstrap_node_ids(bootstrap_node_ids).await;
 
     if let Err(e) = container.start(OPERATION_DATABASE_URL.as_str()).await {
-        println!("Failed to start P2PandaContainer on liftoff: {:?}", e);
+        info!("Failed to start P2PandaContainer on liftoff: {:?}", e);
     }
 
     match config.region_ids {
@@ -68,13 +69,13 @@ pub async fn start_panda(
                 match RegionId::from_hex(&id_string) {
                     Ok(region_id) => {
                         if let Err(e) = container.join_region(region_id.clone()).await {
-                            println!("Failed to join region {}: {:?}", region_id, e);
+                            info!("Failed to join region {}: {:?}", region_id, e);
                         } else {
-                            println!("Successfully joined region {}", region_id);
+                            info!("Successfully joined region {}", region_id);
                         }
                     }
                     Err(e) => {
-                        println!(
+                        info!(
                             "Invalid region id in config: {:?}, error: {:?}",
                             id_string, e
                         );
@@ -83,7 +84,7 @@ pub async fn start_panda(
             }
         }
         None => {
-            println!("No region ids set");
+            info!("No region ids set");
         }
     }
 }

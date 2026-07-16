@@ -1,5 +1,5 @@
 use std::collections::HashSet;
-use tracing::warn;
+use tracing::{info, warn};
 
 use async_trait::async_trait;
 use axum_login::{AuthUser, AuthnBackend, AuthzBackend, UserId};
@@ -131,7 +131,7 @@ impl AppAuthBackend {
         &self,
         creds: &AdminCredentials,
     ) -> Result<Option<User>, AuthError> {
-        println!("Authenticating admin user");
+        info!("Authenticating admin user");
 
         let hashed_password = self.expect_hashed_password().await?;
 
@@ -148,7 +148,7 @@ impl AppAuthBackend {
         &self,
         creds: &NodeStewardCredentials,
     ) -> Result<Option<User>, AuthError> {
-        println!("Authenticating admin user");
+        info!("Authenticating admin user");
 
         let repo = NodeStewardsRepo::init();
 

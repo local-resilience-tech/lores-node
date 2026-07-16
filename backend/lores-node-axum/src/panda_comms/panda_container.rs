@@ -1,5 +1,5 @@
 use std::sync::Arc;
-use tracing::warn;
+use tracing::{info, warn};
 use thiserror::Error;
 use tokio::sync::{mpsc, Mutex};
 
@@ -94,7 +94,7 @@ impl PandaContainer {
     }
 
     pub async fn start(&self, operations_database_url: &str) -> Result<(), PandaContainerError> {
-        println!("Starting client");
+        info!("Starting client");
 
         let params = self.get_params().await;
 
@@ -103,12 +103,12 @@ impl PandaContainer {
         let boostrap_node_ids: Vec<VerifyingKey> = params.bootstrap_node_ids;
 
         if private_key.is_none() {
-            println!("P2Panda: No private key found, not starting network");
+            info!("P2Panda: No private key found, not starting network");
             return Ok(());
         }
 
         if network_name.is_none() {
-            println!("P2Panda: No network name found, not starting network");
+            info!("P2Panda: No network name found, not starting network");
             return Ok(());
         }
 
@@ -147,7 +147,7 @@ impl PandaContainer {
             *node_lock = Some(panda_node);
         }
 
-        println!("P2Panda: Node started. Network name: {}", network_name);
+        info!("P2Panda: Node started. Network name: {}", network_name);
 
         Ok(())
     }

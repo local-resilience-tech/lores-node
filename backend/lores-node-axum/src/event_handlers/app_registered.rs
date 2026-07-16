@@ -1,5 +1,5 @@
 use sqlx::{Sqlite, SqlitePool};
-use tracing::warn;
+use tracing::{info, warn};
 
 use crate::{
     api::public_api::client_events::ClientEvent,
@@ -67,7 +67,7 @@ impl AppRegisteredHandler {
         match app_details {
             Ok(Some(details)) => vec![ClientEvent::RegionAppUpdated(details)],
             Ok(None) => {
-                println!("Node not found for announcement.");
+                info!("Node not found for announcement.");
                 vec![]
             }
             Err(e) => {

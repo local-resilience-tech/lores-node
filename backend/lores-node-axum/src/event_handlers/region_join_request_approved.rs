@@ -1,5 +1,5 @@
 use sqlx::SqlitePool;
-use tracing::warn;
+use tracing::{info, warn};
 
 use crate::{
     api::public_api::client_events::ClientEvent,
@@ -91,7 +91,7 @@ impl EventHandler for RegionJoinRequestApprovedHandler {
         let region = match repo.find(pool, &region_id.to_hex()).await {
             Ok(Some(region)) => region,
             Ok(None) => {
-                println!(
+                info!(
                     "Validation failed: region not found for ID {}",
                     region_id.to_hex()
                 );
@@ -106,14 +106,14 @@ impl EventHandler for RegionJoinRequestApprovedHandler {
         let creator_node_id = match region.creator_node_id.clone() {
             Some(id) => id,
             None => {
-                println!("Validation failed: region creator node ID is missing");
+                info!("Validation failed: region creator node ID is missing");
                 return Err(());
             }
         };
 
         // The author node id should be the region creator
         if header.author_node_id != creator_node_id {
-            println!(
+            info!(
                 "Validation failed: author node ID {:?} does not match region creator node ID {:?}",
                 header.author_node_id, creator_node_id
             );

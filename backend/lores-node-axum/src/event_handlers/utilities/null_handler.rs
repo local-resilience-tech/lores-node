@@ -1,3 +1,4 @@
+use tracing::info;
 use sqlx::SqlitePool;
 
 use crate::{
@@ -18,7 +19,7 @@ impl NullHandler {
 
 impl EventHandler for NullHandler {
     async fn handle(&self, _header: LoResEventHeader, _pool: &SqlitePool) -> HandlerResult {
-        println!("NullHandler invoked - no operation performed");
+        info!("NullHandler invoked - no operation performed");
         HandlerResult::default()
     }
 

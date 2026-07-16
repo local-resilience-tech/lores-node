@@ -11,6 +11,7 @@ use tokio::sync::mpsc;
 use tonic::transport::Server as GrpcServer;
 use tower_http::{cors::CorsLayer, trace::TraceLayer};
 use tower_sessions::{Expiry, SessionManagerLayer};
+use tracing::info;
 use tracing_subscriber::EnvFilter;
 use utoipa::OpenApi;
 use utoipa_axum::router::OpenApiRouter;
@@ -137,7 +138,7 @@ async fn main() {
         .expect("Failed to initialise PandaService")
     };
     tokio::spawn(async move {
-        println!("gRPC listening on {}", grpc_addr);
+        info!("gRPC listening on {}", grpc_addr);
         GrpcServer::builder()
             .add_service(panda_service.into_server())
             .serve(grpc_addr)
@@ -174,7 +175,7 @@ async fn main() {
         .await
         .unwrap();
 
-    println!("Listening on http://localhost:{}, Ctrl+C to stop", port);
+    info!("Listening on http://localhost:{}, Ctrl+C to stop", port);
 
     axum::serve(listener, app).await.unwrap();
 }

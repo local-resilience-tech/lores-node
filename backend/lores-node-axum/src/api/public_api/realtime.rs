@@ -16,7 +16,7 @@ use tokio::sync::{
     broadcast::{self, Receiver, Sender},
 };
 
-use tracing::warn;
+use tracing::{info, warn};
 
 use super::client_events::ClientEvent;
 
@@ -75,10 +75,10 @@ async fn recv_from_client(mut client_rx: SplitStream<WebSocket>) {
             return;
         }
 
-        println!("Received message from client: {:?}", msg);
+        info!("Received message from client: {:?}", msg);
 
         // if broadcast_tx.lock().await.send(msg).is_err() {
-        //     println!("Failed to broadcast a message");
+        //     info!("Failed to broadcast a message");
         // }
     }
 }

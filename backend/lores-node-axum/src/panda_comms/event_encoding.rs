@@ -1,5 +1,5 @@
 use anyhow::Result;
-use tracing::warn;
+use tracing::{info, warn};
 use p2panda_core::cbor::{decode_cbor, encode_cbor, DecodeError, EncodeError};
 
 use super::lores_events::{
@@ -47,7 +47,7 @@ pub fn decode_lores_event_payload(
     match wire_event.event_payload {
         LoResPossibleEventPayload::LoResEventPayload(payload) => Ok(payload),
         LoResPossibleEventPayload::DeprecatedLoResEventPayload(_) => {
-            println!("Received deprecated LoResEventPayload, which is no longer supported.");
+            info!("Received deprecated LoResEventPayload, which is no longer supported.");
             Err(anyhow::anyhow!(
                 "Received deprecated LoResEventPayload, which is no longer supported."
             ))
@@ -66,7 +66,7 @@ pub fn decode_lores_event(
         payload: decoded_payload,
     };
 
-    println!("  Parsed LoResEvent: {:?}", lores_event);
+    info!("  Parsed LoResEvent: {:?}", lores_event);
 
     Ok(lores_event)
 }
