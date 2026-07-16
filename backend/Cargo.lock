@@ -2728,7 +2728,7 @@ dependencies = [
 
 [[package]]
 name = "lores-node"
-version = "0.20.1"
+version = "0.20.2"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -2776,7 +2776,7 @@ dependencies = [
 
 [[package]]
 name = "lores-p2panda"
-version = "0.20.1"
+version = "0.20.2"
 dependencies = [
  "hex",
  "p2panda",
