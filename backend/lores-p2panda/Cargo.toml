@@ -2,13 +2,14 @@
 name = "lores-p2panda"
 version = "0.20.2"
 edition = "2024"
+rust-version = "1.96"
 publish = false
 
 [dependencies]
-p2panda = "0.6.1"
+p2panda = "0.7.0"
 p2panda-core = { workspace = true }
-p2panda-store = { version = "0.6.1", features = ["sqlite"] }
-p2panda-net = "0.6.1"
+p2panda-store = { version = "0.7.0", features = ["sqlite"] }
+p2panda-net = "0.7.0"
 serde = { workspace = true, features = ["derive"] }
 sqlx = { workspace = true, default-features = false, features = [
   "runtime-tokio",

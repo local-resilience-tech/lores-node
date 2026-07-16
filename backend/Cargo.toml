@@ -11,7 +11,7 @@ default-members = ["lores-node-axum"]
 
 [workspace.dependencies]
 hex = "0.4.3"
-p2panda-core = "0.6.1"
+p2panda-core = "0.7.0"
 prost = "0.14"
 serde = { version = "1.0.219" }
 sqlx = { version = "0.8.6", default-features = false }

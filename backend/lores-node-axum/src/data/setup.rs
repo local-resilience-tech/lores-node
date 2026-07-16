@@ -1,30 +1,39 @@
-use tracing::info;
 use anyhow::Result;
-use sqlx::{migrate::Migrator, sqlite::SqliteConnectOptions, Pool, Sqlite, SqlitePool};
+use sqlx::{Pool, Sqlite, SqlitePool, migrate::Migrator, sqlite::SqliteConnectOptions};
 use std::env;
 use tower_sessions_sqlx_store::SqliteStore;
+use tracing::info;
 
 lazy_static! {
-    pub static ref DATABASE_URL: String =
-        env::var("DATABASE_URL").unwrap_or_else(|_| "sqlite:projections.sqlite".to_string());
+    static ref DATA_DIR: String = env::var("DATA_DIR").unwrap_or_else(|_| ".".to_string());
 }
 
-lazy_static! {
-    pub static ref NODE_DATA_DATABASE_URL: String = env::var("NODE_DATA_DATABASE_URL")
-        .unwrap_or_else(|_| "sqlite:node_data.sqlite".to_string());
+fn db_url(name: &str, version: Option<u32>) -> String {
+    let file_basename = match version {
+        Some(v) => format!("{}-{}", name, v),
+        None => name.to_string(),
+    };
+    format!("sqlite:{}/{}.sqlite", *DATA_DIR, file_basename)
 }
 
-lazy_static! {
-    pub static ref OPERATION_DATABASE_URL: String = env::var("OPERATION_DATABASE_URL")
-        .unwrap_or_else(|_| "sqlite:operations.sqlite".to_string());
+const OPERATIONS_DATABASE_VERSION: u32 = 1;
+
+fn database_url() -> String {
+    db_url("projections", Some(OPERATIONS_DATABASE_VERSION))
+}
+fn node_data_database_url() -> String {
+    db_url("node_data", None)
+}
+pub fn operation_database_url() -> String {
+    db_url("operations", Some(OPERATIONS_DATABASE_VERSION))
 }
 
 pub async fn prepare_projections_database() -> Result<Pool<Sqlite>> {
-    prepare_database(&DATABASE_URL, Some("./migrations_projectiondb")).await
+    prepare_database(&database_url(), Some("./migrations_projectiondb")).await
 }
 
 pub async fn prepare_node_data_database() -> Result<Pool<Sqlite>> {
-    prepare_database(&NODE_DATA_DATABASE_URL, Some("./migrations_nodedatadb")).await
+    prepare_database(&node_data_database_url(), Some("./migrations_nodedatadb")).await
 }
 
 pub async fn prepare_session_store(node_data_pool: &SqlitePool) -> Result<SqliteStore> {

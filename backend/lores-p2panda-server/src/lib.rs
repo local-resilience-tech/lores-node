@@ -276,7 +276,7 @@ fn incoming_to_event(op: IncomingOperation) -> OperationEvent {
         topic_id: op.topic.to_bytes().to_vec(),
         author: op.author.as_bytes().to_vec(),
         operation_id: op.operation_id.as_bytes().to_vec(),
-        timestamp: op.timestamp,
+        timestamp: op.received_timestamp,
         payload: op.bytes,
     }
 }

@@ -11,6 +11,7 @@ pub enum ClientEvent {
     RegionNodeUpdated(RegionNodeDetails),
     RegionAppUpdated(RegionAppWithInstallations),
     RegionUpdated(Region),
+    RegionForgotten(String),
     LocalAppCreated(LocalApp),
     LocalAppUpdated(LocalApp),
 }

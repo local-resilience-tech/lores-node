@@ -36,9 +36,7 @@ services:
       - "8200:8200"
     environment:
       CONFIG_PATH: /app/data/config.toml
-      DATABASE_URL: sqlite:/app/data/projections.sqlite
-      NODE_DATA_DATABASE_URL: sqlite:/app/data/node_data.sqlite
-      OPERATION_DATABASE_URL: sqlite:/app/data/operations.sqlite
+      DATA_DIR: /app/data
       HTTP_PORT: "8200"
       BASE_URL: http://lores.localhost:5173
     volumes:
@@ -56,9 +54,7 @@ services:
       - "8201:8200"
     environment:
       CONFIG_PATH: /app/data/config.toml
-      DATABASE_URL: sqlite:/app/data/projections.sqlite
-      NODE_DATA_DATABASE_URL: sqlite:/app/data/node_data.sqlite
-      OPERATION_DATABASE_URL: sqlite:/app/data/operations.sqlite
+      DATA_DIR: /app/data
       HTTP_PORT: "8200"
       BASE_URL: http://lores2.localhost:5174
     volumes:

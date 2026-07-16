@@ -16,6 +16,10 @@ docker:
 two-node:
     mprocs --config mprocs-2node.yaml
 
+[working-directory: 'frontend']
+gen-api:
+    npm run swagger
+
 [working-directory: 'backend/lores-p2panda-client']
 p2panda-client-publish:
     cargo publish

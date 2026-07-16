@@ -1,22 +1,26 @@
-use axum::{http::StatusCode, response::IntoResponse, Extension, Json};
-use tracing::{info, warn};
+use axum::{Extension, Json, http::StatusCode, response::IntoResponse};
 use serde::Deserialize;
 use sqlx::SqlitePool;
+use tracing::{info, warn};
 use utoipa::ToSchema;
 use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::{
-    api::{auth_api::auth_backend::AuthSession, helpers::internal_server_error},
+    DatabaseState,
+    api::{
+        auth_api::auth_backend::AuthSession,
+        helpers::internal_server_error,
+        public_api::{client_events::ClientEvent, realtime::RealtimeState},
+    },
     config::config_state::LoresNodeConfigState,
     data::{entities::LatLng, projections_read::regions::RegionsReadRepo},
     panda_comms::{
+        PandaContainer, RegionAdminTopic, RegionId,
         lores_events::{
             LoResEventPayload, RegionCreatedDataV1, RegionJoinRequestApprovedDataV1,
             RegionJoinRequestedDataV1, RegionMapUpdatedDataV1,
         },
-        PandaContainer, RegionAdminTopic, RegionId,
     },
-    DatabaseState,
 };
 
 pub fn router() -> OpenApiRouter {
@@ -25,6 +29,7 @@ pub fn router() -> OpenApiRouter {
         .routes(routes!(join_region))
         .routes(routes!(approve_join_request))
         .routes(routes!(update_map))
+        .routes(routes!(forget_region))
 }
 
 #[derive(Deserialize, ToSchema, Debug)]
@@ -370,6 +375,61 @@ async fn update_map(
     }
 
     return (StatusCode::OK, ()).into_response();
+}
+
+#[derive(Deserialize, ToSchema, Debug)]
+#[allow(dead_code)]
+pub struct ForgetRegionData {
+    pub region_id: String,
+}
+
+#[utoipa::path(
+    delete,
+    path = "/forget",
+    request_body(content = ForgetRegionData, content_type = "application/json"),
+    responses(
+        (status = 200, body = ()),
+        (status = BAD_REQUEST, body = String),
+        (status = INTERNAL_SERVER_ERROR, body = String),
+    )
+)]
+async fn forget_region(
+    _auth_session: AuthSession,
+    Extension(config_state): Extension<LoresNodeConfigState>,
+    Extension(realtime_state): Extension<RealtimeState>,
+    axum::extract::Json(data): axum::extract::Json<ForgetRegionData>,
+) -> impl IntoResponse {
+    if data.region_id.is_empty() {
+        return (
+            StatusCode::BAD_REQUEST,
+            Json("Invalid region ID".to_string()),
+        )
+            .into_response();
+    }
+
+    if let Err(e) = config_state
+        .update(|config| {
+            let mut result = config.clone();
+            result.region_ids = Some(
+                result
+                    .region_ids
+                    .unwrap_or_default()
+                    .into_iter()
+                    .filter(|id| id != &data.region_id)
+                    .collect(),
+            );
+            result
+        })
+        .await
+    {
+        return internal_server_error(e).into_response();
+    }
+
+    realtime_state
+        .broadcast_app_event(ClientEvent::RegionForgotten(data.region_id))
+        .await;
+
+    (StatusCode::OK, ()).into_response()
 }
 
 async fn store_new_region_id(
