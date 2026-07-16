@@ -5,18 +5,23 @@ use std::env;
 use tower_sessions_sqlx_store::SqliteStore;
 
 lazy_static! {
+    static ref DATA_DIR: String =
+        env::var("DATA_DIR").unwrap_or_else(|_| ".".to_string());
+}
+
+lazy_static! {
     pub static ref DATABASE_URL: String =
-        env::var("DATABASE_URL").unwrap_or_else(|_| "sqlite:projections.sqlite".to_string());
+        format!("sqlite:{}/projections.sqlite", *DATA_DIR);
 }
 
 lazy_static! {
-    pub static ref NODE_DATA_DATABASE_URL: String = env::var("NODE_DATA_DATABASE_URL")
-        .unwrap_or_else(|_| "sqlite:node_data.sqlite".to_string());
+    pub static ref NODE_DATA_DATABASE_URL: String =
+        format!("sqlite:{}/node_data.sqlite", *DATA_DIR);
 }
 
 lazy_static! {
-    pub static ref OPERATION_DATABASE_URL: String = env::var("OPERATION_DATABASE_URL")
-        .unwrap_or_else(|_| "sqlite:operations.sqlite".to_string());
+    pub static ref OPERATION_DATABASE_URL: String =
+        format!("sqlite:{}/operations.sqlite", *DATA_DIR);
 }
 
 pub async fn prepare_projections_database() -> Result<Pool<Sqlite>> {
