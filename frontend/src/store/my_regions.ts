@@ -112,6 +112,16 @@ const regionsSlice = createSlice({
 
       return ensureRegionSlugs(state)
     },
+    regionForgotten: (state, action: PayloadAction<string>) => {
+      const regionId = action.payload
+      if (state.all) {
+        state.all = state.all.filter((r) => r.region.id !== regionId)
+      }
+      if (state.activeRegionId === regionId) {
+        state.activeRegionId = state.all?.[0]?.region.id ?? null
+      }
+      return state
+    },
   },
 })
 
@@ -168,5 +178,6 @@ export const {
   activeRegionChanged,
   regionNodeUpdated,
   regionUpdated,
+  regionForgotten,
 } = regionsSlice.actions
 export default regionsSlice.reducer

@@ -5,6 +5,7 @@ import regionsReducer, {
   nodeJoinedRegion,
   regionNodeUpdated,
   regionUpdated,
+  regionForgotten,
 } from "./my_regions"
 import localAppsReducer, {
   localAppCreated,
@@ -47,6 +48,8 @@ export async function handleClientEvent(event: ClientEvent) {
     store.dispatch(nodeJoinedRegion(event.NodeJoinedRegion))
   } else if ("RegionUpdated" in event) {
     store.dispatch(regionUpdated(event.RegionUpdated))
+  } else if ("RegionForgotten" in event) {
+    store.dispatch(regionForgotten(event.RegionForgotten))
   } else if ("LocalAppCreated" in event) {
     store.dispatch(localAppCreated(event.LocalAppCreated))
   } else if ("LocalAppUpdated" in event) {
