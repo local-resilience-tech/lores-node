@@ -2,16 +2,16 @@ use std::collections::HashMap;
 use std::collections::HashSet;
 use std::sync::{Arc, LazyLock};
 
+use p2panda::Node;
 use p2panda::node::SpawnError;
 use p2panda::streams::{PublishError, StreamEvent, StreamFrom, StreamPublisher};
-use p2panda::Node;
 use p2panda_core::{Hash, SigningKey, Topic, VerifyingKey};
 use p2panda_net::iroh_endpoint::RelayUrl;
 use p2panda_store::SqliteError;
-use sqlx::sqlite::{SqliteConnectOptions, SqlitePool, SqlitePoolOptions};
 use sqlx::Row;
+use sqlx::sqlite::{SqliteConnectOptions, SqlitePool, SqlitePoolOptions};
 use thiserror::Error;
-use tokio::sync::{mpsc, RwLock};
+use tokio::sync::{RwLock, mpsc};
 use tokio_stream::StreamExt;
 
 use crate::node_status::NodeStatus;
@@ -29,7 +29,7 @@ pub struct IncomingOperation {
     pub topic: Topic,
     pub bytes: Vec<u8>,
     pub operation_id: Hash,
-    pub timestamp: u64,
+    pub received_timestamp: u64,
 }
 
 #[derive(Debug, Error)]
@@ -143,7 +143,7 @@ impl PandaNode {
                             topic: op.topic(),
                             bytes: op.message().clone(),
                             operation_id: op.id(),
-                            timestamp: op.timestamp(),
+                            received_timestamp: op.timestamp(),
                         };
                         if events_tx.send(incoming).await.is_err() {
                             break;
@@ -219,7 +219,7 @@ impl PandaNode {
                             topic: op.topic(),
                             bytes: op.message().clone(),
                             operation_id: op.id(),
-                            timestamp: op.timestamp(),
+                            received_timestamp: op.timestamp(),
                         };
                         if events_tx.send(incoming).await.is_err() {
                             break;

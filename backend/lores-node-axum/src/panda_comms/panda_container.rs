@@ -1,16 +1,16 @@
 use std::sync::Arc;
-use tracing::{info, warn};
 use thiserror::Error;
-use tokio::sync::{mpsc, Mutex};
+use tokio::sync::{Mutex, mpsc};
+use tracing::{info, warn};
 
 use lores_p2panda::{
-    p2panda_core::{identity::VERIFYING_KEY_LEN, Hash, SigningKey, VerifyingKey},
+    IncomingOperation, PandaNodeError, RegionAdminTopic, RegionId, RegionTopic, Topic,
+    p2panda_core::{Hash, SigningKey, VerifyingKey, identity::VERIFYING_KEY_LEN},
     panda_node::{
         LogCount, OperationCountByAuthorAndTopic, PandaNode, PandaPublishError, RequiredNodeParams,
         SubscriptionError,
     },
     topic_status::ConnectionStatus,
-    IncomingOperation, PandaNodeError, RegionAdminTopic, RegionId, RegionTopic, Topic,
 };
 
 use crate::api::auth_api::auth_backend::User;
@@ -287,7 +287,7 @@ impl PandaContainer {
         let lores_header = LoResEventHeader {
             author_node_id: incoming.author.to_hex(),
             region_id: Some(incoming.topic.to_bytes().into()),
-            timestamp: incoming.timestamp,
+            timestamp: incoming.received_timestamp,
             operation_id: incoming.operation_id,
         };
 
