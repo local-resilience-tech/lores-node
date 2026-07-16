@@ -2,6 +2,7 @@ use std::collections::HashMap;
 use std::future::Future;
 use std::pin::Pin;
 use std::sync::Arc;
+use tracing::{info, warn};
 
 use lores_p2panda::{
     IncomingOperation, PandaNode, PandaPublishError, RegionAppTopic, RegionId, RegionTopic,
@@ -174,7 +175,7 @@ impl Panda for PandaService {
 
         let region_app_topic = RegionAppTopic::new(region_id, ids.app_id);
 
-        println!(
+        info!(
             "[publish] region={} app_id={} payload_bytes={}",
             region_app_topic.region_id,
             region_app_topic.app_id,
@@ -187,7 +188,7 @@ impl Panda for PandaService {
             .is_duplicate(&region_app_topic, &req.idempotency_key)
             .await?
         {
-            println!("[publish] duplicate idempotency key, skipping re-insert");
+            info!("[publish] duplicate idempotency key, skipping re-insert");
             return Ok(Response::new(PublishResponse {}));
         }
 
@@ -242,7 +243,7 @@ impl Panda for PandaService {
 
         let region_app_topic = RegionAppTopic::new(region_id, ids.app_id);
 
-        println!(
+        info!(
             "[subscribe] region={} app_id={}",
             region_app_topic.region_id, region_app_topic.app_id
         );
@@ -283,20 +284,20 @@ fn incoming_to_event(op: IncomingOperation) -> OperationEvent {
 fn publish_error_to_status(e: PandaPublishError) -> Status {
     match e {
         PandaPublishError::NodeNotStarted => {
-            eprintln!("publish error: p2panda node not started");
+            warn!("publish error: p2panda node not started");
             Status::unavailable("p2panda node not started")
         }
         PandaPublishError::NoSubscription(t) => {
             let msg = format!("no subscription for topic {}", t.to_hex());
-            eprintln!("publish error: {msg}");
+            warn!("publish error: {msg}");
             Status::failed_precondition(msg)
         }
         PandaPublishError::Publish(e) => {
-            eprintln!("publish error: {e}");
+            warn!("publish error: {e}");
             Status::internal(e.to_string())
         }
         PandaPublishError::AppError(msg) => {
-            eprintln!("publish error: {msg}");
+            warn!("publish error: {msg}");
             Status::internal(msg)
         }
     }
@@ -306,11 +307,11 @@ fn subscription_error_to_status(e: SubscriptionError) -> Status {
     match e {
         SubscriptionError::AlreadySubscribed(t) => {
             let msg = format!("already subscribed to topic {:?}", t);
-            eprintln!("subscription error: {msg}");
+            warn!("subscription error: {msg}");
             Status::already_exists(msg)
         }
         SubscriptionError::CreateStream(e) => {
-            eprintln!("subscription error: failed to create stream: {e}");
+            warn!("subscription error: failed to create stream: {e}");
             Status::internal(e.to_string())
         }
     }
