@@ -1,4 +1,5 @@
 use axum::{Extension, Json, http::StatusCode, response::IntoResponse};
+use tracing::{info, warn};
 use serde::Deserialize;
 use utoipa::ToSchema;
 use utoipa_axum::{router::OpenApiRouter, routes};
@@ -136,7 +137,7 @@ async fn register_app(
         name: payload.app.name.clone(),
         version: payload.app.version.clone(),
     });
-    println!("Prepared event payload: {:?}", event_payload);
+    info!("Prepared event payload: {:?}", event_payload);
 
     // Publish the operation
     if let Err(e) = panda_container
@@ -181,7 +182,7 @@ async fn create_local_app(
     let created = match LocalAppsRepo::init().create(&db.node_data_pool, &app).await {
         Ok(app) => app,
         Err(sqlx::Error::Database(e)) => {
-            eprintln!("Database error creating local app: {e}");
+            warn!("Database error creating local app: {e}");
             if e.code().as_deref() == Some("2067") {
                 return bad_request("Name and instance ID must be unique").into_response();
             }

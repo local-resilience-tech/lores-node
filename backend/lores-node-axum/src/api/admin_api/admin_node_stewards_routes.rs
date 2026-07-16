@@ -1,16 +1,17 @@
 use axum::{
+    Extension, Json,
     extract::{self, Path},
     http::StatusCode,
     response::IntoResponse,
-    Extension, Json,
 };
 use serde::{Deserialize, Serialize};
+use tracing::warn;
 use utoipa::ToSchema;
 use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::{
-    data::node_data::node_stewards::{NodeStewardIdentifier, NodeStewardRow, NodeStewardsRepo},
     DatabaseState,
+    data::node_data::node_stewards::{NodeStewardIdentifier, NodeStewardRow, NodeStewardsRepo},
 };
 
 pub fn router() -> OpenApiRouter {
@@ -148,7 +149,7 @@ async fn reset_node_steward_token(
         Ok(Some(row)) => row,
         Ok(None) => return (StatusCode::NOT_FOUND, ()).into_response(),
         Err(e) => {
-            eprintln!("Error finding node steward: {:?}", e);
+            warn!("Error finding node steward: {:?}", e);
             return (StatusCode::INTERNAL_SERVER_ERROR, ()).into_response();
         }
     };
@@ -167,7 +168,7 @@ async fn reset_node_steward_token(
             (StatusCode::OK, Json(creation_result)).into_response()
         }
         Err(e) => {
-            eprintln!("Error saving reset token: {:?}", e);
+            warn!("Error saving reset token: {:?}", e);
             (StatusCode::INTERNAL_SERVER_ERROR, ()).into_response()
         }
     }
@@ -224,7 +225,7 @@ async fn toggle_node_steward_status(
         .await;
 
     if let Err(e) = result {
-        eprintln!("Error updating node steward status: {:?}", e);
+        warn!("Error updating node steward status: {:?}", e);
         return (StatusCode::INTERNAL_SERVER_ERROR, ()).into_response();
     }
 
@@ -232,7 +233,7 @@ async fn toggle_node_steward_status(
         Ok(Some(row)) => (StatusCode::OK, Json(NodeSteward::from_row(&row))).into_response(),
         Ok(None) => (StatusCode::NOT_FOUND, ()).into_response(),
         Err(e) => {
-            eprintln!("Error finding node steward: {:?}", e);
+            warn!("Error finding node steward: {:?}", e);
             (StatusCode::INTERNAL_SERVER_ERROR, ()).into_response()
         }
     }

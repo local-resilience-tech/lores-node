@@ -1,3 +1,4 @@
+use tracing::info;
 use std::env;
 
 use axum::{
@@ -24,7 +25,7 @@ pub async fn frontend_handler(uri: Uri) -> Result<Response<Body>, (StatusCode, S
         .iter()
         .any(|prefix| uri.path().starts_with(prefix))
     {
-        println!(
+        info!(
             "API call detected, not serving static files for URI: {}",
             uri
         );
@@ -38,7 +39,7 @@ pub async fn frontend_handler(uri: Uri) -> Result<Response<Body>, (StatusCode, S
         StatusCode::NOT_FOUND => {
             // serve the HTML file for SPA routing
             let spa_file_path_string = FRONTEND_PATH.clone() + "/index.html";
-            println!(
+            info!(
                 "Serving SPA index.html for URI: {}, using path {}",
                 uri.clone(),
                 spa_file_path_string
@@ -47,7 +48,7 @@ pub async fn frontend_handler(uri: Uri) -> Result<Response<Body>, (StatusCode, S
         }
         other => {
             // If the status is not OK or NOT_FOUND, return the response as is
-            println!("Got other status: {}", other);
+            info!("Got other status: {}", other);
             return Ok(res);
         }
     }
@@ -62,7 +63,7 @@ async fn serve_file(
     match ServeFile::new(spa_file_path_string).oneshot(req).await {
         Ok(res) => Ok(res.map(Body::new)),
         Err(err) => {
-            println!("Error serving static file: {}", err);
+            info!("Error serving static file: {}", err);
             return Err((
                 StatusCode::INTERNAL_SERVER_ERROR,
                 format!("Something went wrong: {}", err),
@@ -78,7 +79,7 @@ async fn serve_dir(uri: Uri, static_dir: String) -> Result<Response<Body>, (Stat
     match ServeDir::new(static_dir).oneshot(req).await {
         Ok(res) => Ok(res.map(Body::new)),
         Err(err) => {
-            println!("Error serving static file: {}", err);
+            info!("Error serving static file: {}", err);
             return Err((
                 StatusCode::INTERNAL_SERVER_ERROR,
                 format!("Something went wrong: {}", err),

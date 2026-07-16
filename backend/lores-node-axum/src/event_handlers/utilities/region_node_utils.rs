@@ -1,4 +1,5 @@
 use sqlx::SqlitePool;
+use tracing::{info, warn};
 
 use crate::{
     api::public_api::client_events::ClientEvent,
@@ -16,11 +17,11 @@ pub async fn read_node_updated_event(
     match node_details {
         Ok(Some(details)) => vec![ClientEvent::RegionNodeUpdated(details)],
         Ok(None) => {
-            println!("Node not found for announcement.");
+            info!("Node not found for announcement.");
             vec![]
         }
         Err(e) => {
-            eprintln!("Error reading node details: {}", e);
+            warn!("Error reading node details: {}", e);
             vec![]
         }
     }

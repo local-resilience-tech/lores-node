@@ -1,4 +1,5 @@
 use axum::{http::StatusCode, response::IntoResponse, Extension, Json};
+use tracing::{info, warn};
 use serde::Deserialize;
 use sqlx::SqlitePool;
 use utoipa::ToSchema;
@@ -54,7 +55,7 @@ async fn create_region(
     Extension(config_state): Extension<LoresNodeConfigState>,
     axum::extract::Json(data): axum::extract::Json<CreateRegionData>,
 ) -> impl IntoResponse {
-    println!("Creating region with data: {:?}", data);
+    info!("Creating region with data: {:?}", data);
 
     if data.slug.is_empty() || data.name.is_empty() {
         return (
@@ -64,7 +65,7 @@ async fn create_region(
             .into_response();
     }
 
-    println!(
+    info!(
         "Validated region data: slug={}, name={}",
         data.slug, data.name
     );
@@ -72,7 +73,7 @@ async fn create_region(
     // Generate a region ID and store it in the config
     let region_id = match store_new_region_id(&config_state).await {
         Ok(id) => {
-            println!("Generated new region ID: {}", id);
+            info!("Generated new region ID: {}", id);
             id
         }
         Err(e) => return internal_server_error(e).into_response(),
@@ -93,7 +94,7 @@ async fn create_region(
         user_conduct_url: data.user_conduct_url.clone(),
         user_privacy_url: data.user_privacy_url.clone(),
     });
-    println!("Prepared event payload: {:?}", event_payload);
+    info!("Prepared event payload: {:?}", event_payload);
 
     if let Err(e) = panda_container
         .publish_persisted(
@@ -106,7 +107,7 @@ async fn create_region(
         return internal_server_error(e).into_response();
     }
 
-    println!("Created new region with ID: {:?}", region_id);
+    info!("Created new region with ID: {:?}", region_id);
 
     return (StatusCode::OK, ()).into_response();
 }
@@ -152,7 +153,7 @@ async fn join_region(
     let region_id = match RegionId::from_hex(data.region_id.as_str()) {
         Ok(id) => id,
         Err(e) => {
-            eprintln!("Invalid region ID: {:?}", e);
+            warn!("Invalid region ID: {:?}", e);
             return (
                 StatusCode::BAD_REQUEST,
                 Json("Invalid region ID".to_string()),
@@ -177,7 +178,7 @@ async fn join_region(
         about_your_stewards: data.about_your_stewards.clone(),
         agreed_node_steward_conduct_url: data.agreed_node_steward_conduct_url.clone(),
     });
-    println!("Prepared event payload: {:?}", event_payload);
+    info!("Prepared event payload: {:?}", event_payload);
 
     if let Err(e) = panda_container
         .publish_persisted(
@@ -232,7 +233,7 @@ async fn approve_join_request(
     let region_id = match RegionId::from_hex(data.region_id.as_str()) {
         Ok(id) => id,
         Err(e) => {
-            eprintln!("Invalid region ID: {:?}", e);
+            warn!("Invalid region ID: {:?}", e);
             return (
                 StatusCode::BAD_REQUEST,
                 Json("Invalid region ID".to_string()),
@@ -244,7 +245,7 @@ async fn approve_join_request(
     // Check that I am the controller node for this region
     if let Err(e) = ensure_controller_node(&db.projections_pool, &region_id, &panda_container).await
     {
-        eprintln!("Controller node check failed: {:?}", e);
+        warn!("Controller node check failed: {:?}", e);
         return (
             StatusCode::BAD_REQUEST,
             Json(format!("Controller node check failed: {}", e)),
@@ -331,7 +332,7 @@ async fn update_map(
     let region_id = match RegionId::from_hex(data.region_id.as_str()) {
         Ok(id) => id,
         Err(e) => {
-            eprintln!("Invalid region ID: {:?}", e);
+            warn!("Invalid region ID: {:?}", e);
             return (
                 StatusCode::BAD_REQUEST,
                 Json("Invalid region ID".to_string()),
@@ -343,7 +344,7 @@ async fn update_map(
     // Ensure I am the controller node for this region
     if let Err(e) = ensure_controller_node(&db.projections_pool, &region_id, &panda_container).await
     {
-        eprintln!("Controller node check failed: {:?}", e);
+        warn!("Controller node check failed: {:?}", e);
         return (
             StatusCode::BAD_REQUEST,
             Json(format!("Controller node check failed: {}", e)),
@@ -384,7 +385,7 @@ async fn store_new_region_id(
                 || region_ids.contains(&region_id_string.clone().unwrap())
             {
                 let new_id_string = RegionId::generate().to_hex();
-                println!("Trying new region id {}", new_id_string);
+                info!("Trying new region id {}", new_id_string);
                 if !region_ids.contains(&new_id_string) {
                     region_id_string = Some(new_id_string.clone());
                 }
@@ -392,7 +393,7 @@ async fn store_new_region_id(
 
             region_ids.push(region_id_string.clone().unwrap());
 
-            println!("Setting region_ids to {:?}", region_ids);
+            info!("Setting region_ids to {:?}", region_ids);
 
             result.region_ids = Some(region_ids);
             result
@@ -421,7 +422,7 @@ async fn store_region_id(
                 region_ids.push(region_id.to_hex());
             }
 
-            println!("Setting region_ids to {:?}", region_ids);
+            info!("Setting region_ids to {:?}", region_ids);
 
             result.region_ids = Some(region_ids);
             result

@@ -11,6 +11,7 @@ use tokio::sync::mpsc;
 use tonic::transport::Server as GrpcServer;
 use tower_http::{cors::CorsLayer, trace::TraceLayer};
 use tower_sessions::{Expiry, SessionManagerLayer};
+use tracing::info;
 use tracing_subscriber::EnvFilter;
 use utoipa::OpenApi;
 use utoipa_axum::router::OpenApiRouter;
@@ -66,7 +67,7 @@ async fn main() {
         // when running the app to set log levels.
         .with_env_filter(
             EnvFilter::try_from_default_env()
-                .or_else(|_| EnvFilter::try_new("axum_tracing_example=error,tower_http=warn"))
+                .or_else(|_| EnvFilter::try_new("info"))
                 .unwrap(),
         )
         .init();
@@ -137,7 +138,7 @@ async fn main() {
         .expect("Failed to initialise PandaService")
     };
     tokio::spawn(async move {
-        println!("gRPC listening on {}", grpc_addr);
+        info!("gRPC listening on {}", grpc_addr);
         GrpcServer::builder()
             .add_service(panda_service.into_server())
             .serve(grpc_addr)
@@ -174,7 +175,7 @@ async fn main() {
         .await
         .unwrap();
 
-    println!("Listening on http://localhost:{}, Ctrl+C to stop", port);
+    info!("Listening on http://localhost:{}, Ctrl+C to stop", port);
 
     axum::serve(listener, app).await.unwrap();
 }

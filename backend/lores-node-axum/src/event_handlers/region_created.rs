@@ -1,3 +1,4 @@
+use tracing::info;
 use sqlx::SqlitePool;
 
 use crate::{
@@ -37,7 +38,7 @@ impl RegionCreatedHandler {
         let region_id = match header.region_id.clone() {
             Some(id) => id,
             None => {
-                println!("Error: header region ID is missing");
+                info!("Error: header region ID is missing");
                 return Err(sqlx::Error::ColumnNotFound("region_id".to_string()));
             }
         };

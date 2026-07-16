@@ -1,4 +1,5 @@
 use std::sync::Arc;
+use tracing::warn;
 use tokio::sync::Mutex;
 
 use super::config::LoresNodeConfig;
@@ -33,7 +34,7 @@ impl LoresNodeConfigState {
                 Ok(())
             }
             Err(e) => {
-                eprintln!("Failed to save config: {}", e);
+                warn!("Failed to save config: {}", e);
                 Err(e)
             }
         }

@@ -1,3 +1,4 @@
+use tracing::info;
 use crate::{config::config_state::LoresNodeConfigState, panda_comms::build_public_key_from_hex};
 use hex;
 use p2panda_core::{identity::SIGNING_KEY_LEN, SigningKey, VerifyingKey};
@@ -55,7 +56,7 @@ impl ThisP2PandaNodeRepo {
         self.set_private_key_hex(config_state, new_private_key.to_hex(), public_key.to_hex())
             .await?;
 
-        println!("Created new private key");
+        info!("Created new private key");
         Ok(new_private_key)
     }
 

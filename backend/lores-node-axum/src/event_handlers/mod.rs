@@ -1,4 +1,5 @@
 use sqlx::SqlitePool;
+use tracing::{info, warn};
 
 use crate::{
     api::public_api::realtime::RealtimeState,
@@ -30,7 +31,7 @@ pub async fn handle_event(event: LoResEvent, pool: &SqlitePool, realtime_state: 
     let handler = get_handler(&payload);
 
     if let Err(e) = handler.validate(&header, &pool).await {
-        eprintln!("This event is not valid: {:?}", e);
+        warn!("This event is not valid: {:?}", e);
         return;
     }
 
@@ -42,9 +43,9 @@ pub async fn handle_event(event: LoResEvent, pool: &SqlitePool, realtime_state: 
         realtime_state
             .broadcast_app_events(handle_result.client_events.clone())
             .await;
-        println!("Client events to send: {:?}", handle_result.client_events);
+        info!("Client events to send: {:?}", handle_result.client_events);
     } else {
-        println!("No client events to send.");
+        info!("No client events to send.");
     }
 }
 

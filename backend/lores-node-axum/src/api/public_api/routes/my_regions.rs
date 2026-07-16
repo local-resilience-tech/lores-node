@@ -1,4 +1,5 @@
 use axum::{http::StatusCode, response::IntoResponse, Extension, Json};
+use tracing::{info, warn};
 
 use utoipa_axum::{router::OpenApiRouter, routes};
 
@@ -38,7 +39,7 @@ async fn list_regions(
     // Get region_ids from config
     let region_ids: Vec<RegionId> = match config.region_ids {
         Some(region_ids) => {
-            println!("got region ids {:?}", region_ids);
+            info!("got region ids {:?}", region_ids);
 
             region_ids
                 .into_iter()
@@ -53,7 +54,7 @@ async fn list_regions(
                 .collect()
         }
         None => {
-            println!("no region ids found in config");
+            info!("no region ids found in config");
             return (StatusCode::OK, Json(Vec::<RegionWithNodes>::new())).into_response();
         }
     };
@@ -76,7 +77,7 @@ async fn list_regions(
         let region = match db_region {
             Some(region) => region.clone(),
             None => {
-                eprintln!("Region {} not found in database", id);
+                warn!("Region {} not found in database", id);
                 Region::unnamed(id, node_id)
             }
         };

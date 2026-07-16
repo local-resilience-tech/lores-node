@@ -1,3 +1,4 @@
+use tracing::info;
 use anyhow::Result;
 use sqlx::{migrate::Migrator, sqlite::SqliteConnectOptions, Pool, Sqlite, SqlitePool};
 use std::env;
@@ -61,7 +62,7 @@ pub(crate) async fn prepare_database(
     }
 
     if let Some(migrations_path) = migrations {
-        println!("Running migrations");
+        info!("Running migrations");
         let migrator = Migrator::new(std::path::Path::new(migrations_path)).await?;
         migrator.run(&pool).await?;
     }

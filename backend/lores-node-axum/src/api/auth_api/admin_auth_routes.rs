@@ -1,14 +1,15 @@
-use axum::{http::StatusCode, response::IntoResponse, Extension, Json};
+use axum::{Extension, Json, http::StatusCode, response::IntoResponse};
 use serde::Serialize;
+use tracing::warn;
 use utoipa::ToSchema;
 use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::config::config_state::LoresNodeConfigState;
 
 use super::{
+    UserRef,
     admin_user_repo::{AdminUserRepo, GeneratePasswordError},
     auth_backend::{AdminCredentials, AuthError, AuthSession, Credentials},
-    UserRef,
 };
 
 pub fn router() -> OpenApiRouter {
@@ -41,11 +42,11 @@ async fn generate_admin_password(
     match repo.generate_and_save_admin_password().await {
         Ok(password) => (StatusCode::CREATED, password).into_response(),
         Err(GeneratePasswordError::PasswordAlreadySet) => {
-            eprintln!("Error generating admin password: Password already set");
+            warn!("Error generating admin password: Password already set");
             (StatusCode::BAD_REQUEST, "Admin password already set").into_response()
         }
         Err(GeneratePasswordError::ServerError) => {
-            eprintln!("Error generating admin password: Internal Server Error");
+            warn!("Error generating admin password: Internal Server Error");
             (StatusCode::INTERNAL_SERVER_ERROR, "Internal Server Error").into_response()
         }
     }
@@ -84,7 +85,7 @@ async fn admin_login(
         }
 
         Err(e) => {
-            eprintln!("Authentication failed: {:?}", e);
+            warn!("Authentication failed: {:?}", e);
             let status = match e {
                 axum_login::Error::Backend(AuthError::InvalidCredentials) => (
                     StatusCode::UNAUTHORIZED,

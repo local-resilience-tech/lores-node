@@ -1,4 +1,5 @@
 use sqlx::SqlitePool;
+use tracing::{info, warn};
 
 use crate::panda_comms::lores_events::LoResEventHeader;
 
@@ -25,11 +26,11 @@ pub async fn region_already_projected(
     match repo.find(pool, &region_id.to_hex()).await {
         Ok(Some(_)) => Ok(()), // Region already projected
         Ok(None) => {
-            println!("Region not projected yet.");
+            info!("Region not projected yet.");
             Err(())
         }
         Err(e) => {
-            eprintln!("Database error while checking region projection: {}", e);
+            warn!("Database error while checking region projection: {}", e);
             Err(())
         }
     }

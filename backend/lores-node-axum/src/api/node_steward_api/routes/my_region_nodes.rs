@@ -1,3 +1,4 @@
+use tracing::info;
 use axum::{http::StatusCode, response::IntoResponse, Extension};
 use serde::Deserialize;
 use utoipa::ToSchema;
@@ -77,7 +78,7 @@ async fn update_this_region_node(
     axum::extract::Path(region_id_string): axum::extract::Path<String>,
     axum::extract::Json(data): axum::extract::Json<UpdateNodeDetails>,
 ) -> impl IntoResponse {
-    println!("update node: {:?}", data);
+    info!("update node: {:?}", data);
 
     // Validate input data
     if let Err(e) = data.validate() {
@@ -97,7 +98,7 @@ async fn update_this_region_node(
         domain_on_internet: data.domain_on_internet.clone(),
         latlng: data.latlng.clone(),
     });
-    println!("Prepared event payload: {:?}", event_payload);
+    info!("Prepared event payload: {:?}", event_payload);
 
     // Publish the operation
     if let Err(e) = panda_container
@@ -138,7 +139,7 @@ async fn post_region_node_status(
     axum::extract::Path(region_id_string): axum::extract::Path<String>,
     axum::extract::Json(data): axum::extract::Json<RegionNodeStatusData>,
 ) -> impl IntoResponse {
-    println!("post status: {:?}", data);
+    info!("post status: {:?}", data);
 
     // Get region_id from path and validate it
     let region_id = match RegionId::from_hex(&region_id_string) {
@@ -151,7 +152,7 @@ async fn post_region_node_status(
         text: data.text.clone(),
         state: data.state.map(|s| s.to_string()),
     });
-    println!("Created event payload: {:?}", event_payload);
+    info!("Created event payload: {:?}", event_payload);
 
     if let Err(e) = panda_container
         .publish_persisted(

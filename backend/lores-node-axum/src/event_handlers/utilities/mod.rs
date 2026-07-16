@@ -15,12 +15,14 @@ pub trait EventHandler: Send + Sync {
     async fn handle(&self, header: LoResEventHeader, pool: &SqlitePool) -> HandlerResult;
 }
 
+use tracing::warn;
+
 #[derive(Default, Debug)]
 pub struct HandlerResult {
     pub client_events: Vec<ClientEvent>,
 }
 
 pub fn handle_db_write_error(e: sqlx::Error) -> HandlerResult {
-    eprintln!("Database write error: {}", e);
+    warn!("Database write error: {}", e);
     HandlerResult::default()
 }
