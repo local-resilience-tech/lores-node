@@ -1,4 +1,4 @@
-use axum::{Extension, Json, http::StatusCode, response::IntoResponse};
+use axum::{Extension, Json, extract::DefaultBodyLimit, http::StatusCode, response::IntoResponse};
 use serde::Deserialize;
 use sqlx::SqlitePool;
 use tracing::{info, warn};
@@ -24,11 +24,15 @@ use crate::{
 };
 
 pub fn router() -> OpenApiRouter {
+    let map_router = OpenApiRouter::new()
+        .routes(routes!(update_map))
+        .layer(DefaultBodyLimit::max(20 * 1024 * 1024)); // 20MB for image uploads
+
     OpenApiRouter::new()
         .routes(routes!(create_region))
         .routes(routes!(join_region))
         .routes(routes!(approve_join_request))
-        .routes(routes!(update_map))
+        .merge(map_router)
         .routes(routes!(forget_region))
 }
 
