@@ -14,6 +14,9 @@ import { IconList, IconMapPin, IconMessageQuestion } from "@tabler/icons-react"
 import { RegionNodeDetails } from "../../../api/Api"
 import { getApi } from "../../../api"
 import { actionFailure, actionSuccess } from "../../../components"
+import { useSearchParams } from "react-router-dom"
+
+const defaultTab = "list"
 
 export default function Nodes() {
   const region = useAppSelector((state) =>
@@ -22,6 +25,9 @@ export default function Nodes() {
   const thisNodeId = useAppSelector((state) => state.network?.node.id)
   const isNodeAdmin =
     thisNodeId != null && region?.region.creator_node_id === thisNodeId
+
+  const [searchParams, setSearchParams] = useSearchParams()
+  const activeTab = searchParams.get("tab") ?? defaultTab
 
   const theme = useMantineTheme()
   const joinRequestColor = theme.colors.orange[6]
@@ -70,7 +76,12 @@ export default function Nodes() {
           </Title>
         </Stack>
 
-        <Tabs defaultValue="list">
+        <Tabs
+          value={activeTab}
+          onChange={(value) =>
+            setSearchParams({ tab: value ?? defaultTab }, { replace: true })
+          }
+        >
           <Tabs.List>
             <Tabs.Tab
               value="list"
