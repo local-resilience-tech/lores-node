@@ -15,11 +15,16 @@ pub struct AppUrl {
 }
 
 #[derive(Debug, Clone)]
+pub struct LoResApp {
+    pub instance_id: Option<String>,
+}
+
+#[derive(Debug, Clone)]
 pub struct CoopCloudApp {
     pub name: String,
     pub version: String,
     pub url: Option<AppUrl>,
-    pub instance_id: Option<String>,
+    pub lores: Option<LoResApp>,
 }
 
 pub fn build_coop_cloud_app(stack: &DockerStack) -> Result<CoopCloudApp, anyhow::Error> {
@@ -32,7 +37,9 @@ pub fn build_coop_cloud_app(stack: &DockerStack) -> Result<CoopCloudApp, anyhow:
             internet_url: app_url(labels.host()),
             local_network_url: None,
         }),
-        instance_id: labels.lores_instance_id(),
+        lores: labels.lores_instance_id().map(|id| LoResApp {
+            instance_id: Some(id),
+        }),
     })
 }
 

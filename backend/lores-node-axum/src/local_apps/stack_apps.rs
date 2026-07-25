@@ -13,7 +13,7 @@ pub fn find_deployed_local_apps() -> Vec<LocalApp> {
                 local_network_url: u.local_network_url,
             }),
             source: LocalAppSource::Docker,
-            instance_id: app.instance_id,
+            instance_id: app.lores.and_then(|l| l.instance_id),
             bound_to_region_id: None,
         })
         .collect()
