@@ -25,5 +25,5 @@ publish-p2panda-client:
     cargo publish
 
 [working-directory: 'backend/coop-cloud-docker-apps']
-public-coop-cloud-docker-apps:
+publish-coop-cloud-docker-apps:
     cargo publish
