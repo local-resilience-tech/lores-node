@@ -34,7 +34,6 @@ use crate::{
 mod api;
 mod config;
 mod data;
-mod docker;
 mod event_handlers;
 mod local_apps;
 mod panda_comms;

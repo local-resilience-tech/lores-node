@@ -1,9 +1,9 @@
-pub use coop_cloud_docker_apps::find_coop_cloud_apps;
+pub use coop_cloud_docker_apps::coop_cloud_apps;
 
 use crate::data::entities::{LocalApp, LocalAppSource, NodeAppUrl};
 
 pub fn find_deployed_local_apps() -> Vec<LocalApp> {
-    find_coop_cloud_apps()
+    coop_cloud_apps()
         .into_iter()
         .map(|app| LocalApp {
             name: app.name,

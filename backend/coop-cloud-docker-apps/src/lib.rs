@@ -8,8 +8,9 @@ mod docker;
 mod service_labels;
 
 pub use apps::{AppUrl, CoopCloudApp};
+pub use docker::{DockerService, DockerStack, DockerStackWithServices, docker_stacks_with_services};
 
-pub fn find_coop_cloud_apps() -> Vec<CoopCloudApp> {
+pub fn coop_cloud_apps() -> Vec<CoopCloudApp> {
     let deployed_stacks = docker_stack_ls().unwrap_or_else(|e| {
         warn!("Error listing docker stacks: {:?}", e);
         vec![]
