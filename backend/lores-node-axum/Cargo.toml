@@ -48,6 +48,7 @@ uuid = "1.18.1"
 hex = { workspace = true }
 lores-p2panda = { path = "../lores-p2panda" }
 lores-p2panda-server = { path = "../lores-p2panda-server" }
+coop-cloud-docker-apps = { path = "../coop-cloud-docker-apps" }
 p2panda-core = { workspace = true }
 tonic = { workspace = true }
 rand = "0.10.0"

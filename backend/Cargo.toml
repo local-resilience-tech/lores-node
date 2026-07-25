@@ -1,6 +1,7 @@
 [workspace]
 resolver = "3"
 members = [
+  "coop-cloud-docker-apps",
   "lores-node-axum",
   "lores-p2panda",
   "lores-p2panda-server",
