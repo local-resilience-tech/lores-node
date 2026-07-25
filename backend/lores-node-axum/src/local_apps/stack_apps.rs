@@ -1,7 +1,6 @@
-use crate::{
-    data::entities::{LocalApp, LocalAppSource, NodeAppUrl},
-    local_apps::coop_cloud_apps::find_coop_cloud_apps,
-};
+pub use coop_cloud_docker_apps::find_coop_cloud_apps;
+
+use crate::data::entities::{LocalApp, LocalAppSource, NodeAppUrl};
 
 pub fn find_deployed_local_apps() -> Vec<LocalApp> {
     find_coop_cloud_apps()
