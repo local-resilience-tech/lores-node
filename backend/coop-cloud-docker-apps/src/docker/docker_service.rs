@@ -1,6 +1,6 @@
 use std::{collections::HashMap, process::Command};
 
-use crate::docker::helpers::parse_docker_json;
+use super::helpers::parse_docker_json;
 
 #[derive(Debug, Clone, serde::Deserialize)]
 #[allow(dead_code)]
@@ -46,7 +46,6 @@ pub fn docker_service_inspect(name: &str) -> Result<DockerInspectResult, anyhow:
 
     let details = parse_docker_json::<Vec<DockerInspectResult>>(output)?;
 
-    // Since docker inspect returns an array, we take the first element
     let detail = details
         .into_iter()
         .next()

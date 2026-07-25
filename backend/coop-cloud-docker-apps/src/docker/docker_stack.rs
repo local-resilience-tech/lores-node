@@ -1,8 +1,6 @@
 use std::process::Command;
 
-use crate::docker::helpers::parse_docker_json;
-
-use super::{DockerService, DockerStack};
+use super::{DockerService, DockerStack, helpers::parse_docker_json};
 
 #[derive(Debug, Clone, serde::Deserialize)]
 #[allow(dead_code)]

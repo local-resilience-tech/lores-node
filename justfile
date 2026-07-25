@@ -21,5 +21,9 @@ gen-api:
     npm run swagger
 
 [working-directory: 'backend/lores-p2panda-client']
-p2panda-client-publish:
+publish-p2panda-client:
+    cargo publish
+
+[working-directory: 'backend/coop-cloud-docker-apps']
+public-coop-cloud-docker-apps:
     cargo publish

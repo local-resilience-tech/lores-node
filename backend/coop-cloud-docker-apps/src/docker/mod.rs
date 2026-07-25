@@ -1,17 +1,14 @@
-use serde::{Deserialize, Serialize};
-use utoipa::ToSchema;
-
 pub mod docker_service;
 pub mod docker_stack;
 mod helpers;
 
-#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
+#[derive(Debug, Clone)]
 pub struct DockerStack {
     pub name: String,
     pub services_count: i64,
 }
 
-#[derive(Serialize, ToSchema, Debug, Clone)]
+#[derive(Debug, Clone)]
 pub struct DockerService {
     pub id: String,
     pub name: String,
@@ -21,7 +18,7 @@ pub struct DockerService {
     pub current_state_duration: String,
 }
 
-#[derive(Serialize, ToSchema, Debug, Clone)]
+#[derive(Debug, Clone)]
 pub struct DockerStackWithServices {
     pub name: String,
     pub services: Vec<DockerService>,
