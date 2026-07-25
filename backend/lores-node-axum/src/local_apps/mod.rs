@@ -7,6 +7,7 @@ use crate::{
 
 pub mod app_instances;
 mod coop_cloud;
+pub mod coop_cloud_apps;
 pub mod region_resolver;
 pub mod stack_apps;
 
