@@ -7,7 +7,7 @@ pub fn find_deployed_local_apps() -> Vec<LocalApp> {
         .into_iter()
         .map(|app| LocalApp {
             name: app.name,
-            version: app.version,
+            version: app.version.unwrap_or("unknown".to_string()),
             url: app.url.map(|u| NodeAppUrl {
                 internet_url: u.internet_url,
                 local_network_url: u.local_network_url,
