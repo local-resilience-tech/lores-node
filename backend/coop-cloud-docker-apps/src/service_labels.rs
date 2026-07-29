@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-#[allow(dead_code)]
+#[derive(Default)]
 pub struct CoopCloudServiceLabels {
     stack_namespace: String,
     namespace_labels: HashMap<String, String>,
@@ -45,11 +45,12 @@ impl CoopCloudServiceLabels {
         })
     }
 
-    pub fn version(&self) -> String {
-        self.namespace_labels
-            .get("version")
-            .cloned()
-            .unwrap_or_else(|| "unknown".to_string())
+    pub fn version(&self) -> Option<String> {
+        self.namespace_labels.get("version").cloned()
+    }
+
+    pub fn recipe(&self) -> Option<String> {
+        self.namespace_labels.get("recipe").cloned()
     }
 
     pub fn host(&self) -> Option<String> {
