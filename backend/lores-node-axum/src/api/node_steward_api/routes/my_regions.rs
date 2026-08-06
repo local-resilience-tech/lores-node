@@ -15,7 +15,8 @@ use crate::{
     config::config_state::LoresNodeConfigState,
     data::{entities::LatLng, projections_read::regions::RegionsReadRepo},
     panda_comms::{
-        PandaContainer, RegionAdminTopic, RegionId,
+        PandaContainer, PandaSubscriptionError, RegionAdminTopic, RegionId,
+        SubscriptionError,
         lores_events::{
             LoResEventPayload, RegionCreatedDataV1, RegionJoinRequestApprovedDataV1,
             RegionJoinRequestedDataV1, RegionMapUpdatedDataV1,
@@ -178,7 +179,11 @@ async fn join_region(
 
     // Subscribe to the new region
     if let Err(e) = panda_container.join_region(region_id.clone()).await {
-        return internal_server_error(e).into_response();
+        if matches!(e, PandaSubscriptionError::SubscriptionError(SubscriptionError::AlreadySubscribed(_))) {
+            warn!("Already subscribed to region {:?}, proceeding", region_id);
+        } else {
+            return internal_server_error(e).into_response();
+        }
     }
 
     // Publish the RegionCreated event

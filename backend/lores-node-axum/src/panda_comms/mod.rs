@@ -8,7 +8,8 @@ pub use config::ThisP2PandaNodeRepo;
 use lores_events::LoResEvent;
 pub use lores_p2panda::RegionAdminTopic;
 pub use lores_p2panda::RegionId;
-pub use panda_container::{PandaContainer, build_public_key_from_hex};
+pub use panda_container::{PandaContainer, PandaSubscriptionError, build_public_key_from_hex};
+pub use lores_p2panda::SubscriptionError;
 use sqlx::SqlitePool;
 use tokio::sync::mpsc;
 
