@@ -13,3 +13,4 @@ pub use topic_status::{ConnectionStatus, TopicStatus};
 
 pub use p2panda_core;
 pub use p2panda_core::Topic;
+pub use p2panda_net::iroh_endpoint::RelayUrl;

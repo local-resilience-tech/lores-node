@@ -11,6 +11,7 @@ use lores_p2panda::{
         SubscriptionError,
     },
     topic_status::ConnectionStatus,
+    RelayUrl,
 };
 
 use crate::api::auth_api::auth_backend::User;
@@ -355,15 +356,31 @@ impl PandaContainer {
         Some(NodeStatusSnapshot { topics })
     }
 
-    /// Validates the node ID and saves it to params. The new peer will be
-    /// discovered on the next node restart via the saved config; the high-level
-    /// p2panda API does not support adding bootstrap nodes at runtime.
+    /// Validates the node ID, inserts the bootstrap peer into the running node
+    /// when it is already started, and saves it to params so it will be used on
+    /// the next restart as well.
     pub async fn add_bootstrap_node(
         &self,
         bootstrap_node_id_hex: &str,
+        relay_url: Option<RelayUrl>,
     ) -> Result<(), anyhow::Error> {
-        build_public_key_from_hex(bootstrap_node_id_hex)
+        let node_id = build_public_key_from_hex(bootstrap_node_id_hex)
             .map_err(|e| anyhow::anyhow!("Invalid bootstrap node ID: {}", e))?;
+
+        {
+            let node_lock = self.node.lock().await;
+            if let Some(node) = node_lock.as_ref() {
+                node.insert_bootstrap(node_id, relay_url).await.map_err(|e| {
+                    anyhow::anyhow!("Failed to insert bootstrap node at runtime: {}", e)
+                })?;
+            }
+        }
+
+        let mut params_lock = self.params.lock().await;
+        if !params_lock.bootstrap_node_ids.contains(&node_id) {
+            params_lock.bootstrap_node_ids.push(node_id);
+        }
+
         Ok(())
     }
 }
