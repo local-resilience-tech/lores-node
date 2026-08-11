@@ -11,6 +11,7 @@ use crate::{
     panda_comms::{build_public_key_from_hex, PandaContainer},
     DatabaseState,
 };
+use lores_p2panda::RelayUrl;
 
 pub fn router() -> OpenApiRouter {
     OpenApiRouter::new()
@@ -53,7 +54,10 @@ async fn add_bootstrap_node(
     }
 
     // Add the bootstrap node to the current PandaContainer
-    if let Err(e) = panda_container.add_bootstrap_node(&payload.node_id).await {
+    if let Err(e) = panda_container
+        .add_bootstrap_node(&payload.node_id, None)
+        .await
+    {
         return (
             StatusCode::INTERNAL_SERVER_ERROR,
             format!("Failed to add bootstrap node: {}", e),

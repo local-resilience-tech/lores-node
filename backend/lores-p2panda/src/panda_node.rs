@@ -3,6 +3,8 @@ use std::collections::HashSet;
 use std::sync::{Arc, LazyLock};
 
 use p2panda::Node;
+use p2panda::NodeId;
+use p2panda::network::NetworkError;
 use p2panda::node::SpawnError;
 use p2panda::streams::{PublishError, StreamEvent, StreamFrom, StreamPublisher};
 use p2panda_core::{Hash, SigningKey, Topic, VerifyingKey};
@@ -191,6 +193,18 @@ impl PandaNode {
     /// Returns all registered region IDs.
     pub async fn get_regions(&self) -> Vec<RegionId> {
         self.regions.read().await.iter().cloned().collect()
+    }
+
+    /// Insert a bootstrap node at runtime.
+    pub async fn insert_bootstrap(
+        &self,
+        node_id: NodeId,
+        relay_url: Option<RelayUrl>,
+    ) -> Result<(), NetworkError> {
+        let relay_url = relay_url.unwrap_or_else(|| DEFAULT_IROH_RELAY_URL.clone());
+        let network = self.network.read().await;
+
+        network.insert_bootstrap(node_id, relay_url).await
     }
 
     /// Creates a new `StreamFrom::Start` stream for `topic_id` and forwards every
