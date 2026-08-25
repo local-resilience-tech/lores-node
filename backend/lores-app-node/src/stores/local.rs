@@ -3,7 +3,7 @@ use std::pin::Pin;
 use futures::{stream, StreamExt};
 use sqlx::SqlitePool;
 
-use crate::store::{
+use crate::stores::{
     OperationStore, OperationStream, RawOperationEvent, StoreError, StorePublishResult,
 };
 

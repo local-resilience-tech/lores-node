@@ -6,10 +6,10 @@ use tokio::sync::{broadcast, watch, Mutex};
 use uuid::Uuid;
 
 use crate::consumer::OperationConsumer;
-use crate::grpc::GrpcOperationStore;
-use crate::local::LocalOperationStore;
-use crate::outbox::OutboxStore;
-use crate::store::{OperationStore, StoreError};
+use crate::stores::grpc::GrpcOperationStore;
+use crate::stores::local::LocalOperationStore;
+use crate::stores::outbox::OutboxStore;
+use crate::stores::{OperationStore, StoreError};
 use crate::subscription::LiveSubscription;
 use crate::types::AppNodeOperation;
 

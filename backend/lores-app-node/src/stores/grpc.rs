@@ -4,7 +4,7 @@ use futures::StreamExt;
 use lores_p2panda_client::{PandaClient, PandaError, PublishResult};
 
 use crate::{
-    store::{OperationStore, OperationStream, RawOperationEvent, StoreError, StorePublishResult},
+    stores::{OperationStore, OperationStream, RawOperationEvent, StoreError, StorePublishResult},
     LoResNodeId, LoResOperationId,
 };
 

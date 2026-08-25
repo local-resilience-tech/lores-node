@@ -1,7 +1,7 @@
 use futures::StreamExt;
 use tokio::sync::broadcast;
 
-use crate::store::{OperationStream, RawOperationEvent, StoreError};
+use crate::stores::{OperationStream, RawOperationEvent, StoreError};
 use crate::types::{AppNodeOperation, LoResNodeId, LoResOperationId};
 
 /// Deserializes raw operation payloads from a stream and broadcasts them to

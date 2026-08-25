@@ -3,7 +3,7 @@ use std::sync::Arc;
 use crate::backoff::Backoff;
 use crate::consumer::OperationConsumer;
 use crate::node::{map_store_error, NodeError};
-use crate::store::{OperationStore, StoreError};
+use crate::stores::{OperationStore, StoreError};
 use tokio::sync::{watch, Mutex};
 
 /// Drives a remote subscription in a loop, reconnecting with exponential
@@ -48,7 +48,7 @@ impl<Op: Clone + Send + 'static> LiveSubscription<Op> {
         }
     }
 
-    async fn try_subscribe(&self, backoff: &mut Backoff) -> Option<crate::store::OperationStream> {
+    async fn try_subscribe(&self, backoff: &mut Backoff) -> Option<crate::stores::OperationStream> {
         match self.operation_store.lock().await.subscribe().await {
             Ok(s) => {
                 self.error_tx.send_replace(None);

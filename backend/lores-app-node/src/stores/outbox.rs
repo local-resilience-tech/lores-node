@@ -1,8 +1,8 @@
 use std::pin::Pin;
 
-use crate::grpc::GrpcOperationStore;
-use crate::local::LocalOperationStore;
-use crate::store::{OperationStore, OperationStream, StoreError, StorePublishResult};
+use crate::stores::grpc::GrpcOperationStore;
+use crate::stores::local::LocalOperationStore;
+use crate::stores::{OperationStore, OperationStream, StoreError, StorePublishResult};
 
 /// [`OperationStore`] decorator that combines a [`LocalOperationStore`] and a
 /// [`GrpcOperationStore`].
