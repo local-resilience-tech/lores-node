@@ -173,7 +173,7 @@ impl<Op: Clone + Serialize + Send + 'static> AppNode<Op> {
             op: operation.clone(),
             local_operation_id: Some(local_id),
             panda_operation_id: result.operation_id,
-            node: result.node_id,
+            author_node_id: result.node_id,
             timestamp: None,
         };
 

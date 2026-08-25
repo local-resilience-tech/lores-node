@@ -27,10 +27,9 @@ pub struct AppNodeOperation<Op> {
     pub op: Op,
     /// Stable local identity assigned at publish time, before any network round-trip.
     pub local_operation_id: Option<Uuid>,
-    /// `None` for locally-published operations.
-    pub panda_operation_id: Option<LoResOperationId>,
-    /// Unix timestamp in milliseconds. `None` for locally-published operations.
-    pub node: Option<LoResNodeId>,
     /// 32-byte p2panda operation hash. `None` for locally-published operations.
+    pub panda_operation_id: Option<LoResOperationId>,
+    /// p2panda public key of the node that authored the operation.
+    pub author_node_id: Option<LoResNodeId>,
     pub timestamp: Option<u64>,
 }
