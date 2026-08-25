@@ -8,6 +8,7 @@ members = [
   "lores-p2panda-client",
   "lores-example-app-cli",
   "lores-app-node",
+  "lores-p2panda-dev-server",
 ]
 default-members = ["lores-node-axum"]
 

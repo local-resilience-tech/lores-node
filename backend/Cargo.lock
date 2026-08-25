@@ -3113,6 +3113,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "lores-p2panda-dev-server"
+version = "0.1.0"
+dependencies = [
+ "futures",
+ "prost",
+ "tokio",
+ "tokio-stream",
+ "tonic",
+ "tonic-prost",
+ "tonic-prost-build",
+ "tracing",
+ "tracing-subscriber",
+]
+
+[[package]]
 name = "lores-p2panda-server"
 version = "0.3.0"
 dependencies = [
