@@ -1,8 +1,8 @@
 use futures::StreamExt;
 use tokio::sync::broadcast;
 
-use crate::node::AppNodeOperation;
 use crate::store::{OperationStream, RawOperationEvent, StoreError};
+use crate::types::{AppNodeOperation, LoResNodeId};
 
 /// Deserializes raw operation payloads from a stream and broadcasts them to
 /// all subscribers of the event channel.
@@ -38,27 +38,33 @@ impl<Op: Clone + Send + 'static> OperationConsumer<Op> {
     /// Returns `Ok(count)` if the stream ended cleanly, or `Err` on the first
     /// stream-level failure. Deserialization failures are logged as warnings
     /// and do not stop the drain.
-    pub(crate) async fn drain_stream(&self, stream: &mut OperationStream) -> Result<usize, StoreError>
+    pub(crate) async fn drain_stream(
+        &self,
+        stream: &mut OperationStream,
+    ) -> Result<usize, StoreError>
     where
         Op: for<'de> serde::Deserialize<'de>,
     {
         let mut count = 0usize;
         while let Some(item) = stream.next().await {
             match item {
-                Ok(RawOperationEvent { payload, author, operation_id, timestamp }) => {
-                    match serde_json::from_slice::<Op>(&payload) {
-                        Ok(op) => {
-                            let _ = self.event_tx.send(AppNodeOperation {
-                                op,
-                                author,
-                                operation_id,
-                                timestamp,
-                            });
-                            count += 1;
-                        }
-                        Err(e) => tracing::warn!("Failed to deserialize operation: {e}"),
+                Ok(RawOperationEvent {
+                    payload,
+                    author,
+                    operation_id,
+                    timestamp,
+                }) => match serde_json::from_slice::<Op>(&payload) {
+                    Ok(op) => {
+                        let _ = self.event_tx.send(AppNodeOperation {
+                            op,
+                            node: author.map(LoResNodeId),
+                            operation_id,
+                            timestamp,
+                        });
+                        count += 1;
                     }
-                }
+                    Err(e) => tracing::warn!("Failed to deserialize operation: {e}"),
+                },
                 Err(e) => return Err(e),
             }
         }

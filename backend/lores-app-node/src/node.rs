@@ -10,6 +10,7 @@ use crate::local::LocalOperationStore;
 use crate::outbox::OutboxStore;
 use crate::store::{OperationStore, StoreError};
 use crate::subscription::LiveSubscription;
+use crate::types::AppNodeOperation;
 
 /// Errors emitted by the node that consumers (e.g. a WebSocket handler) may
 /// want to surface directly to users.
@@ -28,17 +29,6 @@ impl std::fmt::Display for NodeError {
             NodeError::GrpcUnavailable(msg) => write!(f, "{msg}"),
         }
     }
-}
-
-#[derive(Clone, Serialize, Deserialize)]
-pub struct AppNodeOperation<Op> {
-    pub op: Op,
-    /// 32-byte p2panda author public key. `None` for locally-published operations.
-    pub author: Option<Vec<u8>>,
-    /// 32-byte p2panda operation hash. `None` for locally-published operations.
-    pub operation_id: Option<Vec<u8>>,
-    /// Unix timestamp in milliseconds. `None` for locally-published operations.
-    pub timestamp: Option<u64>,
 }
 
 /// The central node handle used by application code.
@@ -126,7 +116,11 @@ impl<Op: Clone + Serialize + Send + 'static> AppNode<Op> {
     /// Create an `AppNode` connected to an external lores-node via gRPC.
     ///
     /// Uses a lazy connection — no network call until the first publish.
-    pub fn grpc(grpc_addr: String, app_id: impl Into<String>, instance_id: impl Into<String>) -> Self {
+    pub fn grpc(
+        grpc_addr: String,
+        app_id: impl Into<String>,
+        instance_id: impl Into<String>,
+    ) -> Self {
         let app_id = app_id.into();
         let instance_id = instance_id.into();
         let operation_store = GrpcOperationStore::connect_lazy(grpc_addr, &app_id, &instance_id)
@@ -175,7 +169,7 @@ impl<Op: Clone + Serialize + Send + 'static> AppNode<Op> {
 
         let app_node_operation = AppNodeOperation::<Op> {
             op: operation.clone(),
-            author: None,
+            node: None,
             operation_id: None,
             timestamp: None,
         };
@@ -207,8 +201,8 @@ impl<Op: Clone + Serialize + Send + 'static> AppNode<Op> {
 pub(crate) fn map_store_error(err: StoreError) -> NodeError {
     match err {
         StoreError::RegionNotBound(msg) => NodeError::RegionNotBound(msg),
-        StoreError::Other(_) => {
-            NodeError::GrpcUnavailable("Could not connect to the LoRes Node for this server".to_string())
-        }
+        StoreError::Other(_) => NodeError::GrpcUnavailable(
+            "Could not connect to the LoRes Node for this server".to_string(),
+        ),
     }
 }
