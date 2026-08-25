@@ -3,6 +3,7 @@ use std::pin::Pin;
 use crate::grpc::GrpcOperationStore;
 use crate::local::LocalOperationStore;
 use crate::store::{OperationStore, OperationStream, StoreError};
+use crate::LoResOperationId;
 
 /// [`OperationStore`] decorator that combines a [`LocalOperationStore`] and a
 /// [`GrpcOperationStore`].
@@ -29,7 +30,13 @@ impl OperationStore for OutboxStore {
         &mut self,
         payload: Vec<u8>,
         idempotency_key: Option<String>,
-    ) -> Pin<Box<dyn std::future::Future<Output = Result<(), StoreError>> + Send + '_>> {
+    ) -> Pin<
+        Box<
+            dyn std::future::Future<Output = Result<Option<LoResOperationId>, StoreError>>
+                + Send
+                + '_,
+        >,
+    > {
         Box::pin(async move {
             // 1. Persist locally — this is our source of truth until gRPC acks.
             let id = self
@@ -40,17 +47,19 @@ impl OperationStore for OutboxStore {
 
             // 2. Attempt gRPC delivery.
             match self.remote.publish(payload, idempotency_key).await {
-                Ok(()) => {
+                Ok(operation_id) => {
                     // 3. Confirmed — remove from local store.
                     if let Err(e) = self.local.delete(id).await {
-                        tracing::warn!("Delivered op {id} but failed to delete from local store: {e}");
+                        tracing::warn!(
+                            "Delivered op {id} but failed to delete from local store: {e}"
+                        );
                     }
-                    Ok(())
+                    Ok(operation_id)
                 }
                 Err(e) => {
                     tracing::warn!("gRPC delivery failed for op {id}: {e}");
                     // Leave in local store for a future drain attempt.
-                    Ok(())
+                    Ok(None)
                 }
             }
         })
@@ -58,13 +67,15 @@ impl OperationStore for OutboxStore {
 
     fn subscribe(
         &mut self,
-    ) -> Pin<Box<dyn std::future::Future<Output = Result<OperationStream, StoreError>> + Send + '_>> {
+    ) -> Pin<Box<dyn std::future::Future<Output = Result<OperationStream, StoreError>> + Send + '_>>
+    {
         self.remote.subscribe()
     }
 
     fn replay(
         &mut self,
-    ) -> Pin<Box<dyn std::future::Future<Output = Result<OperationStream, StoreError>> + Send + '_>> {
+    ) -> Pin<Box<dyn std::future::Future<Output = Result<OperationStream, StoreError>> + Send + '_>>
+    {
         self.local.replay()
     }
 }

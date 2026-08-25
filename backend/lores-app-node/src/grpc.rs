@@ -1,9 +1,12 @@
 use std::pin::Pin;
 
 use futures::StreamExt;
-use lores_p2panda_client::{PandaClient, PandaError};
+use lores_p2panda_client::{OperationId, PandaClient, PandaError};
 
-use crate::store::{OperationStore, OperationStream, RawOperationEvent, StoreError};
+use crate::{
+    store::{OperationStore, OperationStream, RawOperationEvent, StoreError},
+    LoResOperationId,
+};
 
 impl From<PandaError> for StoreError {
     fn from(e: PandaError) -> Self {
@@ -42,9 +45,16 @@ impl OperationStore for GrpcOperationStore {
         &mut self,
         payload: Vec<u8>,
         idempotency_key: Option<String>,
-    ) -> Pin<Box<dyn std::future::Future<Output = Result<(), StoreError>> + Send + '_>> {
+    ) -> Pin<
+        Box<
+            dyn std::future::Future<Output = Result<Option<LoResOperationId>, StoreError>>
+                + Send
+                + '_,
+        >,
+    > {
         Box::pin(async move {
-            self.client
+            let OperationId(id_bytes) = self
+                .client
                 .publish(
                     &self.app_id,
                     &self.instance_id,
@@ -52,14 +62,19 @@ impl OperationStore for GrpcOperationStore {
                     idempotency_key.map(|k| k.into_bytes()),
                 )
                 .await
-                .map(|_| ())
-                .map_err(StoreError::from)
+                .map_err(StoreError::from)?;
+            Ok(if id_bytes.is_empty() {
+                None
+            } else {
+                Some(LoResOperationId(id_bytes))
+            })
         })
     }
 
     fn subscribe(
         &mut self,
-    ) -> Pin<Box<dyn std::future::Future<Output = Result<OperationStream, StoreError>> + Send + '_>> {
+    ) -> Pin<Box<dyn std::future::Future<Output = Result<OperationStream, StoreError>> + Send + '_>>
+    {
         Box::pin(async move {
             let response = self
                 .client

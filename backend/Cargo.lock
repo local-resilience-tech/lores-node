@@ -3010,7 +3010,7 @@ name = "lores-app-node"
 version = "0.1.0"
 dependencies = [
  "futures",
- "lores-p2panda-client 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "lores-p2panda-client",
  "serde",
  "serde_json",
  "sha2 0.10.9",
@@ -3028,7 +3028,7 @@ dependencies = [
  "ciborium",
  "clap",
  "hex",
- "lores-p2panda-client 0.3.1",
+ "lores-p2panda-client",
  "serde",
  "tokio",
 ]
@@ -3103,20 +3103,6 @@ dependencies = [
 [[package]]
 name = "lores-p2panda-client"
 version = "0.3.1"
-dependencies = [
- "prost",
- "tokio",
- "tokio-stream",
- "tonic",
- "tonic-prost",
- "tonic-prost-build",
-]
-
-[[package]]
-name = "lores-p2panda-client"
-version = "0.3.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f8b7831217abde329165c589297c1b78a93f96e61b44bc88c821c8c13e92bcb6"
 dependencies = [
  "prost",
  "tokio",

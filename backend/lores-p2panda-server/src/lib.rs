@@ -183,13 +183,13 @@ impl Panda for PandaService {
         );
 
         // If the client supplied an idempotency key, return early on duplicate.
-        if self
+        if let Some(existing_id) = self
             .idempotency
-            .is_duplicate(&region_app_topic, &req.idempotency_key)
+            .check_duplicate(&region_app_topic, &req.idempotency_key)
             .await?
         {
-            info!("[publish] duplicate idempotency key, skipping re-insert");
-            return Ok(Response::new(PublishResponse {}));
+            info!("[publish] duplicate idempotency key, returning existing operation_id");
+            return Ok(Response::new(PublishResponse { operation_id: existing_id }));
         }
 
         // Ensure a subscription exists for this topic so the publisher is
@@ -199,21 +199,24 @@ impl Panda for PandaService {
             .ensure_broadcast_subscription(&node, &region_app_topic)
             .await?;
 
-        node.publish_to_region_topic(&region_app_topic, req.payload)
+        let operation_id = node
+            .publish_to_region_topic(&region_app_topic, req.payload)
             .await
             .map_err(publish_error_to_status)?;
 
         // Record the key only after a successful publish so a publish failure
         // does not burn the key — the client can safely retry.
         self.idempotency
-            .record(&region_app_topic, &req.idempotency_key)
+            .record(&region_app_topic, &req.idempotency_key, operation_id.as_bytes())
             .await?;
 
         self.instance_notifier
             .notify(&region_app_topic.app_id, &ids.instance_id)
             .await;
 
-        Ok(Response::new(PublishResponse {}))
+        Ok(Response::new(PublishResponse {
+            operation_id: operation_id.as_bytes().to_vec(),
+        }))
     }
 
     type SubscribeStream =

@@ -31,8 +31,10 @@ message PublishRequest {
   bytes idempotency_key = 4;
 }
 
-// An empty response indicates the operation was successfully persisted.
-message PublishResponse {}
+message PublishResponse {
+  // 32-byte p2panda operation hash assigned by the node.
+  bytes operation_id = 1;
+}
 
 message SubscribeRequest {
   // String identifying this application consistantly across all nodes in the region.

@@ -52,11 +52,11 @@ impl OperationStore for LocalOperationStore {
         &mut self,
         payload: Vec<u8>,
         _idempotency_key: Option<String>,
-    ) -> Pin<Box<dyn std::future::Future<Output = Result<(), StoreError>> + Send + '_>> {
+    ) -> Pin<Box<dyn std::future::Future<Output = Result<Option<crate::types::LoResOperationId>, StoreError>> + Send + '_>> {
         Box::pin(async move {
             self.insert(payload)
                 .await
-                .map(|_| ())
+                .map(|_| None)
                 .map_err(|e| StoreError::Other(e.to_string()))
         })
     }

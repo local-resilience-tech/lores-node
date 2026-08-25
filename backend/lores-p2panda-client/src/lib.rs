@@ -5,10 +5,14 @@ pub mod proto {
 }
 
 use proto::{
-    OperationEvent, PublishRequest, PublishResponse, SubscribeRequest,
+    OperationEvent, PublishRequest, SubscribeRequest,
     panda_client::PandaClient as TonicPandaClient,
 };
 use tonic::{Code, Response, Status, Streaming};
+
+/// 32-byte p2panda operation hash returned by a successful publish.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct OperationId(pub Vec<u8>);
 
 /// Errors returned by [`PandaClient`] methods.
 #[derive(Debug)]
@@ -84,22 +88,26 @@ impl PandaClient {
     /// p2panda node, guaranteeing eventual propagation to peers.
     ///
     /// If `idempotency_key` is `Some`, the server will deduplicate within its
-    /// retention window: retrying with the same key returns success without
-    /// re-inserting the operation.
+    /// retention window: retrying with the same key returns the same operation_id
+    /// without re-inserting the operation.
     pub async fn publish(
         &mut self,
         app_id: impl Into<String>,
         instance_id: impl Into<String>,
         payload: impl Into<Vec<u8>>,
         idempotency_key: Option<Vec<u8>>,
-    ) -> Result<Response<PublishResponse>, PandaError> {
+    ) -> Result<OperationId, PandaError> {
         let request = PublishRequest {
             app_id: app_id.into(),
             instance_id: instance_id.into(),
             payload: payload.into(),
             idempotency_key: idempotency_key.unwrap_or_default(),
         };
-        self.inner.publish(request).await.map_err(PandaError::from)
+        self.inner
+            .publish(request)
+            .await
+            .map(|r| OperationId(r.into_inner().operation_id))
+            .map_err(PandaError::from)
     }
 
     /// Subscribe to a region+namespace topic and receive a stream of

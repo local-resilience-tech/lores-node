@@ -20,34 +20,35 @@ impl IdempotencyStore {
         Ok(Self { db })
     }
 
-    /// Returns `true` if the idempotency key has already been recorded for
-    /// this topic. Returns `false` immediately when no key is supplied.
-    pub async fn is_duplicate(
+    /// Returns the stored operation_id if the key is a duplicate, or `None` if it is new.
+    /// Returns `None` immediately when no key is supplied.
+    pub async fn check_duplicate(
         &self,
         region_app_topic: &RegionAppTopic,
         idempotency_key: &[u8],
-    ) -> Result<bool, Status> {
+    ) -> Result<Option<Vec<u8>>, Status> {
         if idempotency_key.is_empty() {
-            return Ok(false);
+            return Ok(None);
         }
 
         let topic_bytes = region_app_topic.p2panda_topic().to_bytes().to_vec();
-        let exists: Option<(i64,)> =
-            sqlx::query_as("SELECT 1 FROM publish_idempotency_keys WHERE topic = ? AND key = ?")
+        let row: Option<(Vec<u8>,)> =
+            sqlx::query_as("SELECT operation_id FROM publish_idempotency_keys WHERE topic = ? AND key = ?")
                 .bind(&topic_bytes)
                 .bind(idempotency_key)
                 .fetch_optional(&self.db)
                 .await
                 .map_err(|e| Status::internal(e.to_string()))?;
 
-        Ok(exists.is_some())
+        Ok(row.map(|(id,)| id))
     }
 
-    /// Records an idempotency key as processed. No-op when the key is empty.
+    /// Records an idempotency key with its operation_id. No-op when the key is empty.
     pub async fn record(
         &self,
         region_app_topic: &RegionAppTopic,
         idempotency_key: &[u8],
+        operation_id: &[u8],
     ) -> Result<(), Status> {
         if idempotency_key.is_empty() {
             return Ok(());
@@ -60,11 +61,12 @@ impl IdempotencyStore {
             .as_secs() as i64;
 
         sqlx::query(
-            "INSERT OR IGNORE INTO publish_idempotency_keys (topic, key, seen_at)
-             VALUES (?, ?, ?)",
+            "INSERT OR IGNORE INTO publish_idempotency_keys (topic, key, operation_id, seen_at)
+             VALUES (?, ?, ?, ?)",
         )
         .bind(&topic_bytes)
         .bind(idempotency_key)
+        .bind(operation_id)
         .bind(seen_at)
         .execute(&self.db)
         .await
@@ -76,9 +78,10 @@ impl IdempotencyStore {
     async fn setup_table(db: &SqlitePool) -> Result<(), sqlx::Error> {
         sqlx::query(
             "CREATE TABLE IF NOT EXISTS publish_idempotency_keys (
-                topic   BLOB    NOT NULL,
-                key     BLOB    NOT NULL,
-                seen_at INTEGER NOT NULL,
+                topic        BLOB    NOT NULL,
+                key          BLOB    NOT NULL,
+                operation_id BLOB    NOT NULL,
+                seen_at      INTEGER NOT NULL,
                 PRIMARY KEY (topic, key)
             );
             CREATE INDEX IF NOT EXISTS idx_pik_seen_at
@@ -137,33 +140,33 @@ mod tests {
     #[tokio::test]
     async fn test_unknown_key_is_not_duplicate() {
         let store = test_store().await;
-        let result = store.is_duplicate(&topic("app"), b"key-1").await.unwrap();
-        assert!(!result);
+        let result = store.check_duplicate(&topic("app"), b"key-1").await.unwrap();
+        assert!(result.is_none());
     }
 
     // 2. is_duplicate returns false when no key is supplied.
     #[tokio::test]
     async fn test_empty_key_is_not_duplicate() {
         let store = test_store().await;
-        let result = store.is_duplicate(&topic("app"), b"").await.unwrap();
-        assert!(!result);
+        let result = store.check_duplicate(&topic("app"), b"").await.unwrap();
+        assert!(result.is_none());
     }
 
     // 3. After record, is_duplicate returns true for the same key and topic.
     #[tokio::test]
     async fn test_recorded_key_is_duplicate() {
         let store = test_store().await;
-        store.record(&topic("app"), b"key-1").await.unwrap();
-        let result = store.is_duplicate(&topic("app"), b"key-1").await.unwrap();
-        assert!(result);
+        store.record(&topic("app"), b"key-1", b"op-id-1").await.unwrap();
+        let result = store.check_duplicate(&topic("app"), b"key-1").await.unwrap();
+        assert_eq!(result.as_deref(), Some(b"op-id-1".as_slice()));
     }
 
     // 4. Calling record twice with the same key does not error.
     #[tokio::test]
     async fn test_record_is_idempotent() {
         let store = test_store().await;
-        store.record(&topic("app"), b"key-1").await.unwrap();
-        store.record(&topic("app"), b"key-1").await.unwrap();
+        store.record(&topic("app"), b"key-1", b"op-id-1").await.unwrap();
+        store.record(&topic("app"), b"key-1", b"op-id-1").await.unwrap();
     }
 
     // 5. After manual cleanup removes an expired row, is_duplicate returns false.
@@ -174,16 +177,17 @@ mod tests {
         // Insert a row with seen_at in the distant past.
         let topic = topic("app");
         let topic_bytes = topic.p2panda_topic().to_bytes().to_vec();
-        sqlx::query("INSERT INTO publish_idempotency_keys (topic, key, seen_at) VALUES (?, ?, ?)")
+        sqlx::query("INSERT INTO publish_idempotency_keys (topic, key, operation_id, seen_at) VALUES (?, ?, ?, ?)")
             .bind(&topic_bytes)
             .bind(b"old-key".as_slice())
+            .bind(b"op-id".as_slice())
             .bind(0i64) // epoch — definitely expired
             .execute(&store.db)
             .await
             .unwrap();
 
         // Confirm it looks like a duplicate before cleanup.
-        assert!(store.is_duplicate(&topic, b"old-key").await.unwrap());
+        assert!(store.check_duplicate(&topic, b"old-key").await.unwrap().is_some());
 
         // Run cleanup with a cutoff of now (removes anything seen_at < now).
         let cutoff = SystemTime::now()
@@ -197,7 +201,7 @@ mod tests {
             .unwrap();
 
         // Now the key should be gone.
-        assert!(!store.is_duplicate(&topic, b"old-key").await.unwrap());
+        assert!(store.check_duplicate(&topic, b"old-key").await.unwrap().is_none());
     }
 
     // 6. Keys are scoped by topic: the same key on different topics is independent.
@@ -207,9 +211,9 @@ mod tests {
         let topic_a = topic("app-a");
         let topic_b = topic("app-b");
 
-        store.record(&topic_a, b"key-1").await.unwrap();
+        store.record(&topic_a, b"key-1", b"op-id-1").await.unwrap();
 
-        assert!(store.is_duplicate(&topic_a, b"key-1").await.unwrap());
-        assert!(!store.is_duplicate(&topic_b, b"key-1").await.unwrap());
+        assert!(store.check_duplicate(&topic_a, b"key-1").await.unwrap().is_some());
+        assert!(store.check_duplicate(&topic_b, b"key-1").await.unwrap().is_none());
     }
 }

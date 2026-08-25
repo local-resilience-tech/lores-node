@@ -3,6 +3,8 @@ use std::pin::Pin;
 
 use futures::Stream;
 
+use crate::types::LoResOperationId;
+
 /// Error returned by [`OperationStore`] methods.
 #[derive(Debug)]
 pub enum StoreError {
@@ -50,11 +52,12 @@ pub(crate) type OperationStream = Pin<Box<dyn Stream<Item = Result<RawOperationE
 /// App developers never interact with this directly — they use [`crate::AppNode`]
 /// and its named constructors (`grpc`, etc.).
 pub(crate) trait OperationStore: Send + Sync + 'static {
+    /// Returns the p2panda operation hash if the backend can provide it synchronously.
     fn publish(
         &mut self,
         payload: Vec<u8>,
         idempotency_key: Option<String>,
-    ) -> Pin<Box<dyn Future<Output = Result<(), StoreError>> + Send + '_>>;
+    ) -> Pin<Box<dyn Future<Output = Result<Option<LoResOperationId>, StoreError>> + Send + '_>>;
 
     /// Open a subscription to incoming operations.
     ///

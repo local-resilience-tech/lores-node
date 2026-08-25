@@ -274,18 +274,18 @@ impl PandaNode {
         &self,
         region_topic: &T,
         bytes: Vec<u8>,
-    ) -> Result<(), PandaPublishError> {
+    ) -> Result<Hash, PandaPublishError> {
         let topic = region_topic.p2panda_topic();
         self.publish(topic, bytes).await
     }
 
-    async fn publish(&self, topic_id: Topic, bytes: Vec<u8>) -> Result<(), PandaPublishError> {
+    async fn publish(&self, topic_id: Topic, bytes: Vec<u8>) -> Result<Hash, PandaPublishError> {
         let publishers = self.publishers.read().await;
         let publisher = publishers
             .get(&topic_id)
             .ok_or(PandaPublishError::NoSubscription(topic_id))?;
-        publisher.publish(bytes).await?;
-        Ok(())
+        let publish_future = publisher.publish(bytes).await?;
+        Ok(publish_future.hash())
     }
 
     pub async fn get_log_counts(&self) -> Result<Vec<LogCount>, SqliteError> {
