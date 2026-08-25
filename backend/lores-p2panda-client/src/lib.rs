@@ -4,10 +4,7 @@ pub mod proto {
     tonic::include_proto!("lores.panda.v2");
 }
 
-use proto::{
-    InfoRequest, OperationEvent, PublishRequest, SubscribeRequest,
-    panda_client::PandaClient as TonicPandaClient,
-};
+use proto::{InfoRequest, OperationEvent, PublishRequest, SubscribeRequest, panda_client::PandaClient as TonicPandaClient};
 use tonic::{Code, Response, Status, Streaming};
 
 /// 32-byte p2panda operation hash returned by a successful publish.
@@ -155,16 +152,15 @@ impl PandaClient {
             app_id: app_id.into(),
             instance_id: instance_id.into(),
         };
-        self.inner
-            .subscribe(request)
-            .await
-            .map_err(PandaError::from)
+        self.inner.subscribe(request).await.map_err(PandaError::from)
     }
 
     /// Retrieve information about the connected server node.
     pub async fn info(&mut self, instance_id: impl Into<String>) -> Result<NodeId, PandaError> {
         self.inner
-            .info(InfoRequest { instance_id: instance_id.into() })
+            .info(InfoRequest {
+                instance_id: instance_id.into(),
+            })
             .await
             .map(|r| NodeId(r.into_inner().node_id))
             .map_err(PandaError::from)

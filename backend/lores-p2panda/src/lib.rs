@@ -5,8 +5,8 @@ pub mod topic_status;
 
 pub use node_status::NodeStatus;
 pub use panda_node::{
-    IncomingOperation, LogCount, OperationCountByAuthorAndTopic, PandaNode, PandaNodeError,
-    PandaPublishError, RequiredNodeParams, SubscriptionError,
+    IncomingOperation, LogCount, OperationCountByAuthorAndTopic, PandaNode, PandaNodeError, PandaPublishError, RequiredNodeParams,
+    SubscriptionError,
 };
 pub use region::{RegionAdminTopic, RegionAppTopic, RegionId, RegionTopic};
 pub use topic_status::{ConnectionStatus, TopicStatus};

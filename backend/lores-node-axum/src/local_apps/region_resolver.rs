@@ -1,7 +1,7 @@
 use lores_p2panda_server::{AppInstanceIds, ResolveRegionId, ResolveRegionIdError};
-use tracing::warn;
 use sqlx::SqlitePool;
 use std::sync::Arc;
+use tracing::warn;
 
 use crate::data::node_data::local_apps_repo::LocalAppsRepo;
 
@@ -21,18 +21,15 @@ pub fn make_region_resolver(pool: SqlitePool) -> ResolveRegionId {
                     ResolveRegionIdError::Internal
                 })?;
 
-            let region_id_hex = row
-                .and_then(|app| app.bound_to_region_id)
-                .ok_or(ResolveRegionIdError::NotFound)?;
+            let region_id_hex = row.and_then(|app| app.bound_to_region_id).ok_or(ResolveRegionIdError::NotFound)?;
 
-            lores_p2panda::RegionId::from_hex(&region_id_hex)
-                .map_err(|_| {
-                    warn!(
-                        "[region_resolver] invalid region_id hex in database for app '{}' instance '{}': '{}'",
-                        ids.app_id, ids.instance_id, region_id_hex
-                    );
-                    ResolveRegionIdError::Internal
-                })
+            lores_p2panda::RegionId::from_hex(&region_id_hex).map_err(|_| {
+                warn!(
+                    "[region_resolver] invalid region_id hex in database for app '{}' instance '{}': '{}'",
+                    ids.app_id, ids.instance_id, region_id_hex
+                );
+                ResolveRegionIdError::Internal
+            })
         })
     })
 }

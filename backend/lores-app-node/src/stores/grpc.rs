@@ -28,11 +28,7 @@ pub(crate) struct GrpcOperationStore {
 }
 
 impl GrpcOperationStore {
-    pub(crate) fn new(
-        client: Arc<Mutex<PandaClient>>,
-        app_id: impl Into<String>,
-        instance_id: impl Into<String>,
-    ) -> Self {
+    pub(crate) fn new(client: Arc<Mutex<PandaClient>>, app_id: impl Into<String>, instance_id: impl Into<String>) -> Self {
         Self {
             client,
             app_id: app_id.into(),
@@ -46,23 +42,13 @@ impl OperationStore for GrpcOperationStore {
         &mut self,
         payload: Vec<u8>,
         idempotency_key: Option<String>,
-    ) -> Pin<
-        Box<dyn std::future::Future<Output = Result<StorePublishResult, StoreError>> + Send + '_>,
-    > {
+    ) -> Pin<Box<dyn std::future::Future<Output = Result<StorePublishResult, StoreError>> + Send + '_>> {
         Box::pin(async move {
-            let PublishResult {
-                operation_id,
-                node_id,
-            } = self
+            let PublishResult { operation_id, node_id } = self
                 .client
                 .lock()
                 .await
-                .publish(
-                    &self.app_id,
-                    &self.instance_id,
-                    payload,
-                    idempotency_key.map(|k| k.into_bytes()),
-                )
+                .publish(&self.app_id, &self.instance_id, payload, idempotency_key.map(|k| k.into_bytes()))
                 .await
                 .map_err(StoreError::from)?;
             Ok(StorePublishResult {
@@ -72,10 +58,7 @@ impl OperationStore for GrpcOperationStore {
         })
     }
 
-    fn subscribe(
-        &mut self,
-    ) -> Pin<Box<dyn std::future::Future<Output = Result<OperationStream, StoreError>> + Send + '_>>
-    {
+    fn subscribe(&mut self) -> Pin<Box<dyn std::future::Future<Output = Result<OperationStream, StoreError>> + Send + '_>> {
         Box::pin(async move {
             let response = self
                 .client

@@ -19,11 +19,8 @@ use tokio_stream::StreamExt;
 use crate::node_status::NodeStatus;
 use crate::region::{RegionId, RegionTopic};
 
-static DEFAULT_IROH_RELAY_URL: LazyLock<RelayUrl> = LazyLock::new(|| {
-    "https://euc1-1.relay.n0.iroh-canary.iroh.link"
-        .parse()
-        .expect("valid relay URL")
-});
+static DEFAULT_IROH_RELAY_URL: LazyLock<RelayUrl> =
+    LazyLock::new(|| "https://euc1-1.relay.n0.iroh-canary.iroh.link".parse().expect("valid relay URL"));
 
 #[derive(Clone)]
 pub struct IncomingOperation {
@@ -79,10 +76,7 @@ pub struct PandaNode {
 }
 
 impl PandaNode {
-    pub async fn new(
-        params: &RequiredNodeParams,
-        database_url: &str,
-    ) -> Result<Self, PandaNodeError> {
+    pub async fn new(params: &RequiredNodeParams, database_url: &str) -> Result<Self, PandaNodeError> {
         let public_key = params.private_key.verifying_key();
         let network_id: [u8; 32] = *params.network_id.as_bytes();
 
@@ -92,10 +86,7 @@ impl PandaNode {
             .database_url(database_url);
 
         if cfg!(not(test)) {
-            let best_relay_url = params
-                .relay_url
-                .clone()
-                .unwrap_or_else(|| DEFAULT_IROH_RELAY_URL.clone());
+            let best_relay_url = params.relay_url.clone().unwrap_or_else(|| DEFAULT_IROH_RELAY_URL.clone());
 
             for bootstrap_id in &params.bootstrap_node_ids {
                 builder = builder.bootstrap(*bootstrap_id, best_relay_url.clone());
@@ -118,19 +109,13 @@ impl PandaNode {
         })
     }
 
-    async fn subscribe_to_topic(
-        &self,
-        topic_id: Topic,
-        events_tx: mpsc::Sender<IncomingOperation>,
-    ) -> Result<(), SubscriptionError> {
+    async fn subscribe_to_topic(&self, topic_id: Topic, events_tx: mpsc::Sender<IncomingOperation>) -> Result<(), SubscriptionError> {
         if self.publishers.read().await.contains_key(&topic_id) {
             return Err(SubscriptionError::AlreadySubscribed(topic_id));
         }
 
         let network = self.network.read().await;
-        let (publisher, mut subscription) = network
-            .stream_from::<Vec<u8>>(topic_id, StreamFrom::Frontier)
-            .await?;
+        let (publisher, mut subscription) = network.stream_from::<Vec<u8>>(topic_id, StreamFrom::Frontier).await?;
         drop(network);
 
         let topic_status = self.node_status.write().await.register_topic(topic_id);
@@ -196,11 +181,7 @@ impl PandaNode {
     }
 
     /// Insert a bootstrap node at runtime.
-    pub async fn insert_bootstrap(
-        &self,
-        node_id: NodeId,
-        relay_url: Option<RelayUrl>,
-    ) -> Result<(), NetworkError> {
+    pub async fn insert_bootstrap(&self, node_id: NodeId, relay_url: Option<RelayUrl>) -> Result<(), NetworkError> {
         let relay_url = relay_url.unwrap_or_else(|| DEFAULT_IROH_RELAY_URL.clone());
         let network = self.network.read().await;
 
@@ -213,15 +194,9 @@ impl PandaNode {
     /// subscribed, so it can be called while a live frontier subscription is
     /// active.  The publisher half of the stream is dropped immediately because
     /// publishing is handled by the existing subscription.
-    pub async fn replay_topic(
-        &self,
-        topic_id: Topic,
-        events_tx: mpsc::Sender<IncomingOperation>,
-    ) -> Result<(), SubscriptionError> {
+    pub async fn replay_topic(&self, topic_id: Topic, events_tx: mpsc::Sender<IncomingOperation>) -> Result<(), SubscriptionError> {
         let network = self.network.read().await;
-        let (_publisher, mut subscription) = network
-            .stream_from::<Vec<u8>>(topic_id, StreamFrom::Start)
-            .await?;
+        let (_publisher, mut subscription) = network.stream_from::<Vec<u8>>(topic_id, StreamFrom::Start).await?;
         drop(network);
 
         tokio::spawn(async move {
@@ -270,30 +245,22 @@ impl PandaNode {
         self.subscribe_to_topic(topic, events_tx).await
     }
 
-    pub async fn publish_to_region_topic<T: RegionTopic>(
-        &self,
-        region_topic: &T,
-        bytes: Vec<u8>,
-    ) -> Result<Hash, PandaPublishError> {
+    pub async fn publish_to_region_topic<T: RegionTopic>(&self, region_topic: &T, bytes: Vec<u8>) -> Result<Hash, PandaPublishError> {
         let topic = region_topic.p2panda_topic();
         self.publish(topic, bytes).await
     }
 
     async fn publish(&self, topic_id: Topic, bytes: Vec<u8>) -> Result<Hash, PandaPublishError> {
         let publishers = self.publishers.read().await;
-        let publisher = publishers
-            .get(&topic_id)
-            .ok_or(PandaPublishError::NoSubscription(topic_id))?;
+        let publisher = publishers.get(&topic_id).ok_or(PandaPublishError::NoSubscription(topic_id))?;
         let publish_future = publisher.publish(bytes).await?;
         Ok(publish_future.hash())
     }
 
     pub async fn get_log_counts(&self) -> Result<Vec<LogCount>, SqliteError> {
-        let rows = sqlx::query(
-            "SELECT public_key, COUNT(*) AS total FROM operations_v1 GROUP BY public_key",
-        )
-        .fetch_all(&self.pool)
-        .await?;
+        let rows = sqlx::query("SELECT public_key, COUNT(*) AS total FROM operations_v1 GROUP BY public_key")
+            .fetch_all(&self.pool)
+            .await?;
 
         Ok(rows
             .into_iter()
@@ -304,9 +271,7 @@ impl PandaNode {
             .collect())
     }
 
-    pub async fn get_operation_counts_by_topic(
-        &self,
-    ) -> Result<Vec<OperationCountByAuthorAndTopic>, SqliteError> {
+    pub async fn get_operation_counts_by_topic(&self) -> Result<Vec<OperationCountByAuthorAndTopic>, SqliteError> {
         let rows = sqlx::query(
             "SELECT lower(hex(substr(t.topic, 3))) AS topic_hex, t.author, COUNT(o.hash) AS total
              FROM topics_v1 t
@@ -343,12 +308,7 @@ async fn open_pool(database_url: &str) -> Result<SqlitePool, sqlx::Error> {
     // wants just the path.
     let path = database_url.strip_prefix("sqlite:").unwrap_or(database_url);
 
-    let options = SqliteConnectOptions::new()
-        .filename(path)
-        .create_if_missing(true);
+    let options = SqliteConnectOptions::new().filename(path).create_if_missing(true);
 
-    SqlitePoolOptions::new()
-        .max_connections(4)
-        .connect_with(options)
-        .await
+    SqlitePoolOptions::new().max_connections(4).connect_with(options).await
 }

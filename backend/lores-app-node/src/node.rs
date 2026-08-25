@@ -101,11 +101,7 @@ impl<Op: Clone + Serialize + Send + 'static> AppNode<Op> {
     /// Create a local-only `AppNode` backed by a SQLite store.
     ///
     /// Operations are persisted locally and never forwarded to a remote node.
-    pub async fn local(
-        pool: SqlitePool,
-        app_id: impl Into<String>,
-        instance_id: impl Into<String>,
-    ) -> Result<Self, sqlx::Error> {
+    pub async fn local(pool: SqlitePool, app_id: impl Into<String>, instance_id: impl Into<String>) -> Result<Self, sqlx::Error> {
         let store = LocalOperationStore::new(pool).await?;
         Ok(Self::new(app_id, instance_id, Box::new(store), None))
     }
@@ -133,11 +129,7 @@ impl<Op: Clone + Serialize + Send + 'static> AppNode<Op> {
     /// Create an `AppNode` connected to an external lores-node via gRPC.
     ///
     /// Uses a lazy connection — no network call until the first publish.
-    pub fn grpc(
-        grpc_addr: String,
-        app_id: impl Into<String>,
-        instance_id: impl Into<String>,
-    ) -> Self {
+    pub fn grpc(grpc_addr: String, app_id: impl Into<String>, instance_id: impl Into<String>) -> Self {
         let app_id = app_id.into();
         let instance_id = instance_id.into();
         let client = make_panda_client(grpc_addr);
@@ -227,8 +219,6 @@ impl<Op: Clone + Serialize + Send + 'static> AppNode<Op> {
 pub(crate) fn map_store_error(err: StoreError) -> NodeError {
     match err {
         StoreError::RegionNotBound(msg) => NodeError::RegionNotBound(msg),
-        StoreError::Other(_) => NodeError::GrpcUnavailable(
-            "Could not connect to the LoRes Node for this server".to_string(),
-        ),
+        StoreError::Other(_) => NodeError::GrpcUnavailable("Could not connect to the LoRes Node for this server".to_string()),
     }
 }

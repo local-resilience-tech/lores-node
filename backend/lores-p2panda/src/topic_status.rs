@@ -29,14 +29,9 @@ impl TopicStatus {
     pub fn handle_stream_event<M>(&mut self, event: &StreamEvent<M>) {
         match event {
             StreamEvent::SyncStarted { remote_node_id, .. } => {
-                self.connections
-                    .insert(*remote_node_id, ConnectionStatus::Syncing);
+                self.connections.insert(*remote_node_id, ConnectionStatus::Syncing);
             }
-            StreamEvent::SyncEnded {
-                remote_node_id,
-                error,
-                ..
-            } => {
+            StreamEvent::SyncEnded { remote_node_id, error, .. } => {
                 let new_status = if error.is_some() {
                     ConnectionStatus::SyncFailed
                 } else {

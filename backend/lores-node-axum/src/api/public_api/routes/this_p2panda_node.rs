@@ -1,6 +1,6 @@
-use tracing::info;
-use axum::{http::StatusCode, response::IntoResponse, Extension, Json};
+use axum::{Extension, Json, http::StatusCode, response::IntoResponse};
 use serde::Serialize;
+use tracing::info;
 use utoipa::ToSchema;
 use utoipa_axum::{router::OpenApiRouter, routes};
 
@@ -22,9 +22,7 @@ pub struct P2PandaNodeDetails {
     (status = 200, body = P2PandaNodeDetails),
     (status = 503, description = "Network not started", body = String),
 ),)]
-async fn show_this_panda_node(
-    Extension(panda_container): Extension<PandaContainer>,
-) -> impl IntoResponse {
+async fn show_this_panda_node(Extension(panda_container): Extension<PandaContainer>) -> impl IntoResponse {
     if !panda_container.is_started().await {
         return (StatusCode::SERVICE_UNAVAILABLE, Json("Network not started")).into_response();
     }
@@ -53,9 +51,7 @@ struct P2PandaLogCounts {
 #[utoipa::path(get, path = "/event_log", responses(
     (status = 200, body = P2PandaLogCounts)
 ),)]
-async fn p2panda_log_counts(
-    Extension(panda_container): Extension<PandaContainer>,
-) -> impl IntoResponse {
+async fn p2panda_log_counts(Extension(panda_container): Extension<PandaContainer>) -> impl IntoResponse {
     let counts = panda_container.get_log_counts().await.unwrap_or_else(|e| {
         eprint!("Error finding log count: {}", e);
         vec![]

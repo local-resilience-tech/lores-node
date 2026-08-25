@@ -48,7 +48,12 @@ pub(crate) struct RawOperationEvent {
 impl RawOperationEvent {
     /// Construct an event for a locally-published operation with no p2panda metadata.
     pub(crate) fn new_local(payload: Vec<u8>) -> Self {
-        Self { payload, author: None, operation_id: None, timestamp: None }
+        Self {
+            payload,
+            author: None,
+            operation_id: None,
+            timestamp: None,
+        }
     }
 }
 

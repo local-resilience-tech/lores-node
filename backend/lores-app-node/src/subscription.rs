@@ -70,23 +70,13 @@ impl<Op: Clone + Send + 'static> LiveSubscription<Op> {
                 Some(s)
             }
             Err(err @ StoreError::RegionNotBound(_)) => {
-                tracing::warn!(
-                    "Subscribe failed — region not bound (retrying in {:?})",
-                    backoff.current
-                );
-                backoff
-                    .set_error_and_advance(&self.error_tx, map_store_error(err))
-                    .await;
+                tracing::warn!("Subscribe failed — region not bound (retrying in {:?})", backoff.current);
+                backoff.set_error_and_advance(&self.error_tx, map_store_error(err)).await;
                 None
             }
             Err(err @ StoreError::Other(_)) => {
-                tracing::error!(
-                    "Subscribe failed: {err} (retrying in {:?})",
-                    backoff.current
-                );
-                backoff
-                    .set_error_and_advance(&self.error_tx, map_store_error(err))
-                    .await;
+                tracing::error!("Subscribe failed: {err} (retrying in {:?})", backoff.current);
+                backoff.set_error_and_advance(&self.error_tx, map_store_error(err)).await;
                 None
             }
         }

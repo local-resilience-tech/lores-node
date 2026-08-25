@@ -17,11 +17,7 @@ pub async fn find_local_apps(pool: &SqlitePool) -> Result<Vec<LocalApp>, sqlx::E
     Ok(local_apps)
 }
 
-pub async fn find_local_app(
-    pool: &SqlitePool,
-    name: &str,
-    instance_id: &Option<String>,
-) -> Result<Option<LocalApp>, sqlx::Error> {
+pub async fn find_local_app(pool: &SqlitePool, name: &str, instance_id: &Option<String>) -> Result<Option<LocalApp>, sqlx::Error> {
     // Check Docker-deployed apps first (no DB required)
     let docker_match = find_deployed_local_apps()
         .into_iter()

@@ -29,9 +29,7 @@ impl OperationStore for OutboxStore {
         &mut self,
         payload: Vec<u8>,
         idempotency_key: Option<String>,
-    ) -> Pin<
-        Box<dyn std::future::Future<Output = Result<StorePublishResult, StoreError>> + Send + '_>,
-    > {
+    ) -> Pin<Box<dyn std::future::Future<Output = Result<StorePublishResult, StoreError>> + Send + '_>> {
         Box::pin(async move {
             // 1. Persist locally — this is our source of truth until gRPC acks.
             let id = self
@@ -45,9 +43,7 @@ impl OperationStore for OutboxStore {
                 Ok(result) => {
                     // 3. Confirmed — remove from local store.
                     if let Err(e) = self.local.delete(id).await {
-                        tracing::warn!(
-                            "Delivered op {id} but failed to delete from local store: {e}"
-                        );
+                        tracing::warn!("Delivered op {id} but failed to delete from local store: {e}");
                     }
                     Ok(result)
                 }
@@ -63,17 +59,11 @@ impl OperationStore for OutboxStore {
         })
     }
 
-    fn subscribe(
-        &mut self,
-    ) -> Pin<Box<dyn std::future::Future<Output = Result<OperationStream, StoreError>> + Send + '_>>
-    {
+    fn subscribe(&mut self) -> Pin<Box<dyn std::future::Future<Output = Result<OperationStream, StoreError>> + Send + '_>> {
         self.remote.subscribe()
     }
 
-    fn replay(
-        &mut self,
-    ) -> Pin<Box<dyn std::future::Future<Output = Result<OperationStream, StoreError>> + Send + '_>>
-    {
+    fn replay(&mut self) -> Pin<Box<dyn std::future::Future<Output = Result<OperationStream, StoreError>> + Send + '_>> {
         self.local.replay()
     }
 }

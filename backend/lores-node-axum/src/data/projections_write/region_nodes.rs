@@ -17,12 +17,7 @@ impl RegionNodesWriteRepo {
         RegionNodesWriteRepo {}
     }
 
-    pub async fn upsert_identity(
-        &self,
-        pool: &SqlitePool,
-        node_id: &str,
-        region_id: &str,
-    ) -> Result<(), sqlx::Error> {
+    pub async fn upsert_identity(&self, pool: &SqlitePool, node_id: &str, region_id: &str) -> Result<(), sqlx::Error> {
         let node_repo = NodesWriteRepo::init();
         node_repo.upsert_id(pool, node_id).await?;
 
@@ -39,18 +34,11 @@ impl RegionNodesWriteRepo {
         Ok(())
     }
 
-    pub async fn find_or_create_by_keys(
-        &self,
-        pool: &SqlitePool,
-        node_id: &str,
-        region_id: &str,
-    ) -> Result<RegionNode, sqlx::Error> {
+    pub async fn find_or_create_by_keys(&self, pool: &SqlitePool, node_id: &str, region_id: &str) -> Result<RegionNode, sqlx::Error> {
         self.upsert_identity(pool, node_id, region_id).await?;
 
         let read_repo = RegionNodesReadRepo::init();
-        read_repo
-            .find_required_by_keys(pool, node_id, region_id)
-            .await
+        read_repo.find_required_by_keys(pool, node_id, region_id).await
     }
 
     pub async fn upsert_join_status_and_details(

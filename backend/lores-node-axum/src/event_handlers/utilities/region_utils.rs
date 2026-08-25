@@ -4,17 +4,10 @@ use tracing::{info, warn};
 use crate::panda_comms::lores_events::LoResEventHeader;
 
 pub fn header_has_region(header: &LoResEventHeader) -> Result<(), ()> {
-    if header.region_id.is_some() {
-        Ok(())
-    } else {
-        Err(())
-    }
+    if header.region_id.is_some() { Ok(()) } else { Err(()) }
 }
 
-pub async fn region_already_projected(
-    header: &LoResEventHeader,
-    pool: &SqlitePool,
-) -> Result<(), ()> {
+pub async fn region_already_projected(header: &LoResEventHeader, pool: &SqlitePool) -> Result<(), ()> {
     use crate::data::projections_read::regions::RegionsReadRepo;
 
     let region_id = match &header.region_id {

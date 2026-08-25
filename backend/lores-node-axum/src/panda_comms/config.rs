@@ -1,7 +1,7 @@
-use tracing::info;
 use crate::{config::config_state::LoresNodeConfigState, panda_comms::build_public_key_from_hex};
 use hex;
-use p2panda_core::{identity::SIGNING_KEY_LEN, SigningKey, VerifyingKey};
+use p2panda_core::{SigningKey, VerifyingKey, identity::SIGNING_KEY_LEN};
+use tracing::info;
 
 pub struct ThisP2PandaNodeRepo {}
 
@@ -10,10 +10,7 @@ impl ThisP2PandaNodeRepo {
         ThisP2PandaNodeRepo {}
     }
 
-    pub async fn get_bootstrap_node_ids(
-        &self,
-        config_state: &LoresNodeConfigState,
-    ) -> Vec<VerifyingKey> {
+    pub async fn get_bootstrap_node_ids(&self, config_state: &LoresNodeConfigState) -> Vec<VerifyingKey> {
         let config = config_state.get().await;
 
         config
@@ -24,10 +21,7 @@ impl ThisP2PandaNodeRepo {
             .collect()
     }
 
-    pub async fn get_or_create_private_key(
-        &self,
-        config_state: &LoresNodeConfigState,
-    ) -> Result<SigningKey, anyhow::Error> {
+    pub async fn get_or_create_private_key(&self, config_state: &LoresNodeConfigState) -> Result<SigningKey, anyhow::Error> {
         let private_key = self.get_private_key(config_state).await;
 
         match private_key {
@@ -46,10 +40,7 @@ impl ThisP2PandaNodeRepo {
             .flatten()
     }
 
-    async fn create_private_key(
-        &self,
-        config_state: &LoresNodeConfigState,
-    ) -> Result<SigningKey, anyhow::Error> {
+    async fn create_private_key(&self, config_state: &LoresNodeConfigState) -> Result<SigningKey, anyhow::Error> {
         let new_private_key = SigningKey::generate();
         let public_key = new_private_key.verifying_key();
 

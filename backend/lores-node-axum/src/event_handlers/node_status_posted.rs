@@ -9,10 +9,7 @@ use crate::{
             region_nodes::RegionNodesWriteRepo,
         },
     },
-    event_handlers::utilities::{
-        handle_db_write_error, header_has_region, read_node_updated_event, EventHandler,
-        HandlerResult,
-    },
+    event_handlers::utilities::{EventHandler, HandlerResult, handle_db_write_error, header_has_region, read_node_updated_event},
     panda_comms::lores_events::{LoResEventHeader, NodeStatusPostedDataV1},
 };
 
@@ -22,17 +19,10 @@ pub struct NodeStatusPostedHandler {
 
 impl NodeStatusPostedHandler {
     pub fn new(payload: &NodeStatusPostedDataV1) -> Self {
-        Self {
-            payload: payload.clone(),
-        }
+        Self { payload: payload.clone() }
     }
 
-    async fn write_projections(
-        &self,
-        header: &LoResEventHeader,
-        region_id_string: &str,
-        pool: &SqlitePool,
-    ) -> Result<(), sqlx::Error> {
+    async fn write_projections(&self, header: &LoResEventHeader, region_id_string: &str, pool: &SqlitePool) -> Result<(), sqlx::Error> {
         let region_nodes_read_repo = RegionNodesReadRepo::init();
         let region_nodes_write_repo = RegionNodesWriteRepo::init();
         let status_write_repo = NodeStatusesWriteRepo::init();
@@ -78,18 +68,11 @@ impl NodeStatusPostedHandler {
 impl EventHandler for NodeStatusPostedHandler {
     async fn handle(&self, header: LoResEventHeader, pool: &SqlitePool) -> HandlerResult {
         let region_id_string = header.region_id.as_ref().unwrap().to_hex();
-        let result = self
-            .write_projections(&header, &region_id_string, pool)
-            .await;
+        let result = self.write_projections(&header, &region_id_string, pool).await;
 
         match result {
             Ok(()) => HandlerResult {
-                client_events: read_node_updated_event(
-                    pool,
-                    header.author_node_id,
-                    region_id_string.clone(),
-                )
-                .await,
+                client_events: read_node_updated_event(pool, header.author_node_id, region_id_string.clone()).await,
             },
 
             Err(e) => handle_db_write_error(e),

@@ -1,4 +1,4 @@
-use axum::{http::StatusCode, response::IntoResponse, Extension, Json};
+use axum::{Extension, Json, http::StatusCode, response::IntoResponse};
 use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::{
@@ -27,24 +27,13 @@ async fn show_network(Extension(panda_container): Extension<PandaContainer>) -> 
 
     let network_name = match params.network_name {
         Some(name) => name,
-        None => {
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json("Network name not found"),
-            )
-                .into_response()
-        }
+        None => return (StatusCode::INTERNAL_SERVER_ERROR, Json("Network name not found")).into_response(),
     };
 
     let public_key = panda_container.get_public_key().await.unwrap();
 
-    let node = NetworkNode {
-        id: public_key.to_hex(),
-    };
-    let result = Network {
-        name: network_name,
-        node,
-    };
+    let node = NetworkNode { id: public_key.to_hex() };
+    let result = Network { name: network_name, node };
 
     (StatusCode::OK, Json(result)).into_response()
 }

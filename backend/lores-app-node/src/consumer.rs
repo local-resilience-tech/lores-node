@@ -38,10 +38,7 @@ impl<Op: Clone + Send + 'static> OperationConsumer<Op> {
     /// Returns `Ok(count)` if the stream ended cleanly, or `Err` on the first
     /// stream-level failure. Deserialization failures are logged as warnings
     /// and do not stop the drain.
-    pub(crate) async fn drain_stream(
-        &self,
-        stream: &mut OperationStream,
-    ) -> Result<usize, StoreError>
+    pub(crate) async fn drain_stream(&self, stream: &mut OperationStream) -> Result<usize, StoreError>
     where
         Op: for<'de> serde::Deserialize<'de>,
     {

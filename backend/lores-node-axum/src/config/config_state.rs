@@ -1,6 +1,6 @@
 use std::sync::Arc;
-use tracing::warn;
 use tokio::sync::Mutex;
+use tracing::warn;
 
 use super::config::LoresNodeConfig;
 
@@ -20,10 +20,7 @@ impl LoresNodeConfigState {
         self.config.lock().await.clone()
     }
 
-    pub async fn update(
-        &self,
-        callback: impl FnOnce(LoresNodeConfig) -> LoresNodeConfig,
-    ) -> Result<(), anyhow::Error> {
+    pub async fn update(&self, callback: impl FnOnce(LoresNodeConfig) -> LoresNodeConfig) -> Result<(), anyhow::Error> {
         let mut locked_config = self.config.lock().await;
         let changed_config = callback(locked_config.clone());
         let save_result = changed_config.save();

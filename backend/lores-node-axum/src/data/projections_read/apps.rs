@@ -33,10 +33,7 @@ impl AppsReadRepo {
     //         .await
     // }
 
-    pub async fn all_with_installations(
-        &self,
-        pool: &SqlitePool,
-    ) -> Result<Vec<RegionAppWithInstallations>, sqlx::Error> {
+    pub async fn all_with_installations(&self, pool: &SqlitePool) -> Result<Vec<RegionAppWithInstallations>, sqlx::Error> {
         let rows = sqlx::query_as!(
             InstallationRow,
             "SELECT app_installations.app_name, app_installations.region_node_id, app_installations.version, region_nodes.region_id
@@ -56,13 +53,11 @@ impl AppsReadRepo {
 
         let region_apps = app_map
             .into_iter()
-            .map(
-                |(name, (region_id, installations))| RegionAppWithInstallations {
-                    name,
-                    region_id,
-                    installations,
-                },
-            )
+            .map(|(name, (region_id, installations))| RegionAppWithInstallations {
+                name,
+                region_id,
+                installations,
+            })
             .collect();
 
         Ok(region_apps)

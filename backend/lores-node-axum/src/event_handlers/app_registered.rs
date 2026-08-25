@@ -6,16 +6,11 @@ use crate::{
     data::{
         entities::AppInstallation,
         projections_read::apps::AppsReadRepo,
-        projections_write::{
-            app_installations::AppInstallationsWriteRepo, region_nodes::RegionNodesWriteRepo,
-        },
+        projections_write::{app_installations::AppInstallationsWriteRepo, region_nodes::RegionNodesWriteRepo},
     },
     event_handlers::{
-        utilities::{
-            handle_db_write_error, header_has_region, region_utils::region_already_projected,
-            HandlerResult,
-        },
         EventHandler,
+        utilities::{HandlerResult, handle_db_write_error, header_has_region, region_utils::region_already_projected},
     },
     panda_comms::lores_events::{AppRegisteredDataV1, LoResEventHeader},
 };
@@ -26,16 +21,10 @@ pub struct AppRegisteredHandler {
 
 impl AppRegisteredHandler {
     pub fn new(payload: &AppRegisteredDataV1) -> Self {
-        Self {
-            payload: payload.clone(),
-        }
+        Self { payload: payload.clone() }
     }
 
-    async fn write_projections(
-        &self,
-        header: LoResEventHeader,
-        pool: &SqlitePool,
-    ) -> Result<(), sqlx::Error> {
+    async fn write_projections(&self, header: LoResEventHeader, pool: &SqlitePool) -> Result<(), sqlx::Error> {
         let node_write_repo = RegionNodesWriteRepo::init();
         let installations_write_repo = AppInstallationsWriteRepo::init();
 
@@ -55,14 +44,8 @@ impl AppRegisteredHandler {
         Ok(())
     }
 
-    async fn read_region_app_updated_event(
-        &self,
-        pool: &SqlitePool,
-        app_name: String,
-    ) -> Vec<ClientEvent> {
-        let app_details = AppsReadRepo::init()
-            .find_with_installations(pool, app_name)
-            .await;
+    async fn read_region_app_updated_event(&self, pool: &SqlitePool, app_name: String) -> Vec<ClientEvent> {
+        let app_details = AppsReadRepo::init().find_with_installations(pool, app_name).await;
 
         match app_details {
             Ok(Some(details)) => vec![ClientEvent::RegionAppUpdated(details)],

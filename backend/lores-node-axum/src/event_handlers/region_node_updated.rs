@@ -3,13 +3,10 @@ use tracing::warn;
 
 use crate::{
     data::projections_write::region_nodes::RegionNodesWriteRepo,
-    event_handlers::utilities::{
-        handle_db_write_error, header_has_region, read_node_updated_event, EventHandler,
-        HandlerResult,
-    },
+    event_handlers::utilities::{EventHandler, HandlerResult, handle_db_write_error, header_has_region, read_node_updated_event},
     panda_comms::{
-        lores_events::{LoResEventHeader, RegionNodeUpdatedDataV1},
         RegionId,
+        lores_events::{LoResEventHeader, RegionNodeUpdatedDataV1},
     },
 };
 
@@ -19,16 +16,10 @@ pub struct RegionNodeUpdatedHandler {
 
 impl RegionNodeUpdatedHandler {
     pub fn new(payload: &RegionNodeUpdatedDataV1) -> Self {
-        Self {
-            payload: payload.clone(),
-        }
+        Self { payload: payload.clone() }
     }
 
-    async fn write_projections(
-        &self,
-        header: &LoResEventHeader,
-        pool: &SqlitePool,
-    ) -> Result<(), sqlx::Error> {
+    async fn write_projections(&self, header: &LoResEventHeader, pool: &SqlitePool) -> Result<(), sqlx::Error> {
         let repo = RegionNodesWriteRepo::init();
 
         repo.upsert_details(

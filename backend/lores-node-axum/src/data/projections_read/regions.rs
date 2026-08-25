@@ -50,11 +50,7 @@ impl RegionsReadRepo {
         RegionsReadRepo {}
     }
 
-    pub async fn find(
-        &self,
-        pool: &SqlitePool,
-        region_id: &str,
-    ) -> Result<Option<Region>, sqlx::Error> {
+    pub async fn find(&self, pool: &SqlitePool, region_id: &str) -> Result<Option<Region>, sqlx::Error> {
         let region = sqlx::query_as!(
             RegionRow,
             "
@@ -84,11 +80,7 @@ impl RegionsReadRepo {
         return Ok(region);
     }
 
-    pub async fn find_all_for_node(
-        &self,
-        pool: &SqlitePool,
-        node_id: &str,
-    ) -> Result<Vec<Region>, sqlx::Error> {
+    pub async fn find_all_for_node(&self, pool: &SqlitePool, node_id: &str) -> Result<Vec<Region>, sqlx::Error> {
         let regions = sqlx::query_as!(
             RegionRow,
             "

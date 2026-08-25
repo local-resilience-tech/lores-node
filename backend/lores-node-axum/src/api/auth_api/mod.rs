@@ -20,8 +20,6 @@ struct UserRef {
 
 impl UserRef {
     pub fn from_backend_user(user: &auth_backend::User) -> Self {
-        UserRef {
-            user_id: user.id.clone(),
-        }
+        UserRef { user_id: user.id.clone() }
     }
 }

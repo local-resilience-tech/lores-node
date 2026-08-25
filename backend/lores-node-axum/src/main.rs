@@ -25,9 +25,7 @@ use crate::{
         public_api::realtime::{self, RealtimeState},
     },
     config::{config::LoresNodeConfig, config_state::LoresNodeConfigState},
-    panda_comms::{
-        PandaContainer, lores_events::LoResEvent, start_panda, start_panda_event_handler,
-    },
+    panda_comms::{PandaContainer, lores_events::LoResEvent, start_panda, start_panda_event_handler},
     static_server::frontend_handler,
 };
 
@@ -57,30 +55,19 @@ async fn main() {
     struct ApiDoc;
 
     // CONFIG PARAMS
-    let base_url =
-        std::env::var("BASE_URL").unwrap_or_else(|_| "http://lores.localhost:5173".to_string());
+    let base_url = std::env::var("BASE_URL").unwrap_or_else(|_| "http://lores.localhost:5173".to_string());
 
     // LOGGING AND TRACING
     tracing_subscriber::fmt()
         // This allows you to use, e.g., `RUST_LOG=info` or `RUST_LOG=debug`
         // when running the app to set log levels.
-        .with_env_filter(
-            EnvFilter::try_from_default_env()
-                .or_else(|_| EnvFilter::try_new("info"))
-                .unwrap(),
-        )
+        .with_env_filter(EnvFilter::try_from_default_env().or_else(|_| EnvFilter::try_new("info")).unwrap())
         .init();
 
     // CORS
     let cors = CorsLayer::new()
         .allow_origin(base_url.parse::<header::HeaderValue>().unwrap())
-        .allow_methods([
-            Method::GET,
-            Method::POST,
-            Method::PUT,
-            Method::DELETE,
-            Method::OPTIONS,
-        ])
+        .allow_methods([Method::GET, Method::POST, Method::PUT, Method::DELETE, Method::OPTIONS])
         .allow_headers([header::AUTHORIZATION, header::ACCEPT, header::CONTENT_TYPE])
         .allow_credentials(true);
 
@@ -110,22 +97,17 @@ async fn main() {
     let realtime_state = RealtimeState::new();
 
     // P2PANDA
-    let (channel_tx, channel_rx): (mpsc::Sender<LoResEvent>, mpsc::Receiver<LoResEvent>) =
-        mpsc::channel(32);
+    let (channel_tx, channel_rx): (mpsc::Sender<LoResEvent>, mpsc::Receiver<LoResEvent>) = mpsc::channel(32);
     let panda_container = PandaContainer::new(channel_tx);
     start_panda_event_handler(channel_rx, projections_pool.clone(), realtime_state.clone());
     start_panda(&config_state, &panda_container, &projections_pool).await;
 
     // GRPC SERVER
     let grpc_port = env::var("GRPC_PORT").unwrap_or_else(|_| "50051".to_string());
-    let grpc_addr = format!("0.0.0.0:{}", grpc_port)
-        .parse()
-        .expect("valid gRPC bind address");
+    let grpc_addr = format!("0.0.0.0:{}", grpc_port).parse().expect("valid gRPC bind address");
     let panda_service = {
-        let on_instance_seen =
-            local_apps::app_instances::make_instance_seen_callback(node_data_pool.clone());
-        let resolve_region_id =
-            local_apps::region_resolver::make_region_resolver(node_data_pool.clone());
+        let on_instance_seen = local_apps::app_instances::make_instance_seen_callback(node_data_pool.clone());
+        let resolve_region_id = local_apps::region_resolver::make_region_resolver(node_data_pool.clone());
         lores_p2panda_server::PandaService::new(
             panda_container.node_arc(),
             node_data_pool.clone(),
@@ -146,9 +128,7 @@ async fn main() {
     });
 
     // ROUTES
-    let (router, api) = OpenApiRouter::with_openapi(ApiDoc::openapi())
-        .merge(api_router())
-        .split_for_parts();
+    let (router, api) = OpenApiRouter::with_openapi(ApiDoc::openapi()).merge(api_router()).split_for_parts();
 
     let router = router
         .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", api.clone()))
@@ -170,9 +150,7 @@ async fn main() {
     let app = router.into_make_service();
 
     let port = env::var("HTTP_PORT").unwrap_or_else(|_| "8200".to_string());
-    let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{}", port))
-        .await
-        .unwrap();
+    let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{}", port)).await.unwrap();
 
     info!("Listening on http://localhost:{}, Ctrl+C to stop", port);
 

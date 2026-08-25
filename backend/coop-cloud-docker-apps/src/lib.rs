@@ -9,9 +9,7 @@ mod service_labels;
 
 pub use apps::build_coop_cloud_app;
 pub use coop_cloud_app::{AppUrl, CoopCloudApp, LoResApp};
-pub use docker::{
-    DockerService, DockerStack, DockerStackWithServices, docker_stacks_with_services,
-};
+pub use docker::{DockerService, DockerStack, DockerStackWithServices, docker_stacks_with_services};
 
 pub fn coop_cloud_apps() -> Vec<CoopCloudApp> {
     let deployed_stacks = docker_stack_ls().unwrap_or_else(|e| {

@@ -4,14 +4,10 @@ use tokio::sync::{Mutex, mpsc};
 use tracing::{info, warn};
 
 use lores_p2panda::{
-    IncomingOperation, PandaNodeError, RegionAdminTopic, RegionId, RegionTopic, Topic,
+    IncomingOperation, PandaNodeError, RegionAdminTopic, RegionId, RegionTopic, RelayUrl, Topic,
     p2panda_core::{Hash, SigningKey, VerifyingKey, identity::VERIFYING_KEY_LEN},
-    panda_node::{
-        LogCount, OperationCountByAuthorAndTopic, PandaNode, PandaPublishError, RequiredNodeParams,
-        SubscriptionError,
-    },
+    panda_node::{LogCount, OperationCountByAuthorAndTopic, PandaNode, PandaPublishError, RequiredNodeParams, SubscriptionError},
     topic_status::ConnectionStatus,
-    RelayUrl,
 };
 
 use crate::api::auth_api::auth_backend::User;
@@ -116,13 +112,8 @@ impl PandaContainer {
         let private_key = private_key.unwrap();
         let network_name = network_name.unwrap();
 
-        self.start_for(
-            private_key,
-            network_name,
-            &boostrap_node_ids,
-            operations_database_url,
-        )
-        .await?;
+        self.start_for(private_key, network_name, &boostrap_node_ids, operations_database_url)
+            .await?;
 
         Ok(())
     }
@@ -220,10 +211,7 @@ impl PandaContainer {
         Ok(admin_topic.p2panda_topic())
     }
 
-    pub async fn subscribe<T: RegionTopic>(
-        &self,
-        region_topic: &T,
-    ) -> Result<(), PandaSubscriptionError> {
+    pub async fn subscribe<T: RegionTopic>(&self, region_topic: &T) -> Result<(), PandaSubscriptionError> {
         let node_lock = self.node.lock().await;
         let node = match node_lock.as_ref() {
             Some(node) => node.clone(),
@@ -233,8 +221,7 @@ impl PandaContainer {
 
         let (incoming_tx, mut incoming_rx) = mpsc::channel::<IncomingOperation>(32);
 
-        node.subscribe_to_region_topic(region_topic, incoming_tx)
-            .await?;
+        node.subscribe_to_region_topic(region_topic, incoming_tx).await?;
 
         let events_tx = self.lores_events_tx.clone();
         tokio::spawn(async move {
@@ -273,18 +260,15 @@ impl PandaContainer {
             _ => None,
         };
         let metadata = LoResEventMetadataV1 { node_steward_id };
-        let encoded_payload = encode_lores_event_payload(event_payload, metadata)
-            .map_err(|e| PandaPublishError::AppError(format!("Encoding error: {e}")))?;
+        let encoded_payload =
+            encode_lores_event_payload(event_payload, metadata).map_err(|e| PandaPublishError::AppError(format!("Encoding error: {e}")))?;
 
-        node.publish_to_region_topic(region_topic, encoded_payload)
-            .await?;
+        node.publish_to_region_topic(region_topic, encoded_payload).await?;
 
         Ok(())
     }
 
-    fn decode_incoming_to_lores_event(
-        incoming: IncomingOperation,
-    ) -> Result<LoResEvent, anyhow::Error> {
+    fn decode_incoming_to_lores_event(incoming: IncomingOperation) -> Result<LoResEvent, anyhow::Error> {
         let lores_header = LoResEventHeader {
             author_node_id: incoming.author.to_hex(),
             region_id: Some(incoming.topic.to_bytes().into()),
@@ -308,9 +292,7 @@ impl PandaContainer {
             .map_err(|e| anyhow::anyhow!("Error finding log count: {}", e))
     }
 
-    pub async fn get_operation_counts_by_topic(
-        &self,
-    ) -> Result<Vec<OperationCountByAuthorAndTopic>, anyhow::Error> {
+    pub async fn get_operation_counts_by_topic(&self) -> Result<Vec<OperationCountByAuthorAndTopic>, anyhow::Error> {
         let node_lock = self.node.lock().await;
         let node = match node_lock.as_ref() {
             Some(node) => node.clone(),
@@ -359,20 +341,15 @@ impl PandaContainer {
     /// Validates the node ID, inserts the bootstrap peer into the running node
     /// when it is already started, and saves it to params so it will be used on
     /// the next restart as well.
-    pub async fn add_bootstrap_node(
-        &self,
-        bootstrap_node_id_hex: &str,
-        relay_url: Option<RelayUrl>,
-    ) -> Result<(), anyhow::Error> {
-        let node_id = build_public_key_from_hex(bootstrap_node_id_hex)
-            .map_err(|e| anyhow::anyhow!("Invalid bootstrap node ID: {}", e))?;
+    pub async fn add_bootstrap_node(&self, bootstrap_node_id_hex: &str, relay_url: Option<RelayUrl>) -> Result<(), anyhow::Error> {
+        let node_id = build_public_key_from_hex(bootstrap_node_id_hex).map_err(|e| anyhow::anyhow!("Invalid bootstrap node ID: {}", e))?;
 
         {
             let node_lock = self.node.lock().await;
             if let Some(node) = node_lock.as_ref() {
-                node.insert_bootstrap(node_id, relay_url).await.map_err(|e| {
-                    anyhow::anyhow!("Failed to insert bootstrap node at runtime: {}", e)
-                })?;
+                node.insert_bootstrap(node_id, relay_url)
+                    .await
+                    .map_err(|e| anyhow::anyhow!("Failed to insert bootstrap node at runtime: {}", e))?;
             }
         }
 
@@ -387,8 +364,6 @@ impl PandaContainer {
 
 pub fn build_public_key_from_hex(key_hex: &str) -> Result<VerifyingKey, anyhow::Error> {
     let key_bytes = hex::decode(key_hex).map_err(|_| anyhow::anyhow!("Invalid hex string"))?;
-    let key_byte_array: [u8; VERIFYING_KEY_LEN] = key_bytes
-        .try_into()
-        .map_err(|_| anyhow::anyhow!("Invalid public key length"))?;
+    let key_byte_array: [u8; VERIFYING_KEY_LEN] = key_bytes.try_into().map_err(|_| anyhow::anyhow!("Invalid public key length"))?;
     VerifyingKey::from_bytes(&key_byte_array).map_err(|_| anyhow::anyhow!("Invalid public key"))
 }

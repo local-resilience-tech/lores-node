@@ -8,12 +8,10 @@ use crate::{
         projections_read::{region_nodes::RegionNodesReadRepo, regions::RegionsReadRepo},
         projections_write::{region_nodes::RegionNodesWriteRepo, regions::RegionsWriteRepo},
     },
-    event_handlers::utilities::{
-        handle_db_write_error, header_has_region, EventHandler, HandlerResult,
-    },
+    event_handlers::utilities::{EventHandler, HandlerResult, handle_db_write_error, header_has_region},
     panda_comms::{
-        lores_events::{LoResEventHeader, RegionJoinRequestedDataV1},
         RegionId,
+        lores_events::{LoResEventHeader, RegionJoinRequestedDataV1},
     },
 };
 
@@ -23,9 +21,7 @@ pub struct RegionJoinRequestedHandler {
 
 impl RegionJoinRequestedHandler {
     pub fn new(payload: &RegionJoinRequestedDataV1) -> Self {
-        Self {
-            payload: payload.clone(),
-        }
+        Self { payload: payload.clone() }
     }
 
     async fn write_projections(

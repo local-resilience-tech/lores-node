@@ -1,6 +1,6 @@
-use tracing::info;
-use axum::{http::StatusCode, response::IntoResponse, Extension};
+use axum::{Extension, http::StatusCode, response::IntoResponse};
 use serde::Deserialize;
+use tracing::info;
 use utoipa::ToSchema;
 use utoipa_axum::{router::OpenApiRouter, routes};
 
@@ -11,8 +11,8 @@ use crate::{
     },
     data::entities::{LatLng, NodeState},
     panda_comms::{
-        lores_events::{LoResEventPayload, NodeStatusPostedDataV1, RegionNodeUpdatedDataV1},
         PandaContainer, RegionAdminTopic, RegionId,
+        lores_events::{LoResEventPayload, NodeStatusPostedDataV1, RegionNodeUpdatedDataV1},
     },
 };
 
@@ -102,11 +102,7 @@ async fn update_this_region_node(
 
     // Publish the operation
     if let Err(e) = panda_container
-        .publish_persisted(
-            &RegionAdminTopic::new(region_id),
-            event_payload,
-            auth_session.user,
-        )
+        .publish_persisted(&RegionAdminTopic::new(region_id), event_payload, auth_session.user)
         .await
     {
         return internal_server_error(e).into_response();
@@ -155,11 +151,7 @@ async fn post_region_node_status(
     info!("Created event payload: {:?}", event_payload);
 
     if let Err(e) = panda_container
-        .publish_persisted(
-            &RegionAdminTopic::new(region_id),
-            event_payload,
-            auth_session.user,
-        )
+        .publish_persisted(&RegionAdminTopic::new(region_id), event_payload, auth_session.user)
         .await
     {
         return internal_server_error(e).into_response();

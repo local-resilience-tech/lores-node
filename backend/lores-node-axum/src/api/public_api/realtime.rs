@@ -48,10 +48,7 @@ impl RealtimeState {
     }
 }
 
-pub async fn handler(
-    ws: WebSocketUpgrade,
-    Extension(realtime_state): Extension<RealtimeState>,
-) -> Response {
+pub async fn handler(ws: WebSocketUpgrade, Extension(realtime_state): Extension<RealtimeState>) -> Response {
     ws.on_upgrade(|socket| handle_socket(socket, realtime_state))
 }
 
@@ -83,10 +80,7 @@ async fn recv_from_client(mut client_rx: SplitStream<WebSocket>) {
     }
 }
 
-async fn recv_broadcast(
-    client_tx_mutex: Arc<Mutex<SplitSink<WebSocket, Message>>>,
-    mut broadcast_rx: Receiver<ClientEvent>,
-) {
+async fn recv_broadcast(client_tx_mutex: Arc<Mutex<SplitSink<WebSocket, Message>>>, mut broadcast_rx: Receiver<ClientEvent>) {
     while let Ok(msg) = broadcast_rx.recv().await {
         let mut client_tx = client_tx_mutex.lock().await;
 

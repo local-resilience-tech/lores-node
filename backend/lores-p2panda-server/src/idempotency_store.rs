@@ -10,11 +10,7 @@ pub struct IdempotencyStore {
 }
 
 impl IdempotencyStore {
-    pub async fn new(
-        db: SqlitePool,
-        cleanup_frequency: Duration,
-        retention: Duration,
-    ) -> Result<Self, sqlx::Error> {
+    pub async fn new(db: SqlitePool, cleanup_frequency: Duration, retention: Duration) -> Result<Self, sqlx::Error> {
         Self::setup_table(&db).await?;
         Self::spawn_cleanup(&db, cleanup_frequency, retention);
         Ok(Self { db })
@@ -22,43 +18,30 @@ impl IdempotencyStore {
 
     /// Returns the stored operation_id if the key is a duplicate, or `None` if it is new.
     /// Returns `None` immediately when no key is supplied.
-    pub async fn check_duplicate(
-        &self,
-        region_app_topic: &RegionAppTopic,
-        idempotency_key: &[u8],
-    ) -> Result<Option<Vec<u8>>, Status> {
+    pub async fn check_duplicate(&self, region_app_topic: &RegionAppTopic, idempotency_key: &[u8]) -> Result<Option<Vec<u8>>, Status> {
         if idempotency_key.is_empty() {
             return Ok(None);
         }
 
         let topic_bytes = region_app_topic.p2panda_topic().to_bytes().to_vec();
-        let row: Option<(Vec<u8>,)> =
-            sqlx::query_as("SELECT operation_id FROM publish_idempotency_keys WHERE topic = ? AND key = ?")
-                .bind(&topic_bytes)
-                .bind(idempotency_key)
-                .fetch_optional(&self.db)
-                .await
-                .map_err(|e| Status::internal(e.to_string()))?;
+        let row: Option<(Vec<u8>,)> = sqlx::query_as("SELECT operation_id FROM publish_idempotency_keys WHERE topic = ? AND key = ?")
+            .bind(&topic_bytes)
+            .bind(idempotency_key)
+            .fetch_optional(&self.db)
+            .await
+            .map_err(|e| Status::internal(e.to_string()))?;
 
         Ok(row.map(|(id,)| id))
     }
 
     /// Records an idempotency key with its operation_id. No-op when the key is empty.
-    pub async fn record(
-        &self,
-        region_app_topic: &RegionAppTopic,
-        idempotency_key: &[u8],
-        operation_id: &[u8],
-    ) -> Result<(), Status> {
+    pub async fn record(&self, region_app_topic: &RegionAppTopic, idempotency_key: &[u8], operation_id: &[u8]) -> Result<(), Status> {
         if idempotency_key.is_empty() {
             return Ok(());
         }
 
         let topic_bytes = region_app_topic.p2panda_topic().to_bytes().to_vec();
-        let seen_at = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap()
-            .as_secs() as i64;
+        let seen_at = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs() as i64;
 
         sqlx::query(
             "INSERT OR IGNORE INTO publish_idempotency_keys (topic, key, operation_id, seen_at)
@@ -100,11 +83,7 @@ impl IdempotencyStore {
             let mut timer = interval(cleanup_frequency);
             loop {
                 timer.tick().await;
-                let cutoff = SystemTime::now()
-                    .duration_since(UNIX_EPOCH)
-                    .unwrap()
-                    .as_secs() as i64
-                    - retention_secs;
+                let cutoff = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs() as i64 - retention_secs;
                 let _ = sqlx::query("DELETE FROM publish_idempotency_keys WHERE seen_at < ?")
                     .bind(cutoff)
                     .execute(&db)
@@ -123,13 +102,9 @@ mod tests {
     async fn test_store() -> IdempotencyStore {
         let db = SqlitePool::connect("sqlite::memory:").await.unwrap();
         // Use a very long cleanup frequency so the background task never fires during tests.
-        IdempotencyStore::new(
-            db,
-            Duration::from_secs(u64::MAX / 2),
-            Duration::from_hours(48),
-        )
-        .await
-        .unwrap()
+        IdempotencyStore::new(db, Duration::from_secs(u64::MAX / 2), Duration::from_hours(48))
+            .await
+            .unwrap()
     }
 
     fn topic(namespace: &str) -> RegionAppTopic {
@@ -190,10 +165,7 @@ mod tests {
         assert!(store.check_duplicate(&topic, b"old-key").await.unwrap().is_some());
 
         // Run cleanup with a cutoff of now (removes anything seen_at < now).
-        let cutoff = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap()
-            .as_secs() as i64;
+        let cutoff = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs() as i64;
         sqlx::query("DELETE FROM publish_idempotency_keys WHERE seen_at < ?")
             .bind(cutoff)
             .execute(&store.db)

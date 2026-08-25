@@ -1,10 +1,10 @@
-use axum::{http::StatusCode, response::IntoResponse, Extension, Json};
+use axum::{Extension, Json, http::StatusCode, response::IntoResponse};
 
 use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::{
-    data::{entities::RegionAppWithInstallations, projections_read::apps::AppsReadRepo},
     DatabaseState,
+    data::{entities::RegionAppWithInstallations, projections_read::apps::AppsReadRepo},
 };
 
 pub fn router() -> OpenApiRouter {

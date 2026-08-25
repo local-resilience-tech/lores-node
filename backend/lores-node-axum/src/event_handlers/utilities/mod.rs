@@ -1,6 +1,4 @@
-use crate::{
-    api::public_api::client_events::ClientEvent, panda_comms::lores_events::LoResEventHeader,
-};
+use crate::{api::public_api::client_events::ClientEvent, panda_comms::lores_events::LoResEventHeader};
 
 pub use region_node_utils::read_node_updated_event;
 pub use region_utils::header_has_region;

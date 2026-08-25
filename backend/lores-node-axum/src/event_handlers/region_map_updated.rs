@@ -8,12 +8,10 @@ use crate::{
         projections_read::regions::RegionsReadRepo,
         projections_write::regions::RegionsWriteRepo,
     },
-    event_handlers::utilities::{
-        handle_db_write_error, header_has_region, EventHandler, HandlerResult,
-    },
+    event_handlers::utilities::{EventHandler, HandlerResult, handle_db_write_error, header_has_region},
     panda_comms::{
-        lores_events::{LoResEventHeader, RegionMapUpdatedDataV1},
         RegionId,
+        lores_events::{LoResEventHeader, RegionMapUpdatedDataV1},
     },
 };
 
@@ -23,16 +21,10 @@ pub struct RegionMapUpdatedHandler {
 
 impl RegionMapUpdatedHandler {
     pub fn new(payload: &RegionMapUpdatedDataV1) -> Self {
-        Self {
-            payload: payload.clone(),
-        }
+        Self { payload: payload.clone() }
     }
 
-    async fn write_projections(
-        &self,
-        region_id: RegionId,
-        pool: &SqlitePool,
-    ) -> Result<Region, sqlx::Error> {
+    async fn write_projections(&self, region_id: RegionId, pool: &SqlitePool) -> Result<Region, sqlx::Error> {
         let regions_write_repo = RegionsWriteRepo::init();
         let regions_read_repo = RegionsReadRepo::init();
 
@@ -87,10 +79,7 @@ impl EventHandler for RegionMapUpdatedHandler {
         let region = match repo.find(pool, &region_id.to_hex()).await {
             Ok(Some(region)) => region,
             Ok(None) => {
-                info!(
-                    "Validation failed: region not found for ID {}",
-                    region_id.to_hex()
-                );
+                info!("Validation failed: region not found for ID {}", region_id.to_hex());
                 return Err(());
             }
             Err(e) => {

@@ -37,10 +37,7 @@ impl ProjectionDb {
         // A pool with more than one connection would give each connection its
         // own isolated in-memory database. Pin to one connection so all
         // callers share the same database.
-        let pool = sqlx::pool::PoolOptions::new()
-            .max_connections(1)
-            .connect_with(options)
-            .await?;
+        let pool = sqlx::pool::PoolOptions::new().max_connections(1).connect_with(options).await?;
 
         Self::apply_schema(&pool, schema_sql).await?;
         tracing::info!("projection database ready");
@@ -92,9 +89,7 @@ impl ProjectionDb {
         tracing::info!(schema_hash = %hash, "applying projection schema");
 
         // Create the framework-owned bookkeeping table first.
-        sqlx::raw_sql("CREATE TABLE _schema (hash TEXT NOT NULL);")
-            .execute(pool)
-            .await?;
+        sqlx::raw_sql("CREATE TABLE _schema (hash TEXT NOT NULL);").execute(pool).await?;
 
         sqlx::query("INSERT INTO _schema (hash) VALUES (?)")
             .bind(&hash)
@@ -110,16 +105,12 @@ impl ProjectionDb {
 
     async fn drop_all_tables(pool: &SqlitePool) -> Result<(), sqlx::Error> {
         // Collect all user-created tables (excluding SQLite internals).
-        let tables = sqlx::query_scalar::<_, String>(
-            "SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%'",
-        )
-        .fetch_all(pool)
-        .await?;
+        let tables = sqlx::query_scalar::<_, String>("SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%'")
+            .fetch_all(pool)
+            .await?;
 
         for table in tables {
-            sqlx::raw_sql(&format!("DROP TABLE IF EXISTS \"{table}\""))
-                .execute(pool)
-                .await?;
+            sqlx::raw_sql(&format!("DROP TABLE IF EXISTS \"{table}\"")).execute(pool).await?;
         }
 
         Ok(())

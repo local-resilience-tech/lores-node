@@ -28,11 +28,7 @@ impl Backoff {
 
     /// Set `error` on `error_tx`, reset the duration if the variant changed,
     /// sleep for the current duration, then double it (up to `MAX`).
-    pub(crate) async fn set_error_and_advance(
-        &mut self,
-        error_tx: &watch::Sender<Option<NodeError>>,
-        error: NodeError,
-    ) {
+    pub(crate) async fn set_error_and_advance(&mut self, error_tx: &watch::Sender<Option<NodeError>>, error: NodeError) {
         let d = std::mem::discriminant(&error);
         if self.last_error != Some(d) {
             self.current = Self::MIN;

@@ -20,12 +20,8 @@ pub struct CoopCloudApp {
     pub lores: Option<LoResApp>,
 }
 
-pub fn build_coop_cloud_app_from_labels(
-    labels: &CoopCloudServiceLabels,
-) -> Result<CoopCloudApp, anyhow::Error> {
-    let recipe = labels
-        .recipe()
-        .ok_or_else(|| anyhow::anyhow!("Missing recipe label"))?;
+pub fn build_coop_cloud_app_from_labels(labels: &CoopCloudServiceLabels) -> Result<CoopCloudApp, anyhow::Error> {
+    let recipe = labels.recipe().ok_or_else(|| anyhow::anyhow!("Missing recipe label"))?;
 
     Ok(CoopCloudApp {
         name: recipe.clone(),
@@ -35,9 +31,7 @@ pub fn build_coop_cloud_app_from_labels(
             internet_url: app_url(labels.host()),
             local_network_url: None,
         }),
-        lores: labels.lores_instance_id().map(|id| LoResApp {
-            instance_id: Some(id),
-        }),
+        lores: labels.lores_instance_id().map(|id| LoResApp { instance_id: Some(id) }),
     })
 }
 
@@ -50,35 +44,23 @@ mod tests {
     use super::*;
 
     fn stack_namespace_label(namespace: &str) -> (String, String) {
-        (
-            "com.docker.stack.namespace".to_string(),
-            namespace.to_string(),
-        )
+        ("com.docker.stack.namespace".to_string(), namespace.to_string())
     }
 
     fn version_label(namespace: &str, version: &str) -> (String, String) {
-        (
-            format!("coop-cloud.{}.version", namespace),
-            version.to_string(),
-        )
+        (format!("coop-cloud.{}.version", namespace), version.to_string())
     }
 
     fn recipe_label(namespace: &str, recipe: &str) -> (String, String) {
-        (
-            format!("coop-cloud.{}.recipe", namespace),
-            recipe.to_string(),
-        )
+        (format!("coop-cloud.{}.recipe", namespace), recipe.to_string())
     }
 
     #[test]
     fn test_build_app_gets_version() {
         let labels = CoopCloudServiceLabels::new(
-            vec![
-                version_label("foobar", "1.2.3"),
-                stack_namespace_label("foobar"),
-            ]
-            .into_iter()
-            .collect(),
+            vec![version_label("foobar", "1.2.3"), stack_namespace_label("foobar")]
+                .into_iter()
+                .collect(),
         )
         .unwrap();
 
@@ -88,10 +70,7 @@ mod tests {
 
     #[test]
     fn test_build_has_no_version_if_not_specified() {
-        let labels = CoopCloudServiceLabels::new(
-            vec![stack_namespace_label("foobar")].into_iter().collect(),
-        )
-        .unwrap();
+        let labels = CoopCloudServiceLabels::new(vec![stack_namespace_label("foobar")].into_iter().collect()).unwrap();
 
         let result = build_coop_cloud_app_from_labels(&labels).unwrap();
         assert_eq!(result.version, None);
@@ -99,10 +78,7 @@ mod tests {
 
     #[test]
     fn test_build_fails_if_no_recipe() {
-        let labels = CoopCloudServiceLabels::new(
-            vec![stack_namespace_label("foobar")].into_iter().collect(),
-        )
-        .unwrap();
+        let labels = CoopCloudServiceLabels::new(vec![stack_namespace_label("foobar")].into_iter().collect()).unwrap();
 
         let result = build_coop_cloud_app_from_labels(&labels);
         assert!(result.is_err());
@@ -111,12 +87,9 @@ mod tests {
     #[test]
     fn test_recipe_comes_from_recipe() {
         let labels = CoopCloudServiceLabels::new(
-            vec![
-                stack_namespace_label("foobar"),
-                recipe_label("foobar", "my-recipe"),
-            ]
-            .into_iter()
-            .collect(),
+            vec![stack_namespace_label("foobar"), recipe_label("foobar", "my-recipe")]
+                .into_iter()
+                .collect(),
         )
         .unwrap();
 
@@ -127,12 +100,9 @@ mod tests {
     #[test]
     fn test_name_comes_from_recipe() {
         let labels = CoopCloudServiceLabels::new(
-            vec![
-                stack_namespace_label("foobar"),
-                recipe_label("foobar", "my-recipe"),
-            ]
-            .into_iter()
-            .collect(),
+            vec![stack_namespace_label("foobar"), recipe_label("foobar", "my-recipe")]
+                .into_iter()
+                .collect(),
         )
         .unwrap();
 

@@ -1,5 +1,5 @@
-use tracing::info;
 use std::env;
+use tracing::info;
 
 use axum::{
     body::Body,
@@ -9,26 +9,13 @@ use tower::ServiceExt;
 use tower_http::services::{ServeDir, ServeFile};
 
 lazy_static! {
-    pub static ref FRONTEND_PATH: String =
-        env::var("FRONTEND_PATH").unwrap_or_else(|_| "../frontend/dist".to_string());
+    pub static ref FRONTEND_PATH: String = env::var("FRONTEND_PATH").unwrap_or_else(|_| "../frontend/dist".to_string());
 }
 
 pub async fn frontend_handler(uri: Uri) -> Result<Response<Body>, (StatusCode, String)> {
-    let api_prefixes = vec![
-        "/public_api",
-        "/auth_api",
-        "/admin_api",
-        "/node_steward_api",
-        "/ws",
-    ];
-    if api_prefixes
-        .iter()
-        .any(|prefix| uri.path().starts_with(prefix))
-    {
-        info!(
-            "API call detected, not serving static files for URI: {}",
-            uri
-        );
+    let api_prefixes = vec!["/public_api", "/auth_api", "/admin_api", "/node_steward_api", "/ws"];
+    if api_prefixes.iter().any(|prefix| uri.path().starts_with(prefix)) {
+        info!("API call detected, not serving static files for URI: {}", uri);
         return Err((StatusCode::NOT_FOUND, "API endpoint not found".to_string()));
     }
 
@@ -54,20 +41,14 @@ pub async fn frontend_handler(uri: Uri) -> Result<Response<Body>, (StatusCode, S
     }
 }
 
-async fn serve_file(
-    uri: Uri,
-    spa_file_path_string: String,
-) -> Result<Response<Body>, (StatusCode, String)> {
+async fn serve_file(uri: Uri, spa_file_path_string: String) -> Result<Response<Body>, (StatusCode, String)> {
     let req = Request::builder().uri(uri).body(Body::empty()).unwrap();
 
     match ServeFile::new(spa_file_path_string).oneshot(req).await {
         Ok(res) => Ok(res.map(Body::new)),
         Err(err) => {
             info!("Error serving static file: {}", err);
-            return Err((
-                StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Something went wrong: {}", err),
-            ));
+            return Err((StatusCode::INTERNAL_SERVER_ERROR, format!("Something went wrong: {}", err)));
         }
     }
 }
@@ -80,10 +61,7 @@ async fn serve_dir(uri: Uri, static_dir: String) -> Result<Response<Body>, (Stat
         Ok(res) => Ok(res.map(Body::new)),
         Err(err) => {
             info!("Error serving static file: {}", err);
-            return Err((
-                StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Something went wrong: {}", err),
-            ));
+            return Err((StatusCode::INTERNAL_SERVER_ERROR, format!("Something went wrong: {}", err)));
         }
     }
 }
