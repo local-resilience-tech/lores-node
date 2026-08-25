@@ -17,6 +17,7 @@ pub(crate) struct LiveSubscription<Op> {
     error_tx: watch::Sender<Option<NodeError>>,
     node_event_tx: broadcast::Sender<NodeEvent>,
     panda_client: Option<Arc<Mutex<PandaClient>>>,
+    instance_id: String,
 }
 
 impl<Op: Clone + Send + 'static> LiveSubscription<Op> {
@@ -26,6 +27,7 @@ impl<Op: Clone + Send + 'static> LiveSubscription<Op> {
         error_tx: watch::Sender<Option<NodeError>>,
         node_event_tx: broadcast::Sender<NodeEvent>,
         panda_client: Option<Arc<Mutex<PandaClient>>>,
+        instance_id: String,
     ) -> Self {
         Self {
             operation_store,
@@ -33,6 +35,7 @@ impl<Op: Clone + Send + 'static> LiveSubscription<Op> {
             error_tx,
             node_event_tx,
             panda_client,
+            instance_id,
         }
     }
 
@@ -77,7 +80,10 @@ impl<Op: Clone + Send + 'static> LiveSubscription<Op> {
                 None
             }
             Err(err @ StoreError::Other(_)) => {
-                tracing::error!("Subscribe failed: {err} (retrying in {:?})", backoff.current);
+                tracing::error!(
+                    "Subscribe failed: {err} (retrying in {:?})",
+                    backoff.current
+                );
                 backoff
                     .set_error_and_advance(&self.error_tx, map_store_error(err))
                     .await;
@@ -87,8 +93,10 @@ impl<Op: Clone + Send + 'static> LiveSubscription<Op> {
     }
 
     async fn fetch_and_emit_server_info(&self) {
-        let Some(client) = &self.panda_client else { return };
-        match client.lock().await.info().await {
+        let Some(client) = &self.panda_client else {
+            return;
+        };
+        match client.lock().await.info(&self.instance_id).await {
             Ok(node_id) => {
                 let _ = self.node_event_tx.send(NodeEvent::ServerConnected {
                     node_id: crate::types::LoResNodeId(node_id.0),

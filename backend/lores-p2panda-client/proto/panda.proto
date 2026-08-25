@@ -62,7 +62,9 @@ message OperationEvent {
   bytes payload = 5;
 }
 
-message InfoRequest {}
+message InfoRequest {
+  string instance_id = 1;
+}
 
 message InfoResponse {
   // 32-byte p2panda public key of this node.

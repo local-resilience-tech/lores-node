@@ -3118,6 +3118,7 @@ name = "lores-p2panda-dev-server"
 version = "0.1.0"
 dependencies = [
  "futures",
+ "hex",
  "prost",
  "sha2 0.10.9",
  "tokio",

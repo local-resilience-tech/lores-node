@@ -13,7 +13,8 @@ use tracing::{info, warn};
 use sha2::{Digest, Sha256};
 
 use crate::proto::{
-    panda_server::Panda, OperationEvent, PublishRequest, PublishResponse, SubscribeRequest,
+    panda_server::Panda, InfoRequest, InfoResponse, OperationEvent, PublishRequest,
+    PublishResponse, SubscribeRequest,
 };
 
 /// In-memory dev server for the lores-p2panda gRPC API.
@@ -86,6 +87,10 @@ impl DevPandaService {
     }
 }
 
+fn dummy_node_id(instance_id: &str) -> Vec<u8> {
+    Sha256::digest(instance_id.as_bytes()).to_vec()
+}
+
 fn topic_id_from_app_id(app_id: &str) -> Vec<u8> {
     let mut topic_id = vec![0u8; 32];
     let bytes = app_id.as_bytes();
@@ -119,7 +124,7 @@ impl Panda for DevPandaService {
             .as_millis() as u64;
 
         let operation_id = self.next_operation_id();
-        let node_id = Sha256::digest(req.instance_id.as_bytes()).to_vec();
+        let node_id = dummy_node_id(&req.instance_id);
 
         let event = OperationEvent {
             topic_id: topic_id_from_app_id(&req.app_id),
@@ -165,5 +170,14 @@ impl Panda for DevPandaService {
         });
 
         Ok(Response::new(Box::pin(stream)))
+    }
+
+    async fn info(&self, _request: Request<InfoRequest>) -> Result<Response<InfoResponse>, Status> {
+        let instance_id = _request.into_inner().instance_id;
+        let node_id = dummy_node_id(&instance_id);
+
+        info!(instance_id = %instance_id, node_id = %hex::encode(&node_id), "info");
+
+        Ok(Response::new(InfoResponse { node_id }))
     }
 }

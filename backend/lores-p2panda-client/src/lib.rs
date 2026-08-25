@@ -162,9 +162,9 @@ impl PandaClient {
     }
 
     /// Retrieve information about the connected server node.
-    pub async fn info(&mut self) -> Result<NodeId, PandaError> {
+    pub async fn info(&mut self, instance_id: impl Into<String>) -> Result<NodeId, PandaError> {
         self.inner
-            .info(InfoRequest {})
+            .info(InfoRequest { instance_id: instance_id.into() })
             .await
             .map(|r| NodeId(r.into_inner().node_id))
             .map_err(PandaError::from)
