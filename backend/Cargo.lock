@@ -3118,6 +3118,7 @@ version = "0.1.0"
 dependencies = [
  "futures",
  "prost",
+ "sha2 0.10.9",
  "tokio",
  "tokio-stream",
  "tonic",

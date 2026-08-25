@@ -10,7 +10,11 @@ use tokio_stream::wrappers::BroadcastStream;
 use tonic::{Request, Response, Status};
 use tracing::{info, warn};
 
-use crate::proto::{panda_server::Panda, OperationEvent, PublishRequest, PublishResponse, SubscribeRequest};
+use sha2::{Digest, Sha256};
+
+use crate::proto::{
+    panda_server::Panda, OperationEvent, PublishRequest, PublishResponse, SubscribeRequest,
+};
 
 /// In-memory dev server for the lores-p2panda gRPC API.
 ///
@@ -92,7 +96,10 @@ fn topic_id_from_app_id(app_id: &str) -> Vec<u8> {
 
 #[tonic::async_trait]
 impl Panda for DevPandaService {
-    async fn publish(&self, request: Request<PublishRequest>) -> Result<Response<PublishResponse>, Status> {
+    async fn publish(
+        &self,
+        request: Request<PublishRequest>,
+    ) -> Result<Response<PublishResponse>, Status> {
         let req = request.into_inner();
 
         info!(
@@ -112,9 +119,7 @@ impl Panda for DevPandaService {
             .as_millis() as u64;
 
         let operation_id = self.next_operation_id();
-        // Stable synthetic node id: all-zeros with 1 in the last byte.
-        let mut node_id = vec![0u8; 32];
-        node_id[31] = 1;
+        let node_id = Sha256::digest(req.instance_id.as_bytes()).to_vec();
 
         let event = OperationEvent {
             topic_id: topic_id_from_app_id(&req.app_id),
@@ -129,12 +134,19 @@ impl Panda for DevPandaService {
         // broadcast behaviour of the real server.
         let _ = tx.send(event);
 
-        Ok(Response::new(PublishResponse { operation_id, node_id }))
+        Ok(Response::new(PublishResponse {
+            operation_id,
+            node_id,
+        }))
     }
 
-    type SubscribeStream = Pin<Box<dyn tokio_stream::Stream<Item = Result<OperationEvent, Status>> + Send + 'static>>;
+    type SubscribeStream =
+        Pin<Box<dyn tokio_stream::Stream<Item = Result<OperationEvent, Status>> + Send + 'static>>;
 
-    async fn subscribe(&self, request: Request<SubscribeRequest>) -> Result<Response<Self::SubscribeStream>, Status> {
+    async fn subscribe(
+        &self,
+        request: Request<SubscribeRequest>,
+    ) -> Result<Response<Self::SubscribeStream>, Status> {
         let req = request.into_inner();
 
         info!(app_id = %req.app_id, instance_id = %req.instance_id, "subscribe");
