@@ -33,3 +33,9 @@ pub struct AppNodeOperation<Op> {
     pub author_node_id: Option<LoResNodeId>,
     pub timestamp: Option<u64>,
 }
+
+#[derive(Clone, Debug)]
+pub enum NodeEvent {
+    ServerConnected { node_id: LoResNodeId },
+    ServerDisconnected,
+}

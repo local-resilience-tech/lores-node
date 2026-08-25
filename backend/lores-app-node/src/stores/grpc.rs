@@ -1,7 +1,9 @@
 use std::pin::Pin;
+use std::sync::Arc;
 
 use futures::StreamExt;
 use lores_p2panda_client::{PandaClient, PandaError, PublishResult};
+use tokio::sync::Mutex;
 
 use crate::{
     stores::{OperationStore, OperationStream, RawOperationEvent, StoreError, StorePublishResult},
@@ -20,23 +22,22 @@ impl From<PandaError> for StoreError {
 /// [`OperationStore`] implementation that forwards operations to a lores-node
 /// instance via gRPC using [`PandaClient`].
 pub(crate) struct GrpcOperationStore {
-    client: PandaClient,
+    client: Arc<Mutex<PandaClient>>,
     app_id: String,
     instance_id: String,
 }
 
 impl GrpcOperationStore {
-    pub(crate) fn connect_lazy(
-        grpc_addr: String,
+    pub(crate) fn new(
+        client: Arc<Mutex<PandaClient>>,
         app_id: impl Into<String>,
         instance_id: impl Into<String>,
-    ) -> Result<Self, tonic::transport::Error> {
-        let client = PandaClient::connect_lazy(grpc_addr)?;
-        Ok(Self {
+    ) -> Self {
+        Self {
             client,
             app_id: app_id.into(),
             instance_id: instance_id.into(),
-        })
+        }
     }
 }
 
@@ -54,6 +55,8 @@ impl OperationStore for GrpcOperationStore {
                 node_id,
             } = self
                 .client
+                .lock()
+                .await
                 .publish(
                     &self.app_id,
                     &self.instance_id,
@@ -76,6 +79,8 @@ impl OperationStore for GrpcOperationStore {
         Box::pin(async move {
             let response = self
                 .client
+                .lock()
+                .await
                 .subscribe(&self.app_id, &self.instance_id)
                 .await
                 .map_err(StoreError::from)?;

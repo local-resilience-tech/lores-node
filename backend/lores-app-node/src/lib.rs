@@ -9,4 +9,4 @@ mod types;
 pub use node::{AppNode, NodeError};
 pub use projection::ProjectionDb;
 pub use stores::StoreError;
-pub use types::{AppNodeOperation, LoResNodeId, LoResOperationId};
+pub use types::{AppNodeOperation, LoResNodeId, LoResOperationId, NodeEvent};

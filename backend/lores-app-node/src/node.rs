@@ -1,5 +1,6 @@
 use std::sync::Arc;
 
+use lores_p2panda_client::PandaClient;
 use serde::{Deserialize, Serialize};
 use sqlx::SqlitePool;
 use tokio::sync::{broadcast, watch, Mutex};
@@ -11,7 +12,7 @@ use crate::stores::local::LocalOperationStore;
 use crate::stores::outbox::OutboxStore;
 use crate::stores::{OperationStore, StoreError};
 use crate::subscription::LiveSubscription;
-use crate::types::AppNodeOperation;
+use crate::types::{AppNodeOperation, NodeEvent};
 
 /// Errors emitted by the node that consumers (e.g. a WebSocket handler) may
 /// want to surface directly to users.
@@ -50,6 +51,9 @@ pub struct AppNode<Op> {
     operation_store: Arc<Mutex<Box<dyn OperationStore>>>,
     consumer: OperationConsumer<Op>,
     error_tx: watch::Sender<Option<NodeError>>,
+    node_event_tx: broadcast::Sender<NodeEvent>,
+    /// Present only when this node is connected to a gRPC server.
+    panda_client: Option<Arc<Mutex<PandaClient>>>,
 }
 
 impl<Op> Clone for AppNode<Op> {
@@ -60,8 +64,16 @@ impl<Op> Clone for AppNode<Op> {
             operation_store: self.operation_store.clone(),
             consumer: self.consumer.clone(),
             error_tx: self.error_tx.clone(),
+            node_event_tx: self.node_event_tx.clone(),
+            panda_client: self.panda_client.clone(),
         }
     }
+}
+
+fn make_panda_client(grpc_addr: String) -> Arc<Mutex<PandaClient>> {
+    Arc::new(Mutex::new(
+        PandaClient::connect_lazy(grpc_addr).expect("failed to build gRPC client"),
+    ))
 }
 
 impl<Op: Clone + Serialize + Send + 'static> AppNode<Op> {
@@ -69,9 +81,11 @@ impl<Op: Clone + Serialize + Send + 'static> AppNode<Op> {
         app_id: impl Into<String>,
         instance_id: impl Into<String>,
         operation_store: Box<dyn OperationStore>,
+        panda_client: Option<Arc<Mutex<PandaClient>>>,
     ) -> Self {
         let (event_tx, _) = broadcast::channel(64);
         let (error_tx, _) = watch::channel(None);
+        let (node_event_tx, _) = broadcast::channel(16);
         let consumer = OperationConsumer::new(event_tx);
         Self {
             app_id: app_id.into(),
@@ -79,6 +93,8 @@ impl<Op: Clone + Serialize + Send + 'static> AppNode<Op> {
             operation_store: Arc::new(Mutex::new(operation_store)),
             consumer,
             error_tx,
+            node_event_tx,
+            panda_client,
         }
     }
 
@@ -91,7 +107,7 @@ impl<Op: Clone + Serialize + Send + 'static> AppNode<Op> {
         instance_id: impl Into<String>,
     ) -> Result<Self, sqlx::Error> {
         let store = LocalOperationStore::new(pool).await?;
-        Ok(Self::new(app_id, instance_id, Box::new(store)))
+        Ok(Self::new(app_id, instance_id, Box::new(store), None))
     }
 
     /// Create an `AppNode` that persists to a local SQLite store and forwards
@@ -108,10 +124,10 @@ impl<Op: Clone + Serialize + Send + 'static> AppNode<Op> {
         let app_id = app_id.into();
         let instance_id = instance_id.into();
         let local = LocalOperationStore::new(pool).await?;
-        let remote = GrpcOperationStore::connect_lazy(grpc_addr, &app_id, &instance_id)
-            .expect("failed to build gRPC opereration store");
+        let client = make_panda_client(grpc_addr);
+        let remote = GrpcOperationStore::new(client.clone(), &app_id, &instance_id);
         let store = OutboxStore::new(local, remote);
-        Ok(Self::new(app_id, instance_id, Box::new(store)))
+        Ok(Self::new(app_id, instance_id, Box::new(store), Some(client)))
     }
 
     /// Create an `AppNode` connected to an external lores-node via gRPC.
@@ -124,9 +140,9 @@ impl<Op: Clone + Serialize + Send + 'static> AppNode<Op> {
     ) -> Self {
         let app_id = app_id.into();
         let instance_id = instance_id.into();
-        let operation_store = GrpcOperationStore::connect_lazy(grpc_addr, &app_id, &instance_id)
-            .expect("failed to build gRPC operation store");
-        Self::new(app_id, instance_id, Box::new(operation_store))
+        let client = make_panda_client(grpc_addr);
+        let store = GrpcOperationStore::new(client.clone(), &app_id, &instance_id);
+        Self::new(app_id, instance_id, Box::new(store), Some(client))
     }
 
     /// Subscribe to operations published through this node (loopback).
@@ -140,6 +156,10 @@ impl<Op: Clone + Serialize + Send + 'static> AppNode<Op> {
     /// subscribe after an error was set will see it right away.
     pub fn subscribe_errors(&self) -> watch::Receiver<Option<NodeError>> {
         self.error_tx.subscribe()
+    }
+
+    pub fn subscribe_node_events(&self) -> broadcast::Receiver<NodeEvent> {
+        self.node_event_tx.subscribe()
     }
 
     /// Replay all locally-stored operations, broadcasting each through the
@@ -195,6 +215,8 @@ impl<Op: Clone + Serialize + Send + 'static> AppNode<Op> {
             self.operation_store.clone(),
             self.consumer.clone(),
             self.error_tx.clone(),
+            self.node_event_tx.clone(),
+            self.panda_client.clone(),
         )
         .run()
         .await;

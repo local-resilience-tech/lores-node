@@ -1,10 +1,13 @@
 use std::sync::Arc;
 
+use lores_p2panda_client::PandaClient;
+
 use crate::backoff::Backoff;
 use crate::consumer::OperationConsumer;
 use crate::node::{map_store_error, NodeError};
 use crate::stores::{OperationStore, StoreError};
-use tokio::sync::{watch, Mutex};
+use crate::types::NodeEvent;
+use tokio::sync::{broadcast, watch, Mutex};
 
 /// Drives a remote subscription in a loop, reconnecting with exponential
 /// backoff on any failure.
@@ -12,6 +15,8 @@ pub(crate) struct LiveSubscription<Op> {
     operation_store: Arc<Mutex<Box<dyn OperationStore>>>,
     consumer: OperationConsumer<Op>,
     error_tx: watch::Sender<Option<NodeError>>,
+    node_event_tx: broadcast::Sender<NodeEvent>,
+    panda_client: Option<Arc<Mutex<PandaClient>>>,
 }
 
 impl<Op: Clone + Send + 'static> LiveSubscription<Op> {
@@ -19,11 +24,15 @@ impl<Op: Clone + Send + 'static> LiveSubscription<Op> {
         operation_store: Arc<Mutex<Box<dyn OperationStore>>>,
         consumer: OperationConsumer<Op>,
         error_tx: watch::Sender<Option<NodeError>>,
+        node_event_tx: broadcast::Sender<NodeEvent>,
+        panda_client: Option<Arc<Mutex<PandaClient>>>,
     ) -> Self {
         Self {
             operation_store,
             consumer,
             error_tx,
+            node_event_tx,
+            panda_client,
         }
     }
 
@@ -44,6 +53,7 @@ impl<Op: Clone + Send + 'static> LiveSubscription<Op> {
                 backoff.reset();
             }
 
+            let _ = self.node_event_tx.send(NodeEvent::ServerDisconnected);
             tracing::info!("Subscription stream ended, reconnecting…");
         }
     }
@@ -53,6 +63,7 @@ impl<Op: Clone + Send + 'static> LiveSubscription<Op> {
             Ok(s) => {
                 self.error_tx.send_replace(None);
                 backoff.reset();
+                self.fetch_and_emit_server_info().await;
                 Some(s)
             }
             Err(err @ StoreError::RegionNotBound(_)) => {
@@ -72,6 +83,18 @@ impl<Op: Clone + Send + 'static> LiveSubscription<Op> {
                     .await;
                 None
             }
+        }
+    }
+
+    async fn fetch_and_emit_server_info(&self) {
+        let Some(client) = &self.panda_client else { return };
+        match client.lock().await.info().await {
+            Ok(node_id) => {
+                let _ = self.node_event_tx.send(NodeEvent::ServerConnected {
+                    node_id: crate::types::LoResNodeId(node_id.0),
+                });
+            }
+            Err(e) => tracing::warn!("Failed to fetch server info: {e}"),
         }
     }
 
