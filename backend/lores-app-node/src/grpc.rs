@@ -1,11 +1,11 @@
 use std::pin::Pin;
 
 use futures::StreamExt;
-use lores_p2panda_client::{OperationId, PandaClient, PandaError};
+use lores_p2panda_client::{PandaClient, PandaError, PublishResult};
 
 use crate::{
-    store::{OperationStore, OperationStream, RawOperationEvent, StoreError},
-    LoResOperationId,
+    store::{OperationStore, OperationStream, RawOperationEvent, StoreError, StorePublishResult},
+    LoResNodeId, LoResOperationId,
 };
 
 impl From<PandaError> for StoreError {
@@ -46,14 +46,13 @@ impl OperationStore for GrpcOperationStore {
         payload: Vec<u8>,
         idempotency_key: Option<String>,
     ) -> Pin<
-        Box<
-            dyn std::future::Future<Output = Result<Option<LoResOperationId>, StoreError>>
-                + Send
-                + '_,
-        >,
+        Box<dyn std::future::Future<Output = Result<StorePublishResult, StoreError>> + Send + '_>,
     > {
         Box::pin(async move {
-            let OperationId(id_bytes) = self
+            let PublishResult {
+                operation_id,
+                node_id,
+            } = self
                 .client
                 .publish(
                     &self.app_id,
@@ -63,10 +62,9 @@ impl OperationStore for GrpcOperationStore {
                 )
                 .await
                 .map_err(StoreError::from)?;
-            Ok(if id_bytes.is_empty() {
-                None
-            } else {
-                Some(LoResOperationId(id_bytes))
+            Ok(StorePublishResult {
+                operation_id: operation_id.into_non_empty().map(LoResOperationId),
+                node_id: node_id.into_non_empty().map(LoResNodeId),
             })
         })
     }

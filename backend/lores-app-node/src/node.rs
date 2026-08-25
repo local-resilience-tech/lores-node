@@ -166,14 +166,14 @@ impl<Op: Clone + Serialize + Send + 'static> AppNode<Op> {
             StoreError::Other(format!("Failed to serialize operation: {e}"))
         })?;
         let mut t = self.operation_store.lock().await;
-        let panda_operation_id = t.publish(payload, Some(local_id.to_string())).await?;
+        let result = t.publish(payload, Some(local_id.to_string())).await?;
         drop(t);
 
         let app_node_operation = AppNodeOperation::<Op> {
             op: operation.clone(),
             local_operation_id: Some(local_id),
-            panda_operation_id: panda_operation_id,
-            node: None,
+            panda_operation_id: result.operation_id,
+            node: result.node_id,
             timestamp: None,
         };
 

@@ -189,7 +189,8 @@ impl Panda for PandaService {
             .await?
         {
             info!("[publish] duplicate idempotency key, returning existing operation_id");
-            return Ok(Response::new(PublishResponse { operation_id: existing_id }));
+            let node_id = node.public_key.as_bytes().to_vec();
+            return Ok(Response::new(PublishResponse { operation_id: existing_id, node_id }));
         }
 
         // Ensure a subscription exists for this topic so the publisher is
@@ -216,6 +217,7 @@ impl Panda for PandaService {
 
         Ok(Response::new(PublishResponse {
             operation_id: operation_id.as_bytes().to_vec(),
+            node_id: node.public_key.as_bytes().to_vec(),
         }))
     }
 

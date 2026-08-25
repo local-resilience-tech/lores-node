@@ -3,7 +3,15 @@ use std::pin::Pin;
 
 use futures::Stream;
 
-use crate::types::LoResOperationId;
+use crate::types::{LoResNodeId, LoResOperationId};
+
+/// Result returned by [`OperationStore::publish`].
+pub(crate) struct StorePublishResult {
+    /// p2panda operation hash, if the backend can provide it synchronously.
+    pub operation_id: Option<LoResOperationId>,
+    /// Identity of the node that persisted the operation, if known.
+    pub node_id: Option<LoResNodeId>,
+}
 
 /// Error returned by [`OperationStore`] methods.
 #[derive(Debug)]
@@ -52,12 +60,12 @@ pub(crate) type OperationStream = Pin<Box<dyn Stream<Item = Result<RawOperationE
 /// App developers never interact with this directly — they use [`crate::AppNode`]
 /// and its named constructors (`grpc`, etc.).
 pub(crate) trait OperationStore: Send + Sync + 'static {
-    /// Returns the p2panda operation hash if the backend can provide it synchronously.
+    /// Returns operation metadata if the backend can provide it synchronously.
     fn publish(
         &mut self,
         payload: Vec<u8>,
         idempotency_key: Option<String>,
-    ) -> Pin<Box<dyn Future<Output = Result<Option<LoResOperationId>, StoreError>> + Send + '_>>;
+    ) -> Pin<Box<dyn Future<Output = Result<StorePublishResult, StoreError>> + Send + '_>>;
 
     /// Open a subscription to incoming operations.
     ///

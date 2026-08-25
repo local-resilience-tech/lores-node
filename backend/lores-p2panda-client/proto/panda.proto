@@ -34,6 +34,8 @@ message PublishRequest {
 message PublishResponse {
   // 32-byte p2panda operation hash assigned by the node.
   bytes operation_id = 1;
+  // 32-byte p2panda public key of the node that persisted the operation.
+  bytes node_id = 2;
 }
 
 message SubscribeRequest {

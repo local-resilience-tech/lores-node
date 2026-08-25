@@ -111,10 +111,15 @@ impl Panda for DevPandaService {
             .unwrap_or_default()
             .as_millis() as u64;
 
+        let operation_id = self.next_operation_id();
+        // Stable synthetic node id: all-zeros with 1 in the last byte.
+        let mut node_id = vec![0u8; 32];
+        node_id[31] = 1;
+
         let event = OperationEvent {
             topic_id: topic_id_from_app_id(&req.app_id),
             author,
-            operation_id: self.next_operation_id(),
+            operation_id: operation_id.clone(),
             timestamp,
             payload: req.payload,
         };
@@ -124,7 +129,7 @@ impl Panda for DevPandaService {
         // broadcast behaviour of the real server.
         let _ = tx.send(event);
 
-        Ok(Response::new(PublishResponse {}))
+        Ok(Response::new(PublishResponse { operation_id, node_id }))
     }
 
     type SubscribeStream = Pin<Box<dyn tokio_stream::Stream<Item = Result<OperationEvent, Status>> + Send + 'static>>;

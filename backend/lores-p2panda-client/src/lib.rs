@@ -14,6 +14,32 @@ use tonic::{Code, Response, Status, Streaming};
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct OperationId(pub Vec<u8>);
 
+impl OperationId {
+    /// Returns the bytes if non-empty, or `None` for an absent value.
+    pub fn into_non_empty(self) -> Option<Vec<u8>> {
+        if self.0.is_empty() { None } else { Some(self.0) }
+    }
+}
+
+/// 32-byte p2panda public key identifying a node.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct NodeId(pub Vec<u8>);
+
+impl NodeId {
+    /// Returns the bytes if non-empty, or `None` for an absent value.
+    pub fn into_non_empty(self) -> Option<Vec<u8>> {
+        if self.0.is_empty() { None } else { Some(self.0) }
+    }
+}
+
+/// Result of a successful publish, containing both the assigned operation id
+/// and the identity of the node that persisted it.
+#[derive(Debug, Clone)]
+pub struct PublishResult {
+    pub operation_id: OperationId,
+    pub node_id: NodeId,
+}
+
 /// Errors returned by [`PandaClient`] methods.
 #[derive(Debug)]
 pub enum PandaError {
@@ -96,7 +122,7 @@ impl PandaClient {
         instance_id: impl Into<String>,
         payload: impl Into<Vec<u8>>,
         idempotency_key: Option<Vec<u8>>,
-    ) -> Result<OperationId, PandaError> {
+    ) -> Result<PublishResult, PandaError> {
         let request = PublishRequest {
             app_id: app_id.into(),
             instance_id: instance_id.into(),
@@ -106,7 +132,13 @@ impl PandaClient {
         self.inner
             .publish(request)
             .await
-            .map(|r| OperationId(r.into_inner().operation_id))
+            .map(|r| {
+                let r = r.into_inner();
+                PublishResult {
+                    operation_id: OperationId(r.operation_id),
+                    node_id: NodeId(r.node_id),
+                }
+            })
             .map_err(PandaError::from)
     }
 

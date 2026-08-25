@@ -3,7 +3,9 @@ use std::pin::Pin;
 use futures::{stream, StreamExt};
 use sqlx::SqlitePool;
 
-use crate::store::{OperationStore, OperationStream, RawOperationEvent, StoreError};
+use crate::store::{
+    OperationStore, OperationStream, RawOperationEvent, StoreError, StorePublishResult,
+};
 
 /// [`OperationStore`] implementation backed by a local SQLite database.
 ///
@@ -52,18 +54,24 @@ impl OperationStore for LocalOperationStore {
         &mut self,
         payload: Vec<u8>,
         _idempotency_key: Option<String>,
-    ) -> Pin<Box<dyn std::future::Future<Output = Result<Option<crate::types::LoResOperationId>, StoreError>> + Send + '_>> {
+    ) -> Pin<
+        Box<dyn std::future::Future<Output = Result<StorePublishResult, StoreError>> + Send + '_>,
+    > {
         Box::pin(async move {
             self.insert(payload)
                 .await
-                .map(|_| None)
+                .map(|_| StorePublishResult {
+                    operation_id: None,
+                    node_id: None,
+                })
                 .map_err(|e| StoreError::Other(e.to_string()))
         })
     }
 
     fn subscribe(
         &mut self,
-    ) -> Pin<Box<dyn std::future::Future<Output = Result<OperationStream, StoreError>> + Send + '_>> {
+    ) -> Pin<Box<dyn std::future::Future<Output = Result<OperationStream, StoreError>> + Send + '_>>
+    {
         Box::pin(async move {
             let s: OperationStream = Box::pin(stream::empty());
             Ok(s)
@@ -72,15 +80,19 @@ impl OperationStore for LocalOperationStore {
 
     fn replay(
         &mut self,
-    ) -> Pin<Box<dyn std::future::Future<Output = Result<OperationStream, StoreError>> + Send + '_>> {
+    ) -> Pin<Box<dyn std::future::Future<Output = Result<OperationStream, StoreError>> + Send + '_>>
+    {
         Box::pin(async move {
-            let rows = sqlx::query_as::<_, (Vec<u8>,)>("SELECT payload FROM lores_app_operations ORDER BY id ASC")
-                .fetch_all(&self.pool)
-                .await
-                .map_err(|e| StoreError::Other(e.to_string()))?;
+            let rows = sqlx::query_as::<_, (Vec<u8>,)>(
+                "SELECT payload FROM lores_app_operations ORDER BY id ASC",
+            )
+            .fetch_all(&self.pool)
+            .await
+            .map_err(|e| StoreError::Other(e.to_string()))?;
 
-            let s: OperationStream =
-                Box::pin(stream::iter(rows).map(|(payload,)| Ok(RawOperationEvent::new_local(payload))));
+            let s: OperationStream = Box::pin(
+                stream::iter(rows).map(|(payload,)| Ok(RawOperationEvent::new_local(payload))),
+            );
             Ok(s)
         })
     }

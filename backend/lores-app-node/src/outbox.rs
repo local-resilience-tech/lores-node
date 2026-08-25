@@ -2,8 +2,7 @@ use std::pin::Pin;
 
 use crate::grpc::GrpcOperationStore;
 use crate::local::LocalOperationStore;
-use crate::store::{OperationStore, OperationStream, StoreError};
-use crate::LoResOperationId;
+use crate::store::{OperationStore, OperationStream, StoreError, StorePublishResult};
 
 /// [`OperationStore`] decorator that combines a [`LocalOperationStore`] and a
 /// [`GrpcOperationStore`].
@@ -31,11 +30,7 @@ impl OperationStore for OutboxStore {
         payload: Vec<u8>,
         idempotency_key: Option<String>,
     ) -> Pin<
-        Box<
-            dyn std::future::Future<Output = Result<Option<LoResOperationId>, StoreError>>
-                + Send
-                + '_,
-        >,
+        Box<dyn std::future::Future<Output = Result<StorePublishResult, StoreError>> + Send + '_>,
     > {
         Box::pin(async move {
             // 1. Persist locally — this is our source of truth until gRPC acks.
@@ -47,19 +42,22 @@ impl OperationStore for OutboxStore {
 
             // 2. Attempt gRPC delivery.
             match self.remote.publish(payload, idempotency_key).await {
-                Ok(operation_id) => {
+                Ok(result) => {
                     // 3. Confirmed — remove from local store.
                     if let Err(e) = self.local.delete(id).await {
                         tracing::warn!(
                             "Delivered op {id} but failed to delete from local store: {e}"
                         );
                     }
-                    Ok(operation_id)
+                    Ok(result)
                 }
                 Err(e) => {
                     tracing::warn!("gRPC delivery failed for op {id}: {e}");
                     // Leave in local store for a future drain attempt.
-                    Ok(None)
+                    Ok(StorePublishResult {
+                        operation_id: None,
+                        node_id: None,
+                    })
                 }
             }
         })
