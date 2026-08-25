@@ -172,8 +172,8 @@ impl<Op: Clone + Serialize + Send + 'static> AppNode<Op> {
         let app_node_operation = AppNodeOperation::<Op> {
             op: operation.clone(),
             local_operation_id: Some(local_id),
-            node: None,
             panda_operation_id: panda_operation_id,
+            node: None,
             timestamp: None,
         };
 
