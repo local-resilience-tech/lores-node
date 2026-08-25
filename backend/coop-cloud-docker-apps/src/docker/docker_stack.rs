@@ -53,9 +53,7 @@ pub struct DockerStackServicesResult {
     pub ports: String,
 }
 
-pub fn docker_stack_services(
-    stack_name: &str,
-) -> Result<Vec<DockerStackServicesResult>, anyhow::Error> {
+pub fn docker_stack_services(stack_name: &str) -> Result<Vec<DockerStackServicesResult>, anyhow::Error> {
     let output = Command::new("docker")
         .arg("stack")
         .arg("services")
@@ -115,8 +113,7 @@ pub fn docker_stack_ps(stack_name: &str) -> Result<Vec<DockerService>, anyhow::E
     let services: Vec<DockerService> = services
         .into_iter()
         .map(|result| {
-            let (current_state, current_state_duration) =
-                split_state_and_duration(&result.current_state);
+            let (current_state, current_state_duration) = split_state_and_duration(&result.current_state);
             DockerService {
                 id: result.id,
                 name: result.name,

@@ -56,10 +56,7 @@ impl CoopCloudServiceLabels {
     pub fn host(&self) -> Option<String> {
         match self
             .traefik_labels
-            .get(&format!(
-                "traefik.http.routers.{}.rule",
-                self.stack_namespace
-            ))
+            .get(&format!("traefik.http.routers.{}.rule", self.stack_namespace))
             .cloned()
         {
             Some(rule) => host_from_host_rule(&rule),

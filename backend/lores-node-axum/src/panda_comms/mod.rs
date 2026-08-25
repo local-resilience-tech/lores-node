@@ -8,8 +8,8 @@ pub use config::ThisP2PandaNodeRepo;
 use lores_events::LoResEvent;
 pub use lores_p2panda::RegionAdminTopic;
 pub use lores_p2panda::RegionId;
-pub use panda_container::{PandaContainer, PandaSubscriptionError, build_public_key_from_hex};
 pub use lores_p2panda::SubscriptionError;
+pub use panda_container::{PandaContainer, PandaSubscriptionError, build_public_key_from_hex};
 use sqlx::SqlitePool;
 use tokio::sync::mpsc;
 
@@ -20,11 +20,7 @@ use crate::{
     event_handlers::handle_event,
 };
 
-pub async fn start_panda(
-    config_state: &LoresNodeConfigState,
-    container: &PandaContainer,
-    projections_pool: &SqlitePool,
-) {
+pub async fn start_panda(config_state: &LoresNodeConfigState, container: &PandaContainer, projections_pool: &SqlitePool) {
     let repo = ThisP2PandaNodeRepo::init();
     let config = config_state.get().await;
 
@@ -76,10 +72,7 @@ pub async fn start_panda(
                         }
                     }
                     Err(e) => {
-                        info!(
-                            "Invalid region id in config: {:?}, error: {:?}",
-                            id_string, e
-                        );
+                        info!("Invalid region id in config: {:?}, error: {:?}", id_string, e);
                     }
                 }
             }
@@ -90,11 +83,7 @@ pub async fn start_panda(
     }
 }
 
-pub fn start_panda_event_handler(
-    channel_rx: mpsc::Receiver<LoResEvent>,
-    pool: SqlitePool,
-    realtime_state: RealtimeState,
-) {
+pub fn start_panda_event_handler(channel_rx: mpsc::Receiver<LoResEvent>, pool: SqlitePool, realtime_state: RealtimeState) {
     tokio::spawn(async move {
         let mut events_rx = channel_rx;
 

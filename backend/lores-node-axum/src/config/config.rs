@@ -1,12 +1,11 @@
 use confy::load_path;
-use tracing::warn;
 use serde::{Deserialize, Serialize};
+use tracing::warn;
 
 use std::{env, path::Path};
 
 lazy_static! {
-    pub static ref CONFIG_PATH: String =
-        env::var("CONFIG_PATH").unwrap_or_else(|_| "./config.yaml".to_string());
+    pub static ref CONFIG_PATH: String = env::var("CONFIG_PATH").unwrap_or_else(|_| "./config.yaml".to_string());
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

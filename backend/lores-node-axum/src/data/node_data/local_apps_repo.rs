@@ -55,12 +55,7 @@ impl LocalAppsRepo {
         Ok(rows.into_iter().map(LocalApp::from).collect())
     }
 
-    pub async fn find(
-        &self,
-        pool: &SqlitePool,
-        name: &str,
-        instance_id: &Option<String>,
-    ) -> Result<Option<LocalApp>, sqlx::Error> {
+    pub async fn find(&self, pool: &SqlitePool, name: &str, instance_id: &Option<String>) -> Result<Option<LocalApp>, sqlx::Error> {
         let row = sqlx::query_as::<Sqlite, LocalAppRow>(
             "
             SELECT name, version, internet_url, local_network_url, instance_id, bound_to_region_id
@@ -77,16 +72,9 @@ impl LocalAppsRepo {
         Ok(row.map(LocalApp::from))
     }
 
-    pub async fn update(
-        &self,
-        pool: &SqlitePool,
-        app: &LocalApp,
-    ) -> Result<Option<LocalApp>, sqlx::Error> {
+    pub async fn update(&self, pool: &SqlitePool, app: &LocalApp) -> Result<Option<LocalApp>, sqlx::Error> {
         let internet_url = app.url.as_ref().and_then(|url| url.internet_url.clone());
-        let local_network_url = app
-            .url
-            .as_ref()
-            .and_then(|url| url.local_network_url.clone());
+        let local_network_url = app.url.as_ref().and_then(|url| url.local_network_url.clone());
 
         let rows_affected = sqlx::query::<Sqlite>(
             "
@@ -121,10 +109,7 @@ impl LocalAppsRepo {
 
     pub async fn create(&self, pool: &SqlitePool, app: &LocalApp) -> Result<LocalApp, sqlx::Error> {
         let internet_url = app.url.as_ref().and_then(|url| url.internet_url.clone());
-        let local_network_url = app
-            .url
-            .as_ref()
-            .and_then(|url| url.local_network_url.clone());
+        let local_network_url = app.url.as_ref().and_then(|url| url.local_network_url.clone());
 
         sqlx::query::<Sqlite>(
             "

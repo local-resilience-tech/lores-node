@@ -14,11 +14,7 @@ impl CurrentNodeStatusesWriteRepo {
         CurrentNodeStatusesWriteRepo {}
     }
 
-    pub async fn upsert(
-        &self,
-        pool: &SqlitePool,
-        status: CurrentNodeStatusRow,
-    ) -> Result<(), sqlx::Error> {
+    pub async fn upsert(&self, pool: &SqlitePool, status: CurrentNodeStatusRow) -> Result<(), sqlx::Error> {
         let timestamp = status.posted_timestamp as i64;
 
         let _node = sqlx::query!(

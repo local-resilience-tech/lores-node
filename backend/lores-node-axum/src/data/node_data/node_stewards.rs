@@ -1,5 +1,5 @@
 use chrono::NaiveDateTime;
-use pwgen2::pwgen::{generate_password, PasswordConfig};
+use pwgen2::pwgen::{PasswordConfig, generate_password};
 use serde::Serialize;
 use short_uuid::ShortUuid;
 use sqlx::{Sqlite, SqlitePool};
@@ -106,11 +106,7 @@ impl NodeStewardsRepo {
         Ok(())
     }
 
-    pub async fn find(
-        &self,
-        pool: &SqlitePool,
-        identifier: &NodeStewardIdentifier,
-    ) -> Result<Option<NodeStewardRow>, sqlx::Error> {
+    pub async fn find(&self, pool: &SqlitePool, identifier: &NodeStewardIdentifier) -> Result<Option<NodeStewardRow>, sqlx::Error> {
         let row = sqlx::query_as::<Sqlite, NodeStewardRow>(
             "
             SELECT id, name, hashed_password, password_reset_token, password_reset_token_expires_at, enabled, created_at
@@ -125,11 +121,7 @@ impl NodeStewardsRepo {
         Ok(row)
     }
 
-    pub async fn update_password_reset_token(
-        &self,
-        pool: &SqlitePool,
-        row: &NodeStewardRow,
-    ) -> Result<(), sqlx::Error> {
+    pub async fn update_password_reset_token(&self, pool: &SqlitePool, row: &NodeStewardRow) -> Result<(), sqlx::Error> {
         sqlx::query::<Sqlite>(
             "
             UPDATE node_stewards
@@ -167,12 +159,7 @@ impl NodeStewardsRepo {
         Ok(())
     }
 
-    pub async fn update_enabled(
-        &self,
-        pool: &SqlitePool,
-        identifier: &NodeStewardIdentifier,
-        enabled: bool,
-    ) -> Result<(), sqlx::Error> {
+    pub async fn update_enabled(&self, pool: &SqlitePool, identifier: &NodeStewardIdentifier, enabled: bool) -> Result<(), sqlx::Error> {
         sqlx::query::<Sqlite>(
             "
             UPDATE node_stewards

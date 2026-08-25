@@ -1,4 +1,4 @@
-use sqlx::{types::Json, SqlitePool};
+use sqlx::{SqlitePool, types::Json};
 
 use crate::{
     data::entities::{Region, RegionMap},
@@ -44,11 +44,7 @@ impl RegionsWriteRepo {
         Ok(())
     }
 
-    pub async fn upsert_id(
-        &self,
-        pool: &SqlitePool,
-        region_id: &RegionId,
-    ) -> Result<(), sqlx::Error> {
+    pub async fn upsert_id(&self, pool: &SqlitePool, region_id: &RegionId) -> Result<(), sqlx::Error> {
         let region_id_hex = region_id.to_hex();
         let _region = sqlx::query!(
             "INSERT INTO regions (id)
@@ -62,12 +58,7 @@ impl RegionsWriteRepo {
         Ok(())
     }
 
-    pub async fn upsert_map(
-        &self,
-        pool: &SqlitePool,
-        region_id: &RegionId,
-        map: Option<RegionMap>,
-    ) -> Result<(), sqlx::Error> {
+    pub async fn upsert_map(&self, pool: &SqlitePool, region_id: &RegionId, map: Option<RegionMap>) -> Result<(), sqlx::Error> {
         let region_id_hex = region_id.to_hex();
 
         let (map_data_url, min_latlng_json, max_latlng_json) = match map {

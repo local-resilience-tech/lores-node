@@ -1,5 +1,5 @@
-use tracing::info;
 use sqlx::SqlitePool;
+use tracing::info;
 
 use crate::{
     api::public_api::client_events::ClientEvent,
@@ -8,9 +8,7 @@ use crate::{
         projections_read::region_nodes::RegionNodesReadRepo,
         projections_write::{region_nodes::RegionNodesWriteRepo, regions::RegionsWriteRepo},
     },
-    event_handlers::utilities::{
-        handle_db_write_error, header_has_region, EventHandler, HandlerResult,
-    },
+    event_handlers::utilities::{EventHandler, HandlerResult, handle_db_write_error, header_has_region},
     panda_comms::lores_events::{LoResEventHeader, RegionCreatedDataV1},
 };
 
@@ -20,16 +18,10 @@ pub struct RegionCreatedHandler {
 
 impl RegionCreatedHandler {
     pub fn new(payload: &RegionCreatedDataV1) -> Self {
-        Self {
-            payload: payload.clone(),
-        }
+        Self { payload: payload.clone() }
     }
 
-    async fn write_projections(
-        &self,
-        header: LoResEventHeader,
-        pool: &SqlitePool,
-    ) -> Result<RegionWithNodes, sqlx::Error> {
+    async fn write_projections(&self, header: LoResEventHeader, pool: &SqlitePool) -> Result<RegionWithNodes, sqlx::Error> {
         let region_write_repo = RegionsWriteRepo::init();
         let node_write_repo = RegionNodesWriteRepo::init();
         let node_read_repo = RegionNodesReadRepo::init();
@@ -59,15 +51,7 @@ impl RegionCreatedHandler {
 
         // Upsert region node status
         node_write_repo
-            .upsert_join_status_and_details(
-                pool,
-                &node_id,
-                &region.id,
-                RegionNodeStatus::Member,
-                None,
-                None,
-                None,
-            )
+            .upsert_join_status_and_details(pool, &node_id, &region.id, RegionNodeStatus::Member, None, None, None)
             .await?;
 
         let result = node_read_repo.append_detailed_nodes(pool, &region).await?;

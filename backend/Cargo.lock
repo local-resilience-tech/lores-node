@@ -3006,6 +3006,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "lores-app-node"
+version = "0.1.0"
+dependencies = [
+ "futures",
+ "hex",
+ "lores-p2panda-client",
+ "serde",
+ "serde_json",
+ "sha2 0.10.9",
+ "sqlx",
+ "tokio",
+ "tonic",
+ "tracing",
+ "uuid",
+]
+
+[[package]]
 name = "lores-example-app-cli"
 version = "0.1.0"
 dependencies = [
@@ -3094,6 +3111,23 @@ dependencies = [
  "tonic",
  "tonic-prost",
  "tonic-prost-build",
+]
+
+[[package]]
+name = "lores-p2panda-dev-server"
+version = "0.1.0"
+dependencies = [
+ "futures",
+ "hex",
+ "prost",
+ "sha2 0.10.9",
+ "tokio",
+ "tokio-stream",
+ "tonic",
+ "tonic-prost",
+ "tonic-prost-build",
+ "tracing",
+ "tracing-subscriber",
 ]
 
 [[package]]
@@ -6518,6 +6552,7 @@ checksum = "bf3923a6f5c4c6382e0b653c4117f48d631ea17f38ed86e2a828e6f7412f5239"
 dependencies = [
  "getrandom 0.4.3",
  "js-sys",
+ "serde_core",
  "wasm-bindgen",
 ]
 

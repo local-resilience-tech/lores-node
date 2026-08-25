@@ -1,6 +1,6 @@
 use sqlx::SqlitePool;
-use tracing::warn;
 use std::sync::Arc;
+use tracing::warn;
 
 use crate::data::node_data::app_instances_repo::AppInstancesRepo;
 
@@ -10,10 +10,7 @@ pub fn make_instance_seen_callback(pool: SqlitePool) -> Arc<dyn Fn(String, Strin
     Arc::new(move |app_id: String, instance_id: String| {
         let pool = pool.clone();
         tokio::spawn(async move {
-            if let Err(e) = AppInstancesRepo::init()
-                .record_app_instance(&pool, &app_id, &instance_id)
-                .await
-            {
+            if let Err(e) = AppInstancesRepo::init().record_app_instance(&pool, &app_id, &instance_id).await {
                 warn!("[app_instances] failed to record instance: {}", e);
             }
         });

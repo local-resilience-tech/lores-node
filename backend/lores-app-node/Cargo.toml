@@ -1,0 +1,17 @@
+[package]
+name = "lores-app-node"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+lores-p2panda-client = { path = "../lores-p2panda-client" }
+futures = "0.3"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+sha2 = "0.10"
+sqlx = { version = "0.8", features = ["runtime-tokio", "sqlite"] }
+tokio = { version = "1", features = ["sync"] }
+uuid = { version = "1", features = ["v4", "serde"] }
+tonic = "0.14"
+tracing = "0.1"
+hex.workspace = true

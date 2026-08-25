@@ -4,14 +4,12 @@ pub fn parse_docker_json<T>(output: Output) -> Result<T, anyhow::Error>
 where
     T: serde::de::DeserializeOwned,
 {
-    let stdout_string = String::from_utf8(output.stdout)
-        .map_err(|e| anyhow::anyhow!("Failed to convert output to string: {}", e))?;
+    let stdout_string = String::from_utf8(output.stdout).map_err(|e| anyhow::anyhow!("Failed to convert output to string: {}", e))?;
     let stdout_string = json_object_lines_to_array(&stdout_string);
 
     let stdout_string = strip_double_array_wrapping(&stdout_string);
 
-    let results = serde_json::from_str::<T>(&stdout_string)
-        .map_err(|e| anyhow::anyhow!("Failed to parse JSON: {}", e))?;
+    let results = serde_json::from_str::<T>(&stdout_string).map_err(|e| anyhow::anyhow!("Failed to parse JSON: {}", e))?;
 
     Ok(results)
 }

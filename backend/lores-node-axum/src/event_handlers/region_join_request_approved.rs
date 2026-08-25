@@ -8,12 +8,10 @@ use crate::{
         projections_read::{region_nodes::RegionNodesReadRepo, regions::RegionsReadRepo},
         projections_write::{region_nodes::RegionNodesWriteRepo, regions::RegionsWriteRepo},
     },
-    event_handlers::utilities::{
-        handle_db_write_error, header_has_region, EventHandler, HandlerResult,
-    },
+    event_handlers::utilities::{EventHandler, HandlerResult, handle_db_write_error, header_has_region},
     panda_comms::{
-        lores_events::{LoResEventHeader, RegionJoinRequestApprovedDataV1},
         RegionId,
+        lores_events::{LoResEventHeader, RegionJoinRequestApprovedDataV1},
     },
 };
 
@@ -23,16 +21,10 @@ pub struct RegionJoinRequestApprovedHandler {
 
 impl RegionJoinRequestApprovedHandler {
     pub fn new(payload: &RegionJoinRequestApprovedDataV1) -> Self {
-        Self {
-            payload: payload.clone(),
-        }
+        Self { payload: payload.clone() }
     }
 
-    async fn write_projections(
-        &self,
-        region_id: RegionId,
-        pool: &SqlitePool,
-    ) -> Result<RegionNodeDetails, sqlx::Error> {
+    async fn write_projections(&self, region_id: RegionId, pool: &SqlitePool) -> Result<RegionNodeDetails, sqlx::Error> {
         let regions_write_repo = RegionsWriteRepo::init();
         let node_write_repo = RegionNodesWriteRepo::init();
         let node_read_repo = RegionNodesReadRepo::init();
@@ -42,12 +34,7 @@ impl RegionJoinRequestApprovedHandler {
 
         // Upsert region node status
         node_write_repo
-            .upsert_join_status(
-                pool,
-                &self.payload.node_id,
-                &region_id.to_hex(),
-                RegionNodeStatus::Member,
-            )
+            .upsert_join_status(pool, &self.payload.node_id, &region_id.to_hex(), RegionNodeStatus::Member)
             .await?;
 
         // Get region node
@@ -91,10 +78,7 @@ impl EventHandler for RegionJoinRequestApprovedHandler {
         let region = match repo.find(pool, &region_id.to_hex()).await {
             Ok(Some(region)) => region,
             Ok(None) => {
-                info!(
-                    "Validation failed: region not found for ID {}",
-                    region_id.to_hex()
-                );
+                info!("Validation failed: region not found for ID {}", region_id.to_hex());
                 return Err(());
             }
             Err(e) => {

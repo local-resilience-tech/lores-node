@@ -1,4 +1,4 @@
-use axum::{http::StatusCode, Json};
+use axum::{Json, http::StatusCode};
 
 pub fn internal_server_error<E: std::fmt::Debug>(error: E) -> (StatusCode, Json<String>) {
     let stringified_error = format!("Internal server error: {:?}", error);

@@ -1,4 +1,4 @@
-use axum::{http::StatusCode, response::IntoResponse, Json};
+use axum::{Json, http::StatusCode, response::IntoResponse};
 use coop_cloud_docker_apps as cca;
 use serde::Serialize;
 use tracing::warn;
@@ -56,8 +56,7 @@ async fn list_stacks() -> impl IntoResponse {
 
     match result {
         Ok(stacks) => {
-            let stacks: Vec<DockerStackWithServices> =
-                stacks.into_iter().map(DockerStackWithServices::from).collect();
+            let stacks: Vec<DockerStackWithServices> = stacks.into_iter().map(DockerStackWithServices::from).collect();
             (StatusCode::OK, Json(stacks)).into_response()
         }
         Err(e) => {

@@ -42,17 +42,12 @@ pub async fn prepare_session_store(node_data_pool: &SqlitePool) -> Result<Sqlite
     Ok(session_store)
 }
 
-pub(crate) async fn prepare_database(
-    db_url: &str,
-    migrations: Option<&str>,
-) -> Result<Pool<Sqlite>> {
+pub(crate) async fn prepare_database(db_url: &str, migrations: Option<&str>) -> Result<Pool<Sqlite>> {
     let filename = db_url
         .strip_prefix("sqlite:")
         .ok_or_else(|| anyhow::anyhow!("Database URL must start with 'sqlite:'"))?;
 
-    let options = SqliteConnectOptions::new()
-        .filename(filename)
-        .create_if_missing(true);
+    let options = SqliteConnectOptions::new().filename(filename).create_if_missing(true);
 
     let pool = SqlitePool::connect_with(options).await?;
 

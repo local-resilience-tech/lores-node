@@ -22,12 +22,8 @@ fn get_app_service_labels(stack_name: &str) -> Result<CoopCloudServiceLabels, an
         warn!("Error listing services for stack {}: {:?}", stack_name, e);
         e
     })?;
-    let service = get_app_service_from_list(&services).ok_or_else(|| {
-        anyhow::anyhow!(
-            "App service not found in stack services for stack: {}",
-            stack_name
-        )
-    })?;
+    let service = get_app_service_from_list(&services)
+        .ok_or_else(|| anyhow::anyhow!("App service not found in stack services for stack: {}", stack_name))?;
 
     get_service_labels(&service.name)
 }
@@ -44,10 +40,6 @@ fn get_service_labels(service_id: &str) -> Result<CoopCloudServiceLabels, anyhow
     Ok(service_labels)
 }
 
-fn get_app_service_from_list(
-    services: &Vec<DockerStackServicesResult>,
-) -> Option<&DockerStackServicesResult> {
-    services
-        .iter()
-        .find(|service| service.name.ends_with("_app"))
+fn get_app_service_from_list(services: &Vec<DockerStackServicesResult>) -> Option<&DockerStackServicesResult> {
+    services.iter().find(|service| service.name.ends_with("_app"))
 }

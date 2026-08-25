@@ -11,11 +11,7 @@ impl AppInstallationsWriteRepo {
         AppInstallationsWriteRepo {}
     }
 
-    pub async fn upsert(
-        &self,
-        pool: &SqlitePool,
-        installation: AppInstallation,
-    ) -> Result<(), sqlx::Error> {
+    pub async fn upsert(&self, pool: &SqlitePool, installation: AppInstallation) -> Result<(), sqlx::Error> {
         let app_write_repo = AppsWriteRepo::init();
         app_write_repo.upsert(pool, &installation.app_name).await?;
 

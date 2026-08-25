@@ -11,24 +11,14 @@ impl RegionNodesReadRepo {
         RegionNodesReadRepo {}
     }
 
-    pub async fn find_required_by_keys(
-        &self,
-        pool: &SqlitePool,
-        node_id: &str,
-        region_id: &str,
-    ) -> Result<RegionNode, sqlx::Error> {
+    pub async fn find_required_by_keys(&self, pool: &SqlitePool, node_id: &str, region_id: &str) -> Result<RegionNode, sqlx::Error> {
         match self.find_by_keys(pool, node_id, region_id).await? {
             Some(node) => Ok(node),
             None => Err(sqlx::Error::RowNotFound),
         }
     }
 
-    pub async fn find_by_keys(
-        &self,
-        pool: &SqlitePool,
-        node_id: &str,
-        region_id: &str,
-    ) -> Result<Option<RegionNode>, sqlx::Error> {
+    pub async fn find_by_keys(&self, pool: &SqlitePool, node_id: &str, region_id: &str) -> Result<Option<RegionNode>, sqlx::Error> {
         let node = sqlx::query_as!(
             RegionNode,
             "
@@ -48,11 +38,7 @@ impl RegionNodesReadRepo {
         return Ok(node);
     }
 
-    pub async fn append_detail_nodes_to_list(
-        &self,
-        pool: &SqlitePool,
-        regions: Vec<Region>,
-    ) -> Result<Vec<RegionWithNodes>, sqlx::Error> {
+    pub async fn append_detail_nodes_to_list(&self, pool: &SqlitePool, regions: Vec<Region>) -> Result<Vec<RegionWithNodes>, sqlx::Error> {
         let mut result = Vec::new();
         for region in regions {
             let with_details = self.append_detailed_nodes(pool, &region).await?;
@@ -61,11 +47,7 @@ impl RegionNodesReadRepo {
         Ok(result)
     }
 
-    pub async fn append_detailed_nodes(
-        &self,
-        pool: &SqlitePool,
-        region: &Region,
-    ) -> Result<RegionWithNodes, sqlx::Error> {
+    pub async fn append_detailed_nodes(&self, pool: &SqlitePool, region: &Region) -> Result<RegionWithNodes, sqlx::Error> {
         let nodes = self.find_all_detailed(pool, &region.id).await?;
 
         let with_details = RegionWithNodes {
@@ -102,11 +84,7 @@ impl RegionNodesReadRepo {
         return Ok(node);
     }
 
-    pub async fn find_all_detailed(
-        &self,
-        pool: &SqlitePool,
-        region_id: &str,
-    ) -> Result<Vec<RegionNodeDetails>, sqlx::Error> {
+    pub async fn find_all_detailed(&self, pool: &SqlitePool, region_id: &str) -> Result<Vec<RegionNodeDetails>, sqlx::Error> {
         let nodes = sqlx::query_as!(
             RegionNodeDetails,
             "

@@ -1,6 +1,6 @@
 use axum::{Extension, Json, http::StatusCode, response::IntoResponse};
-use tracing::{info, warn};
 use serde::Deserialize;
+use tracing::{info, warn};
 use utoipa::ToSchema;
 use utoipa_axum::{router::OpenApiRouter, routes};
 
@@ -89,10 +89,7 @@ async fn register_app(
     };
 
     // Verify the region is known to this node
-    match RegionsReadRepo::init()
-        .find(&db.projections_pool, &payload.region_id)
-        .await
-    {
+    match RegionsReadRepo::init().find(&db.projections_pool, &payload.region_id).await {
         Ok(Some(_)) => {}
         Ok(None) => return bad_request("Region not found").into_response(),
         Err(e) => return internal_server_error(e).into_response(),
@@ -115,12 +112,7 @@ async fn register_app(
     // Persist the binding in node_data before announcing to the network
     let binding_event = if !already_bound {
         if let Err(e) = LocalAppsRepo::init()
-            .bind_to_region(
-                &db.node_data_pool,
-                &payload.app.name,
-                &payload.app.instance_id,
-                &payload.region_id,
-            )
+            .bind_to_region(&db.node_data_pool, &payload.app.name, &payload.app.instance_id, &payload.region_id)
             .await
         {
             return internal_server_error(e).into_response();
@@ -141,11 +133,7 @@ async fn register_app(
 
     // Publish the operation
     if let Err(e) = panda_container
-        .publish_persisted(
-            &RegionAdminTopic::new(region_id),
-            event_payload,
-            auth_session.user,
-        )
+        .publish_persisted(&RegionAdminTopic::new(region_id), event_payload, auth_session.user)
         .await
     {
         return internal_server_error(e).into_response();

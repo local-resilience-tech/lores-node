@@ -15,12 +15,10 @@ pub fn api_router() -> OpenApiRouter {
         .nest("/auth_api", auth_api::auth_api_router())
         .nest(
             "/admin_api",
-            admin_api::admin_api_router()
-                .route_layer(permission_required!(AppAuthBackend, "admin")),
+            admin_api::admin_api_router().route_layer(permission_required!(AppAuthBackend, "admin")),
         )
         .nest(
             "/node_steward_api",
-            node_steward_api::node_steward_api_router()
-                .route_layer(permission_required!(AppAuthBackend, "steward")),
+            node_steward_api::node_steward_api_router().route_layer(permission_required!(AppAuthBackend, "steward")),
         )
 }

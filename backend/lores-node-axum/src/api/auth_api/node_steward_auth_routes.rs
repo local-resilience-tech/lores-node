@@ -1,20 +1,20 @@
-use axum::{http::StatusCode, response::IntoResponse, Extension, Json};
-use tracing::warn;
+use axum::{Extension, Json, http::StatusCode, response::IntoResponse};
 use password_auth::generate_hash;
 use serde::{Deserialize, Serialize};
+use tracing::warn;
 use utoipa::ToSchema;
 use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::{
+    DatabaseState,
     config::config_state::LoresNodeConfigState,
     data::node_data::node_stewards::{NodeStewardIdentifier, NodeStewardsRepo},
-    DatabaseState,
 };
 
 use super::{
+    UserRef,
     admin_user_repo::AdminUserRepo,
     auth_backend::{AuthError, AuthSession, Credentials, NodeStewardCredentials},
-    UserRef,
 };
 
 pub fn router() -> OpenApiRouter {
@@ -51,11 +51,7 @@ async fn get_current_user(
 ) -> impl IntoResponse {
     let admin_repo = AdminUserRepo::new(&config_state);
     if !admin_repo.has_admin_password().await {
-        return (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(GetCurrentNodeStewardError::AdminNotFound),
-        )
-            .into_response();
+        return (StatusCode::INTERNAL_SERVER_ERROR, Json(GetCurrentNodeStewardError::AdminNotFound)).into_response();
     }
 
     let auth_user = match auth_session.user {
@@ -69,9 +65,7 @@ async fn get_current_user(
     let repo = NodeStewardsRepo::init();
 
     // Fetch node steward by ID
-    let id = NodeStewardIdentifier {
-        id: auth_user.id.clone(),
-    };
+    let id = NodeStewardIdentifier { id: auth_user.id.clone() };
     let steward = match repo.find(&db.node_data_pool, &id).await {
         Ok(Some(steward)) => steward,
         Ok(None) => {
@@ -121,36 +115,25 @@ async fn node_steward_login(
     let user = match auth_session.authenticate(creds.clone()).await {
         Ok(Some(user)) => user,
         Ok(None) => {
-            return (
-                StatusCode::UNAUTHORIZED,
-                Json(NodeStewardLoginError::InvalidCredentials),
-            )
-                .into_response();
+            return (StatusCode::UNAUTHORIZED, Json(NodeStewardLoginError::InvalidCredentials)).into_response();
         }
 
         Err(e) => {
             warn!("Authentication failed: {:?}", e);
             let status = match e {
-                axum_login::Error::Backend(AuthError::InvalidCredentials) => (
-                    StatusCode::UNAUTHORIZED,
-                    Json(NodeStewardLoginError::InvalidCredentials),
-                ),
-                axum_login::Error::Backend(AuthError::NoPasswordSet) => (
-                    StatusCode::UNAUTHORIZED,
-                    Json(NodeStewardLoginError::NoPasswordSet),
-                ),
-                axum_login::Error::Backend(AuthError::UserNotFound) => (
-                    StatusCode::UNAUTHORIZED,
-                    Json(NodeStewardLoginError::InvalidCredentials),
-                ),
-                axum_login::Error::Backend(AuthError::AccountDisabled) => (
-                    StatusCode::UNAUTHORIZED,
-                    Json(NodeStewardLoginError::AccountDisabled),
-                ),
-                _ => (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(NodeStewardLoginError::InternalServerError),
-                ),
+                axum_login::Error::Backend(AuthError::InvalidCredentials) => {
+                    (StatusCode::UNAUTHORIZED, Json(NodeStewardLoginError::InvalidCredentials))
+                }
+                axum_login::Error::Backend(AuthError::NoPasswordSet) => {
+                    (StatusCode::UNAUTHORIZED, Json(NodeStewardLoginError::NoPasswordSet))
+                }
+                axum_login::Error::Backend(AuthError::UserNotFound) => {
+                    (StatusCode::UNAUTHORIZED, Json(NodeStewardLoginError::InvalidCredentials))
+                }
+                axum_login::Error::Backend(AuthError::AccountDisabled) => {
+                    (StatusCode::UNAUTHORIZED, Json(NodeStewardLoginError::AccountDisabled))
+                }
+                _ => (StatusCode::INTERNAL_SERVER_ERROR, Json(NodeStewardLoginError::InternalServerError)),
             };
             return status.into_response();
         }
@@ -158,11 +141,7 @@ async fn node_steward_login(
 
     if auth_session.login(&user).await.is_err() {
         eprint!("Failed to log in node steward user");
-        return (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(NodeStewardLoginError::InternalServerError),
-        )
-            .into_response();
+        return (StatusCode::INTERNAL_SERVER_ERROR, Json(NodeStewardLoginError::InternalServerError)).into_response();
     }
 
     return (StatusCode::OK, Json(UserRef::from_backend_user(&user))).into_response();
@@ -204,11 +183,7 @@ async fn node_steward_set_password(
     let steward = match repo.find(&db.node_data_pool, &id).await {
         Ok(Some(steward)) => steward,
         Ok(None) => {
-            return (
-                StatusCode::UNAUTHORIZED,
-                Json(NodeStewardSetPasswordError::InvalidId),
-            )
-                .into_response();
+            return (StatusCode::UNAUTHORIZED, Json(NodeStewardSetPasswordError::InvalidId)).into_response();
         }
         Err(e) => {
             warn!("Failed to find node steward: {:?}", e);
@@ -222,29 +197,17 @@ async fn node_steward_set_password(
 
     // Check that the token is valid and not empty or missing
     if !steward.token_equals(&input.token) {
-        return (
-            StatusCode::UNAUTHORIZED,
-            Json(NodeStewardSetPasswordError::InvalidToken),
-        )
-            .into_response();
+        return (StatusCode::UNAUTHORIZED, Json(NodeStewardSetPasswordError::InvalidToken)).into_response();
     }
 
     // Check that the token hasn't expired
     if steward.token_expired() {
-        return (
-            StatusCode::UNAUTHORIZED,
-            Json(NodeStewardSetPasswordError::TokenExpired),
-        )
-            .into_response();
+        return (StatusCode::UNAUTHORIZED, Json(NodeStewardSetPasswordError::TokenExpired)).into_response();
     }
 
     // Check that the new password is valid
     if !password_is_valid(&input.new_password) {
-        return (
-            StatusCode::UNAUTHORIZED,
-            Json(NodeStewardSetPasswordError::InvalidNewPassword),
-        )
-            .into_response();
+        return (StatusCode::UNAUTHORIZED, Json(NodeStewardSetPasswordError::InvalidNewPassword)).into_response();
     }
 
     // Hash the password and save it

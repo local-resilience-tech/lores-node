@@ -36,10 +36,7 @@ impl<'r> Decode<'r, Sqlite> for LatLng {
 }
 
 impl<'q> Encode<'q, Sqlite> for LatLng {
-    fn encode_by_ref(
-        &self,
-        buf: &mut <Sqlite as Database>::ArgumentBuffer<'q>,
-    ) -> Result<IsNull, BoxDynError> {
+    fn encode_by_ref(&self, buf: &mut <Sqlite as Database>::ArgumentBuffer<'q>) -> Result<IsNull, BoxDynError> {
         let raw = serde_json::to_string(self).expect("Failed to serialize LatLng");
         <String as Encode<Sqlite>>::encode(raw, buf)
     }
@@ -48,16 +45,10 @@ impl<'q> Encode<'q, Sqlite> for LatLng {
 impl LatLng {
     pub fn validate(&self) -> Result<(), String> {
         if self.lat < -90.0 || self.lat > 90.0 {
-            return Err(format!(
-                "Invalid latitude: {}. Must be between -90 and 90.",
-                self.lat
-            ));
+            return Err(format!("Invalid latitude: {}. Must be between -90 and 90.", self.lat));
         }
         if self.lng < -180.0 || self.lng > 180.0 {
-            return Err(format!(
-                "Invalid longitude: {}. Must be between -180 and 180.",
-                self.lng
-            ));
+            return Err(format!("Invalid longitude: {}. Must be between -180 and 180.", self.lng));
         }
         Ok(())
     }

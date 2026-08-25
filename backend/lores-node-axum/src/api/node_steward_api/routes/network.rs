@@ -1,15 +1,15 @@
-use axum::{http::StatusCode, response::IntoResponse, Extension, Json};
-use tracing::warn;
+use axum::{Extension, Json, http::StatusCode, response::IntoResponse};
 use serde::Deserialize;
 use serde::Serialize;
+use tracing::warn;
 use utoipa::ToSchema;
 use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::{
+    DatabaseState,
     config::config_state::LoresNodeConfigState,
     data::projections_write::truncate_all,
-    panda_comms::{build_public_key_from_hex, PandaContainer},
-    DatabaseState,
+    panda_comms::{PandaContainer, build_public_key_from_hex},
 };
 use lores_p2panda::RelayUrl;
 
@@ -27,9 +27,8 @@ struct BootstrapNodeRequest {
 
 impl BootstrapNodeRequest {
     fn validate(&self) -> Result<(), String> {
-        build_public_key_from_hex(&self.node_id).map_err(|_| {
-            "Invalid node_id format. Must be a hex string representing a public key.".to_string()
-        })?;
+        build_public_key_from_hex(&self.node_id)
+            .map_err(|_| "Invalid node_id format. Must be a hex string representing a public key.".to_string())?;
 
         Ok(())
     }
@@ -54,15 +53,8 @@ async fn add_bootstrap_node(
     }
 
     // Add the bootstrap node to the current PandaContainer
-    if let Err(e) = panda_container
-        .add_bootstrap_node(&payload.node_id, None)
-        .await
-    {
-        return (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            format!("Failed to add bootstrap node: {}", e),
-        )
-            .into_response();
+    if let Err(e) = panda_container.add_bootstrap_node(&payload.node_id, None).await {
+        return (StatusCode::INTERNAL_SERVER_ERROR, format!("Failed to add bootstrap node: {}", e)).into_response();
     }
 
     // Add the new bootstrap node ID to the config
@@ -78,11 +70,7 @@ async fn add_bootstrap_node(
         })
         .await;
     if let Err(e) = update_result {
-        return (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            format!("Failed to update config: {}", e),
-        )
-            .into_response();
+        return (StatusCode::INTERNAL_SERVER_ERROR, format!("Failed to update config: {}", e)).into_response();
     }
 
     (StatusCode::OK, ()).into_response()
@@ -110,18 +98,10 @@ async fn replay_projections(
     }
 
     match panda_container.replay_all_regions().await {
-        Ok(count) => (
-            StatusCode::OK,
-            format!("Replaying {count} region(s) from the operations store"),
-        )
-            .into_response(),
+        Ok(count) => (StatusCode::OK, format!("Replaying {count} region(s) from the operations store")).into_response(),
         Err(e) => {
             warn!("Failed to start replay: {e}");
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to start replay: {e}"),
-            )
-                .into_response()
+            (StatusCode::INTERNAL_SERVER_ERROR, format!("Failed to start replay: {e}")).into_response()
         }
     }
 }
@@ -141,9 +121,7 @@ struct OperationCountEntry {
         (status = 500, body = String),
     )
 )]
-async fn get_operation_counts(
-    Extension(panda_container): Extension<PandaContainer>,
-) -> impl IntoResponse {
+async fn get_operation_counts(Extension(panda_container): Extension<PandaContainer>) -> impl IntoResponse {
     match panda_container.get_operation_counts_by_topic().await {
         Ok(counts) => {
             let entries: Vec<OperationCountEntry> = counts

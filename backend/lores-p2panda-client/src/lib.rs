@@ -4,11 +4,38 @@ pub mod proto {
     tonic::include_proto!("lores.panda.v2");
 }
 
-use proto::{
-    OperationEvent, PublishRequest, PublishResponse, SubscribeRequest,
-    panda_client::PandaClient as TonicPandaClient,
-};
+use proto::{InfoRequest, OperationEvent, PublishRequest, SubscribeRequest, panda_client::PandaClient as TonicPandaClient};
 use tonic::{Code, Response, Status, Streaming};
+
+/// 32-byte p2panda operation hash returned by a successful publish.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct OperationId(pub Vec<u8>);
+
+impl OperationId {
+    /// Returns the bytes if non-empty, or `None` for an absent value.
+    pub fn into_non_empty(self) -> Option<Vec<u8>> {
+        if self.0.is_empty() { None } else { Some(self.0) }
+    }
+}
+
+/// 32-byte p2panda public key identifying a node.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct NodeId(pub Vec<u8>);
+
+impl NodeId {
+    /// Returns the bytes if non-empty, or `None` for an absent value.
+    pub fn into_non_empty(self) -> Option<Vec<u8>> {
+        if self.0.is_empty() { None } else { Some(self.0) }
+    }
+}
+
+/// Result of a successful publish, containing both the assigned operation id
+/// and the identity of the node that persisted it.
+#[derive(Debug, Clone)]
+pub struct PublishResult {
+    pub operation_id: OperationId,
+    pub node_id: NodeId,
+}
 
 /// Errors returned by [`PandaClient`] methods.
 #[derive(Debug)]
@@ -84,22 +111,32 @@ impl PandaClient {
     /// p2panda node, guaranteeing eventual propagation to peers.
     ///
     /// If `idempotency_key` is `Some`, the server will deduplicate within its
-    /// retention window: retrying with the same key returns success without
-    /// re-inserting the operation.
+    /// retention window: retrying with the same key returns the same operation_id
+    /// without re-inserting the operation.
     pub async fn publish(
         &mut self,
         app_id: impl Into<String>,
         instance_id: impl Into<String>,
         payload: impl Into<Vec<u8>>,
         idempotency_key: Option<Vec<u8>>,
-    ) -> Result<Response<PublishResponse>, PandaError> {
+    ) -> Result<PublishResult, PandaError> {
         let request = PublishRequest {
             app_id: app_id.into(),
             instance_id: instance_id.into(),
             payload: payload.into(),
             idempotency_key: idempotency_key.unwrap_or_default(),
         };
-        self.inner.publish(request).await.map_err(PandaError::from)
+        self.inner
+            .publish(request)
+            .await
+            .map(|r| {
+                let r = r.into_inner();
+                PublishResult {
+                    operation_id: OperationId(r.operation_id),
+                    node_id: NodeId(r.node_id),
+                }
+            })
+            .map_err(PandaError::from)
     }
 
     /// Subscribe to a region+namespace topic and receive a stream of
@@ -115,9 +152,17 @@ impl PandaClient {
             app_id: app_id.into(),
             instance_id: instance_id.into(),
         };
+        self.inner.subscribe(request).await.map_err(PandaError::from)
+    }
+
+    /// Retrieve information about the connected server node.
+    pub async fn info(&mut self, instance_id: impl Into<String>) -> Result<NodeId, PandaError> {
         self.inner
-            .subscribe(request)
+            .info(InfoRequest {
+                instance_id: instance_id.into(),
+            })
             .await
+            .map(|r| NodeId(r.into_inner().node_id))
             .map_err(PandaError::from)
     }
 }

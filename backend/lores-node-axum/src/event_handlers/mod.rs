@@ -40,9 +40,7 @@ pub async fn handle_event(event: LoResEvent, pool: &SqlitePool, realtime_state: 
     if !handle_result.client_events.is_empty() {
         // Here you would typically send the client events to the appropriate clients.
         // For example, using a WebSocket or similar mechanism.
-        realtime_state
-            .broadcast_app_events(handle_result.client_events.clone())
-            .await;
+        realtime_state.broadcast_app_events(handle_result.client_events.clone()).await;
         info!("Client events to send: {:?}", handle_result.client_events);
     } else {
         info!("No client events to send.");

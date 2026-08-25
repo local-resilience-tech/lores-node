@@ -15,11 +15,9 @@ use crate::{
     config::config_state::LoresNodeConfigState,
     data::{entities::LatLng, projections_read::regions::RegionsReadRepo},
     panda_comms::{
-        PandaContainer, PandaSubscriptionError, RegionAdminTopic, RegionId,
-        SubscriptionError,
+        PandaContainer, PandaSubscriptionError, RegionAdminTopic, RegionId, SubscriptionError,
         lores_events::{
-            LoResEventPayload, RegionCreatedDataV1, RegionJoinRequestApprovedDataV1,
-            RegionJoinRequestedDataV1, RegionMapUpdatedDataV1,
+            LoResEventPayload, RegionCreatedDataV1, RegionJoinRequestApprovedDataV1, RegionJoinRequestedDataV1, RegionMapUpdatedDataV1,
         },
     },
 };
@@ -68,17 +66,10 @@ async fn create_region(
     info!("Creating region with data: {:?}", data);
 
     if data.slug.is_empty() || data.name.is_empty() {
-        return (
-            StatusCode::BAD_REQUEST,
-            Json("Slug and name are required".to_string()),
-        )
-            .into_response();
+        return (StatusCode::BAD_REQUEST, Json("Slug and name are required".to_string())).into_response();
     }
 
-    info!(
-        "Validated region data: slug={}, name={}",
-        data.slug, data.name
-    );
+    info!("Validated region data: slug={}, name={}", data.slug, data.name);
 
     // Generate a region ID and store it in the config
     let region_id = match store_new_region_id(&config_state).await {
@@ -107,11 +98,7 @@ async fn create_region(
     info!("Prepared event payload: {:?}", event_payload);
 
     if let Err(e) = panda_container
-        .publish_persisted(
-            &RegionAdminTopic::new(region_id.clone()),
-            event_payload,
-            auth_session.user,
-        )
+        .publish_persisted(&RegionAdminTopic::new(region_id.clone()), event_payload, auth_session.user)
         .await
     {
         return internal_server_error(e).into_response();
@@ -148,27 +135,15 @@ async fn join_region(
     axum::extract::Json(data): axum::extract::Json<JoinRegionRequestData>,
 ) -> impl IntoResponse {
     // Validate data
-    if data.region_id.is_empty()
-        || data.region_id.len() != 64
-        || data.about_your_node.is_empty()
-        || data.about_your_stewards.is_empty()
-    {
-        return (
-            StatusCode::BAD_REQUEST,
-            Json("Invalid request data".to_string()),
-        )
-            .into_response();
+    if data.region_id.is_empty() || data.region_id.len() != 64 || data.about_your_node.is_empty() || data.about_your_stewards.is_empty() {
+        return (StatusCode::BAD_REQUEST, Json("Invalid request data".to_string())).into_response();
     }
 
     let region_id = match RegionId::from_hex(data.region_id.as_str()) {
         Ok(id) => id,
         Err(e) => {
             warn!("Invalid region ID: {:?}", e);
-            return (
-                StatusCode::BAD_REQUEST,
-                Json("Invalid region ID".to_string()),
-            )
-                .into_response();
+            return (StatusCode::BAD_REQUEST, Json("Invalid region ID".to_string())).into_response();
         }
     };
 
@@ -179,7 +154,10 @@ async fn join_region(
 
     // Subscribe to the new region
     if let Err(e) = panda_container.join_region(region_id.clone()).await {
-        if matches!(e, PandaSubscriptionError::SubscriptionError(SubscriptionError::AlreadySubscribed(_))) {
+        if matches!(
+            e,
+            PandaSubscriptionError::SubscriptionError(SubscriptionError::AlreadySubscribed(_))
+        ) {
             warn!("Already subscribed to region {:?}, proceeding", region_id);
         } else {
             return internal_server_error(e).into_response();
@@ -195,11 +173,7 @@ async fn join_region(
     info!("Prepared event payload: {:?}", event_payload);
 
     if let Err(e) = panda_container
-        .publish_persisted(
-            &RegionAdminTopic::new(region_id),
-            event_payload,
-            auth_session.user,
-        )
+        .publish_persisted(&RegionAdminTopic::new(region_id), event_payload, auth_session.user)
         .await
     {
         return internal_server_error(e).into_response();
@@ -232,52 +206,30 @@ async fn approve_join_request(
     axum::extract::Json(data): axum::extract::Json<ApproveJoinRequestData>,
 ) -> impl IntoResponse {
     // Validate data
-    if data.region_id.is_empty()
-        || data.region_id.len() != 64
-        || data.node_id.is_empty()
-        || data.node_id.len() != 64
-    {
-        return (
-            StatusCode::BAD_REQUEST,
-            Json("Invalid request data".to_string()),
-        )
-            .into_response();
+    if data.region_id.is_empty() || data.region_id.len() != 64 || data.node_id.is_empty() || data.node_id.len() != 64 {
+        return (StatusCode::BAD_REQUEST, Json("Invalid request data".to_string())).into_response();
     }
 
     let region_id = match RegionId::from_hex(data.region_id.as_str()) {
         Ok(id) => id,
         Err(e) => {
             warn!("Invalid region ID: {:?}", e);
-            return (
-                StatusCode::BAD_REQUEST,
-                Json("Invalid region ID".to_string()),
-            )
-                .into_response();
+            return (StatusCode::BAD_REQUEST, Json("Invalid region ID".to_string())).into_response();
         }
     };
 
     // Check that I am the controller node for this region
-    if let Err(e) = ensure_controller_node(&db.projections_pool, &region_id, &panda_container).await
-    {
+    if let Err(e) = ensure_controller_node(&db.projections_pool, &region_id, &panda_container).await {
         warn!("Controller node check failed: {:?}", e);
-        return (
-            StatusCode::BAD_REQUEST,
-            Json(format!("Controller node check failed: {}", e)),
-        )
-            .into_response();
+        return (StatusCode::BAD_REQUEST, Json(format!("Controller node check failed: {}", e))).into_response();
     }
 
     // Publish the RegionJoinRequestApproved event
-    let event_payload =
-        LoResEventPayload::RegionJoinRequestApproved(RegionJoinRequestApprovedDataV1 {
-            node_id: data.node_id.clone(),
-        });
+    let event_payload = LoResEventPayload::RegionJoinRequestApproved(RegionJoinRequestApprovedDataV1 {
+        node_id: data.node_id.clone(),
+    });
     if let Err(e) = panda_container
-        .publish_persisted(
-            &RegionAdminTopic::new(region_id),
-            event_payload,
-            auth_session.user,
-        )
+        .publish_persisted(&RegionAdminTopic::new(region_id), event_payload, auth_session.user)
         .await
     {
         return internal_server_error(e).into_response();
@@ -304,9 +256,7 @@ impl UpdateMapData {
         self.min_latlng.validate()?;
         self.max_latlng.validate()?;
 
-        if (self.min_latlng.lat > self.max_latlng.lat)
-            || (self.min_latlng.lng > self.max_latlng.lng)
-        {
+        if (self.min_latlng.lat > self.max_latlng.lat) || (self.min_latlng.lng > self.max_latlng.lng) {
             return Err("min_latlng must be less than or equal to max_latlng".to_string());
         }
 
@@ -336,34 +286,21 @@ async fn update_map(
 ) -> impl IntoResponse {
     // Validate data
     if let Err(e) = data.validate() {
-        return (
-            StatusCode::BAD_REQUEST,
-            Json(format!("Invalid request data: {}", e)),
-        )
-            .into_response();
+        return (StatusCode::BAD_REQUEST, Json(format!("Invalid request data: {}", e))).into_response();
     }
 
     let region_id = match RegionId::from_hex(data.region_id.as_str()) {
         Ok(id) => id,
         Err(e) => {
             warn!("Invalid region ID: {:?}", e);
-            return (
-                StatusCode::BAD_REQUEST,
-                Json("Invalid region ID".to_string()),
-            )
-                .into_response();
+            return (StatusCode::BAD_REQUEST, Json("Invalid region ID".to_string())).into_response();
         }
     };
 
     // Ensure I am the controller node for this region
-    if let Err(e) = ensure_controller_node(&db.projections_pool, &region_id, &panda_container).await
-    {
+    if let Err(e) = ensure_controller_node(&db.projections_pool, &region_id, &panda_container).await {
         warn!("Controller node check failed: {:?}", e);
-        return (
-            StatusCode::BAD_REQUEST,
-            Json(format!("Controller node check failed: {}", e)),
-        )
-            .into_response();
+        return (StatusCode::BAD_REQUEST, Json(format!("Controller node check failed: {}", e))).into_response();
     }
 
     // Publish the event
@@ -373,11 +310,7 @@ async fn update_map(
         image_data_url: data.image_data_url.clone(),
     });
     if let Err(e) = panda_container
-        .publish_persisted(
-            &RegionAdminTopic::new(region_id),
-            event_payload,
-            auth_session.user,
-        )
+        .publish_persisted(&RegionAdminTopic::new(region_id), event_payload, auth_session.user)
         .await
     {
         return internal_server_error(e).into_response();
@@ -409,11 +342,7 @@ async fn forget_region(
     axum::extract::Json(data): axum::extract::Json<ForgetRegionData>,
 ) -> impl IntoResponse {
     if data.region_id.is_empty() {
-        return (
-            StatusCode::BAD_REQUEST,
-            Json("Invalid region ID".to_string()),
-        )
-            .into_response();
+        return (StatusCode::BAD_REQUEST, Json("Invalid region ID".to_string())).into_response();
     }
 
     if let Err(e) = config_state
@@ -441,18 +370,14 @@ async fn forget_region(
     (StatusCode::OK, ()).into_response()
 }
 
-async fn store_new_region_id(
-    config_state: &LoresNodeConfigState,
-) -> Result<RegionId, anyhow::Error> {
+async fn store_new_region_id(config_state: &LoresNodeConfigState) -> Result<RegionId, anyhow::Error> {
     let mut region_id_string: Option<String> = None;
     config_state
         .update(|config| {
             let mut result = config.clone();
             let mut region_ids: Vec<String> = result.region_ids.unwrap_or_else(|| vec![]);
 
-            while region_id_string.is_none()
-                || region_ids.contains(&region_id_string.clone().unwrap())
-            {
+            while region_id_string.is_none() || region_ids.contains(&region_id_string.clone().unwrap()) {
                 let new_id_string = RegionId::generate().to_hex();
                 info!("Trying new region id {}", new_id_string);
                 if !region_ids.contains(&new_id_string) {
@@ -478,10 +403,7 @@ async fn store_new_region_id(
     }
 }
 
-async fn store_region_id(
-    config_state: &LoresNodeConfigState,
-    region_id: &RegionId,
-) -> Result<(), anyhow::Error> {
+async fn store_region_id(config_state: &LoresNodeConfigState, region_id: &RegionId) -> Result<(), anyhow::Error> {
     config_state
         .update(|config| {
             let mut result = config.clone();
@@ -501,11 +423,7 @@ async fn store_region_id(
     Ok(())
 }
 
-async fn ensure_controller_node(
-    pool: &SqlitePool,
-    region_id: &RegionId,
-    panda_container: &PandaContainer,
-) -> Result<(), String> {
+async fn ensure_controller_node(pool: &SqlitePool, region_id: &RegionId, panda_container: &PandaContainer) -> Result<(), String> {
     let region = RegionsReadRepo::init()
         .find(pool, &region_id.to_hex())
         .await

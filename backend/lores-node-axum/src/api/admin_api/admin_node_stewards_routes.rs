@@ -72,10 +72,7 @@ async fn list_node_stewards(Extension(db): Extension<DatabaseState>) -> impl Int
 
     match repo.all(&db.node_data_pool).await {
         Ok(stewards) => {
-            let results: Vec<NodeSteward> = stewards
-                .into_iter()
-                .map(|steward| NodeSteward::from_row(&steward))
-                .collect();
+            let results: Vec<NodeSteward> = stewards.into_iter().map(|steward| NodeSteward::from_row(&steward)).collect();
             (StatusCode::OK, Json(results)).into_response()
         }
         Err(_) => (StatusCode::INTERNAL_SERVER_ERROR, ()).into_response(),
@@ -118,11 +115,7 @@ async fn create_node_steward(
             };
             (StatusCode::CREATED, Json(creation_result)).into_response()
         }
-        Err(_) => (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            "server error".to_string(),
-        )
-            .into_response(),
+        Err(_) => (StatusCode::INTERNAL_SERVER_ERROR, "server error".to_string()).into_response(),
     }
 }
 
@@ -138,10 +131,7 @@ async fn create_node_steward(
         (status = INTERNAL_SERVER_ERROR, body = ()),
     ),
 )]
-async fn reset_node_steward_token(
-    Extension(db): Extension<DatabaseState>,
-    Path(steward_id): Path<String>,
-) -> impl IntoResponse {
+async fn reset_node_steward_token(Extension(db): Extension<DatabaseState>, Path(steward_id): Path<String>) -> impl IntoResponse {
     let repo = NodeStewardsRepo::init();
     let identifier = NodeStewardIdentifier { id: steward_id };
 
@@ -155,9 +145,7 @@ async fn reset_node_steward_token(
     };
     row.set_password_reset_token();
 
-    let result = repo
-        .update_password_reset_token(&db.node_data_pool, &row)
-        .await;
+    let result = repo.update_password_reset_token(&db.node_data_pool, &row).await;
 
     match result {
         Ok(_) => {
@@ -186,10 +174,7 @@ async fn reset_node_steward_token(
         (status = INTERNAL_SERVER_ERROR, body = ()),
     ),
 )]
-async fn disable_node_steward(
-    Extension(db): Extension<DatabaseState>,
-    Path(steward_id): Path<String>,
-) -> impl IntoResponse {
+async fn disable_node_steward(Extension(db): Extension<DatabaseState>, Path(steward_id): Path<String>) -> impl IntoResponse {
     toggle_node_steward_status(db, steward_id, false).await
 }
 
@@ -205,24 +190,15 @@ async fn disable_node_steward(
         (status = INTERNAL_SERVER_ERROR, body = ()),
     ),
 )]
-async fn enable_node_steward(
-    Extension(db): Extension<DatabaseState>,
-    Path(steward_id): Path<String>,
-) -> impl IntoResponse {
+async fn enable_node_steward(Extension(db): Extension<DatabaseState>, Path(steward_id): Path<String>) -> impl IntoResponse {
     toggle_node_steward_status(db, steward_id, true).await
 }
 
-async fn toggle_node_steward_status(
-    db: DatabaseState,
-    steward_id: String,
-    enabled: bool,
-) -> impl IntoResponse {
+async fn toggle_node_steward_status(db: DatabaseState, steward_id: String, enabled: bool) -> impl IntoResponse {
     let repo = NodeStewardsRepo::init();
     let identifier = NodeStewardIdentifier { id: steward_id };
 
-    let result = repo
-        .update_enabled(&db.node_data_pool, &identifier, enabled)
-        .await;
+    let result = repo.update_enabled(&db.node_data_pool, &identifier, enabled).await;
 
     if let Err(e) = result {
         warn!("Error updating node steward status: {:?}", e);

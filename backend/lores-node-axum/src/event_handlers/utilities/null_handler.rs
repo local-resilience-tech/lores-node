@@ -1,5 +1,5 @@
-use tracing::info;
 use sqlx::SqlitePool;
+use tracing::info;
 
 use crate::{
     event_handlers::utilities::{EventHandler, HandlerResult},

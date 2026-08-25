@@ -53,14 +53,11 @@ async fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
         Command::Publish { message } => {
             let payload_struct = MessagePayload { message };
             let mut payload_bytes: Vec<u8> = Vec::new();
-            ciborium::into_writer(&payload_struct, &mut payload_bytes)
-                .map_err(|e| format!("failed to encode payload as CBOR: {e}"))?;
+            ciborium::into_writer(&payload_struct, &mut payload_bytes).map_err(|e| format!("failed to encode payload as CBOR: {e}"))?;
 
             let mut client = connect(&server)?;
 
-            client
-                .publish(APP_ID, INSTANCE_ID, payload_bytes, None)
-                .await?;
+            client.publish(APP_ID, INSTANCE_ID, payload_bytes, None).await?;
 
             println!("published");
         }
@@ -78,9 +75,7 @@ async fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
                     match stream.message().await {
                         Ok(Some(event)) => {
                             let author = hex::encode(&event.author);
-                            match ciborium::from_reader::<MessagePayload, _>(
-                                event.payload.as_slice(),
-                            ) {
+                            match ciborium::from_reader::<MessagePayload, _>(event.payload.as_slice()) {
                                 Ok(p) => println!("[{}...] {}", &author[..8], p.message),
                                 Err(_) => {
                                     println!("[{}...] <unparseable payload>", &author[..8])
@@ -96,9 +91,7 @@ async fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
                 }
             });
 
-            println!(
-                "Live mode — type a message and press Enter to publish. Press Ctrl+C to exit.\n",
-            );
+            println!("Live mode — type a message and press Enter to publish. Press Ctrl+C to exit.\n",);
 
             let stdin = tokio::io::BufReader::new(tokio::io::stdin());
             let mut lines = stdin.lines();
@@ -134,6 +127,5 @@ async fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
 }
 
 fn connect(server: &str) -> Result<PandaClient, Box<dyn std::error::Error>> {
-    PandaClient::connect_lazy(server.to_string())
-        .map_err(|e| format!("could not connect to gRPC server at {server}: {e}").into())
+    PandaClient::connect_lazy(server.to_string()).map_err(|e| format!("could not connect to gRPC server at {server}: {e}").into())
 }

@@ -4,10 +4,7 @@ use std::pin::Pin;
 use std::sync::Arc;
 use tracing::{info, warn};
 
-use lores_p2panda::{
-    IncomingOperation, PandaNode, PandaPublishError, RegionAppTopic, RegionId, RegionTopic,
-    SubscriptionError, Topic,
-};
+use lores_p2panda::{IncomingOperation, PandaNode, PandaPublishError, RegionAppTopic, RegionId, RegionTopic, SubscriptionError, Topic};
 use sqlx::SqlitePool;
 use std::time::Duration;
 use tokio::sync::{Mutex, RwLock, broadcast};
@@ -43,7 +40,7 @@ pub mod proto {
 }
 
 use proto::{
-    OperationEvent, PublishRequest, PublishResponse, SubscribeRequest,
+    InfoRequest, InfoResponse, OperationEvent, PublishRequest, PublishResponse, SubscribeRequest,
     panda_server::{Panda, PandaServer},
 };
 
@@ -66,13 +63,8 @@ pub struct AppInstanceIds {
 /// Async callback type for resolving a [`RegionId`] from an [`AppInstanceIds`].
 /// The owner (e.g. `lores-node-axum`) supplies this when constructing
 /// [`PandaService`].
-pub type ResolveRegionId = Arc<
-    dyn Fn(
-            AppInstanceIds,
-        ) -> Pin<Box<dyn Future<Output = Result<RegionId, ResolveRegionIdError>> + Send>>
-        + Send
-        + Sync,
->;
+pub type ResolveRegionId =
+    Arc<dyn Fn(AppInstanceIds) -> Pin<Box<dyn Future<Output = Result<RegionId, ResolveRegionIdError>> + Send>> + Send + Sync>;
 
 /// gRPC service that exposes [`PandaNode`] publish and subscribe over the
 /// network.
@@ -100,8 +92,7 @@ impl PandaService {
         resolve_region_id: ResolveRegionId,
     ) -> Result<Self, sqlx::Error> {
         let config = idempotency_config.unwrap_or_default();
-        let idempotency =
-            IdempotencyStore::new(db, config.cleanup_frequency, config.retention).await?;
+        let idempotency = IdempotencyStore::new(db, config.cleanup_frequency, config.retention).await?;
         Ok(Self {
             node,
             subscriptions: Arc::new(RwLock::new(HashMap::new())),
@@ -151,10 +142,7 @@ impl PandaService {
 
 #[tonic::async_trait]
 impl Panda for PandaService {
-    async fn publish(
-        &self,
-        request: Request<PublishRequest>,
-    ) -> Result<Response<PublishResponse>, Status> {
+    async fn publish(&self, request: Request<PublishRequest>) -> Result<Response<PublishResponse>, Status> {
         let req = request.into_inner();
 
         let ids = AppInstanceIds {
@@ -183,46 +171,42 @@ impl Panda for PandaService {
         );
 
         // If the client supplied an idempotency key, return early on duplicate.
-        if self
-            .idempotency
-            .is_duplicate(&region_app_topic, &req.idempotency_key)
-            .await?
-        {
-            info!("[publish] duplicate idempotency key, skipping re-insert");
-            return Ok(Response::new(PublishResponse {}));
+        if let Some(existing_id) = self.idempotency.check_duplicate(&region_app_topic, &req.idempotency_key).await? {
+            info!("[publish] duplicate idempotency key, returning existing operation_id");
+            let node_id = node.public_key.as_bytes().to_vec();
+            return Ok(Response::new(PublishResponse {
+                operation_id: existing_id,
+                node_id,
+            }));
         }
 
         // Ensure a subscription exists for this topic so the publisher is
         // available. This is idempotent: if already subscribed the existing
         // broadcast channel is reused.
-        let _rx = self
-            .ensure_broadcast_subscription(&node, &region_app_topic)
-            .await?;
+        let _rx = self.ensure_broadcast_subscription(&node, &region_app_topic).await?;
 
-        node.publish_to_region_topic(&region_app_topic, req.payload)
+        let operation_id = node
+            .publish_to_region_topic(&region_app_topic, req.payload)
             .await
             .map_err(publish_error_to_status)?;
 
         // Record the key only after a successful publish so a publish failure
         // does not burn the key — the client can safely retry.
         self.idempotency
-            .record(&region_app_topic, &req.idempotency_key)
+            .record(&region_app_topic, &req.idempotency_key, operation_id.as_bytes())
             .await?;
 
-        self.instance_notifier
-            .notify(&region_app_topic.app_id, &ids.instance_id)
-            .await;
+        self.instance_notifier.notify(&region_app_topic.app_id, &ids.instance_id).await;
 
-        Ok(Response::new(PublishResponse {}))
+        Ok(Response::new(PublishResponse {
+            operation_id: operation_id.as_bytes().to_vec(),
+            node_id: node.public_key.as_bytes().to_vec(),
+        }))
     }
 
-    type SubscribeStream =
-        Pin<Box<dyn tokio_stream::Stream<Item = Result<OperationEvent, Status>> + Send + 'static>>;
+    type SubscribeStream = Pin<Box<dyn tokio_stream::Stream<Item = Result<OperationEvent, Status>> + Send + 'static>>;
 
-    async fn subscribe(
-        &self,
-        request: Request<SubscribeRequest>,
-    ) -> Result<Response<Self::SubscribeStream>, Status> {
+    async fn subscribe(&self, request: Request<SubscribeRequest>) -> Result<Response<Self::SubscribeStream>, Status> {
         let req = request.into_inner();
 
         let ids = AppInstanceIds {
@@ -248,15 +232,11 @@ impl Panda for PandaService {
             region_app_topic.region_id, region_app_topic.app_id
         );
 
-        self.instance_notifier
-            .notify(&region_app_topic.app_id, &ids.instance_id)
-            .await;
+        self.instance_notifier.notify(&region_app_topic.app_id, &ids.instance_id).await;
 
         // Under a write lock, ensure a p2panda subscription exists for this
         // topic and return a broadcast receiver for it.
-        let receiver = self
-            .ensure_broadcast_subscription(&node, &region_app_topic)
-            .await?;
+        let receiver = self.ensure_broadcast_subscription(&node, &region_app_topic).await?;
 
         // Record the region/namespace so ListRegions can report it.
         node.register_region(region_app_topic.region_id).await;
@@ -268,6 +248,16 @@ impl Panda for PandaService {
         });
 
         Ok(Response::new(Box::pin(stream)))
+    }
+
+    async fn info(&self, _request: Request<InfoRequest>) -> Result<Response<InfoResponse>, Status> {
+        let node_lock = self.node.lock().await;
+        let node = node_lock
+            .as_ref()
+            .ok_or_else(|| Status::unavailable("p2panda node is not yet started"))?;
+        let node_id = node.public_key.as_bytes().to_vec();
+        drop(node_lock);
+        Ok(Response::new(InfoResponse { node_id }))
     }
 }
 

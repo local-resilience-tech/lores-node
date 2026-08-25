@@ -1,12 +1,7 @@
 use axum::{Extension, Json, http::StatusCode, response::IntoResponse};
 use utoipa_axum::{router::OpenApiRouter, routes};
 
-use crate::{
-    DatabaseState,
-    api::helpers::internal_server_error,
-    data::entities::LocalApp,
-    local_apps::find_local_apps,
-};
+use crate::{DatabaseState, api::helpers::internal_server_error, data::entities::LocalApp, local_apps::find_local_apps};
 
 pub fn router() -> OpenApiRouter {
     OpenApiRouter::new().routes(routes!(list_local_apps))

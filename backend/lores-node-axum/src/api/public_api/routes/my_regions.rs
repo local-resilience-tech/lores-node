@@ -1,9 +1,10 @@
-use axum::{http::StatusCode, response::IntoResponse, Extension, Json};
+use axum::{Extension, Json, http::StatusCode, response::IntoResponse};
 use tracing::{info, warn};
 
 use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::{
+    DatabaseState,
     api::helpers::internal_server_error,
     config::config_state::LoresNodeConfigState,
     data::{
@@ -11,7 +12,6 @@ use crate::{
         projections_read::{region_nodes::RegionNodesReadRepo, regions::RegionsReadRepo},
     },
     panda_comms::{PandaContainer, RegionId},
-    DatabaseState,
 };
 
 pub fn router() -> OpenApiRouter {
@@ -61,10 +61,7 @@ async fn list_regions(
 
     // Get regions from database
     let repo = RegionsReadRepo::init();
-    let db_regions = match repo
-        .find_all_for_node(&db.projections_pool, &node_id.to_hex())
-        .await
-    {
+    let db_regions = match repo.find_all_for_node(&db.projections_pool, &node_id.to_hex()).await {
         Ok(regions) => regions,
         Err(e) => return internal_server_error(e).into_response(),
     };

@@ -98,17 +98,10 @@ impl AuthnBackend for AppAuthBackend {
     type Credentials = Credentials;
     type Error = AuthError;
 
-    async fn authenticate(
-        &self,
-        creds: Self::Credentials,
-    ) -> Result<Option<Self::User>, AuthError> {
+    async fn authenticate(&self, creds: Self::Credentials) -> Result<Option<Self::User>, AuthError> {
         match creds {
-            Self::Credentials::Admin(admin_creds) => {
-                self.authenticate_admin_user(&admin_creds).await
-            }
-            Self::Credentials::NodeSteward(node_steward_creds) => {
-                self.authenticate_steward_user(&node_steward_creds).await
-            }
+            Self::Credentials::Admin(admin_creds) => self.authenticate_admin_user(&admin_creds).await,
+            Self::Credentials::NodeSteward(node_steward_creds) => self.authenticate_steward_user(&node_steward_creds).await,
         }
     }
 
@@ -127,16 +120,12 @@ impl AuthnBackend for AppAuthBackend {
 }
 
 impl AppAuthBackend {
-    async fn authenticate_admin_user(
-        &self,
-        creds: &AdminCredentials,
-    ) -> Result<Option<User>, AuthError> {
+    async fn authenticate_admin_user(&self, creds: &AdminCredentials) -> Result<Option<User>, AuthError> {
         info!("Authenticating admin user");
 
         let hashed_password = self.expect_hashed_password().await?;
 
-        self.verify_password(creds.password.clone(), hashed_password.clone())
-            .await?;
+        self.verify_password(creds.password.clone(), hashed_password.clone()).await?;
 
         Ok(Some(User {
             id: ADMIN_USER_ID.into(),
@@ -144,18 +133,13 @@ impl AppAuthBackend {
         }))
     }
 
-    async fn authenticate_steward_user(
-        &self,
-        creds: &NodeStewardCredentials,
-    ) -> Result<Option<User>, AuthError> {
+    async fn authenticate_steward_user(&self, creds: &NodeStewardCredentials) -> Result<Option<User>, AuthError> {
         info!("Authenticating admin user");
 
         let repo = NodeStewardsRepo::init();
 
         // Fetch node steward by ID
-        let id = NodeStewardIdentifier {
-            id: creds.id.clone(),
-        };
+        let id = NodeStewardIdentifier { id: creds.id.clone() };
         let steward = match repo.find(&self.node_data_pool, &id).await {
             Ok(Some(steward)) => steward,
             Ok(None) => {
@@ -181,8 +165,7 @@ impl AppAuthBackend {
         }
 
         // Check if the password matches the credentials
-        self.verify_password(creds.password.clone(), hashed_password.clone())
-            .await?;
+        self.verify_password(creds.password.clone(), hashed_password.clone()).await?;
 
         Ok(Some(User {
             id: steward.id.clone(),
@@ -194,9 +177,7 @@ impl AppAuthBackend {
         let repo = NodeStewardsRepo::init();
 
         // Fetch node steward by ID
-        let id = NodeStewardIdentifier {
-            id: user_id.clone(),
-        };
+        let id = NodeStewardIdentifier { id: user_id.clone() };
         let steward = match repo.find(&self.node_data_pool, &id).await {
             Ok(Some(steward)) => steward,
             Ok(None) => {
@@ -259,9 +240,7 @@ pub struct Permission {
 
 impl From<&str> for Permission {
     fn from(name: &str) -> Self {
-        Permission {
-            name: name.to_string(),
-        }
+        Permission { name: name.to_string() }
     }
 }
 
@@ -269,10 +248,7 @@ impl From<&str> for Permission {
 impl AuthzBackend for AppAuthBackend {
     type Permission = Permission;
 
-    async fn get_group_permissions(
-        &self,
-        user: &Self::User,
-    ) -> Result<HashSet<Self::Permission>, Self::Error> {
+    async fn get_group_permissions(&self, user: &Self::User) -> Result<HashSet<Self::Permission>, Self::Error> {
         let mut perms = HashSet::new();
 
         if user.id == ADMIN_USER_ID.to_string() {

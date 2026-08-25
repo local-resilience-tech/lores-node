@@ -14,6 +14,9 @@ service Panda {
   // will not send faster than the client reads.
   rpc Subscribe(SubscribeRequest) returns (stream OperationEvent);
 
+  // Returns information about the connected server node.
+  rpc Info(InfoRequest) returns (InfoResponse);
+
 }
 
 message PublishRequest {
@@ -31,8 +34,12 @@ message PublishRequest {
   bytes idempotency_key = 4;
 }
 
-// An empty response indicates the operation was successfully persisted.
-message PublishResponse {}
+message PublishResponse {
+  // 32-byte p2panda operation hash assigned by the node.
+  bytes operation_id = 1;
+  // 32-byte p2panda public key of the node that persisted the operation.
+  bytes node_id = 2;
+}
 
 message SubscribeRequest {
   // String identifying this application consistantly across all nodes in the region.
@@ -53,6 +60,15 @@ message OperationEvent {
   uint64 timestamp = 4;
   // Encoded operation payload (e.g. CBOR).
   bytes payload = 5;
+}
+
+message InfoRequest {
+  string instance_id = 1;
+}
+
+message InfoResponse {
+  // 32-byte p2panda public key of this node.
+  bytes node_id = 1;
 }
 
 
