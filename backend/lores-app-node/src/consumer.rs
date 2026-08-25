@@ -2,7 +2,7 @@ use futures::StreamExt;
 use tokio::sync::broadcast;
 
 use crate::store::{OperationStream, RawOperationEvent, StoreError};
-use crate::types::{AppNodeOperation, LoResNodeId};
+use crate::types::{AppNodeOperation, LoResNodeId, LoResOperationId};
 
 /// Deserializes raw operation payloads from a stream and broadcasts them to
 /// all subscribers of the event channel.
@@ -58,7 +58,7 @@ impl<Op: Clone + Send + 'static> OperationConsumer<Op> {
                         let _ = self.event_tx.send(AppNodeOperation {
                             op,
                             node: author.map(LoResNodeId),
-                            operation_id,
+                            operation_id: operation_id.map(LoResOperationId),
                             timestamp,
                         });
                         count += 1;
