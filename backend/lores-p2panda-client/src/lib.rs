@@ -5,7 +5,7 @@ pub mod proto {
 }
 
 use proto::{
-    OperationEvent, PublishRequest, SubscribeRequest,
+    InfoRequest, OperationEvent, PublishRequest, SubscribeRequest,
     panda_client::PandaClient as TonicPandaClient,
 };
 use tonic::{Code, Response, Status, Streaming};
@@ -158,6 +158,15 @@ impl PandaClient {
         self.inner
             .subscribe(request)
             .await
+            .map_err(PandaError::from)
+    }
+
+    /// Retrieve information about the connected server node.
+    pub async fn info(&mut self) -> Result<NodeId, PandaError> {
+        self.inner
+            .info(InfoRequest {})
+            .await
+            .map(|r| NodeId(r.into_inner().node_id))
             .map_err(PandaError::from)
     }
 }

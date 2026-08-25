@@ -43,7 +43,7 @@ pub mod proto {
 }
 
 use proto::{
-    OperationEvent, PublishRequest, PublishResponse, SubscribeRequest,
+    InfoRequest, InfoResponse, OperationEvent, PublishRequest, PublishResponse, SubscribeRequest,
     panda_server::{Panda, PandaServer},
 };
 
@@ -273,6 +273,19 @@ impl Panda for PandaService {
         });
 
         Ok(Response::new(Box::pin(stream)))
+    }
+
+    async fn info(
+        &self,
+        _request: Request<InfoRequest>,
+    ) -> Result<Response<InfoResponse>, Status> {
+        let node_lock = self.node.lock().await;
+        let node = node_lock
+            .as_ref()
+            .ok_or_else(|| Status::unavailable("p2panda node is not yet started"))?;
+        let node_id = node.public_key.as_bytes().to_vec();
+        drop(node_lock);
+        Ok(Response::new(InfoResponse { node_id }))
     }
 }
 

@@ -14,6 +14,9 @@ service Panda {
   // will not send faster than the client reads.
   rpc Subscribe(SubscribeRequest) returns (stream OperationEvent);
 
+  // Returns information about the connected server node.
+  rpc Info(InfoRequest) returns (InfoResponse);
+
 }
 
 message PublishRequest {
@@ -57,6 +60,13 @@ message OperationEvent {
   uint64 timestamp = 4;
   // Encoded operation payload (e.g. CBOR).
   bytes payload = 5;
+}
+
+message InfoRequest {}
+
+message InfoResponse {
+  // 32-byte p2panda public key of this node.
+  bytes node_id = 1;
 }
 
 
