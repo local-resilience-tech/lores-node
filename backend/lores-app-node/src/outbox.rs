@@ -28,7 +28,7 @@ impl OperationStore for OutboxStore {
     fn publish(
         &mut self,
         payload: Vec<u8>,
-        _idempotency_key: Option<String>,
+        idempotency_key: Option<String>,
     ) -> Pin<Box<dyn std::future::Future<Output = Result<(), StoreError>> + Send + '_>> {
         Box::pin(async move {
             // 1. Persist locally — this is our source of truth until gRPC acks.
@@ -38,10 +38,8 @@ impl OperationStore for OutboxStore {
                 .await
                 .map_err(|e| StoreError::Other(e.to_string()))?;
 
-            let key = Some(id.to_string());
-
             // 2. Attempt gRPC delivery.
-            match self.remote.publish(payload, key).await {
+            match self.remote.publish(payload, idempotency_key).await {
                 Ok(()) => {
                     // 3. Confirmed — remove from local store.
                     if let Err(e) = self.local.delete(id).await {

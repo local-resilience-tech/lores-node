@@ -3,6 +3,7 @@ use std::sync::Arc;
 use serde::{Deserialize, Serialize};
 use sqlx::SqlitePool;
 use tokio::sync::{broadcast, watch, Mutex};
+use uuid::Uuid;
 
 use crate::consumer::OperationConsumer;
 use crate::grpc::GrpcOperationStore;
@@ -159,18 +160,20 @@ impl<Op: Clone + Serialize + Send + 'static> AppNode<Op> {
 
     /// Serialize and publish an operation, then broadcast it locally.
     pub async fn publish(&self, operation: &Op) -> Result<(), StoreError> {
+        let local_id = Uuid::new_v4();
         let payload = serde_json::to_vec(operation).map_err(|e| {
             tracing::error!("Failed to serialize operation: {e}");
             StoreError::Other(format!("Failed to serialize operation: {e}"))
         })?;
         let mut t = self.operation_store.lock().await;
-        t.publish(payload, None).await?;
+        t.publish(payload, Some(local_id.to_string())).await?;
         drop(t);
 
         let app_node_operation = AppNodeOperation::<Op> {
             op: operation.clone(),
+            local_operation_id: Some(local_id),
             node: None,
-            operation_id: None,
+            panda_operation_id: None,
             timestamp: None,
         };
 

@@ -57,8 +57,9 @@ impl<Op: Clone + Send + 'static> OperationConsumer<Op> {
                     Ok(op) => {
                         let _ = self.event_tx.send(AppNodeOperation {
                             op,
+                            local_operation_id: None,
                             node: author.map(LoResNodeId),
-                            operation_id: operation_id.map(LoResOperationId),
+                            panda_operation_id: operation_id.map(LoResOperationId),
                             timestamp,
                         });
                         count += 1;
