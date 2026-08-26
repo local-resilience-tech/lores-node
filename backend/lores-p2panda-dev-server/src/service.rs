@@ -27,45 +27,19 @@ pub struct DevPandaService {
     /// One broadcast channel per `app_id`. All subscribers to the same app
     /// share the same channel so they see each other's operations.
     topics: Arc<RwLock<HashMap<String, broadcast::Sender<OperationEvent>>>>,
-    /// Stable author id (32-byte, incrementing) assigned per `instance_id`.
-    authors: Arc<RwLock<HashMap<String, Vec<u8>>>>,
     /// Reverse map from hex node_id to instance_id, used by get_node.
     node_names: Arc<RwLock<HashMap<String, String>>>,
     /// Monotonically increasing counter used to synthesise `operation_id`s.
     counter: Arc<AtomicU64>,
-    /// Monotonically increasing counter used to assign author ids.
-    author_counter: Arc<AtomicU64>,
 }
 
 impl DevPandaService {
     pub fn new() -> Self {
         Self {
             topics: Arc::new(RwLock::new(HashMap::new())),
-            authors: Arc::new(RwLock::new(HashMap::new())),
             node_names: Arc::new(RwLock::new(HashMap::new())),
             counter: Arc::new(AtomicU64::new(1)),
-            author_counter: Arc::new(AtomicU64::new(1)),
         }
-    }
-
-    async fn author_id_for(&self, instance_id: &str) -> Vec<u8> {
-        {
-            let authors = self.authors.read().await;
-            if let Some(id) = authors.get(instance_id) {
-                return id.clone();
-            }
-        }
-        let mut authors = self.authors.write().await;
-        // Re-check after acquiring write lock.
-        authors
-            .entry(instance_id.to_string())
-            .or_insert_with(|| {
-                let n = self.author_counter.fetch_add(1, Ordering::SeqCst);
-                let mut bytes = vec![0u8; 32];
-                bytes[24..32].copy_from_slice(&n.to_be_bytes());
-                bytes
-            })
-            .clone()
     }
 
     async fn topic_tx(&self, app_id: &str) -> broadcast::Sender<OperationEvent> {
@@ -120,7 +94,7 @@ impl Panda for DevPandaService {
 
         let tx = self.topic_tx(&req.app_id).await;
 
-        let author = self.author_id_for(&req.instance_id).await;
+        let author = dummy_node_id(&req.instance_id);
 
         let timestamp = SystemTime::now()
             .duration_since(SystemTime::UNIX_EPOCH)
@@ -190,6 +164,9 @@ impl Panda for DevPandaService {
     async fn get_node(&self, request: Request<GetNodeRequest>) -> Result<Response<GetNodeResponse>, Status> {
         let req = request.into_inner();
         let name = self.node_names.read().await.get(&req.node_id).cloned();
+
+        info!(node_id = %req.node_id, name = ?name, "get_node");
+
         Ok(Response::new(GetNodeResponse {
             node_id: req.node_id,
             name,
