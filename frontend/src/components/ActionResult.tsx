@@ -41,6 +41,10 @@ export function actionSuccess(): ActionPromiseResult {
   return { success: true }
 }
 
+export function actionCancelled(): ActionPromiseResult {
+  return { success: false, error: "Cancelled" }
+}
+
 export function useOnSubmitWithResult<ValType>(
   onSubmit: (values: ValType) => Promise<ActionPromiseResult>,
 ): [ActionResult | null, (values: ValType) => Promise<void>] {

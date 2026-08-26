@@ -158,4 +158,21 @@ impl LocalAppsRepo {
 
         Ok(())
     }
+
+    pub async fn delete(&self, pool: &SqlitePool, name: &str, instance_id: &Option<String>) -> Result<bool, sqlx::Error> {
+        let rows_affected = sqlx::query::<Sqlite>(
+            "
+            DELETE FROM local_apps
+            WHERE name = ? AND (instance_id = ? OR (instance_id IS NULL AND ? IS NULL))
+            ",
+        )
+        .bind(name)
+        .bind(instance_id)
+        .bind(instance_id)
+        .execute(pool)
+        .await?
+        .rows_affected();
+
+        Ok(rows_affected > 0)
+    }
 }

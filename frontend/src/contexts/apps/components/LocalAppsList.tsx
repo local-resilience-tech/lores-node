@@ -37,6 +37,11 @@ export default function LocalAppsList({ apps }: AppsListProps) {
               app={app}
               region={region}
               isActiveRegion={region?.region.id === activeRegionId}
+              unknownRegionId={
+                !region && app.bound_to_region_id
+                  ? app.bound_to_region_id
+                  : undefined
+              }
             />
           )
         })}
@@ -49,9 +54,15 @@ interface LocalAppRowProps {
   app: LocalApp
   region?: RegionWithNodes
   isActiveRegion?: boolean
+  unknownRegionId?: string
 }
 
-function LocalAppRow({ app, region, isActiveRegion }: LocalAppRowProps) {
+function LocalAppRow({
+  app,
+  region,
+  isActiveRegion,
+  unknownRegionId,
+}: LocalAppRowProps) {
   const regionName = region ? regionDisplayName(region.region) : ""
   const source = app.source ?? LocalAppSource.Docker
 
@@ -100,7 +111,13 @@ function LocalAppRow({ app, region, isActiveRegion }: LocalAppRowProps) {
       </Table.Td>
       <Table.Td>{app.version}</Table.Td>
       <Table.Td>
-        <Text fw={isActiveRegion ? 700 : undefined}>{regionName}</Text>
+        {unknownRegionId ? (
+          <Text c="red" size="xs" ff="monospace" title={unknownRegionId}>
+            {unknownRegionId.slice(0, 12)}
+          </Text>
+        ) : (
+          <Text fw={isActiveRegion ? 700 : undefined}>{regionName}</Text>
+        )}
       </Table.Td>
     </Table.Tr>
   )

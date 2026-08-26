@@ -20,12 +20,12 @@ import { regionDisplayName } from "../../regions"
 import { IconEdit } from "@tabler/icons-react"
 
 export default function ShowLocalApp() {
-  const { appName, instanceIdString } = useParams<{
+  const { appName, instanceId: instanceIdParam } = useParams<{
     appName: string
-    instanceIdString: string
+    instanceId: string
   }>()
   const instanceId: string | null =
-    instanceIdString === "-" ? null : instanceIdString || null
+    instanceIdParam === "-" ? null : instanceIdParam || null
 
   const app = useAppSelector((state) =>
     (state.localApps || []).find(
@@ -47,7 +47,12 @@ export default function ShowLocalApp() {
   }
 
   if (!app) {
-    return <Container>Error: App not found</Container>
+    return (
+      <Container>
+        Error: App not found with name "{appName}" and instance ID "{instanceId}
+        "
+      </Container>
+    )
   }
 
   const onRegister = region

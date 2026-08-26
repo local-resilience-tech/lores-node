@@ -12,4 +12,5 @@ pub enum ClientEvent {
     RegionForgotten(String),
     LocalAppCreated(LocalApp),
     LocalAppUpdated(LocalApp),
+    LocalAppsReloaded(Vec<LocalApp>),
 }

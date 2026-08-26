@@ -191,6 +191,12 @@ pub struct LocalApp {
 }
 
 #[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
+pub struct LocalAppInstanceRef {
+    pub name: String,
+    pub instance_id: Option<String>,
+}
+
+#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
 pub struct RegionAppWithInstallations {
     pub name: String,
     pub region_id: String,
