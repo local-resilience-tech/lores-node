@@ -93,7 +93,11 @@ impl<Op: Clone + Send + 'static> LiveSubscription<Op> {
             Ok(info) => {
                 let _ = self.node_event_tx.send(NodeEvent::ServerConnected {
                     node_id: info.node_id,
-                    region: crate::types::RegionInfo { region_id: info.region_id },
+                    region: crate::types::RegionInfo {
+                        region_id: info.region.region_id,
+                        slug: info.region.slug,
+                        name: info.region.name,
+                    },
                 });
             }
             Err(e) => tracing::warn!("Failed to fetch server info: {e}"),

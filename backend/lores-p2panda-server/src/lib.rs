@@ -44,13 +44,21 @@ use proto::{
     panda_server::{Panda, PandaServer},
 };
 
-/// Error returned by the [`ResolveRegionId`] callback.
+/// Error returned by the [`ResolveRegion`] callback.
 #[derive(Debug)]
 pub enum ResolveRegionIdError {
     /// No region is bound to the given app/instance.
     NotFound,
     /// The stored binding is corrupt or otherwise unusable.
     Internal,
+}
+
+/// Region identity and metadata returned by the [`ResolveRegion`] callback.
+#[derive(Debug, Clone)]
+pub struct ResolvedRegion {
+    pub region_id: RegionId,
+    pub slug: Option<String>,
+    pub name: Option<String>,
 }
 
 /// Identifies the app and instance making a gRPC request.
@@ -60,11 +68,11 @@ pub struct AppInstanceIds {
     pub instance_id: String,
 }
 
-/// Async callback type for resolving a [`RegionId`] from an [`AppInstanceIds`].
+/// Async callback that resolves region identity and metadata for an app instance.
 /// The owner (e.g. `lores-node-axum`) supplies this when constructing
 /// [`PandaService`].
 pub type ResolveRegionId =
-    Arc<dyn Fn(AppInstanceIds) -> Pin<Box<dyn Future<Output = Result<RegionId, ResolveRegionIdError>> + Send>> + Send + Sync>;
+    Arc<dyn Fn(AppInstanceIds) -> Pin<Box<dyn Future<Output = Result<ResolvedRegion, ResolveRegionIdError>> + Send>> + Send + Sync>;
 
 /// gRPC service that exposes [`PandaNode`] publish and subscribe over the
 /// network.
@@ -150,7 +158,7 @@ impl Panda for PandaService {
             instance_id: req.instance_id,
         };
 
-        let region_id = (self.resolve_region_id)(ids.clone())
+        let region = (self.resolve_region_id)(ids.clone())
             .await
             .map_err(|e| resolve_region_error_to_status(e, &ids))?;
 
@@ -161,7 +169,7 @@ impl Panda for PandaService {
             .clone();
         drop(node_lock);
 
-        let region_app_topic = RegionAppTopic::new(region_id, ids.app_id);
+        let region_app_topic = RegionAppTopic::new(region.region_id, ids.app_id);
 
         info!(
             "[publish] region={} app_id={} payload_bytes={}",
@@ -214,7 +222,7 @@ impl Panda for PandaService {
             instance_id: req.instance_id,
         };
 
-        let region_id = (self.resolve_region_id)(ids.clone())
+        let region = (self.resolve_region_id)(ids.clone())
             .await
             .map_err(|e| resolve_region_error_to_status(e, &ids))?;
 
@@ -225,7 +233,7 @@ impl Panda for PandaService {
             .clone();
         drop(node_lock);
 
-        let region_app_topic = RegionAppTopic::new(region_id, ids.app_id);
+        let region_app_topic = RegionAppTopic::new(region.region_id, ids.app_id);
 
         info!(
             "[subscribe] region={} app_id={}",
@@ -262,11 +270,17 @@ impl Panda for PandaService {
             app_id: req.app_id,
             instance_id: req.instance_id,
         };
-        let region_id = (self.resolve_region_id)(ids.clone())
+        let region = (self.resolve_region_id)(ids.clone())
             .await
-            .map_err(|e| resolve_region_error_to_status(e, &ids))
-            .map(|r| <[u8; 32]>::from(r).to_vec())?;
-        Ok(Response::new(InfoResponse { node_id, region_id }))
+            .map_err(|e| resolve_region_error_to_status(e, &ids))?;
+        Ok(Response::new(InfoResponse {
+            node_id,
+            region: Some(proto::RegionInfo {
+                region_id: <[u8; 32]>::from(region.region_id).to_vec(),
+                slug: region.slug,
+                name: region.name,
+            }),
+        }))
     }
 }
 

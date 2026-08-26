@@ -91,7 +91,15 @@ impl fmt::Display for RegionId {
 #[derive(Debug, Clone)]
 pub struct InfoResult {
     pub node_id: NodeId,
+    pub region: RegionInfo,
+}
+
+/// Region identity and metadata returned by [`PandaClient::info`].
+#[derive(Debug, Clone)]
+pub struct RegionInfo {
     pub region_id: RegionId,
+    pub slug: Option<String>,
+    pub name: Option<String>,
 }
 
 /// Result of a successful publish, containing both the assigned operation id
@@ -228,13 +236,20 @@ impl PandaClient {
                 instance_id: instance_id.into(),
             })
             .await
-            .map(|r| {
-                let r = r.into_inner();
-                InfoResult {
-                    node_id: NodeId(r.node_id),
-                    region_id: RegionId(r.region_id),
-                }
-            })
             .map_err(PandaError::from)
+            .and_then(|r| {
+                let r = r.into_inner();
+                let region = r.region.ok_or_else(|| {
+                    PandaError::Rpc(tonic::Status::internal("server returned info response without region"))
+                })?;
+                Ok(InfoResult {
+                    node_id: NodeId(r.node_id),
+                    region: RegionInfo {
+                        region_id: RegionId(region.region_id),
+                        slug: region.slug,
+                        name: region.name,
+                    },
+                })
+            })
     }
 }

@@ -7,6 +7,8 @@ pub use lores_p2panda_client::{NodeId, OperationId, RegionId};
 #[derive(Clone, Debug)]
 pub struct RegionInfo {
     pub region_id: RegionId,
+    pub slug: Option<String>,
+    pub name: Option<String>,
 }
 
 impl fmt::Display for RegionInfo {

@@ -166,10 +166,16 @@ impl Panda for DevPandaService {
     async fn info(&self, _request: Request<InfoRequest>) -> Result<Response<InfoResponse>, Status> {
         let req = _request.into_inner();
         let node_id = dummy_node_id(&req.instance_id);
-        let region_id = dummy_region_id(&req.app_id);
 
         info!(instance_id = %req.instance_id, node_id = %hex::encode(&node_id), "info");
 
-        Ok(Response::new(InfoResponse { node_id, region_id }))
+        Ok(Response::new(InfoResponse {
+            node_id,
+            region: Some(crate::proto::RegionInfo {
+                region_id: dummy_region_id(&req.app_id),
+                slug: Some("dev-region".to_string()),
+                name: Some("Dev Region".to_string()),
+            }),
+        }))
     }
 }

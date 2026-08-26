@@ -67,11 +67,17 @@ message InfoRequest {
   string instance_id = 2;
 }
 
+message RegionInfo {
+  // 32-byte region identifier.
+  bytes region_id = 1;
+  optional string slug = 2;
+  optional string name = 3;
+}
+
 message InfoResponse {
   // 32-byte p2panda public key of this node.
   bytes node_id = 1;
-  // 32-byte region identifier assigned to this app instance.
-  bytes region_id = 2;
+  RegionInfo region = 2;
 }
 
 
