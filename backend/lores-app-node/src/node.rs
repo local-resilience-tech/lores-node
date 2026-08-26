@@ -209,6 +209,7 @@ impl<Op: Clone + Serialize + Send + 'static> AppNode<Op> {
             self.error_tx.clone(),
             self.node_event_tx.clone(),
             self.panda_client.clone(),
+            self.app_id.clone(),
             self.instance_id.clone(),
         )
         .run()

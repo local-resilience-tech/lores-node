@@ -250,14 +250,23 @@ impl Panda for PandaService {
         Ok(Response::new(Box::pin(stream)))
     }
 
-    async fn info(&self, _request: Request<InfoRequest>) -> Result<Response<InfoResponse>, Status> {
+    async fn info(&self, request: Request<InfoRequest>) -> Result<Response<InfoResponse>, Status> {
+        let req = request.into_inner();
         let node_lock = self.node.lock().await;
         let node = node_lock
             .as_ref()
             .ok_or_else(|| Status::unavailable("p2panda node is not yet started"))?;
         let node_id = node.public_key.as_bytes().to_vec();
         drop(node_lock);
-        Ok(Response::new(InfoResponse { node_id }))
+        let ids = AppInstanceIds {
+            app_id: req.app_id,
+            instance_id: req.instance_id,
+        };
+        let region_id = (self.resolve_region_id)(ids.clone())
+            .await
+            .map_err(|e| resolve_region_error_to_status(e, &ids))
+            .map(|r| <[u8; 32]>::from(r).to_vec())?;
+        Ok(Response::new(InfoResponse { node_id, region_id }))
     }
 }
 

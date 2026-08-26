@@ -7,7 +7,7 @@ use tokio::sync::Mutex;
 
 use crate::{
     stores::{OperationStore, OperationStream, RawOperationEvent, StoreError, StorePublishResult},
-    LoResNodeId, LoResOperationId,
+    NodeId, OperationId,
 };
 
 impl From<PandaError> for StoreError {
@@ -52,8 +52,8 @@ impl OperationStore for GrpcOperationStore {
                 .await
                 .map_err(StoreError::from)?;
             Ok(StorePublishResult {
-                operation_id: operation_id.into_non_empty().map(LoResOperationId),
-                node_id: node_id.into_non_empty().map(LoResNodeId),
+                operation_id: operation_id.into_non_empty().map(OperationId),
+                node_id: node_id.into_non_empty().map(NodeId),
             })
         })
     }

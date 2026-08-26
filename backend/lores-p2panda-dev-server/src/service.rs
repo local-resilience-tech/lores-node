@@ -88,6 +88,10 @@ fn dummy_node_id(instance_id: &str) -> Vec<u8> {
     Sha256::digest(instance_id.as_bytes()).to_vec()
 }
 
+fn dummy_region_id(app_id: &str) -> Vec<u8> {
+    Sha256::digest(app_id.as_bytes()).to_vec()
+}
+
 fn topic_id_from_app_id(app_id: &str) -> Vec<u8> {
     let mut topic_id = vec![0u8; 32];
     let bytes = app_id.as_bytes();
@@ -160,11 +164,12 @@ impl Panda for DevPandaService {
     }
 
     async fn info(&self, _request: Request<InfoRequest>) -> Result<Response<InfoResponse>, Status> {
-        let instance_id = _request.into_inner().instance_id;
-        let node_id = dummy_node_id(&instance_id);
+        let req = _request.into_inner();
+        let node_id = dummy_node_id(&req.instance_id);
+        let region_id = dummy_region_id(&req.app_id);
 
-        info!(instance_id = %instance_id, node_id = %hex::encode(&node_id), "info");
+        info!(instance_id = %req.instance_id, node_id = %hex::encode(&node_id), "info");
 
-        Ok(Response::new(InfoResponse { node_id }))
+        Ok(Response::new(InfoResponse { node_id, region_id }))
     }
 }

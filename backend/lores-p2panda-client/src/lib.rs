@@ -1,3 +1,4 @@
+use std::fmt;
 use tonic::transport::Channel;
 
 pub mod proto {
@@ -8,25 +9,89 @@ use proto::{InfoRequest, OperationEvent, PublishRequest, SubscribeRequest, panda
 use tonic::{Code, Response, Status, Streaming};
 
 /// 32-byte p2panda operation hash returned by a successful publish.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct OperationId(pub Vec<u8>);
 
 impl OperationId {
+    pub fn to_hex(&self) -> String {
+        hex::encode(&self.0)
+    }
+
     /// Returns the bytes if non-empty, or `None` for an absent value.
     pub fn into_non_empty(self) -> Option<Vec<u8>> {
         if self.0.is_empty() { None } else { Some(self.0) }
     }
 }
 
+impl fmt::Debug for OperationId {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "OperationId({})", self.to_hex())
+    }
+}
+
+impl fmt::Display for OperationId {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(&self.to_hex())
+    }
+}
+
 /// 32-byte p2panda public key identifying a node.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct NodeId(pub Vec<u8>);
 
 impl NodeId {
+    pub fn to_hex(&self) -> String {
+        hex::encode(&self.0)
+    }
+
     /// Returns the bytes if non-empty, or `None` for an absent value.
     pub fn into_non_empty(self) -> Option<Vec<u8>> {
         if self.0.is_empty() { None } else { Some(self.0) }
     }
+}
+
+impl fmt::Debug for NodeId {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "NodeId({})", self.to_hex())
+    }
+}
+
+impl fmt::Display for NodeId {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(&self.to_hex())
+    }
+}
+
+/// 32-byte region identifier.
+#[derive(Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub struct RegionId(pub Vec<u8>);
+
+impl RegionId {
+    pub fn to_hex(&self) -> String {
+        hex::encode(&self.0)
+    }
+}
+
+impl fmt::Debug for RegionId {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "RegionId({})", self.to_hex())
+    }
+}
+
+impl fmt::Display for RegionId {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(&self.to_hex())
+    }
+}
+
+/// Result of a successful [`PandaClient::info`] call.
+#[derive(Debug, Clone)]
+pub struct InfoResult {
+    pub node_id: NodeId,
+    pub region_id: RegionId,
 }
 
 /// Result of a successful publish, containing both the assigned operation id
@@ -156,13 +221,20 @@ impl PandaClient {
     }
 
     /// Retrieve information about the connected server node.
-    pub async fn info(&mut self, instance_id: impl Into<String>) -> Result<NodeId, PandaError> {
+    pub async fn info(&mut self, app_id: impl Into<String>, instance_id: impl Into<String>) -> Result<InfoResult, PandaError> {
         self.inner
             .info(InfoRequest {
+                app_id: app_id.into(),
                 instance_id: instance_id.into(),
             })
             .await
-            .map(|r| NodeId(r.into_inner().node_id))
+            .map(|r| {
+                let r = r.into_inner();
+                InfoResult {
+                    node_id: NodeId(r.node_id),
+                    region_id: RegionId(r.region_id),
+                }
+            })
             .map_err(PandaError::from)
     }
 }

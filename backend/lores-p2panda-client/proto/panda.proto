@@ -63,12 +63,15 @@ message OperationEvent {
 }
 
 message InfoRequest {
-  string instance_id = 1;
+  string app_id = 1;
+  string instance_id = 2;
 }
 
 message InfoResponse {
   // 32-byte p2panda public key of this node.
   bytes node_id = 1;
+  // 32-byte region identifier assigned to this app instance.
+  bytes region_id = 2;
 }
 
 
