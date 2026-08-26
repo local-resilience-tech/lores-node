@@ -3,6 +3,7 @@ name: Publish Container image
 on:
   push:
     tags: ["v*.*.*"]
+  workflow_dispatch:
 
 env:
   IMAGE_NAME: ${{ github.repository }}
