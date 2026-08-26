@@ -267,9 +267,9 @@ impl PandaClient {
             .map_err(PandaError::from)
             .and_then(|r| {
                 let r = r.into_inner();
-                let region = r.region.ok_or_else(|| {
-                    PandaError::Rpc(tonic::Status::internal("server returned info response without region"))
-                })?;
+                let region = r
+                    .region
+                    .ok_or_else(|| PandaError::Rpc(tonic::Status::internal("server returned info response without region")))?;
                 Ok(InfoResult {
                     node_id: NodeId(r.node_id),
                     region: RegionInfo {

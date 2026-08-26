@@ -37,13 +37,10 @@ pub fn make_region_resolver(node_data_pool: SqlitePool, projections_pool: Sqlite
                 ResolveRegionIdError::Internal
             })?;
 
-            let region = RegionsReadRepo::init()
-                .find(&projections_pool, &region_id_hex)
-                .await
-                .map_err(|e| {
-                    warn!("[region_resolver] projections database error: {e}");
-                    ResolveRegionIdError::Internal
-                })?;
+            let region = RegionsReadRepo::init().find(&projections_pool, &region_id_hex).await.map_err(|e| {
+                warn!("[region_resolver] projections database error: {e}");
+                ResolveRegionIdError::Internal
+            })?;
 
             Ok(ResolvedRegion {
                 region_id,

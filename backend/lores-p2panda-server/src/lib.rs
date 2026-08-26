@@ -40,8 +40,7 @@ pub mod proto {
 }
 
 use proto::{
-    GetNodeRequest, GetNodeResponse, InfoRequest, InfoResponse, OperationEvent, PublishRequest,
-    PublishResponse, SubscribeRequest,
+    GetNodeRequest, GetNodeResponse, InfoRequest, InfoResponse, OperationEvent, PublishRequest, PublishResponse, SubscribeRequest,
     panda_server::{Panda, PandaServer},
 };
 
