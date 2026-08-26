@@ -40,17 +40,25 @@ pub mod proto {
 }
 
 use proto::{
-    InfoRequest, InfoResponse, OperationEvent, PublishRequest, PublishResponse, SubscribeRequest,
+    GetNodeRequest, GetNodeResponse, InfoRequest, InfoResponse, OperationEvent, PublishRequest, PublishResponse, SubscribeRequest,
     panda_server::{Panda, PandaServer},
 };
 
-/// Error returned by the [`ResolveRegionId`] callback.
+/// Error returned by the [`ResolveRegion`] callback.
 #[derive(Debug)]
 pub enum ResolveRegionIdError {
     /// No region is bound to the given app/instance.
     NotFound,
     /// The stored binding is corrupt or otherwise unusable.
     Internal,
+}
+
+/// Region identity and metadata returned by the [`ResolveRegion`] callback.
+#[derive(Debug, Clone)]
+pub struct ResolvedRegion {
+    pub region_id: RegionId,
+    pub slug: Option<String>,
+    pub name: Option<String>,
 }
 
 /// Identifies the app and instance making a gRPC request.
@@ -60,11 +68,25 @@ pub struct AppInstanceIds {
     pub instance_id: String,
 }
 
-/// Async callback type for resolving a [`RegionId`] from an [`AppInstanceIds`].
+/// Async callback that resolves region identity and metadata for an app instance.
 /// The owner (e.g. `lores-node-axum`) supplies this when constructing
 /// [`PandaService`].
 pub type ResolveRegionId =
-    Arc<dyn Fn(AppInstanceIds) -> Pin<Box<dyn Future<Output = Result<RegionId, ResolveRegionIdError>> + Send>> + Send + Sync>;
+    Arc<dyn Fn(AppInstanceIds) -> Pin<Box<dyn Future<Output = Result<ResolvedRegion, ResolveRegionIdError>> + Send>> + Send + Sync>;
+
+/// Node information returned by the [`ResolveNodeInfo`] callback.
+#[derive(Debug, Clone)]
+pub struct NodeInfo {
+    pub node_id: String,
+    pub name: Option<String>,
+    pub domain_on_internet: Option<String>,
+}
+
+/// Async callback that looks up node metadata within a region.
+/// Returns `None` when the node exists but has no enrichment data.
+/// Returns `Err(ResolveRegionIdError::NotFound)` when the node is not in the region.
+pub type ResolveNodeInfo =
+    Arc<dyn Fn(AppInstanceIds, String) -> Pin<Box<dyn Future<Output = Result<NodeInfo, ResolveRegionIdError>> + Send>> + Send + Sync>;
 
 /// gRPC service that exposes [`PandaNode`] publish and subscribe over the
 /// network.
@@ -81,6 +103,7 @@ pub struct PandaService {
     idempotency: IdempotencyStore,
     instance_notifier: InstanceNotifier,
     resolve_region_id: ResolveRegionId,
+    resolve_node_info: ResolveNodeInfo,
 }
 
 impl PandaService {
@@ -90,6 +113,7 @@ impl PandaService {
         idempotency_config: Option<IdempotencyConfig>,
         on_instance_seen: Arc<dyn Fn(String, String) + Send + Sync>,
         resolve_region_id: ResolveRegionId,
+        resolve_node_info: ResolveNodeInfo,
     ) -> Result<Self, sqlx::Error> {
         let config = idempotency_config.unwrap_or_default();
         let idempotency = IdempotencyStore::new(db, config.cleanup_frequency, config.retention).await?;
@@ -99,6 +123,7 @@ impl PandaService {
             idempotency,
             instance_notifier: InstanceNotifier::new(on_instance_seen),
             resolve_region_id,
+            resolve_node_info,
         })
     }
 
@@ -150,7 +175,7 @@ impl Panda for PandaService {
             instance_id: req.instance_id,
         };
 
-        let region_id = (self.resolve_region_id)(ids.clone())
+        let region = (self.resolve_region_id)(ids.clone())
             .await
             .map_err(|e| resolve_region_error_to_status(e, &ids))?;
 
@@ -161,7 +186,7 @@ impl Panda for PandaService {
             .clone();
         drop(node_lock);
 
-        let region_app_topic = RegionAppTopic::new(region_id, ids.app_id);
+        let region_app_topic = RegionAppTopic::new(region.region_id, ids.app_id);
 
         info!(
             "[publish] region={} app_id={} payload_bytes={}",
@@ -214,7 +239,7 @@ impl Panda for PandaService {
             instance_id: req.instance_id,
         };
 
-        let region_id = (self.resolve_region_id)(ids.clone())
+        let region = (self.resolve_region_id)(ids.clone())
             .await
             .map_err(|e| resolve_region_error_to_status(e, &ids))?;
 
@@ -225,7 +250,7 @@ impl Panda for PandaService {
             .clone();
         drop(node_lock);
 
-        let region_app_topic = RegionAppTopic::new(region_id, ids.app_id);
+        let region_app_topic = RegionAppTopic::new(region.region_id, ids.app_id);
 
         info!(
             "[subscribe] region={} app_id={}",
@@ -250,14 +275,45 @@ impl Panda for PandaService {
         Ok(Response::new(Box::pin(stream)))
     }
 
-    async fn info(&self, _request: Request<InfoRequest>) -> Result<Response<InfoResponse>, Status> {
+    async fn info(&self, request: Request<InfoRequest>) -> Result<Response<InfoResponse>, Status> {
+        let req = request.into_inner();
         let node_lock = self.node.lock().await;
         let node = node_lock
             .as_ref()
             .ok_or_else(|| Status::unavailable("p2panda node is not yet started"))?;
         let node_id = node.public_key.as_bytes().to_vec();
         drop(node_lock);
-        Ok(Response::new(InfoResponse { node_id }))
+        let ids = AppInstanceIds {
+            app_id: req.app_id,
+            instance_id: req.instance_id,
+        };
+        let region = (self.resolve_region_id)(ids.clone())
+            .await
+            .map_err(|e| resolve_region_error_to_status(e, &ids))?;
+        Ok(Response::new(InfoResponse {
+            node_id,
+            region: Some(proto::RegionInfo {
+                region_id: <[u8; 32]>::from(region.region_id).to_vec(),
+                slug: region.slug,
+                name: region.name,
+            }),
+        }))
+    }
+
+    async fn get_node(&self, request: Request<GetNodeRequest>) -> Result<Response<GetNodeResponse>, Status> {
+        let req = request.into_inner();
+        let ids = AppInstanceIds {
+            app_id: req.app_id,
+            instance_id: req.instance_id,
+        };
+        let info = (self.resolve_node_info)(ids.clone(), req.node_id.clone())
+            .await
+            .map_err(|e| resolve_region_error_to_status(e, &ids))?;
+        Ok(Response::new(GetNodeResponse {
+            node_id: info.node_id,
+            name: info.name,
+            domain_on_internet: info.domain_on_internet,
+        }))
     }
 }
 

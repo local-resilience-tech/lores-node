@@ -17,6 +17,7 @@ pub(crate) struct LiveSubscription<Op> {
     error_tx: watch::Sender<Option<NodeError>>,
     node_event_tx: broadcast::Sender<NodeEvent>,
     panda_client: Option<Arc<Mutex<PandaClient>>>,
+    app_id: String,
     instance_id: String,
 }
 
@@ -27,6 +28,7 @@ impl<Op: Clone + Send + 'static> LiveSubscription<Op> {
         error_tx: watch::Sender<Option<NodeError>>,
         node_event_tx: broadcast::Sender<NodeEvent>,
         panda_client: Option<Arc<Mutex<PandaClient>>>,
+        app_id: String,
         instance_id: String,
     ) -> Self {
         Self {
@@ -35,6 +37,7 @@ impl<Op: Clone + Send + 'static> LiveSubscription<Op> {
             error_tx,
             node_event_tx,
             panda_client,
+            app_id,
             instance_id,
         }
     }
@@ -86,10 +89,15 @@ impl<Op: Clone + Send + 'static> LiveSubscription<Op> {
         let Some(client) = &self.panda_client else {
             return;
         };
-        match client.lock().await.info(&self.instance_id).await {
-            Ok(node_id) => {
+        match client.lock().await.info(&self.app_id, &self.instance_id).await {
+            Ok(info) => {
                 let _ = self.node_event_tx.send(NodeEvent::ServerConnected {
-                    node_id: crate::types::LoResNodeId(node_id.0),
+                    node_id: info.node_id,
+                    region: crate::types::RegionInfo {
+                        region_id: info.region.region_id,
+                        slug: info.region.slug,
+                        name: info.region.name,
+                    },
                 });
             }
             Err(e) => tracing::warn!("Failed to fetch server info: {e}"),

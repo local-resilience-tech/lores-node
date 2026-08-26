@@ -14,7 +14,9 @@ publish = true
 license-file = "LICENSE.txt"
 
 [dependencies]
+hex.workspace = true
 prost = "0.14"
+serde = { workspace = true, optional = true }
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
 tokio-stream = "0.1"
 tonic = "0.14"
@@ -22,3 +24,6 @@ tonic-prost = "0.14"
 
 [build-dependencies]
 tonic-prost-build = "0.14"
+
+[features]
+serde = ["dep:serde"]

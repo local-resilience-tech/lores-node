@@ -12,7 +12,10 @@ use tracing::{info, warn};
 
 use sha2::{Digest, Sha256};
 
-use crate::proto::{panda_server::Panda, InfoRequest, InfoResponse, OperationEvent, PublishRequest, PublishResponse, SubscribeRequest};
+use crate::proto::{
+    panda_server::Panda, GetNodeRequest, GetNodeResponse, InfoRequest, InfoResponse, OperationEvent, PublishRequest, PublishResponse,
+    SubscribeRequest,
+};
 
 /// In-memory dev server for the lores-p2panda gRPC API.
 ///
@@ -24,42 +27,19 @@ pub struct DevPandaService {
     /// One broadcast channel per `app_id`. All subscribers to the same app
     /// share the same channel so they see each other's operations.
     topics: Arc<RwLock<HashMap<String, broadcast::Sender<OperationEvent>>>>,
-    /// Stable author id (32-byte, incrementing) assigned per `instance_id`.
-    authors: Arc<RwLock<HashMap<String, Vec<u8>>>>,
+    /// Reverse map from hex node_id to instance_id, used by get_node.
+    node_names: Arc<RwLock<HashMap<String, String>>>,
     /// Monotonically increasing counter used to synthesise `operation_id`s.
     counter: Arc<AtomicU64>,
-    /// Monotonically increasing counter used to assign author ids.
-    author_counter: Arc<AtomicU64>,
 }
 
 impl DevPandaService {
     pub fn new() -> Self {
         Self {
             topics: Arc::new(RwLock::new(HashMap::new())),
-            authors: Arc::new(RwLock::new(HashMap::new())),
+            node_names: Arc::new(RwLock::new(HashMap::new())),
             counter: Arc::new(AtomicU64::new(1)),
-            author_counter: Arc::new(AtomicU64::new(1)),
         }
-    }
-
-    async fn author_id_for(&self, instance_id: &str) -> Vec<u8> {
-        {
-            let authors = self.authors.read().await;
-            if let Some(id) = authors.get(instance_id) {
-                return id.clone();
-            }
-        }
-        let mut authors = self.authors.write().await;
-        // Re-check after acquiring write lock.
-        authors
-            .entry(instance_id.to_string())
-            .or_insert_with(|| {
-                let n = self.author_counter.fetch_add(1, Ordering::SeqCst);
-                let mut bytes = vec![0u8; 32];
-                bytes[24..32].copy_from_slice(&n.to_be_bytes());
-                bytes
-            })
-            .clone()
     }
 
     async fn topic_tx(&self, app_id: &str) -> broadcast::Sender<OperationEvent> {
@@ -88,6 +68,10 @@ fn dummy_node_id(instance_id: &str) -> Vec<u8> {
     Sha256::digest(instance_id.as_bytes()).to_vec()
 }
 
+fn dummy_region_id(app_id: &str) -> Vec<u8> {
+    Sha256::digest(app_id.as_bytes()).to_vec()
+}
+
 fn topic_id_from_app_id(app_id: &str) -> Vec<u8> {
     let mut topic_id = vec![0u8; 32];
     let bytes = app_id.as_bytes();
@@ -110,7 +94,7 @@ impl Panda for DevPandaService {
 
         let tx = self.topic_tx(&req.app_id).await;
 
-        let author = self.author_id_for(&req.instance_id).await;
+        let author = dummy_node_id(&req.instance_id);
 
         let timestamp = SystemTime::now()
             .duration_since(SystemTime::UNIX_EPOCH)
@@ -119,6 +103,7 @@ impl Panda for DevPandaService {
 
         let operation_id = self.next_operation_id();
         let node_id = dummy_node_id(&req.instance_id);
+        self.node_names.write().await.insert(hex::encode(&node_id), req.instance_id.clone());
 
         let event = OperationEvent {
             topic_id: topic_id_from_app_id(&req.app_id),
@@ -160,11 +145,32 @@ impl Panda for DevPandaService {
     }
 
     async fn info(&self, _request: Request<InfoRequest>) -> Result<Response<InfoResponse>, Status> {
-        let instance_id = _request.into_inner().instance_id;
-        let node_id = dummy_node_id(&instance_id);
+        let req = _request.into_inner();
+        let node_id = dummy_node_id(&req.instance_id);
+        self.node_names.write().await.insert(hex::encode(&node_id), req.instance_id.clone());
 
-        info!(instance_id = %instance_id, node_id = %hex::encode(&node_id), "info");
+        info!(instance_id = %req.instance_id, node_id = %hex::encode(&node_id), "info");
 
-        Ok(Response::new(InfoResponse { node_id }))
+        Ok(Response::new(InfoResponse {
+            node_id,
+            region: Some(crate::proto::RegionInfo {
+                region_id: dummy_region_id(&req.app_id),
+                slug: Some("dev-region".to_string()),
+                name: Some("Dev Region".to_string()),
+            }),
+        }))
+    }
+
+    async fn get_node(&self, request: Request<GetNodeRequest>) -> Result<Response<GetNodeResponse>, Status> {
+        let req = request.into_inner();
+        let name = self.node_names.read().await.get(&req.node_id).cloned();
+
+        info!(node_id = %req.node_id, name = ?name, "get_node");
+
+        Ok(Response::new(GetNodeResponse {
+            node_id: req.node_id,
+            name,
+            domain_on_internet: None,
+        }))
     }
 }

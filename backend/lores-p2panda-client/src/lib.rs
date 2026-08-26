@@ -1,32 +1,113 @@
+use std::fmt;
 use tonic::transport::Channel;
 
 pub mod proto {
     tonic::include_proto!("lores.panda.v2");
 }
 
-use proto::{InfoRequest, OperationEvent, PublishRequest, SubscribeRequest, panda_client::PandaClient as TonicPandaClient};
+use proto::{GetNodeRequest, InfoRequest, OperationEvent, PublishRequest, SubscribeRequest, panda_client::PandaClient as TonicPandaClient};
 use tonic::{Code, Response, Status, Streaming};
 
 /// 32-byte p2panda operation hash returned by a successful publish.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct OperationId(pub Vec<u8>);
 
 impl OperationId {
+    pub fn to_hex(&self) -> String {
+        hex::encode(&self.0)
+    }
+
     /// Returns the bytes if non-empty, or `None` for an absent value.
     pub fn into_non_empty(self) -> Option<Vec<u8>> {
         if self.0.is_empty() { None } else { Some(self.0) }
     }
 }
 
+impl fmt::Debug for OperationId {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "OperationId({})", self.to_hex())
+    }
+}
+
+impl fmt::Display for OperationId {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(&self.to_hex())
+    }
+}
+
 /// 32-byte p2panda public key identifying a node.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct NodeId(pub Vec<u8>);
 
 impl NodeId {
+    pub fn to_hex(&self) -> String {
+        hex::encode(&self.0)
+    }
+
     /// Returns the bytes if non-empty, or `None` for an absent value.
     pub fn into_non_empty(self) -> Option<Vec<u8>> {
         if self.0.is_empty() { None } else { Some(self.0) }
     }
+}
+
+impl fmt::Debug for NodeId {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "NodeId({})", self.to_hex())
+    }
+}
+
+impl fmt::Display for NodeId {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(&self.to_hex())
+    }
+}
+
+/// 32-byte region identifier.
+#[derive(Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub struct RegionId(pub Vec<u8>);
+
+impl RegionId {
+    pub fn to_hex(&self) -> String {
+        hex::encode(&self.0)
+    }
+}
+
+impl fmt::Debug for RegionId {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "RegionId({})", self.to_hex())
+    }
+}
+
+impl fmt::Display for RegionId {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(&self.to_hex())
+    }
+}
+
+/// Node identity and metadata returned by [`PandaClient::get_node`].
+#[derive(Debug, Clone)]
+pub struct NodeInfo {
+    pub node_id: String,
+    pub name: Option<String>,
+    pub domain_on_internet: Option<String>,
+}
+
+/// Result of a successful [`PandaClient::info`] call.
+#[derive(Debug, Clone)]
+pub struct InfoResult {
+    pub node_id: NodeId,
+    pub region: RegionInfo,
+}
+
+/// Region identity and metadata returned by [`PandaClient::info`].
+#[derive(Debug, Clone)]
+pub struct RegionInfo {
+    pub region_id: RegionId,
+    pub slug: Option<String>,
+    pub name: Option<String>,
 }
 
 /// Result of a successful publish, containing both the assigned operation id
@@ -68,6 +149,26 @@ impl From<Status> for PandaError {
         }
     }
 }
+
+/// Errors returned by [`PandaClient::get_node`].
+#[derive(Debug)]
+pub enum GetNodeError {
+    /// The requested node was not found in the region.
+    NodeNotFound(String),
+    /// Any other error (including region not bound).
+    Other(PandaError),
+}
+
+impl std::fmt::Display for GetNodeError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            GetNodeError::NodeNotFound(msg) => write!(f, "{msg}"),
+            GetNodeError::Other(e) => write!(f, "{e}"),
+        }
+    }
+}
+
+impl std::error::Error for GetNodeError {}
 
 /// Client for the lores-p2panda-server gRPC API.
 pub struct PandaClient {
@@ -156,13 +257,55 @@ impl PandaClient {
     }
 
     /// Retrieve information about the connected server node.
-    pub async fn info(&mut self, instance_id: impl Into<String>) -> Result<NodeId, PandaError> {
+    pub async fn info(&mut self, app_id: impl Into<String>, instance_id: impl Into<String>) -> Result<InfoResult, PandaError> {
         self.inner
             .info(InfoRequest {
+                app_id: app_id.into(),
                 instance_id: instance_id.into(),
             })
             .await
-            .map(|r| NodeId(r.into_inner().node_id))
             .map_err(PandaError::from)
+            .and_then(|r| {
+                let r = r.into_inner();
+                let region = r
+                    .region
+                    .ok_or_else(|| PandaError::Rpc(tonic::Status::internal("server returned info response without region")))?;
+                Ok(InfoResult {
+                    node_id: NodeId(r.node_id),
+                    region: RegionInfo {
+                        region_id: RegionId(region.region_id),
+                        slug: region.slug,
+                        name: region.name,
+                    },
+                })
+            })
+    }
+
+    /// Retrieve information about a node in the same region.
+    pub async fn get_node(
+        &mut self,
+        app_id: impl Into<String>,
+        instance_id: impl Into<String>,
+        node_id: impl Into<String>,
+    ) -> Result<NodeInfo, GetNodeError> {
+        self.inner
+            .get_node(GetNodeRequest {
+                app_id: app_id.into(),
+                instance_id: instance_id.into(),
+                node_id: node_id.into(),
+            })
+            .await
+            .map(|r| {
+                let r = r.into_inner();
+                NodeInfo {
+                    node_id: r.node_id,
+                    name: r.name,
+                    domain_on_internet: r.domain_on_internet,
+                }
+            })
+            .map_err(|s| match s.code() {
+                Code::NotFound => GetNodeError::NodeNotFound(s.message().to_string()),
+                _ => GetNodeError::Other(PandaError::from(s)),
+            })
     }
 }

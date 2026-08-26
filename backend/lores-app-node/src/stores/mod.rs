@@ -3,14 +3,14 @@ use std::pin::Pin;
 
 use futures::Stream;
 
-use crate::types::{LoResNodeId, LoResOperationId};
+use crate::types::{NodeId, OperationId};
 
 /// Result returned by [`OperationStore::publish`].
 pub(crate) struct StorePublishResult {
     /// p2panda operation hash, if the backend can provide it synchronously.
-    pub operation_id: Option<LoResOperationId>,
+    pub operation_id: Option<OperationId>,
     /// Identity of the node that persisted the operation, if known.
-    pub node_id: Option<LoResNodeId>,
+    pub node_id: Option<NodeId>,
 }
 
 /// Error returned by [`OperationStore`] methods.

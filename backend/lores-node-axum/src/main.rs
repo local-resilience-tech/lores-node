@@ -107,13 +107,15 @@ async fn main() {
     let grpc_addr = format!("0.0.0.0:{}", grpc_port).parse().expect("valid gRPC bind address");
     let panda_service = {
         let on_instance_seen = local_apps::app_instances::make_instance_seen_callback(node_data_pool.clone());
-        let resolve_region_id = local_apps::region_resolver::make_region_resolver(node_data_pool.clone());
+        let resolve_region_id = local_apps::region_resolver::make_region_resolver(node_data_pool.clone(), projections_pool.clone());
+        let resolve_node_info = local_apps::region_resolver::make_node_resolver(node_data_pool.clone(), projections_pool.clone());
         lores_p2panda_server::PandaService::new(
             panda_container.node_arc(),
             node_data_pool.clone(),
             None,
             on_instance_seen,
             resolve_region_id,
+            resolve_node_info,
         )
         .await
         .expect("Failed to initialise PandaService")
