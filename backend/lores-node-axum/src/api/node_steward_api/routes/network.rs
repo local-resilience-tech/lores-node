@@ -11,7 +11,6 @@ use crate::{
     data::projections_write::truncate_all,
     panda_comms::{PandaContainer, build_public_key_from_hex},
 };
-use lores_p2panda::RelayUrl;
 
 pub fn router() -> OpenApiRouter {
     OpenApiRouter::new()
