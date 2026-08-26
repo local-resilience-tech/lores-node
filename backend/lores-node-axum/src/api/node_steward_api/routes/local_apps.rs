@@ -248,7 +248,11 @@ async fn delete_local_app_record(
     };
 
     if let Some(region_id) = &app.bound_to_region_id {
-        return bad_request(format!("App is bound to region {region_id} and cannot be deleted")).into_response();
+        match RegionsReadRepo::init().find(&db.projections_pool, region_id).await {
+            Ok(Some(_)) => return bad_request(format!("App is bound to region {region_id} and cannot be deleted")).into_response(),
+            Ok(None) => {} // region no longer connected, allow deletion
+            Err(e) => return internal_server_error(e).into_response(),
+        }
     }
 
     match LocalAppsRepo::init()
