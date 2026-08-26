@@ -154,6 +154,20 @@ impl<Op: Clone + Serialize + Send + 'static> AppNode<Op> {
         self.node_event_tx.subscribe()
     }
 
+    /// Fetch information about a node in the same region.
+    pub async fn node_info(&self, node_id: impl Into<String>) -> Result<lores_p2panda_client::NodeInfo, lores_p2panda_client::GetNodeError> {
+        let client = self.panda_client.as_ref().ok_or_else(|| {
+            lores_p2panda_client::GetNodeError::Other(lores_p2panda_client::PandaError::Rpc(
+                tonic::Status::failed_precondition("node_info requires a gRPC connection"),
+            ))
+        })?;
+        let mut guard = client.lock().await;
+        let client: &mut lores_p2panda_client::PandaClient = &mut *guard;
+        client
+            .get_node(&self.app_id, &self.instance_id, node_id.into())
+            .await
+    }
+
     /// Replay all locally-stored operations, broadcasting each through the
     /// event channel.
     pub async fn replay(&self) -> Result<(), StoreError>

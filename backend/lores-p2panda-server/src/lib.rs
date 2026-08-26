@@ -40,7 +40,8 @@ pub mod proto {
 }
 
 use proto::{
-    InfoRequest, InfoResponse, OperationEvent, PublishRequest, PublishResponse, SubscribeRequest,
+    GetNodeRequest, GetNodeResponse, InfoRequest, InfoResponse, OperationEvent, PublishRequest,
+    PublishResponse, SubscribeRequest,
     panda_server::{Panda, PandaServer},
 };
 
@@ -74,6 +75,20 @@ pub struct AppInstanceIds {
 pub type ResolveRegionId =
     Arc<dyn Fn(AppInstanceIds) -> Pin<Box<dyn Future<Output = Result<ResolvedRegion, ResolveRegionIdError>> + Send>> + Send + Sync>;
 
+/// Node information returned by the [`ResolveNodeInfo`] callback.
+#[derive(Debug, Clone)]
+pub struct NodeInfo {
+    pub node_id: String,
+    pub name: Option<String>,
+    pub domain_on_internet: Option<String>,
+}
+
+/// Async callback that looks up node metadata within a region.
+/// Returns `None` when the node exists but has no enrichment data.
+/// Returns `Err(ResolveRegionIdError::NotFound)` when the node is not in the region.
+pub type ResolveNodeInfo =
+    Arc<dyn Fn(AppInstanceIds, String) -> Pin<Box<dyn Future<Output = Result<NodeInfo, ResolveRegionIdError>> + Send>> + Send + Sync>;
+
 /// gRPC service that exposes [`PandaNode`] publish and subscribe over the
 /// network.
 ///
@@ -89,6 +104,7 @@ pub struct PandaService {
     idempotency: IdempotencyStore,
     instance_notifier: InstanceNotifier,
     resolve_region_id: ResolveRegionId,
+    resolve_node_info: ResolveNodeInfo,
 }
 
 impl PandaService {
@@ -98,6 +114,7 @@ impl PandaService {
         idempotency_config: Option<IdempotencyConfig>,
         on_instance_seen: Arc<dyn Fn(String, String) + Send + Sync>,
         resolve_region_id: ResolveRegionId,
+        resolve_node_info: ResolveNodeInfo,
     ) -> Result<Self, sqlx::Error> {
         let config = idempotency_config.unwrap_or_default();
         let idempotency = IdempotencyStore::new(db, config.cleanup_frequency, config.retention).await?;
@@ -107,6 +124,7 @@ impl PandaService {
             idempotency,
             instance_notifier: InstanceNotifier::new(on_instance_seen),
             resolve_region_id,
+            resolve_node_info,
         })
     }
 
@@ -280,6 +298,22 @@ impl Panda for PandaService {
                 slug: region.slug,
                 name: region.name,
             }),
+        }))
+    }
+
+    async fn get_node(&self, request: Request<GetNodeRequest>) -> Result<Response<GetNodeResponse>, Status> {
+        let req = request.into_inner();
+        let ids = AppInstanceIds {
+            app_id: req.app_id,
+            instance_id: req.instance_id,
+        };
+        let info = (self.resolve_node_info)(ids.clone(), req.node_id.clone())
+            .await
+            .map_err(|e| resolve_region_error_to_status(e, &ids))?;
+        Ok(Response::new(GetNodeResponse {
+            node_id: info.node_id,
+            name: info.name,
+            domain_on_internet: info.domain_on_internet,
         }))
     }
 }

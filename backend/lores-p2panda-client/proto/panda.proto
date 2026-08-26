@@ -17,6 +17,9 @@ service Panda {
   // Returns information about the connected server node.
   rpc Info(InfoRequest) returns (InfoResponse);
 
+  // Returns information about a node in the same region.
+  rpc GetNode(GetNodeRequest) returns (GetNodeResponse);
+
 }
 
 message PublishRequest {
@@ -80,4 +83,16 @@ message InfoResponse {
   RegionInfo region = 2;
 }
 
+message GetNodeRequest {
+  string app_id = 1;
+  string instance_id = 2;
+  // Hex-encoded node public key to look up.
+  string node_id = 3;
+}
+
+message GetNodeResponse {
+  string node_id = 1;
+  optional string name = 2;
+  optional string domain_on_internet = 3;
+}
 

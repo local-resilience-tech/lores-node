@@ -12,7 +12,10 @@ use tracing::{info, warn};
 
 use sha2::{Digest, Sha256};
 
-use crate::proto::{panda_server::Panda, InfoRequest, InfoResponse, OperationEvent, PublishRequest, PublishResponse, SubscribeRequest};
+use crate::proto::{
+    panda_server::Panda, GetNodeRequest, GetNodeResponse, InfoRequest, InfoResponse, OperationEvent, PublishRequest, PublishResponse,
+    SubscribeRequest,
+};
 
 /// In-memory dev server for the lores-p2panda gRPC API.
 ///
@@ -26,6 +29,8 @@ pub struct DevPandaService {
     topics: Arc<RwLock<HashMap<String, broadcast::Sender<OperationEvent>>>>,
     /// Stable author id (32-byte, incrementing) assigned per `instance_id`.
     authors: Arc<RwLock<HashMap<String, Vec<u8>>>>,
+    /// Reverse map from hex node_id to instance_id, used by get_node.
+    node_names: Arc<RwLock<HashMap<String, String>>>,
     /// Monotonically increasing counter used to synthesise `operation_id`s.
     counter: Arc<AtomicU64>,
     /// Monotonically increasing counter used to assign author ids.
@@ -37,6 +42,7 @@ impl DevPandaService {
         Self {
             topics: Arc::new(RwLock::new(HashMap::new())),
             authors: Arc::new(RwLock::new(HashMap::new())),
+            node_names: Arc::new(RwLock::new(HashMap::new())),
             counter: Arc::new(AtomicU64::new(1)),
             author_counter: Arc::new(AtomicU64::new(1)),
         }
@@ -123,6 +129,7 @@ impl Panda for DevPandaService {
 
         let operation_id = self.next_operation_id();
         let node_id = dummy_node_id(&req.instance_id);
+        self.node_names.write().await.insert(hex::encode(&node_id), req.instance_id.clone());
 
         let event = OperationEvent {
             topic_id: topic_id_from_app_id(&req.app_id),
@@ -166,6 +173,7 @@ impl Panda for DevPandaService {
     async fn info(&self, _request: Request<InfoRequest>) -> Result<Response<InfoResponse>, Status> {
         let req = _request.into_inner();
         let node_id = dummy_node_id(&req.instance_id);
+        self.node_names.write().await.insert(hex::encode(&node_id), req.instance_id.clone());
 
         info!(instance_id = %req.instance_id, node_id = %hex::encode(&node_id), "info");
 
@@ -176,6 +184,16 @@ impl Panda for DevPandaService {
                 slug: Some("dev-region".to_string()),
                 name: Some("Dev Region".to_string()),
             }),
+        }))
+    }
+
+    async fn get_node(&self, request: Request<GetNodeRequest>) -> Result<Response<GetNodeResponse>, Status> {
+        let req = request.into_inner();
+        let name = self.node_names.read().await.get(&req.node_id).cloned();
+        Ok(Response::new(GetNodeResponse {
+            node_id: req.node_id,
+            name,
+            domain_on_internet: None,
         }))
     }
 }

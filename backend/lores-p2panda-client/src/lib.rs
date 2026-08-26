@@ -5,7 +5,7 @@ pub mod proto {
     tonic::include_proto!("lores.panda.v2");
 }
 
-use proto::{InfoRequest, OperationEvent, PublishRequest, SubscribeRequest, panda_client::PandaClient as TonicPandaClient};
+use proto::{GetNodeRequest, InfoRequest, OperationEvent, PublishRequest, SubscribeRequest, panda_client::PandaClient as TonicPandaClient};
 use tonic::{Code, Response, Status, Streaming};
 
 /// 32-byte p2panda operation hash returned by a successful publish.
@@ -87,6 +87,14 @@ impl fmt::Display for RegionId {
     }
 }
 
+/// Node identity and metadata returned by [`PandaClient::get_node`].
+#[derive(Debug, Clone)]
+pub struct NodeInfo {
+    pub node_id: String,
+    pub name: Option<String>,
+    pub domain_on_internet: Option<String>,
+}
+
 /// Result of a successful [`PandaClient::info`] call.
 #[derive(Debug, Clone)]
 pub struct InfoResult {
@@ -141,6 +149,26 @@ impl From<Status> for PandaError {
         }
     }
 }
+
+/// Errors returned by [`PandaClient::get_node`].
+#[derive(Debug)]
+pub enum GetNodeError {
+    /// The requested node was not found in the region.
+    NodeNotFound(String),
+    /// Any other error (including region not bound).
+    Other(PandaError),
+}
+
+impl std::fmt::Display for GetNodeError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            GetNodeError::NodeNotFound(msg) => write!(f, "{msg}"),
+            GetNodeError::Other(e) => write!(f, "{e}"),
+        }
+    }
+}
+
+impl std::error::Error for GetNodeError {}
 
 /// Client for the lores-p2panda-server gRPC API.
 pub struct PandaClient {
@@ -250,6 +278,34 @@ impl PandaClient {
                         name: region.name,
                     },
                 })
+            })
+    }
+
+    /// Retrieve information about a node in the same region.
+    pub async fn get_node(
+        &mut self,
+        app_id: impl Into<String>,
+        instance_id: impl Into<String>,
+        node_id: impl Into<String>,
+    ) -> Result<NodeInfo, GetNodeError> {
+        self.inner
+            .get_node(GetNodeRequest {
+                app_id: app_id.into(),
+                instance_id: instance_id.into(),
+                node_id: node_id.into(),
+            })
+            .await
+            .map(|r| {
+                let r = r.into_inner();
+                NodeInfo {
+                    node_id: r.node_id,
+                    name: r.name,
+                    domain_on_internet: r.domain_on_internet,
+                }
+            })
+            .map_err(|s| match s.code() {
+                Code::NotFound => GetNodeError::NodeNotFound(s.message().to_string()),
+                _ => GetNodeError::Other(PandaError::from(s)),
             })
     }
 }

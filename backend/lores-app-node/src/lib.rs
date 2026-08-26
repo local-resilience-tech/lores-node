@@ -9,4 +9,5 @@ mod types;
 pub use node::{AppNode, NodeError};
 pub use projection::ProjectionDb;
 pub use stores::StoreError;
+pub use lores_p2panda_client::{GetNodeError, NodeInfo};
 pub use types::{AppNodeOperation, NodeEvent, NodeId, OperationId, RegionId, RegionInfo};
