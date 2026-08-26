@@ -113,6 +113,9 @@ export type ClientEvent =
     }
   | {
       LocalAppUpdated: LocalApp;
+    }
+  | {
+      LocalAppsReloaded: LocalApp[];
     };
 
 export interface CreateRegionData {
@@ -174,6 +177,11 @@ export interface LocalAppFormData {
   instance_id?: string | null;
   name: string;
   version: string;
+}
+
+export interface LocalAppInstanceRef {
+  instance_id?: string | null;
+  name: string;
 }
 
 export interface Network {
@@ -506,7 +514,7 @@ export class HttpClient<SecurityDataType = unknown> {
 
 /**
  * @title lores-node
- * @version 0.22.0
+ * @version 0.22.2
  * @license
  */
 export class Api<
@@ -694,6 +702,25 @@ export class Api<
       this.request<LocalApp, string>({
         path: `/node_steward_api/local_apps/create`,
         method: "POST",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @name DeleteLocalAppRecord
+     * @request DELETE:/node_steward_api/local_apps/delete
+     */
+    deleteLocalAppRecord: (
+      data: LocalAppInstanceRef,
+      params: RequestParams = {},
+    ) =>
+      this.request<any, string>({
+        path: `/node_steward_api/local_apps/delete`,
+        method: "DELETE",
         body: data,
         type: ContentType.Json,
         format: "json",

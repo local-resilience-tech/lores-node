@@ -12,11 +12,11 @@ use crate::{
         public_api::{client_events::ClientEvent, realtime::RealtimeState},
     },
     data::{
-        entities::{LocalApp, LocalAppSource},
+        entities::{LocalApp, LocalAppInstanceRef, LocalAppSource},
         node_data::local_apps_repo::LocalAppsRepo,
         projections_read::regions::RegionsReadRepo,
     },
-    local_apps::find_local_app,
+    local_apps::{find_local_app, find_local_apps},
     panda_comms::{
         PandaContainer, RegionAdminTopic, RegionId,
         lores_events::{AppRegisteredDataV1, LoResEventPayload},
@@ -28,6 +28,7 @@ pub fn router() -> OpenApiRouter {
         .routes(routes!(register_app))
         .routes(routes!(create_local_app))
         .routes(routes!(update_local_app))
+        .routes(routes!(delete_local_app_record))
 }
 
 #[derive(Deserialize, ToSchema, Debug, Clone)]
@@ -219,4 +220,52 @@ async fn update_local_app(
         .await;
 
     (StatusCode::OK, Json(updated)).into_response()
+}
+
+#[utoipa::path(
+    delete, path = "/delete",
+    request_body(content = LocalAppInstanceRef, content_type = "application/json"),
+    responses(
+        (status = 200, body = ()),
+        (status = BAD_REQUEST, body = String),
+        (status = NOT_FOUND, body = String),
+        (status = INTERNAL_SERVER_ERROR, body = String),
+    )
+)]
+async fn delete_local_app_record(
+    _auth_session: AuthSession,
+    Extension(db): Extension<DatabaseState>,
+    Extension(realtime_state): Extension<RealtimeState>,
+    Json(payload): Json<LocalAppInstanceRef>,
+) -> impl IntoResponse {
+    let app = match LocalAppsRepo::init()
+        .find(&db.node_data_pool, &payload.name, &payload.instance_id)
+        .await
+    {
+        Ok(Some(app)) => app,
+        Ok(None) => return (StatusCode::NOT_FOUND, Json("App not found")).into_response(),
+        Err(e) => return internal_server_error(e).into_response(),
+    };
+
+    if let Some(region_id) = &app.bound_to_region_id {
+        return bad_request(format!("App is bound to region {region_id} and cannot be deleted")).into_response();
+    }
+
+    match LocalAppsRepo::init()
+        .delete(&db.node_data_pool, &payload.name, &payload.instance_id)
+        .await
+    {
+        Ok(true) => {}
+        Ok(false) => return (StatusCode::NOT_FOUND, Json("App not found")).into_response(),
+        Err(e) => return internal_server_error(e).into_response(),
+    };
+
+    let apps = match find_local_apps(&db.node_data_pool).await {
+        Ok(apps) => apps,
+        Err(e) => return internal_server_error(e).into_response(),
+    };
+
+    realtime_state.broadcast_app_event(ClientEvent::LocalAppsReloaded(apps)).await;
+
+    (StatusCode::OK, ()).into_response()
 }

@@ -9,6 +9,7 @@ import regionsReducer, {
 } from "./my_regions"
 import localAppsReducer, {
   localAppCreated,
+  localAppsLoaded,
   localAppUpdated,
 } from "./local_apps"
 import regionAppsReducer, { regionAppUpdated } from "./region_apps"
@@ -54,6 +55,8 @@ export async function handleClientEvent(event: ClientEvent) {
     store.dispatch(localAppCreated(event.LocalAppCreated))
   } else if ("LocalAppUpdated" in event) {
     store.dispatch(localAppUpdated(event.LocalAppUpdated))
+  } else if ("LocalAppsReloaded" in event) {
+    store.dispatch(localAppsLoaded(event.LocalAppsReloaded))
   } else {
     console.warn("Unhandled event type:", event)
   }
