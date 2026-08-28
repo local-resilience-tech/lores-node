@@ -342,6 +342,10 @@ fn publish_error_to_status(e: PandaPublishError) -> Status {
             warn!("publish error: {e}");
             Status::internal(e.to_string())
         }
+        PandaPublishError::EphemeralPublish(e) => {
+            warn!("ephemeral publish error: {e}");
+            Status::internal(e.to_string())
+        }
         PandaPublishError::AppError(msg) => {
             warn!("publish error: {msg}");
             Status::internal(msg)

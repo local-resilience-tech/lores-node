@@ -1,6 +1,9 @@
-use std::sync::Arc;
+use std::{sync::Arc, time::Duration};
 use thiserror::Error;
-use tokio::sync::{Mutex, mpsc};
+use tokio::{
+    sync::{Mutex, mpsc},
+    time::interval,
+};
 use tracing::{info, warn};
 
 use lores_p2panda::{
@@ -10,7 +13,7 @@ use lores_p2panda::{
     topic_status::ConnectionStatus,
 };
 
-use crate::api::auth_api::auth_backend::User;
+use crate::{api::auth_api::auth_backend::User, panda_comms::lores_events::NodeHeartbeatDataV1};
 
 pub struct NodeStatusSnapshot {
     pub topics: Vec<TopicStatusSnapshot>,
@@ -63,11 +66,15 @@ impl PandaContainer {
     pub fn new(events_tx: mpsc::Sender<LoResEvent>) -> Self {
         let params = Arc::new(Mutex::new(NodeParams::default()));
 
-        PandaContainer {
+        let container = Self {
             params,
             node: Arc::new(Mutex::new(None)),
             lores_events_tx: events_tx,
-        }
+        };
+        // to do - where the publishing happens is tbd
+        container.publish_heartbeat();
+
+        container
     }
 
     pub async fn get_params(&self) -> NodeParams {
@@ -236,6 +243,29 @@ impl PandaContainer {
                         warn!("Failed to decode LoResEvent from operation: {}", e);
                     }
                 }
+            }
+        });
+
+        Ok(())
+    }
+
+    async fn publish_heartbeat(&self) -> Result<(), PandaPublishError> {
+        let public_key = self.get_public_key().await.unwrap();
+        let event_payload = LoResEventPayload::NodeHeartbeat(NodeHeartbeatDataV1 {
+            node_id: public_key.to_hex(),
+        });
+        // this is a machine initiated event so should it be attached to a node_steward still?
+        let metadata = LoResEventMetadataV1 { node_steward_id: None };
+        let encoded_payload =
+            encode_lores_event_payload(event_payload, metadata).map_err(|e| PandaPublishError::AppError(format!("Encoding error: {e}")))?;
+
+        tokio::spawn(async move {
+            let mut timer = interval(Duration::from_mins(5)); // need to make this a const and ms probs
+
+            loop {
+                timer.tick().await;
+                // to do - how should we handle the publishing. There's an
+                // ownership issue when this thread owns &self
             }
         });
 

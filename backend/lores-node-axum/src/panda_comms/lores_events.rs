@@ -57,6 +57,11 @@ pub struct AppRegisteredDataV1 {
 }
 
 #[derive(Deserialize, Serialize, Clone, PartialEq, Debug)]
+pub struct NodeHeartbeatDataV1 {
+    pub node_id: String,
+}
+
+#[derive(Deserialize, Serialize, Clone, PartialEq, Debug)]
 pub enum LoResEventPayload {
     RegionCreated(RegionCreatedDataV1),
     RegionJoinRequested(RegionJoinRequestedDataV1),
@@ -65,6 +70,7 @@ pub enum LoResEventPayload {
     RegionNodeUpdated(RegionNodeUpdatedDataV1),
     NodeStatusPosted(NodeStatusPostedDataV1),
     AppRegistered(AppRegisteredDataV1),
+    NodeHeartbeat(NodeHeartbeatDataV1),
 }
 
 #[derive(Deserialize, Serialize, Clone, PartialEq, Debug)]
