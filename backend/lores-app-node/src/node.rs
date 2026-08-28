@@ -33,6 +33,45 @@ impl std::fmt::Display for NodeError {
     }
 }
 
+/// Errors returned when constructing an [`AppNode`].
+#[derive(Debug)]
+pub enum ConnectError {
+    /// The local SQLite store could not be opened or migrated.
+    Database(sqlx::Error),
+    /// The provided gRPC address was invalid and no client could be built.
+    InvalidGrpcAddress(tonic::transport::Error),
+}
+
+impl std::fmt::Display for ConnectError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ConnectError::Database(err) => write!(f, "database error: {err}"),
+            ConnectError::InvalidGrpcAddress(err) => write!(f, "invalid gRPC address: {err}"),
+        }
+    }
+}
+
+impl std::error::Error for ConnectError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            ConnectError::Database(err) => Some(err),
+            ConnectError::InvalidGrpcAddress(err) => Some(err),
+        }
+    }
+}
+
+impl From<sqlx::Error> for ConnectError {
+    fn from(err: sqlx::Error) -> Self {
+        ConnectError::Database(err)
+    }
+}
+
+impl From<tonic::transport::Error> for ConnectError {
+    fn from(err: tonic::transport::Error) -> Self {
+        ConnectError::InvalidGrpcAddress(err)
+    }
+}
+
 /// The central node handle used by application code.
 ///
 /// Generic over the operation type `Op` — the application supplies its own
@@ -43,7 +82,8 @@ impl std::fmt::Display for NodeError {
 /// ```no_run
 /// # use lores_app_node::AppNode;
 /// # #[derive(Clone, serde::Serialize)] enum Op {}
-/// let node = AppNode::<Op>::grpc("http://[::1]:50051".into(), "my-app-id", "my-instance");
+    /// let node = AppNode::<Op>::grpc("http://[::1]:50051".into(), "my-app-id", "my-instance")?;
+    /// # Ok::<(), lores_app_node::ConnectError>(())
 /// ```
 pub struct AppNode<Op> {
     pub app_id: String,
@@ -70,10 +110,8 @@ impl<Op> Clone for AppNode<Op> {
     }
 }
 
-fn make_panda_client(grpc_addr: String) -> Arc<Mutex<PandaClient>> {
-    Arc::new(Mutex::new(
-        PandaClient::connect_lazy(grpc_addr).expect("failed to build gRPC client"),
-    ))
+fn make_panda_client(grpc_addr: String) -> Result<Arc<Mutex<PandaClient>>, ConnectError> {
+    Ok(Arc::new(Mutex::new(PandaClient::connect_lazy(grpc_addr)?)))
 }
 
 impl<Op: Clone + Serialize + Send + 'static> AppNode<Op> {
@@ -116,11 +154,11 @@ impl<Op: Clone + Serialize + Send + 'static> AppNode<Op> {
         grpc_addr: String,
         app_id: impl Into<String>,
         instance_id: impl Into<String>,
-    ) -> Result<Self, sqlx::Error> {
+    ) -> Result<Self, ConnectError> {
         let app_id = app_id.into();
         let instance_id = instance_id.into();
         let local = LocalOperationStore::new(pool).await?;
-        let client = make_panda_client(grpc_addr);
+        let client = make_panda_client(grpc_addr)?;
         let remote = GrpcOperationStore::new(client.clone(), &app_id, &instance_id);
         let store = OutboxStore::new(local, remote);
         Ok(Self::new(app_id, instance_id, Box::new(store), Some(client)))
@@ -129,12 +167,12 @@ impl<Op: Clone + Serialize + Send + 'static> AppNode<Op> {
     /// Create an `AppNode` connected to an external lores-node via gRPC.
     ///
     /// Uses a lazy connection — no network call until the first publish.
-    pub fn grpc(grpc_addr: String, app_id: impl Into<String>, instance_id: impl Into<String>) -> Self {
+    pub fn grpc(grpc_addr: String, app_id: impl Into<String>, instance_id: impl Into<String>) -> Result<Self, ConnectError> {
         let app_id = app_id.into();
         let instance_id = instance_id.into();
-        let client = make_panda_client(grpc_addr);
+        let client = make_panda_client(grpc_addr)?;
         let store = GrpcOperationStore::new(client.clone(), &app_id, &instance_id);
-        Self::new(app_id, instance_id, Box::new(store), Some(client))
+        Ok(Self::new(app_id, instance_id, Box::new(store), Some(client)))
     }
 
     /// Subscribe to operations published through this node (loopback).
