@@ -1,10 +1,22 @@
 [package]
 name = "lores-app-node"
 version = "0.1.0"
-edition = "2021"
+authors = ["Jade Ambrose", "Merri-bek Tech Inc."]
+edition = "2024"
+rust-version = "1.96"
+description = "Application node for building event-sourced, peer-to-peer LoRes apps on p2panda."
+readme = "README.md"
+homepage = "https://lores.tech/"
+repository = "https://github.com/local-resilience-tech/lores-node/"
+keywords = ["p2p", "lores", "p2panda", "event-sourcing", "coop-cloud"]
+categories = ["network-programming"]
+publish = true
+license-file = "LICENSE.md"
 
 [dependencies]
-lores-p2panda-client = { path = "../lores-p2panda-client", features = ["serde"] }
+lores-p2panda-client = { version = "0.4", path = "../lores-p2panda-client", features = [
+  "serde",
+] }
 futures = "0.3"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
@@ -15,3 +27,10 @@ uuid = { version = "1", features = ["v4", "serde"] }
 tonic = "0.14"
 tracing = "0.1"
 hex.workspace = true
+
+[dev-dependencies]
+# Path-only dev-dependency: used to run an in-memory gRPC server in integration
+# tests. It is not published with this crate.
+lores-p2panda-dev-server = { path = "../lores-p2panda-dev-server" }
+tokio = { version = "1", features = ["macros", "rt-multi-thread", "time"] }
+tokio-stream = { version = "0.1", features = ["net"] }

@@ -24,6 +24,10 @@ gen-api:
 publish-p2panda-client:
     cargo publish
 
+[working-directory: 'backend/lores-app-node']
+publish-app-node:
+    cargo publish
+
 [working-directory: 'backend/coop-cloud-docker-apps']
 publish-coop-cloud-docker-apps:
     cargo publish

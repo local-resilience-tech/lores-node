@@ -1,3 +1,5 @@
+#![doc = include_str!("../README.md")]
+
 mod backoff;
 mod consumer;
 mod node;
@@ -7,7 +9,7 @@ mod subscription;
 mod types;
 
 pub use lores_p2panda_client::{GetNodeError, NodeInfo};
-pub use node::{AppNode, NodeError};
+pub use node::{AppNode, ConnectError, NodeError};
 pub use projection::ProjectionDb;
 pub use stores::StoreError;
 pub use types::{AppNodeOperation, NodeEvent, NodeId, OperationId, RegionId, RegionInfo};
