@@ -313,23 +313,33 @@ impl PandaNode {
         Ok(publish_future.hash())
     }
 
-    pub async fn publish_ephemeral_to_region_topic<T: RegionTopic>(
-        &self,
-        region_topic: &T,
-        bytes: Vec<u8>,
-    ) -> Result<(), PandaPublishError> {
-        // to do - where should the publishing happen?
-        let topic_id = region_topic.p2panda_topic();
-        let publishers = self.publishers.read().await;
-        let publisher = publishers
-            .iter()
-            .find(|p| p.topic == topic_id)
-            .ok_or(PandaPublishError::NoSubscription(topic_id))?;
-        let regions = self.get_regions().await;
+    pub async fn publish_ephemeral_heartbeat(self: Arc<Self>, heartbeat_message_payload: Vec<u8>) -> Result<(), PandaPublishError> {
+        tokio::spawn(async move {
+            let mut timer = interval(Duration::from_mins(5)); // need to make this a const and ms probs
 
-        for region in regions {
-            publisher.ephemeral_publisher.publish(bytes.clone()).await?;
-        }
+            loop {
+                // need to test this, I think the ref to self will prevent other
+                // threads from doing their work
+                timer.tick().await;
+                
+                let regions = self.get_regions().await;
+                
+                for region_id in regions {
+                    let admin_topic = RegionAdminTopic::new(region_id);
+                    let topic_id = admin_topic.p2panda_topic();
+                    let publishers = self.publishers.read().await;
+                    let publisher = publishers
+                        .iter()
+                        .find(|p| p.topic == topic_id)
+                        .ok_or(PandaPublishError::NoSubscription(topic_id))
+                        .unwrap();
+                    match publisher.ephemeral_publisher.publish(heartbeat_message_payload.clone()).await {
+                        Ok(_) => {}
+                        Err(_) => break,
+                    }
+                }
+            }
+        });
 
         Ok(())
     }

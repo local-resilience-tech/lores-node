@@ -259,15 +259,13 @@ impl PandaContainer {
         let encoded_payload =
             encode_lores_event_payload(event_payload, metadata).map_err(|e| PandaPublishError::AppError(format!("Encoding error: {e}")))?;
 
-        tokio::spawn(async move {
-            let mut timer = interval(Duration::from_mins(5)); // need to make this a const and ms probs
-
-            loop {
-                timer.tick().await;
-                // to do - how should we handle the publishing. There's an
-                // ownership issue when this thread owns &self
-            }
-        });
+        let node_lock = self.node.lock().await;
+        let node = match node_lock.as_ref() {
+            Some(node) => node.clone(),
+            None => return Err(PandaPublishError::NodeNotStarted), // placeholder error
+        };
+        drop(node_lock);
+        PandaNode::publish_ephemeral_heartbeat(node, encoded_payload).await?;
 
         Ok(())
     }
