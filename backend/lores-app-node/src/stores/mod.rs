@@ -13,7 +13,7 @@ pub(crate) struct StorePublishResult {
     pub node_id: Option<NodeId>,
 }
 
-/// Error returned by [`OperationStore`] methods.
+/// Error returned when publishing, subscribing to, or replaying operations.
 #[derive(Debug)]
 pub enum StoreError {
     /// No region has been bound to the given app/instance on the server.
