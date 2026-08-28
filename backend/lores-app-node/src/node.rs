@@ -3,7 +3,7 @@ use std::sync::Arc;
 use lores_p2panda_client::PandaClient;
 use serde::{Deserialize, Serialize};
 use sqlx::SqlitePool;
-use tokio::sync::{broadcast, watch, Mutex};
+use tokio::sync::{Mutex, broadcast, watch};
 use uuid::Uuid;
 
 use crate::consumer::OperationConsumer;
@@ -82,8 +82,8 @@ impl From<tonic::transport::Error> for ConnectError {
 /// ```no_run
 /// # use lores_app_node::AppNode;
 /// # #[derive(Clone, serde::Serialize)] enum Op {}
-    /// let node = AppNode::<Op>::grpc("http://[::1]:50051".into(), "my-app-id", "my-instance")?;
-    /// # Ok::<(), lores_app_node::ConnectError>(())
+/// let node = AppNode::<Op>::grpc("http://[::1]:50051".into(), "my-app-id", "my-instance")?;
+/// # Ok::<(), lores_app_node::ConnectError>(())
 /// ```
 pub struct AppNode<Op> {
     pub app_id: String,

@@ -1,11 +1,8 @@
 use std::net::SocketAddr;
 use tonic::transport::Server;
 
-use crate::proto::panda_server::PandaServer;
-use crate::service::DevPandaService;
-
-mod proto;
-mod service;
+use lores_p2panda_dev_server::proto::panda_server::PandaServer;
+use lores_p2panda_dev_server::service::DevPandaService;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
