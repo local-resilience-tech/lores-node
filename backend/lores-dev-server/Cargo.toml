@@ -1,7 +1,17 @@
 [package]
 name = "lores-dev-server"
 version = "0.1.0"
-edition = "2021"
+authors = ["Jade Ambrose", "Merri-bek Tech Inc."]
+edition = "2024"
+rust-version = "1.96"
+description = "In-memory development gRPC server for the lores-p2panda API."
+readme = "README.md"
+homepage = "https://lores.tech/"
+repository = "https://github.com/local-resilience-tech/lores-node/"
+keywords = ["p2p", "lores", "p2panda", "grpc", "dev-server"]
+categories = ["network-programming", "development-tools"]
+publish = true
+license-file = "LICENSE.md"
 
 [[bin]]
 name = "lores-dev-server"
