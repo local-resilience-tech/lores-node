@@ -1,20 +1,20 @@
 use std::collections::HashMap;
 use std::pin::Pin;
-use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::SystemTime;
 
 use futures::StreamExt;
-use tokio::sync::{broadcast, RwLock};
+use tokio::sync::{RwLock, broadcast};
 use tokio_stream::wrappers::BroadcastStream;
 use tonic::{Request, Response, Status};
 use tracing::{info, warn};
 
 use sha2::{Digest, Sha256};
 
-use crate::proto::{
-    panda_server::Panda, GetNodeRequest, GetNodeResponse, InfoRequest, InfoResponse, OperationEvent, PublishRequest, PublishResponse,
-    SubscribeRequest,
+use lores_p2panda_client::proto::{
+    GetNodeRequest, GetNodeResponse, InfoRequest, InfoResponse, OperationEvent, PublishRequest, PublishResponse, SubscribeRequest,
+    panda_server::Panda,
 };
 
 /// In-memory dev server for the lores-p2panda gRPC API.
@@ -153,7 +153,7 @@ impl Panda for DevPandaService {
 
         Ok(Response::new(InfoResponse {
             node_id,
-            region: Some(crate::proto::RegionInfo {
+            region: Some(lores_p2panda_client::proto::RegionInfo {
                 region_id: dummy_region_id(&req.app_id),
                 slug: Some("dev-region".to_string()),
                 name: Some("Dev Region".to_string()),

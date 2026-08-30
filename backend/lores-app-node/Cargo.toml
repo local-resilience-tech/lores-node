@@ -31,6 +31,6 @@ hex.workspace = true
 [dev-dependencies]
 # Path-only dev-dependency: used to run an in-memory gRPC server in integration
 # tests. It is not published with this crate.
-lores-p2panda-dev-server = { path = "../lores-p2panda-dev-server" }
+lores-dev-server = { path = "../lores-dev-server" }
 tokio = { version = "1", features = ["macros", "rt-multi-thread", "time"] }
 tokio-stream = { version = "0.1", features = ["net"] }

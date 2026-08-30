@@ -3011,8 +3011,8 @@ version = "0.1.0"
 dependencies = [
  "futures",
  "hex",
+ "lores-dev-server",
  "lores-p2panda-client",
- "lores-p2panda-dev-server",
  "serde",
  "serde_json",
  "sha2 0.10.9",
@@ -3022,6 +3022,21 @@ dependencies = [
  "tonic",
  "tracing",
  "uuid",
+]
+
+[[package]]
+name = "lores-dev-server"
+version = "0.1.0"
+dependencies = [
+ "futures",
+ "hex",
+ "lores-p2panda-client",
+ "sha2 0.10.9",
+ "tokio",
+ "tokio-stream",
+ "tonic",
+ "tracing",
+ "tracing-subscriber",
 ]
 
 [[package]]
@@ -3115,23 +3130,6 @@ dependencies = [
  "tonic",
  "tonic-prost",
  "tonic-prost-build",
-]
-
-[[package]]
-name = "lores-p2panda-dev-server"
-version = "0.1.0"
-dependencies = [
- "futures",
- "hex",
- "prost",
- "sha2 0.10.9",
- "tokio",
- "tokio-stream",
- "tonic",
- "tonic-prost",
- "tonic-prost-build",
- "tracing",
- "tracing-subscriber",
 ]
 
 [[package]]

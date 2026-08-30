@@ -1,11 +1,13 @@
+#![doc = include_str!("../README.md")]
+
 use std::net::SocketAddr;
 
 use tonic::transport::Server;
 
-use crate::proto::panda_server::PandaServer;
 use crate::service::DevPandaService;
+use lores_p2panda_client::proto::panda_server::PandaServer;
 
-pub mod proto;
+pub use lores_p2panda_client::proto;
 pub mod service;
 
 /// Start the dev gRPC server, reading `PANDA_DEV_SERVER_ADDR` from the
@@ -15,7 +17,7 @@ pub async fn run_from_env() -> Result<(), Box<dyn std::error::Error>> {
         .unwrap_or_else(|_| "127.0.0.1:50051".to_string())
         .parse()?;
 
-    println!("starting lores-p2panda-dev-server at {addr}, press CTRL-C to cancel");
+    println!("starting lores-dev-server at {addr}, press CTRL-C to cancel");
 
     Server::builder()
         .add_service(PandaServer::new(DevPandaService::new()))
