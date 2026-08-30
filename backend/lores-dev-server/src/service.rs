@@ -12,7 +12,7 @@ use tracing::{info, warn};
 
 use sha2::{Digest, Sha256};
 
-use crate::proto::{
+use lores_p2panda_client::proto::{
     panda_server::Panda, GetNodeRequest, GetNodeResponse, InfoRequest, InfoResponse, OperationEvent, PublishRequest, PublishResponse,
     SubscribeRequest,
 };
@@ -153,7 +153,7 @@ impl Panda for DevPandaService {
 
         Ok(Response::new(InfoResponse {
             node_id,
-            region: Some(crate::proto::RegionInfo {
+            region: Some(lores_p2panda_client::proto::RegionInfo {
                 region_id: dummy_region_id(&req.app_id),
                 slug: Some("dev-region".to_string()),
                 name: Some("Dev Region".to_string()),

@@ -3030,13 +3030,11 @@ version = "0.1.0"
 dependencies = [
  "futures",
  "hex",
- "prost",
+ "lores-p2panda-client",
  "sha2 0.10.9",
  "tokio",
  "tokio-stream",
  "tonic",
- "tonic-prost",
- "tonic-prost-build",
  "tracing",
  "tracing-subscriber",
 ]
