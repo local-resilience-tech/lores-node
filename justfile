@@ -28,6 +28,10 @@ publish-p2panda-client:
 publish-app-node:
     cargo publish
 
+[working-directory: 'backend/lores-dev-server']
+publish-dev-server:
+    cargo publish
+
 [working-directory: 'backend/coop-cloud-docker-apps']
 publish-coop-cloud-docker-apps:
     cargo publish
