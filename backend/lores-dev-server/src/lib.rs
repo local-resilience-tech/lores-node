@@ -15,7 +15,9 @@ pub async fn run_from_env() -> Result<(), Box<dyn std::error::Error>> {
         .unwrap_or_else(|_| "127.0.0.1:50051".to_string())
         .parse()?;
 
-    println!("starting lores-p2panda-dev-server at {addr}, press CTRL-C to cancel");
+    println!(
+        "starting lores-dev-server at {addr}, press CTRL-C to cancel"
+    );
 
     Server::builder()
         .add_service(PandaServer::new(DevPandaService::new()))

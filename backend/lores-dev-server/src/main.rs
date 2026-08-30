@@ -1,5 +1,5 @@
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     tracing_subscriber::fmt::init();
-    lores_p2panda_dev_server::run_from_env().await
+    lores_dev_server::run_from_env().await
 }

@@ -1,10 +1,10 @@
 [package]
-name = "lores-p2panda-dev-server"
+name = "lores-dev-server"
 version = "0.1.0"
 edition = "2021"
 
 [[bin]]
-name = "lores-p2panda-dev-server"
+name = "lores-dev-server"
 path = "src/main.rs"
 
 [dependencies]

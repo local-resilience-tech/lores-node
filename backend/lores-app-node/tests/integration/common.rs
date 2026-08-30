@@ -1,5 +1,5 @@
-use lores_p2panda_dev_server::proto::panda_server::PandaServer;
-use lores_p2panda_dev_server::service::DevPandaService;
+use lores_dev_server::proto::panda_server::PandaServer;
+use lores_dev_server::service::DevPandaService;
 use serde::{Deserialize, Serialize};
 use sqlx::SqlitePool;
 use sqlx::sqlite::SqlitePoolOptions;
