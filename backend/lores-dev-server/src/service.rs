@@ -1,11 +1,11 @@
 use std::collections::HashMap;
 use std::pin::Pin;
-use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::SystemTime;
 
 use futures::StreamExt;
-use tokio::sync::{broadcast, RwLock};
+use tokio::sync::{RwLock, broadcast};
 use tokio_stream::wrappers::BroadcastStream;
 use tonic::{Request, Response, Status};
 use tracing::{info, warn};
@@ -13,8 +13,8 @@ use tracing::{info, warn};
 use sha2::{Digest, Sha256};
 
 use lores_p2panda_client::proto::{
-    panda_server::Panda, GetNodeRequest, GetNodeResponse, InfoRequest, InfoResponse, OperationEvent, PublishRequest, PublishResponse,
-    SubscribeRequest,
+    GetNodeRequest, GetNodeResponse, InfoRequest, InfoResponse, OperationEvent, PublishRequest, PublishResponse, SubscribeRequest,
+    panda_server::Panda,
 };
 
 /// In-memory dev server for the lores-p2panda gRPC API.

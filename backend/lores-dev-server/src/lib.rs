@@ -4,9 +4,10 @@ use std::net::SocketAddr;
 
 use tonic::transport::Server;
 
-use lores_p2panda_client::proto::panda_server::PandaServer;
 use crate::service::DevPandaService;
+use lores_p2panda_client::proto::panda_server::PandaServer;
 
+pub use lores_p2panda_client::proto;
 pub mod service;
 
 /// Start the dev gRPC server, reading `PANDA_DEV_SERVER_ADDR` from the
