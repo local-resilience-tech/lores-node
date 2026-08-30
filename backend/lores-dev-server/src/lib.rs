@@ -1,3 +1,5 @@
+#![doc = include_str!("../README.md")]
+
 use std::net::SocketAddr;
 
 use tonic::transport::Server;
