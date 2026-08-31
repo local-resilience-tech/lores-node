@@ -220,3 +220,11 @@ pub struct Network {
     pub name: String,
     pub node: NetworkNode,
 }
+
+#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
+pub struct NodeHeartbeat {
+    pub region_id: String,
+    pub node_id: String,
+}
+
+

@@ -1,12 +1,15 @@
-use std::collections::HashMap;
 use std::collections::HashSet;
 use std::sync::{Arc, LazyLock};
+use std::time::Duration;
 
 use p2panda::Node;
 use p2panda::NodeId;
 use p2panda::network::NetworkError;
 use p2panda::node::SpawnError;
-use p2panda::streams::{PublishError, StreamEvent, StreamFrom, StreamPublisher};
+use p2panda::streams::{
+    EphemeralPublishError, EphemeralStreamPublisher, EphemeralStreamSubscription, PublishError, StreamEvent, StreamFrom, StreamPublisher,
+    StreamSubscription,
+};
 use p2panda_core::{Hash, SigningKey, Topic, VerifyingKey};
 use p2panda_net::iroh_endpoint::RelayUrl;
 use p2panda_store::SqliteError;
@@ -14,8 +17,10 @@ use sqlx::Row;
 use sqlx::sqlite::{SqliteConnectOptions, SqlitePool, SqlitePoolOptions};
 use thiserror::Error;
 use tokio::sync::{RwLock, mpsc};
+use tokio::time::interval;
 use tokio_stream::StreamExt;
 
+use crate::RegionAdminTopic;
 use crate::node_status::NodeStatus;
 use crate::region::{RegionId, RegionTopic};
 
@@ -47,6 +52,8 @@ pub enum PandaPublishError {
     NoSubscription(Topic),
     #[error(transparent)]
     Publish(#[from] PublishError),
+    #[error(transparent)]
+    EphemeralPublish(#[from] EphemeralPublishError),
     #[error("App error: {0}")]
     AppError(String),
 }
@@ -66,9 +73,15 @@ pub struct RequiredNodeParams {
     pub relay_url: Option<RelayUrl>,
 }
 
+struct Publisher {
+    topic: Topic,
+    stream_publisher: StreamPublisher<Vec<u8>>,
+    ephemeral_publisher: EphemeralStreamPublisher<Vec<u8>>,
+}
+
 pub struct PandaNode {
     network: RwLock<Node>,
-    publishers: RwLock<HashMap<Topic, StreamPublisher<Vec<u8>>>>,
+    publishers: RwLock<Vec<Publisher>>,
     regions: RwLock<HashSet<RegionId>>,
     node_status: Arc<RwLock<NodeStatus>>,
     pool: SqlitePool,
@@ -101,7 +114,7 @@ impl PandaNode {
 
         Ok(Self {
             network: RwLock::new(node),
-            publishers: RwLock::new(HashMap::new()),
+            publishers: RwLock::new(Vec::new()),
             regions: RwLock::new(HashSet::new()),
             node_status: Arc::new(RwLock::new(NodeStatus::new())),
             pool,
@@ -109,17 +122,13 @@ impl PandaNode {
         })
     }
 
-    async fn subscribe_to_topic(&self, topic_id: Topic, events_tx: mpsc::Sender<IncomingOperation>) -> Result<(), SubscriptionError> {
-        if self.publishers.read().await.contains_key(&topic_id) {
-            return Err(SubscriptionError::AlreadySubscribed(topic_id));
-        }
-
-        let network = self.network.read().await;
-        let (publisher, mut subscription) = network.stream_from::<Vec<u8>>(topic_id, StreamFrom::Frontier).await?;
-        drop(network);
-
-        let topic_status = self.node_status.write().await.register_topic(topic_id);
-        self.publishers.write().await.insert(topic_id, publisher);
+    async fn subscribe_to_stream(
+        &self,
+        topic_id: &Topic,
+        events_tx: mpsc::Sender<IncomingOperation>,
+        mut subscription: StreamSubscription<Vec<u8>>,
+    ) {
+        let topic_status = self.node_status.write().await.register_topic(*topic_id);
 
         tokio::spawn(async move {
             while let Some(event) = subscription.next().await {
@@ -156,12 +165,56 @@ impl PandaNode {
                 }
             }
         });
+    }
+
+    async fn subscribe_to_ephemeral_stream(
+        &self,
+        events_tx: mpsc::Sender<IncomingOperation>,
+        mut subscription: EphemeralStreamSubscription<Vec<u8>>,
+    ) {
+        tokio::spawn(async move {
+            while let Some(event) = subscription.next().await {
+                let incoming = IncomingOperation {
+                    author: event.author(),
+                    topic: event.topic(),
+                    bytes: event.body().clone(),
+                    received_timestamp: event.timestamp(),
+                    operation_id: Hash::digest(event.body().clone()),
+                };
+                if events_tx.send(incoming).await.is_err() {
+                    break;
+                }
+            }
+        });
+    }
+
+    async fn subscribe_to_topic(&self, topic_id: Topic, events_tx: mpsc::Sender<IncomingOperation>) -> Result<(), SubscriptionError> {
+        if self.publishers.read().await.iter().any(|p| &p.topic == &topic_id) {
+            return Err(SubscriptionError::AlreadySubscribed(topic_id));
+        }
+
+        let network = self.network.read().await;
+        let (stream_publisher, stream_subscription) = network.stream_from::<Vec<u8>>(topic_id, StreamFrom::Frontier).await?;
+
+        let (ephemeral_publisher, ephemeral_subscription) = network.ephemeral_stream::<Vec<u8>>(topic_id).await?;
+
+        drop(network);
+
+        let publisher = Publisher {
+            topic: topic_id,
+            stream_publisher,
+            ephemeral_publisher,
+        };
+
+        self.publishers.write().await.push(publisher);
+        self.subscribe_to_stream(&topic_id, events_tx.clone(), stream_subscription).await;
+        self.subscribe_to_ephemeral_stream(events_tx.clone(), ephemeral_subscription).await;
 
         Ok(())
     }
 
     pub async fn get_subscribed_topics(&self) -> Vec<Topic> {
-        self.publishers.read().await.keys().cloned().collect()
+        self.publishers.read().await.iter().map(|p| &p.topic).cloned().collect()
     }
 
     /// Returns the shared [`NodeStatus`] covering all subscribed topics.
@@ -252,9 +305,43 @@ impl PandaNode {
 
     async fn publish(&self, topic_id: Topic, bytes: Vec<u8>) -> Result<Hash, PandaPublishError> {
         let publishers = self.publishers.read().await;
-        let publisher = publishers.get(&topic_id).ok_or(PandaPublishError::NoSubscription(topic_id))?;
-        let publish_future = publisher.publish(bytes).await?;
+        let publisher = publishers
+            .iter()
+            .find(|p| p.topic == topic_id)
+            .ok_or(PandaPublishError::NoSubscription(topic_id))?;
+        let publish_future = publisher.stream_publisher.publish(bytes).await?;
         Ok(publish_future.hash())
+    }
+
+    pub async fn publish_ephemeral_heartbeat(self: Arc<Self>, heartbeat_message_payload: Vec<u8>) -> Result<(), PandaPublishError> {
+        tokio::spawn(async move {
+            let mut timer = interval(Duration::from_mins(5)); // need to make this a const and ms probs
+
+            loop {
+                // need to test this, I think the ref to self will prevent other
+                // threads from doing their work
+                timer.tick().await;
+                
+                let regions = self.get_regions().await;
+                
+                for region_id in regions {
+                    let admin_topic = RegionAdminTopic::new(region_id);
+                    let topic_id = admin_topic.p2panda_topic();
+                    let publishers = self.publishers.read().await;
+                    let publisher = publishers
+                        .iter()
+                        .find(|p| p.topic == topic_id)
+                        .ok_or(PandaPublishError::NoSubscription(topic_id))
+                        .unwrap();
+                    match publisher.ephemeral_publisher.publish(heartbeat_message_payload.clone()).await {
+                        Ok(_) => {}
+                        Err(_) => break,
+                    }
+                }
+            }
+        });
+
+        Ok(())
     }
 
     pub async fn get_log_counts(&self) -> Result<Vec<LogCount>, SqliteError> {
