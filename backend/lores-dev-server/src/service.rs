@@ -31,14 +31,30 @@ pub struct DevPandaService {
     node_names: Arc<RwLock<HashMap<String, String>>>,
     /// Monotonically increasing counter used to synthesise `operation_id`s.
     counter: Arc<AtomicU64>,
+    /// Every operation published to each `app_id`, retained only when tests
+    /// need to introspect published operations.
+    observed: Option<Arc<RwLock<HashMap<String, Vec<OperationEvent>>>>>,
 }
 
 impl DevPandaService {
+    /// Create a new `DevPandaService` without operation recording.
     pub fn new() -> Self {
         Self {
             topics: Arc::new(RwLock::new(HashMap::new())),
             node_names: Arc::new(RwLock::new(HashMap::new())),
             counter: Arc::new(AtomicU64::new(1)),
+            observed: None,
+        }
+    }
+
+    /// Create a new `DevPandaService` that retains all published operations
+    /// so tests can introspect them.
+    pub fn with_operation_recording() -> Self {
+        Self {
+            topics: Arc::new(RwLock::new(HashMap::new())),
+            node_names: Arc::new(RwLock::new(HashMap::new())),
+            counter: Arc::new(AtomicU64::new(1)),
+            observed: Some(Arc::new(RwLock::new(HashMap::new()))),
         }
     }
 
@@ -61,6 +77,18 @@ impl DevPandaService {
         let mut bytes = vec![0u8; 32];
         bytes[24..32].copy_from_slice(&n.to_be_bytes());
         bytes
+    }
+
+    /// Return all operations observed for `app_id` so far.
+    ///
+    /// This is intended for tests that want to assert on what was published
+    /// without needing to subscribe before the operations are sent. It returns
+    /// an empty vector if operation recording is not enabled.
+    pub async fn operations_for_app(&self, app_id: &str) -> Vec<OperationEvent> {
+        match &self.observed {
+            Some(observed) => observed.read().await.get(app_id).cloned().unwrap_or_default(),
+            None => Vec::new(),
+        }
     }
 }
 
@@ -116,7 +144,12 @@ impl Panda for DevPandaService {
         // A lag here means all active subscribers are slow; the dev server
         // simply drops messages when the channel is full, matching the
         // broadcast behaviour of the real server.
-        let _ = tx.send(event);
+        let _ = tx.send(event.clone());
+
+        // Retain a copy for test introspection when enabled.
+        if let Some(observed) = &self.observed {
+            observed.write().await.entry(req.app_id.clone()).or_default().push(event);
+        }
 
         Ok(Response::new(PublishResponse { operation_id, node_id }))
     }
