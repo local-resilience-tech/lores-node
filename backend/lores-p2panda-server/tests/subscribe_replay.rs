@@ -5,7 +5,9 @@ use std::time::Duration;
 
 use lores_p2panda::{PandaNode, RegionAppTopic, RegionId, RequiredNodeParams};
 use lores_p2panda_server::proto::panda_server::Panda;
-use lores_p2panda_server::proto::{PublishRequest, SubscribeEvent, SubscribeRequest, subscribe_event::Event as SubscribeEventKind};
+use lores_p2panda_server::proto::{
+    PublishRequest, SubscribeEvent, SubscribeRequest, SubscriptionCursor, subscribe_event::Event as SubscribeEventKind,
+};
 use lores_p2panda_server::{AppInstanceIds, IdempotencyConfig, NodeInfo, PandaService, ResolveNodeInfo, ResolveRegionId, ResolvedRegion};
 use p2panda_core::{Hash, SigningKey};
 use sqlx::sqlite::{SqliteConnectOptions, SqlitePool, SqlitePoolOptions};
@@ -111,12 +113,14 @@ async fn subscribe_with_replay_yields_historical_then_live_operations() {
         .await
         .unwrap();
 
-    // Subscribe with replay.
+    // Subscribe with replay from the beginning.
     let response = service
         .subscribe(Request::new(SubscribeRequest {
             app_id: app_id.to_string(),
             instance_id: instance_id.to_string(),
-            replay: true,
+            cursor: Some(SubscriptionCursor {
+                mode: Some(lores_p2panda_server::proto::subscription_cursor::Mode::Beginning(true)),
+            }),
         }))
         .await
         .unwrap();
@@ -187,7 +191,9 @@ async fn subscribe_with_replay_yields_replay_ended_without_live_operations() {
         .subscribe(Request::new(SubscribeRequest {
             app_id: app_id.to_string(),
             instance_id: instance_id.to_string(),
-            replay: true,
+            cursor: Some(SubscriptionCursor {
+                mode: Some(lores_p2panda_server::proto::subscription_cursor::Mode::Beginning(true)),
+            }),
         }))
         .await
         .unwrap();
@@ -210,6 +216,54 @@ async fn subscribe_with_replay_yields_replay_ended_without_live_operations() {
         ended.event,
         Some(SubscribeEventKind::ReplayEnded(lores_p2panda_server::proto::ReplayEnded {}))
     );
+}
+
+#[tokio::test]
+async fn subscribe_without_replay_does_not_return_historical_operations() {
+    let app_id = "test-app-no-replay";
+    let instance_id = "test-instance-no-replay";
+    let region_id = RegionId::generate();
+
+    let (node_pool, _node_dir) = temp_db_pool("node-no-replay").await;
+    let node_db_url = format!("{}", node_pool.connect_options().get_filename().display());
+    let node = make_node(&node_db_url).await;
+    let service = make_service(node.clone(), region_id).await;
+
+    // Subscribe without replay first, before any operations exist, so the
+    // shared topic subscription starts from a clean frontier.
+    let response = service
+        .subscribe(Request::new(SubscribeRequest {
+            app_id: app_id.to_string(),
+            instance_id: instance_id.to_string(),
+            cursor: Some(SubscriptionCursor {
+                mode: Some(lores_p2panda_server::proto::subscription_cursor::Mode::Live(true)),
+            }),
+        }))
+        .await
+        .unwrap();
+    let mut stream = response.into_inner();
+
+    // Publish two operations after subscribing; only these live operations
+    // should appear on the stream.
+    for payload in [b"live-1".to_vec(), b"live-2".to_vec()] {
+        service
+            .publish(Request::new(PublishRequest {
+                app_id: app_id.to_string(),
+                instance_id: instance_id.to_string(),
+                payload,
+                idempotency_key: vec![],
+            }))
+            .await
+            .unwrap();
+    }
+
+    let event1 = timeout(Duration::from_secs(30), stream.next()).await.unwrap().unwrap().unwrap();
+    assert_eq!(operation_payload(&event1), b"live-1");
+
+    let event2 = timeout(Duration::from_secs(30), stream.next()).await.unwrap().unwrap().unwrap();
+    assert_eq!(operation_payload(&event2), b"live-2");
+
+    // No replay lifecycle events should be emitted for a live subscription.
 }
 
 fn operation_payload(event: &SubscribeEvent) -> &[u8] {

@@ -3,7 +3,7 @@ use std::sync::Arc;
 
 use futures::StreamExt;
 use lores_p2panda_client::proto::subscribe_event::Event as SubscribeEventKind;
-use lores_p2panda_client::{PandaClient, PandaError, PublishResult};
+use lores_p2panda_client::{PandaClient, PandaError, PublishResult, SubscriptionFrom};
 use tokio::sync::Mutex;
 
 use crate::{
@@ -65,7 +65,7 @@ impl OperationStore for GrpcOperationStore {
                 .client
                 .lock()
                 .await
-                .subscribe(&self.app_id, &self.instance_id, false)
+                .subscribe(&self.app_id, &self.instance_id, SubscriptionFrom::Frontier)
                 .await
                 .map_err(StoreError::from)?;
 

@@ -4,7 +4,9 @@ use std::pin::Pin;
 use std::sync::Arc;
 use tracing::{info, warn};
 
-use lores_p2panda::{PandaNode, PandaPublishError, RegionAppTopic, RegionId, RegionTopic, SubscriptionError, SubscriptionEvent, Topic};
+use lores_p2panda::{
+    PandaNode, PandaPublishError, RegionAppTopic, RegionId, RegionTopic, SubscriptionError, SubscriptionEvent, SubscriptionFrom, Topic,
+};
 use sqlx::SqlitePool;
 use std::time::Duration;
 use tokio::sync::{Mutex, RwLock, broadcast};
@@ -41,7 +43,7 @@ pub mod proto {
 
 use proto::{
     GetNodeRequest, GetNodeResponse, InfoRequest, InfoResponse, OperationEvent, PublishRequest, PublishResponse, ReplayEnded,
-    ReplayStarted, SubscribeEvent, SubscribeRequest,
+    ReplayStarted, SubscribeEvent, SubscribeRequest, SubscriptionCursor,
     panda_server::{Panda, PandaServer},
 };
 
@@ -133,23 +135,29 @@ impl PandaService {
     }
 
     /// Returns a broadcast receiver for the topic derived from `region_id` and
-    /// `app_id`, creating the underlying p2panda subscription and
-    /// forwarding task the first time this topic is seen.
+    /// `app_id`, creating the underlying p2panda subscription and forwarding
+    /// task the first time this topic is seen.
     ///
-    /// If `replay` is `true`, any existing frontier subscription is replaced
-    /// with a `StreamFrom::Start` subscription that replays history before
-    /// continuing with live operations. All current and future subscribers on
-    /// this topic receive the same replayed feed.
+    /// Subscriptions are shared across all gRPC subscribers to the same topic.
+    /// If `from` is [`SubscriptionFrom::Start`], any existing frontier
+    /// subscription is replaced with a `StreamFrom::Start` subscription that
+    /// replays history before continuing with live operations. Existing
+    /// subscribers on the old channel are disconnected.
+    ///
+    /// If `from` is [`SubscriptionFrom::Frontier`] and a subscription already
+    /// exists, its broadcast channel is reused. This matches p2panda's
+    /// singleton-cursor design: there is one ack cursor per topic, so multiple
+    /// concurrent streams on the same topic would interfere with each other.
     async fn ensure_broadcast_subscription(
         &self,
         node: &PandaNode,
         region_app_topic: &RegionAppTopic,
-        replay: bool,
+        from: SubscriptionFrom,
     ) -> Result<broadcast::Receiver<SubscriptionEvent>, Status> {
         let topic = region_app_topic.p2panda_topic();
         let mut subs = self.subscriptions.write().await;
 
-        if !replay {
+        if from == SubscriptionFrom::Frontier {
             if let Some(tx) = subs.get(&topic) {
                 return Ok(tx.subscribe());
             }
@@ -162,12 +170,12 @@ impl PandaService {
         let (broadcast_tx, broadcast_rx) = broadcast::channel::<SubscriptionEvent>(128);
         let (incoming_tx, mut incoming_rx) = tokio::sync::mpsc::channel::<SubscriptionEvent>(128);
 
-        if replay {
+        if from == SubscriptionFrom::Start {
             node.replay_topic_as_primary(topic, incoming_tx)
                 .await
                 .map_err(subscription_error_to_status)?;
         } else {
-            node.subscribe_to_region_topic(region_app_topic, incoming_tx)
+            node.subscribe_to_region_topic(region_app_topic, from, incoming_tx)
                 .await
                 .map_err(subscription_error_to_status)?;
         }
@@ -227,7 +235,9 @@ impl Panda for PandaService {
         // Ensure a subscription exists for this topic so the publisher is
         // available. This is idempotent: if already subscribed the existing
         // broadcast channel is reused.
-        let _rx = self.ensure_broadcast_subscription(&node, &region_app_topic, false).await?;
+        let _rx = self
+            .ensure_broadcast_subscription(&node, &region_app_topic, SubscriptionFrom::Frontier)
+            .await?;
 
         let operation_id = node
             .publish_to_region_topic(&region_app_topic, req.payload)
@@ -284,7 +294,8 @@ impl Panda for PandaService {
 
         // Under a write lock, ensure a p2panda subscription exists for this
         // topic and return a broadcast receiver for it.
-        let receiver = self.ensure_broadcast_subscription(&node, &region_app_topic, req.replay).await?;
+        let from = parse_subscription_cursor(req.cursor);
+        let receiver = self.ensure_broadcast_subscription(&node, &region_app_topic, from).await?;
 
         let stream = BroadcastStream::new(receiver).filter_map(|result| match result {
             Ok(event) => subscription_event_to_proto(event).map(Ok),
@@ -373,6 +384,15 @@ fn publish_error_to_status(e: PandaPublishError) -> Status {
             warn!("publish error: {msg}");
             Status::internal(msg)
         }
+    }
+}
+
+fn parse_subscription_cursor(cursor: Option<SubscriptionCursor>) -> SubscriptionFrom {
+    match cursor.and_then(|c| c.mode) {
+        Some(proto::subscription_cursor::Mode::Beginning(true)) => SubscriptionFrom::Start,
+        Some(proto::subscription_cursor::Mode::Live(true)) | None => SubscriptionFrom::Frontier,
+        Some(proto::subscription_cursor::Mode::Beginning(false)) => SubscriptionFrom::Frontier,
+        Some(proto::subscription_cursor::Mode::Live(false)) => SubscriptionFrom::Frontier,
     }
 }
 

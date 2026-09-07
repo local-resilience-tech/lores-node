@@ -1,5 +1,6 @@
 use clap::{Parser, Subcommand};
 use lores_p2panda_client::PandaClient;
+use lores_p2panda_client::SubscriptionFrom;
 use lores_p2panda_client::proto::subscribe_event::Event as SubscribeEventKind;
 use serde::{Deserialize, Serialize};
 use tokio::io::AsyncBufReadExt as _;
@@ -67,7 +68,7 @@ async fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
             let mut subscribe_client = connect(&server)?;
             let mut publish_client = connect(&server)?;
 
-            let stream_response = subscribe_client.subscribe(APP_ID, INSTANCE_ID, false).await?;
+            let stream_response = subscribe_client.subscribe(APP_ID, INSTANCE_ID, SubscriptionFrom::Frontier).await?;
             let mut stream = stream_response.into_inner();
 
             // Spawn a task that prints every incoming operation.

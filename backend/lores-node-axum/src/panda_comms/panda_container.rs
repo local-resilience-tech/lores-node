@@ -4,7 +4,7 @@ use tokio::sync::{Mutex, mpsc};
 use tracing::{info, warn};
 
 use lores_p2panda::{
-    PandaNodeError, RegionAdminTopic, RegionId, RegionTopic, RelayUrl, SubscriptionEvent, Topic,
+    PandaNodeError, RegionAdminTopic, RegionId, RegionTopic, RelayUrl, SubscriptionEvent, SubscriptionFrom, Topic,
     p2panda_core::{Hash, SigningKey, VerifyingKey, identity::VERIFYING_KEY_LEN},
     panda_node::{
         IncomingOperation, LogCount, OperationCountByAuthorAndTopic, PandaNode, PandaPublishError, RequiredNodeParams, SubscriptionError,
@@ -225,7 +225,8 @@ impl PandaContainer {
 
         let (incoming_tx, mut incoming_rx) = mpsc::channel::<SubscriptionEvent>(32);
 
-        node.subscribe_to_region_topic(region_topic, incoming_tx).await?;
+        node.subscribe_to_region_topic(region_topic, SubscriptionFrom::Frontier, incoming_tx)
+            .await?;
 
         let events_tx = self.lores_events_tx.clone();
         tokio::spawn(async move {

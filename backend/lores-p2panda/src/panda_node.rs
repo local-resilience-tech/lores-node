@@ -7,6 +7,7 @@ use p2panda::NodeId;
 use p2panda::network::NetworkError;
 use p2panda::node::SpawnError;
 use p2panda::streams::{PublishError, StreamEvent, StreamFrom, StreamPublisher};
+
 use p2panda_core::{Hash, SigningKey, Topic, VerifyingKey};
 use p2panda_net::iroh_endpoint::RelayUrl;
 use p2panda_store::SqliteError;
@@ -71,6 +72,17 @@ pub enum SubscriptionError {
     CreateStream(#[from] p2panda::node::CreateStreamError),
 }
 
+/// Determines where a topic subscription should begin, mirroring p2panda's
+/// [`StreamFrom`] but using LoRes-friendly operation identifiers.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum SubscriptionFrom {
+    /// Replay all operations from the beginning.
+    Start,
+    /// Stream only operations arriving after the subscription is established.
+    #[default]
+    Frontier,
+}
+
 pub struct RequiredNodeParams {
     pub private_key: SigningKey,
     pub network_id: Hash,
@@ -121,13 +133,23 @@ impl PandaNode {
         })
     }
 
-    async fn subscribe_to_topic(&self, topic_id: Topic, events_tx: mpsc::Sender<SubscriptionEvent>) -> Result<(), SubscriptionError> {
+    async fn subscribe_to_topic(
+        &self,
+        topic_id: Topic,
+        from: SubscriptionFrom,
+        events_tx: mpsc::Sender<SubscriptionEvent>,
+    ) -> Result<(), SubscriptionError> {
         if self.publishers.read().await.contains_key(&topic_id) {
             return Err(SubscriptionError::AlreadySubscribed(topic_id));
         }
 
+        let stream_from = match from {
+            SubscriptionFrom::Start => StreamFrom::Start,
+            SubscriptionFrom::Frontier => StreamFrom::Frontier,
+        };
+
         let network = self.network.read().await;
-        let (publisher, subscription) = network.stream_from::<Vec<u8>>(topic_id, StreamFrom::Frontier).await?;
+        let (publisher, subscription) = network.stream_from::<Vec<u8>>(topic_id, stream_from).await?;
         drop(network);
 
         let topic_status = self.node_status.write().await.register_topic(topic_id);
@@ -205,7 +227,8 @@ impl PandaNode {
         // local operation store both require an active subscription for the
         // topic; replay also needs it so that new operations continue to flow.
         if !self.publishers.read().await.contains_key(&topic_id) {
-            self.subscribe_to_topic(topic_id, events_tx.clone()).await?;
+            self.subscribe_to_topic(topic_id, SubscriptionFrom::Frontier, events_tx.clone())
+                .await?;
         }
 
         let network = self.network.read().await;
@@ -274,10 +297,11 @@ impl PandaNode {
     pub async fn subscribe_to_region_topic<T: RegionTopic>(
         &self,
         region_topic: &T,
+        from: SubscriptionFrom,
         events_tx: mpsc::Sender<SubscriptionEvent>,
     ) -> Result<(), SubscriptionError> {
         let topic = region_topic.p2panda_topic();
-        self.subscribe_to_topic(topic, events_tx).await
+        self.subscribe_to_topic(topic, from, events_tx).await
     }
 
     pub async fn publish_to_region_topic<T: RegionTopic>(&self, region_topic: &T, bytes: Vec<u8>) -> Result<Hash, PandaPublishError> {

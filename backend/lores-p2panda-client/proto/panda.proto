@@ -51,16 +51,28 @@ message PublishResponse {
   bytes node_id = 2;
 }
 
+message SubscriptionCursor {
+  oneof mode {
+    // Replay all persisted operations for the topic from the beginning of the
+    // log, then continue with live operations. Emits `ReplayStarted` and
+    // `ReplayEnded` lifecycle events.
+    bool beginning = 1;
+
+    // Stream only operations which arrive after the subscription is
+    // established. No replay lifecycle events are emitted.
+    bool live = 2;
+  }
+}
+
 message SubscribeRequest {
   // String identifying this application consistantly across all nodes in the region.
   string app_id = 1;
   // String identifying this specific app instance on this server. Use something that
   // can be rotated if you want to reset the app's state (e.g. a fresh database).
   string instance_id = 2;
-  // If true, the server first replays all persisted operations for the topic
-  // before streaming live operations. Operations are delivered in order and
-  // there is no gap between the historical replay and the live feed.
-  bool replay = 3;
+  // Determines where the subscription stream starts. Defaults to `live` if
+  // unset.
+  SubscriptionCursor cursor = 3;
 }
 
 message OperationEvent {
