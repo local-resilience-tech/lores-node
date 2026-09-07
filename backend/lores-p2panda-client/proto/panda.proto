@@ -9,9 +9,11 @@ service Panda {
   rpc Publish(PublishRequest) returns (PublishResponse);
 
   // Subscribe to a region+namespace topic and receive a stream of operations.
-  // The stream delivers only operations that arrive after the subscription is
-  // established. HTTP/2 flow control provides natural backpressure: the server
-  // will not send faster than the client reads.
+  // By default the stream delivers only operations that arrive after the
+  // subscription is established. If `replay` is true, the server first streams
+  // every persisted operation for the topic from the beginning of the log, then
+  // continues with live operations. HTTP/2 flow control provides natural
+  // backpressure: the server will not send faster than the client reads.
   rpc Subscribe(SubscribeRequest) returns (stream OperationEvent);
 
   // Returns information about the connected server node.
@@ -50,6 +52,10 @@ message SubscribeRequest {
   // String identifying this specific app instance on this server. Use something that
   // can be rotated if you want to reset the app's state (e.g. a fresh database).
   string instance_id = 2;
+  // If true, the server first replays all persisted operations for the topic
+  // before streaming live operations. Operations are delivered in order and
+  // there is no gap between the historical replay and the live feed.
+  bool replay = 3;
 }
 
 message OperationEvent {
