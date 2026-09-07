@@ -31,6 +31,18 @@ pub struct IncomingOperation {
     pub received_timestamp: u64,
 }
 
+/// Events emitted by a p2panda topic subscription.
+///
+/// In addition to [`IncomingOperation`] this includes the p2panda replay
+/// lifecycle events `ReplayStarted` and `ReplayEnded`, allowing consumers to
+/// know when a historical replay has caught up to the live feed.
+#[derive(Clone)]
+pub enum SubscriptionEvent {
+    Operation(IncomingOperation),
+    ReplayStarted { total_operations: u32 },
+    ReplayEnded,
+}
+
 #[derive(Debug, Error)]
 pub enum PandaNodeError {
     #[error(transparent)]
@@ -109,7 +121,7 @@ impl PandaNode {
         })
     }
 
-    async fn subscribe_to_topic(&self, topic_id: Topic, events_tx: mpsc::Sender<IncomingOperation>) -> Result<(), SubscriptionError> {
+    async fn subscribe_to_topic(&self, topic_id: Topic, events_tx: mpsc::Sender<SubscriptionEvent>) -> Result<(), SubscriptionError> {
         if self.publishers.read().await.contains_key(&topic_id) {
             return Err(SubscriptionError::AlreadySubscribed(topic_id));
         }
@@ -139,7 +151,7 @@ impl PandaNode {
     pub async fn replay_topic_as_primary(
         &self,
         topic_id: Topic,
-        events_tx: mpsc::Sender<IncomingOperation>,
+        events_tx: mpsc::Sender<SubscriptionEvent>,
     ) -> Result<(), SubscriptionError> {
         // Remove and drop the existing frontier publisher. Dropping it should
         // cause the old subscription task to end once its stream is exhausted.
@@ -188,7 +200,7 @@ impl PandaNode {
     /// subscribed, so it can be called while a live frontier subscription is
     /// active.  The publisher half of the stream is dropped immediately because
     /// publishing is handled by the existing subscription.
-    pub async fn replay_topic(&self, topic_id: Topic, events_tx: mpsc::Sender<IncomingOperation>) -> Result<(), SubscriptionError> {
+    pub async fn replay_topic(&self, topic_id: Topic, events_tx: mpsc::Sender<SubscriptionEvent>) -> Result<(), SubscriptionError> {
         // Ensure a live frontier subscription exists first. Publishing and the
         // local operation store both require an active subscription for the
         // topic; replay also needs it so that new operations continue to flow.
@@ -208,7 +220,7 @@ impl PandaNode {
     fn spawn_subscription_task(
         topic_id: Topic,
         mut subscription: p2panda::streams::StreamSubscription<Vec<u8>>,
-        events_tx: mpsc::Sender<IncomingOperation>,
+        events_tx: mpsc::Sender<SubscriptionEvent>,
         topic_status: Option<Arc<tokio::sync::RwLock<crate::topic_status::TopicStatus>>>,
     ) {
         tokio::spawn(async move {
@@ -222,7 +234,7 @@ impl PandaNode {
                             operation_id: op.id(),
                             received_timestamp: op.timestamp(),
                         };
-                        if events_tx.send(incoming).await.is_err() {
+                        if events_tx.send(SubscriptionEvent::Operation(incoming)).await.is_err() {
                             break;
                         }
                     }
@@ -238,7 +250,16 @@ impl PandaNode {
                         }
                     }
                     StreamEvent::ImportStarted { .. } | StreamEvent::ImportEnded { .. } => {}
-                    StreamEvent::ReplayStarted { .. } | StreamEvent::ReplayEnded => {}
+                    StreamEvent::ReplayStarted { total_operations } => {
+                        if events_tx.send(SubscriptionEvent::ReplayStarted { total_operations }).await.is_err() {
+                            break;
+                        }
+                    }
+                    StreamEvent::ReplayEnded => {
+                        if events_tx.send(SubscriptionEvent::ReplayEnded).await.is_err() {
+                            break;
+                        }
+                    }
                     StreamEvent::ProcessingFailed { error, .. } => {
                         tracing::error!(topic = %topic_id.to_hex(), "operation processing failed: {error}");
                     }
@@ -253,7 +274,7 @@ impl PandaNode {
     pub async fn subscribe_to_region_topic<T: RegionTopic>(
         &self,
         region_topic: &T,
-        events_tx: mpsc::Sender<IncomingOperation>,
+        events_tx: mpsc::Sender<SubscriptionEvent>,
     ) -> Result<(), SubscriptionError> {
         let topic = region_topic.p2panda_topic();
         self.subscribe_to_topic(topic, events_tx).await

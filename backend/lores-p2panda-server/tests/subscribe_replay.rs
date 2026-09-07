@@ -5,7 +5,7 @@ use std::time::Duration;
 
 use lores_p2panda::{PandaNode, RegionAppTopic, RegionId, RequiredNodeParams};
 use lores_p2panda_server::proto::panda_server::Panda;
-use lores_p2panda_server::proto::{PublishRequest, SubscribeRequest};
+use lores_p2panda_server::proto::{PublishRequest, SubscribeEvent, SubscribeRequest, subscribe_event::Event as SubscribeEventKind};
 use lores_p2panda_server::{AppInstanceIds, IdempotencyConfig, NodeInfo, PandaService, ResolveNodeInfo, ResolveRegionId, ResolvedRegion};
 use p2panda_core::{Hash, SigningKey};
 use sqlx::sqlite::{SqliteConnectOptions, SqlitePool, SqlitePoolOptions};
@@ -122,17 +122,30 @@ async fn subscribe_with_replay_yields_historical_then_live_operations() {
         .unwrap();
     let mut stream = response.into_inner();
 
+    // Expect ReplayStarted with the count of historical operations.
+    let started = timeout(Duration::from_secs(30), stream.next()).await.unwrap().unwrap().unwrap();
+    assert_eq!(
+        started.event,
+        Some(SubscribeEventKind::ReplayStarted(lores_p2panda_server::proto::ReplayStarted {
+            total_operations: 2,
+        }))
+    );
+
     // Collect the two historical operations.
     let event1 = timeout(Duration::from_secs(30), stream.next()).await.unwrap().unwrap().unwrap();
-    assert_eq!(event1.payload, b"first");
+    assert_eq!(operation_payload(&event1), b"first");
 
     let event2 = timeout(Duration::from_secs(30), stream.next()).await.unwrap().unwrap().unwrap();
-    assert_eq!(event2.payload, b"second");
+    assert_eq!(operation_payload(&event2), b"second");
 
-    // Give the replay-to-live handoff a moment, then publish a new operation
-    // and verify it arrives on the same stream.
-    tokio::time::sleep(Duration::from_millis(200)).await;
+    // Replay should finish before any live operations arrive.
+    let ended = timeout(Duration::from_secs(30), stream.next()).await.unwrap().unwrap().unwrap();
+    assert_eq!(
+        ended.event,
+        Some(SubscribeEventKind::ReplayEnded(lores_p2panda_server::proto::ReplayEnded {}))
+    );
 
+    // Publish a new operation and verify it arrives as a live event on the same stream.
     service
         .publish(Request::new(PublishRequest {
             app_id: app_id.to_string(),
@@ -144,5 +157,12 @@ async fn subscribe_with_replay_yields_historical_then_live_operations() {
         .unwrap();
 
     let event3 = timeout(Duration::from_secs(30), stream.next()).await.unwrap().unwrap().unwrap();
-    assert_eq!(event3.payload, b"third");
+    assert_eq!(operation_payload(&event3), b"third");
+}
+
+fn operation_payload(event: &SubscribeEvent) -> &[u8] {
+    match &event.event {
+        Some(SubscribeEventKind::Operation(op)) => &op.payload,
+        other => panic!("expected operation event, got {:?}", other),
+    }
 }

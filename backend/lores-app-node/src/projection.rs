@@ -1,5 +1,5 @@
 use sha2::{Digest, Sha256};
-use sqlx::{sqlite::SqliteConnectOptions, SqlitePool};
+use sqlx::{SqlitePool, sqlite::SqliteConnectOptions};
 
 /// A SQLite pool initialised from a DDL schema string.
 ///

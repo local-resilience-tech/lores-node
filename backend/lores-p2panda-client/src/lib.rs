@@ -5,7 +5,7 @@ pub mod proto {
     tonic::include_proto!("lores.panda.v2");
 }
 
-use proto::{GetNodeRequest, InfoRequest, OperationEvent, PublishRequest, SubscribeRequest, panda_client::PandaClient as TonicPandaClient};
+use proto::{GetNodeRequest, InfoRequest, PublishRequest, SubscribeEvent, SubscribeRequest, panda_client::PandaClient as TonicPandaClient};
 use tonic::{Code, Response, Status, Streaming};
 
 /// 32-byte p2panda operation hash returned by a successful publish.
@@ -241,11 +241,13 @@ impl PandaClient {
     }
 
     /// Subscribe to a region+namespace topic and receive a stream of
-    /// [`OperationEvent`]s.
+    /// [`SubscribeEvent`]s.
     ///
     /// If `replay` is `true`, the server first streams every persisted
     /// operation for the topic before continuing with live operations. The
-    /// historical and live feeds are delivered in order with no gap.
+    /// stream emits `ReplayStarted` before the historical operations and
+    /// `ReplayEnded` once the replay is complete, after which live operations
+    /// follow.
     ///
     /// HTTP/2 flow control provides natural backpressure.
     pub async fn subscribe(
@@ -253,7 +255,7 @@ impl PandaClient {
         app_id: impl Into<String>,
         instance_id: impl Into<String>,
         replay: bool,
-    ) -> Result<Response<Streaming<OperationEvent>>, PandaError> {
+    ) -> Result<Response<Streaming<SubscribeEvent>>, PandaError> {
         let request = SubscribeRequest {
             app_id: app_id.into(),
             instance_id: instance_id.into(),

@@ -4,7 +4,7 @@ use std::pin::Pin;
 use std::sync::Arc;
 use tracing::{info, warn};
 
-use lores_p2panda::{IncomingOperation, PandaNode, PandaPublishError, RegionAppTopic, RegionId, RegionTopic, SubscriptionError, Topic};
+use lores_p2panda::{PandaNode, PandaPublishError, RegionAppTopic, RegionId, RegionTopic, SubscriptionError, SubscriptionEvent, Topic};
 use sqlx::SqlitePool;
 use std::time::Duration;
 use tokio::sync::{Mutex, RwLock, broadcast};
@@ -40,7 +40,8 @@ pub mod proto {
 }
 
 use proto::{
-    GetNodeRequest, GetNodeResponse, InfoRequest, InfoResponse, OperationEvent, PublishRequest, PublishResponse, SubscribeRequest,
+    GetNodeRequest, GetNodeResponse, InfoRequest, InfoResponse, OperationEvent, PublishRequest, PublishResponse, ReplayEnded,
+    ReplayStarted, SubscribeEvent, SubscribeRequest,
     panda_server::{Panda, PandaServer},
 };
 
@@ -99,7 +100,7 @@ pub struct PandaService {
     node: Arc<Mutex<Option<Arc<PandaNode>>>>,
     /// One broadcast sender per subscribed topic.  Shared across all gRPC
     /// connections so the p2panda-level subscription is created only once.
-    subscriptions: Arc<RwLock<HashMap<Topic, broadcast::Sender<IncomingOperation>>>>,
+    subscriptions: Arc<RwLock<HashMap<Topic, broadcast::Sender<SubscriptionEvent>>>>,
     idempotency: IdempotencyStore,
     instance_notifier: InstanceNotifier,
     resolve_region_id: ResolveRegionId,
@@ -144,7 +145,7 @@ impl PandaService {
         node: &PandaNode,
         region_app_topic: &RegionAppTopic,
         replay: bool,
-    ) -> Result<broadcast::Receiver<IncomingOperation>, Status> {
+    ) -> Result<broadcast::Receiver<SubscriptionEvent>, Status> {
         let topic = region_app_topic.p2panda_topic();
         let mut subs = self.subscriptions.write().await;
 
@@ -158,8 +159,8 @@ impl PandaService {
         // one. Existing subscribers on the old channel will be disconnected.
         subs.remove(&topic);
 
-        let (broadcast_tx, broadcast_rx) = broadcast::channel::<IncomingOperation>(128);
-        let (incoming_tx, mut incoming_rx) = tokio::sync::mpsc::channel::<IncomingOperation>(128);
+        let (broadcast_tx, broadcast_rx) = broadcast::channel::<SubscriptionEvent>(128);
+        let (incoming_tx, mut incoming_rx) = tokio::sync::mpsc::channel::<SubscriptionEvent>(128);
 
         if replay {
             node.replay_topic_as_primary(topic, incoming_tx)
@@ -247,7 +248,7 @@ impl Panda for PandaService {
         }))
     }
 
-    type SubscribeStream = Pin<Box<dyn tokio_stream::Stream<Item = Result<OperationEvent, Status>> + Send + 'static>>;
+    type SubscribeStream = Pin<Box<dyn tokio_stream::Stream<Item = Result<SubscribeEvent, Status>> + Send + 'static>>;
 
     async fn subscribe(&self, request: Request<SubscribeRequest>) -> Result<Response<Self::SubscribeStream>, Status> {
         let req = request.into_inner();
@@ -283,12 +284,10 @@ impl Panda for PandaService {
 
         // Under a write lock, ensure a p2panda subscription exists for this
         // topic and return a broadcast receiver for it.
-        let receiver = self
-            .ensure_broadcast_subscription(&node, &region_app_topic, req.replay)
-            .await?;
+        let receiver = self.ensure_broadcast_subscription(&node, &region_app_topic, req.replay).await?;
 
         let stream = BroadcastStream::new(receiver).filter_map(|result| match result {
-            Ok(op) => Some(Ok(incoming_to_event(op))),
+            Ok(event) => subscription_event_to_proto(event).map(Ok),
             // Lagged means the consumer fell behind; skip the lost messages.
             Err(_lagged) => None,
         });
@@ -338,14 +337,21 @@ impl Panda for PandaService {
     }
 }
 
-fn incoming_to_event(op: IncomingOperation) -> OperationEvent {
-    OperationEvent {
-        topic_id: op.topic.to_bytes().to_vec(),
-        author: op.author.as_bytes().to_vec(),
-        operation_id: op.operation_id.as_bytes().to_vec(),
-        timestamp: op.received_timestamp,
-        payload: op.bytes,
-    }
+fn subscription_event_to_proto(event: SubscriptionEvent) -> Option<SubscribeEvent> {
+    let event = match event {
+        SubscriptionEvent::Operation(op) => proto::subscribe_event::Event::Operation(OperationEvent {
+            topic_id: op.topic.to_bytes().to_vec(),
+            author: op.author.as_bytes().to_vec(),
+            operation_id: op.operation_id.as_bytes().to_vec(),
+            timestamp: op.received_timestamp,
+            payload: op.bytes,
+        }),
+        SubscriptionEvent::ReplayStarted { total_operations } => {
+            proto::subscribe_event::Event::ReplayStarted(ReplayStarted { total_operations })
+        }
+        SubscriptionEvent::ReplayEnded => proto::subscribe_event::Event::ReplayEnded(ReplayEnded {}),
+    };
+    Some(SubscribeEvent { event: Some(event) })
 }
 
 fn publish_error_to_status(e: PandaPublishError) -> Status {
