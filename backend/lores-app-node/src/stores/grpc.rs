@@ -64,7 +64,7 @@ impl OperationStore for GrpcOperationStore {
                 .client
                 .lock()
                 .await
-                .subscribe(&self.app_id, &self.instance_id)
+                .subscribe(&self.app_id, &self.instance_id, false)
                 .await
                 .map_err(StoreError::from)?;
 

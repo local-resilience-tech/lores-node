@@ -243,15 +243,21 @@ impl PandaClient {
     /// Subscribe to a region+namespace topic and receive a stream of
     /// [`OperationEvent`]s.
     ///
+    /// If `replay` is `true`, the server first streams every persisted
+    /// operation for the topic before continuing with live operations. The
+    /// historical and live feeds are delivered in order with no gap.
+    ///
     /// HTTP/2 flow control provides natural backpressure.
     pub async fn subscribe(
         &mut self,
         app_id: impl Into<String>,
         instance_id: impl Into<String>,
+        replay: bool,
     ) -> Result<Response<Streaming<OperationEvent>>, PandaError> {
         let request = SubscribeRequest {
             app_id: app_id.into(),
             instance_id: instance_id.into(),
+            replay,
         };
         self.inner.subscribe(request).await.map_err(PandaError::from)
     }
