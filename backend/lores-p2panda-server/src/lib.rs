@@ -9,7 +9,7 @@ use sqlx::SqlitePool;
 use std::time::Duration;
 use tokio::sync::{Mutex, RwLock, broadcast};
 use tokio_stream::StreamExt;
-use tokio_stream::wrappers::BroadcastStream;
+use tokio_stream::wrappers::{BroadcastStream, ReceiverStream};
 use tonic::{Request, Response, Status};
 
 mod idempotency_store;
@@ -264,15 +264,30 @@ impl Panda for PandaService {
         let receiver = self.ensure_broadcast_subscription(&node, &region_app_topic).await?;
 
         // Record the region/namespace so ListRegions can report it.
+        let topic = region_app_topic.p2panda_topic();
         node.register_region(region_app_topic.region_id).await;
 
-        let stream = BroadcastStream::new(receiver).filter_map(|result| match result {
+        let live_stream = BroadcastStream::new(receiver).filter_map(|result| match result {
             Ok(op) => Some(Ok(incoming_to_event(op))),
             // Lagged means the consumer fell behind; skip the lost messages.
             Err(_lagged) => None,
         });
 
-        Ok(Response::new(Box::pin(stream)))
+        if !req.replay {
+            return Ok(Response::new(Box::pin(live_stream)));
+        }
+
+        // Replay-then-live: open a StreamFrom::Start stream for the topic, then
+        // chain the live feed once the replay ends. Because the broadcast
+        // subscription is already active before replay starts, no operation can
+        // be missed in between.
+        let (replay_tx, replay_rx) = tokio::sync::mpsc::channel::<IncomingOperation>(128);
+
+        node.replay_topic(topic, replay_tx).await.map_err(subscription_error_to_status)?;
+
+        let replay_stream = ReceiverStream::new(replay_rx).map(incoming_to_event).map(Ok);
+        let combined = Box::pin(replay_stream.chain(live_stream));
+        Ok(Response::new(combined))
     }
 
     async fn info(&self, request: Request<InfoRequest>) -> Result<Response<InfoResponse>, Status> {
