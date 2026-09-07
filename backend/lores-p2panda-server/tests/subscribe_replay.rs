@@ -160,6 +160,58 @@ async fn subscribe_with_replay_yields_historical_then_live_operations() {
     assert_eq!(operation_payload(&event3), b"third");
 }
 
+#[tokio::test]
+async fn subscribe_with_replay_yields_replay_ended_without_live_operations() {
+    let app_id = "test-app-empty";
+    let instance_id = "test-instance-empty";
+    let region_id = RegionId::generate();
+
+    let (node_pool, _node_dir) = temp_db_pool("node-empty").await;
+    let node_db_url = format!("{}", node_pool.connect_options().get_filename().display());
+    let node = make_node(&node_db_url).await;
+    let service = make_service(node.clone(), region_id).await;
+
+    // Publish one operation so the replay has a single historical event and
+    // then definitively ends, without waiting for any future live operation.
+    service
+        .publish(Request::new(PublishRequest {
+            app_id: app_id.to_string(),
+            instance_id: instance_id.to_string(),
+            payload: b"only".to_vec(),
+            idempotency_key: vec![],
+        }))
+        .await
+        .unwrap();
+
+    let response = service
+        .subscribe(Request::new(SubscribeRequest {
+            app_id: app_id.to_string(),
+            instance_id: instance_id.to_string(),
+            replay: true,
+        }))
+        .await
+        .unwrap();
+    let mut stream = response.into_inner();
+
+    let started = timeout(Duration::from_secs(30), stream.next()).await.unwrap().unwrap().unwrap();
+    assert_eq!(
+        started.event,
+        Some(SubscribeEventKind::ReplayStarted(lores_p2panda_server::proto::ReplayStarted {
+            total_operations: 1,
+        }))
+    );
+
+    let event = timeout(Duration::from_secs(30), stream.next()).await.unwrap().unwrap().unwrap();
+    assert_eq!(operation_payload(&event), b"only");
+
+    // Replay must end even though no live operations will ever be published.
+    let ended = timeout(Duration::from_secs(30), stream.next()).await.unwrap().unwrap().unwrap();
+    assert_eq!(
+        ended.event,
+        Some(SubscribeEventKind::ReplayEnded(lores_p2panda_server::proto::ReplayEnded {}))
+    );
+}
+
 fn operation_payload(event: &SubscribeEvent) -> &[u8] {
     match &event.event {
         Some(SubscribeEventKind::Operation(op)) => &op.payload,
