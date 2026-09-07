@@ -115,53 +115,47 @@ impl PandaNode {
         }
 
         let network = self.network.read().await;
-        let (publisher, mut subscription) = network.stream_from::<Vec<u8>>(topic_id, StreamFrom::Frontier).await?;
+        let (publisher, subscription) = network.stream_from::<Vec<u8>>(topic_id, StreamFrom::Frontier).await?;
         drop(network);
 
         let topic_status = self.node_status.write().await.register_topic(topic_id);
         self.publishers.write().await.insert(topic_id, publisher);
 
-        tokio::spawn(async move {
-            while let Some(event) = subscription.next().await {
-                match event {
-                    StreamEvent::Processed { operation: op, .. } => {
-                        let incoming = IncomingOperation {
-                            author: op.author(),
-                            topic: op.topic(),
-                            bytes: op.message().clone(),
-                            operation_id: op.id(),
-                            received_timestamp: op.timestamp(),
-                        };
-                        if events_tx.send(incoming).await.is_err() {
-                            break;
-                        }
-                    }
-                    StreamEvent::DecodeFailed { error, .. } => {
-                        tracing::error!("failed decoding incoming operation: {error}");
-                    }
-                    StreamEvent::ReplayFailed { error, .. } => {
-                        tracing::error!("error replaying operation stream: {error}");
-                    }
-                    event @ (StreamEvent::SyncStarted { .. } | StreamEvent::SyncEnded { .. }) => {
-                        topic_status.write().await.handle_stream_event(&event);
-                    }
-                    StreamEvent::ImportStarted { .. } | StreamEvent::ImportEnded { .. } => {}
-                    StreamEvent::ReplayStarted { .. } | StreamEvent::ReplayEnded => {}
-                    StreamEvent::ProcessingFailed { error, .. } => {
-                        tracing::error!("operation processing failed: {error}");
-                    }
-                    StreamEvent::AckFailed { error, .. } => {
-                        tracing::error!("operation ack failed: {error}");
-                    }
-                }
-            }
-        });
+        Self::spawn_subscription_task(topic_id, subscription, events_tx, Some(topic_status));
 
         Ok(())
     }
 
     pub async fn get_subscribed_topics(&self) -> Vec<Topic> {
         self.publishers.read().await.keys().cloned().collect()
+    }
+
+    /// Replace the existing subscription for `topic_id` with a `StreamFrom::Start`
+    /// subscription. This replays all locally stored operations from the
+    /// beginning and then continues with live operations.
+    ///
+    /// The old publisher is removed and dropped, and a new publisher from the
+    /// Start stream is installed so that publishing continues to work.
+    pub async fn replay_topic_as_primary(
+        &self,
+        topic_id: Topic,
+        events_tx: mpsc::Sender<IncomingOperation>,
+    ) -> Result<(), SubscriptionError> {
+        // Remove and drop the existing frontier publisher. Dropping it should
+        // cause the old subscription task to end once its stream is exhausted.
+        self.publishers.write().await.remove(&topic_id);
+
+        let network = self.network.read().await;
+        let (publisher, subscription) = network.stream_from::<Vec<u8>>(topic_id, StreamFrom::Start).await?;
+        drop(network);
+
+        // Register the topic again; if it was already registered this is a no-op.
+        let topic_status = self.node_status.write().await.register_topic(topic_id);
+        self.publishers.write().await.insert(topic_id, publisher);
+
+        Self::spawn_subscription_task(topic_id, subscription, events_tx, Some(topic_status));
+
+        Ok(())
     }
 
     /// Returns the shared [`NodeStatus`] covering all subscribed topics.
@@ -195,10 +189,28 @@ impl PandaNode {
     /// active.  The publisher half of the stream is dropped immediately because
     /// publishing is handled by the existing subscription.
     pub async fn replay_topic(&self, topic_id: Topic, events_tx: mpsc::Sender<IncomingOperation>) -> Result<(), SubscriptionError> {
+        // Ensure a live frontier subscription exists first. Publishing and the
+        // local operation store both require an active subscription for the
+        // topic; replay also needs it so that new operations continue to flow.
+        if !self.publishers.read().await.contains_key(&topic_id) {
+            self.subscribe_to_topic(topic_id, events_tx.clone()).await?;
+        }
+
         let network = self.network.read().await;
-        let (_publisher, mut subscription) = network.stream_from::<Vec<u8>>(topic_id, StreamFrom::Start).await?;
+        let (_publisher, subscription) = network.stream_from::<Vec<u8>>(topic_id, StreamFrom::Start).await?;
         drop(network);
 
+        Self::spawn_subscription_task(topic_id, subscription, events_tx, None);
+
+        Ok(())
+    }
+
+    fn spawn_subscription_task(
+        topic_id: Topic,
+        mut subscription: p2panda::streams::StreamSubscription<Vec<u8>>,
+        events_tx: mpsc::Sender<IncomingOperation>,
+        topic_status: Option<Arc<tokio::sync::RwLock<crate::topic_status::TopicStatus>>>,
+    ) {
         tokio::spawn(async move {
             while let Some(event) = subscription.next().await {
                 match event {
@@ -215,25 +227,27 @@ impl PandaNode {
                         }
                     }
                     StreamEvent::DecodeFailed { error, .. } => {
-                        tracing::error!("failed decoding operation during replay: {error}");
+                        tracing::error!(topic = %topic_id.to_hex(), "failed decoding incoming operation: {error}");
                     }
                     StreamEvent::ReplayFailed { error, .. } => {
-                        tracing::error!("error during operation replay: {error}");
+                        tracing::error!(topic = %topic_id.to_hex(), "error replaying operation stream: {error}");
                     }
-                    StreamEvent::SyncStarted { .. } | StreamEvent::SyncEnded { .. } => {}
+                    event @ (StreamEvent::SyncStarted { .. } | StreamEvent::SyncEnded { .. }) => {
+                        if let Some(status) = &topic_status {
+                            status.write().await.handle_stream_event(&event);
+                        }
+                    }
                     StreamEvent::ImportStarted { .. } | StreamEvent::ImportEnded { .. } => {}
                     StreamEvent::ReplayStarted { .. } | StreamEvent::ReplayEnded => {}
                     StreamEvent::ProcessingFailed { error, .. } => {
-                        tracing::error!("operation processing failed during replay: {error}");
+                        tracing::error!(topic = %topic_id.to_hex(), "operation processing failed: {error}");
                     }
                     StreamEvent::AckFailed { error, .. } => {
-                        tracing::error!("operation ack failed during replay: {error}");
+                        tracing::error!(topic = %topic_id.to_hex(), "operation ack failed: {error}");
                     }
                 }
             }
         });
-
-        Ok(())
     }
 
     pub async fn subscribe_to_region_topic<T: RegionTopic>(

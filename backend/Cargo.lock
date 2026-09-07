@@ -3137,8 +3137,10 @@ name = "lores-p2panda-server"
 version = "0.4.0"
 dependencies = [
  "lores-p2panda",
+ "p2panda-core",
  "prost",
  "sqlx",
+ "tempfile",
  "thiserror 2.0.18",
  "tokio",
  "tokio-stream",

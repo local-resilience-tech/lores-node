@@ -9,7 +9,7 @@ use sqlx::SqlitePool;
 use std::time::Duration;
 use tokio::sync::{Mutex, RwLock, broadcast};
 use tokio_stream::StreamExt;
-use tokio_stream::wrappers::{BroadcastStream, ReceiverStream};
+use tokio_stream::wrappers::BroadcastStream;
 use tonic::{Request, Response, Status};
 
 mod idempotency_store;
@@ -134,24 +134,42 @@ impl PandaService {
     /// Returns a broadcast receiver for the topic derived from `region_id` and
     /// `app_id`, creating the underlying p2panda subscription and
     /// forwarding task the first time this topic is seen.
+    ///
+    /// If `replay` is `true`, any existing frontier subscription is replaced
+    /// with a `StreamFrom::Start` subscription that replays history before
+    /// continuing with live operations. All current and future subscribers on
+    /// this topic receive the same replayed feed.
     async fn ensure_broadcast_subscription(
         &self,
         node: &PandaNode,
         region_app_topic: &RegionAppTopic,
+        replay: bool,
     ) -> Result<broadcast::Receiver<IncomingOperation>, Status> {
         let topic = region_app_topic.p2panda_topic();
         let mut subs = self.subscriptions.write().await;
 
-        if let Some(tx) = subs.get(&topic) {
-            return Ok(tx.subscribe());
+        if !replay {
+            if let Some(tx) = subs.get(&topic) {
+                return Ok(tx.subscribe());
+            }
         }
+
+        // Drop any existing shared subscription so that we can install a new
+        // one. Existing subscribers on the old channel will be disconnected.
+        subs.remove(&topic);
 
         let (broadcast_tx, broadcast_rx) = broadcast::channel::<IncomingOperation>(128);
         let (incoming_tx, mut incoming_rx) = tokio::sync::mpsc::channel::<IncomingOperation>(128);
 
-        node.subscribe_to_region_topic(region_app_topic, incoming_tx)
-            .await
-            .map_err(subscription_error_to_status)?;
+        if replay {
+            node.replay_topic_as_primary(topic, incoming_tx)
+                .await
+                .map_err(subscription_error_to_status)?;
+        } else {
+            node.subscribe_to_region_topic(region_app_topic, incoming_tx)
+                .await
+                .map_err(subscription_error_to_status)?;
+        }
 
         let fwd_tx = broadcast_tx.clone();
         tokio::spawn(async move {
@@ -208,7 +226,7 @@ impl Panda for PandaService {
         // Ensure a subscription exists for this topic so the publisher is
         // available. This is idempotent: if already subscribed the existing
         // broadcast channel is reused.
-        let _rx = self.ensure_broadcast_subscription(&node, &region_app_topic).await?;
+        let _rx = self.ensure_broadcast_subscription(&node, &region_app_topic, false).await?;
 
         let operation_id = node
             .publish_to_region_topic(&region_app_topic, req.payload)
@@ -259,35 +277,23 @@ impl Panda for PandaService {
 
         self.instance_notifier.notify(&region_app_topic.app_id, &ids.instance_id).await;
 
+        // Record the region/namespace so ListRegions can report it.
+        let region_id = region_app_topic.region_id.clone();
+        node.register_region(region_id).await;
+
         // Under a write lock, ensure a p2panda subscription exists for this
         // topic and return a broadcast receiver for it.
-        let receiver = self.ensure_broadcast_subscription(&node, &region_app_topic).await?;
+        let receiver = self
+            .ensure_broadcast_subscription(&node, &region_app_topic, req.replay)
+            .await?;
 
-        // Record the region/namespace so ListRegions can report it.
-        let topic = region_app_topic.p2panda_topic();
-        node.register_region(region_app_topic.region_id).await;
-
-        let live_stream = BroadcastStream::new(receiver).filter_map(|result| match result {
+        let stream = BroadcastStream::new(receiver).filter_map(|result| match result {
             Ok(op) => Some(Ok(incoming_to_event(op))),
             // Lagged means the consumer fell behind; skip the lost messages.
             Err(_lagged) => None,
         });
 
-        if !req.replay {
-            return Ok(Response::new(Box::pin(live_stream)));
-        }
-
-        // Replay-then-live: open a StreamFrom::Start stream for the topic, then
-        // chain the live feed once the replay ends. Because the broadcast
-        // subscription is already active before replay starts, no operation can
-        // be missed in between.
-        let (replay_tx, replay_rx) = tokio::sync::mpsc::channel::<IncomingOperation>(128);
-
-        node.replay_topic(topic, replay_tx).await.map_err(subscription_error_to_status)?;
-
-        let replay_stream = ReceiverStream::new(replay_rx).map(incoming_to_event).map(Ok);
-        let combined = Box::pin(replay_stream.chain(live_stream));
-        Ok(Response::new(combined))
+        Ok(Response::new(Box::pin(stream)))
     }
 
     async fn info(&self, request: Request<InfoRequest>) -> Result<Response<InfoResponse>, Status> {
