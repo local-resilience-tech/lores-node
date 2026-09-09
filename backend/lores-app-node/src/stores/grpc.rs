@@ -2,12 +2,13 @@ use std::pin::Pin;
 use std::sync::Arc;
 
 use futures::StreamExt;
-use lores_p2panda_client::{PandaClient, PandaError, PublishResult};
+use lores_p2panda_client::proto::subscribe_event::Event as SubscribeEventKind;
+use lores_p2panda_client::{PandaClient, PandaError, PublishResult, SubscriptionFrom};
 use tokio::sync::Mutex;
 
 use crate::{
-    stores::{OperationStore, OperationStream, RawOperationEvent, StoreError, StorePublishResult},
     NodeId, OperationId,
+    stores::{OperationStore, OperationStream, RawOperationEvent, StoreError, StorePublishResult},
 };
 
 impl From<PandaError> for StoreError {
@@ -64,18 +65,23 @@ impl OperationStore for GrpcOperationStore {
                 .client
                 .lock()
                 .await
-                .subscribe(&self.app_id, &self.instance_id)
+                .subscribe(&self.app_id, &self.instance_id, SubscriptionFrom::Frontier)
                 .await
                 .map_err(StoreError::from)?;
 
-            let stream: OperationStream = Box::pin(response.into_inner().map(|item| {
-                item.map(|event| RawOperationEvent {
-                    payload: event.payload,
-                    author: Some(event.author),
-                    operation_id: Some(event.operation_id),
-                    timestamp: Some(event.timestamp),
-                })
-                .map_err(|s| StoreError::Other(s.to_string()))
+            let stream: OperationStream = Box::pin(response.into_inner().filter_map(|item| async move {
+                match item {
+                    Ok(event) => match event.event {
+                        Some(SubscribeEventKind::Operation(op)) => Some(Ok(RawOperationEvent {
+                            payload: op.payload,
+                            author: Some(op.author),
+                            operation_id: Some(op.operation_id),
+                            timestamp: Some(op.timestamp),
+                        })),
+                        _ => None,
+                    },
+                    Err(s) => Some(Err(StoreError::Other(s.to_string()))),
+                }
             }));
 
             Ok(stream)

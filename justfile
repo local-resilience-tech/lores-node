@@ -4,6 +4,10 @@ setup:
 dev:
     mprocs
 
+[working-directory: 'backend']
+test:
+    cargo test --workspace
+
 docker:
     #!/usr/bin/env bash
     set -e

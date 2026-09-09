@@ -13,8 +13,8 @@ use tracing::{info, warn};
 use sha2::{Digest, Sha256};
 
 use lores_p2panda_client::proto::{
-    GetNodeRequest, GetNodeResponse, InfoRequest, InfoResponse, OperationEvent, PublishRequest, PublishResponse, SubscribeRequest,
-    panda_server::Panda,
+    GetNodeRequest, GetNodeResponse, InfoRequest, InfoResponse, OperationEvent, PublishRequest, PublishResponse, SubscribeEvent,
+    SubscribeRequest, panda_server::Panda,
 };
 
 /// In-memory dev server for the lores-p2panda gRPC API.
@@ -26,7 +26,7 @@ use lores_p2panda_client::proto::{
 pub struct DevPandaService {
     /// One broadcast channel per `app_id`. All subscribers to the same app
     /// share the same channel so they see each other's operations.
-    topics: Arc<RwLock<HashMap<String, broadcast::Sender<OperationEvent>>>>,
+    topics: Arc<RwLock<HashMap<String, broadcast::Sender<SubscribeEvent>>>>,
     /// Reverse map from hex node_id to instance_id, used by get_node.
     node_names: Arc<RwLock<HashMap<String, String>>>,
     /// Monotonically increasing counter used to synthesise `operation_id`s.
@@ -58,7 +58,7 @@ impl DevPandaService {
         }
     }
 
-    async fn topic_tx(&self, app_id: &str) -> broadcast::Sender<OperationEvent> {
+    async fn topic_tx(&self, app_id: &str) -> broadcast::Sender<SubscribeEvent> {
         let topics = self.topics.read().await;
         if let Some(tx) = topics.get(app_id) {
             return tx.clone();
@@ -144,7 +144,10 @@ impl Panda for DevPandaService {
         // A lag here means all active subscribers are slow; the dev server
         // simply drops messages when the channel is full, matching the
         // broadcast behaviour of the real server.
-        let _ = tx.send(event.clone());
+        let subscribe_event = SubscribeEvent {
+            event: Some(lores_p2panda_client::proto::subscribe_event::Event::Operation(event.clone())),
+        };
+        let _ = tx.send(subscribe_event);
 
         // Retain a copy for test introspection when enabled.
         if let Some(observed) = &self.observed {
@@ -154,7 +157,7 @@ impl Panda for DevPandaService {
         Ok(Response::new(PublishResponse { operation_id, node_id }))
     }
 
-    type SubscribeStream = Pin<Box<dyn tokio_stream::Stream<Item = Result<OperationEvent, Status>> + Send + 'static>>;
+    type SubscribeStream = Pin<Box<dyn tokio_stream::Stream<Item = Result<SubscribeEvent, Status>> + Send + 'static>>;
 
     async fn subscribe(&self, request: Request<SubscribeRequest>) -> Result<Response<Self::SubscribeStream>, Status> {
         let req = request.into_inner();

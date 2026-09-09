@@ -1,5 +1,7 @@
 use clap::{Parser, Subcommand};
 use lores_p2panda_client::PandaClient;
+use lores_p2panda_client::SubscriptionFrom;
+use lores_p2panda_client::proto::subscribe_event::Event as SubscribeEventKind;
 use serde::{Deserialize, Serialize};
 use tokio::io::AsyncBufReadExt as _;
 
@@ -66,22 +68,31 @@ async fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
             let mut subscribe_client = connect(&server)?;
             let mut publish_client = connect(&server)?;
 
-            let stream_response = subscribe_client.subscribe(APP_ID, INSTANCE_ID).await?;
+            let stream_response = subscribe_client.subscribe(APP_ID, INSTANCE_ID, SubscriptionFrom::Frontier).await?;
             let mut stream = stream_response.into_inner();
 
             // Spawn a task that prints every incoming operation.
             tokio::spawn(async move {
                 loop {
                     match stream.message().await {
-                        Ok(Some(event)) => {
-                            let author = hex::encode(&event.author);
-                            match ciborium::from_reader::<MessagePayload, _>(event.payload.as_slice()) {
-                                Ok(p) => println!("[{}...] {}", &author[..8], p.message),
-                                Err(_) => {
-                                    println!("[{}...] <unparseable payload>", &author[..8])
+                        Ok(Some(event)) => match event.event {
+                            Some(SubscribeEventKind::Operation(op)) => {
+                                let author = hex::encode(&op.author);
+                                match ciborium::from_reader::<MessagePayload, _>(op.payload.as_slice()) {
+                                    Ok(p) => println!("[{}...] {}", &author[..8], p.message),
+                                    Err(_) => {
+                                        println!("[{}...] <unparseable payload>", &author[..8])
+                                    }
                                 }
                             }
-                        }
+                            Some(SubscribeEventKind::ReplayStarted(rs)) => {
+                                println!("[replay started] {} operations", rs.total_operations);
+                            }
+                            Some(SubscribeEventKind::ReplayEnded(_)) => {
+                                println!("[replay ended] now live");
+                            }
+                            None => {}
+                        },
                         Ok(None) => break,
                         Err(e) => {
                             eprintln!("subscription stream error: {e}");

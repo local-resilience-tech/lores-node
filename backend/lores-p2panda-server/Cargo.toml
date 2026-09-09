@@ -16,5 +16,9 @@ tonic = { workspace = true }
 tonic-prost = { workspace = true }
 tracing = "0.1"
 
+[dev-dependencies]
+p2panda-core = { workspace = true }
+tempfile = "3"
+
 [build-dependencies]
 tonic-prost-build = { workspace = true }

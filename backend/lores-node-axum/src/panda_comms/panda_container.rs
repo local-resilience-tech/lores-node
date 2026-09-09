@@ -4,9 +4,11 @@ use tokio::sync::{Mutex, mpsc};
 use tracing::{info, warn};
 
 use lores_p2panda::{
-    IncomingOperation, PandaNodeError, RegionAdminTopic, RegionId, RegionTopic, RelayUrl, Topic,
+    PandaNodeError, RegionAdminTopic, RegionId, RegionTopic, RelayUrl, SubscriptionEvent, SubscriptionFrom, Topic,
     p2panda_core::{Hash, SigningKey, VerifyingKey, identity::VERIFYING_KEY_LEN},
-    panda_node::{LogCount, OperationCountByAuthorAndTopic, PandaNode, PandaPublishError, RequiredNodeParams, SubscriptionError},
+    panda_node::{
+        IncomingOperation, LogCount, OperationCountByAuthorAndTopic, PandaNode, PandaPublishError, RequiredNodeParams, SubscriptionError,
+    },
     topic_status::ConnectionStatus,
 };
 
@@ -175,20 +177,22 @@ impl PandaContainer {
         let count = topics.len();
 
         for topic_id in topics {
-            let (incoming_tx, mut incoming_rx) = mpsc::channel::<IncomingOperation>(32);
+            let (incoming_tx, mut incoming_rx) = mpsc::channel::<SubscriptionEvent>(32);
             node.replay_topic(topic_id, incoming_tx).await?;
 
             let events_tx = self.lores_events_tx.clone();
             tokio::spawn(async move {
-                while let Some(incoming) = incoming_rx.recv().await {
-                    match Self::decode_incoming_to_lores_event(incoming) {
-                        Ok(lores_event) => {
-                            if events_tx.send(lores_event).await.is_err() {
-                                break;
+                while let Some(event) = incoming_rx.recv().await {
+                    if let SubscriptionEvent::Operation(incoming) = event {
+                        match Self::decode_incoming_to_lores_event(incoming) {
+                            Ok(lores_event) => {
+                                if events_tx.send(lores_event).await.is_err() {
+                                    break;
+                                }
                             }
-                        }
-                        Err(e) => {
-                            warn!("Failed to decode LoResEvent during replay: {}", e);
+                            Err(e) => {
+                                warn!("Failed to decode LoResEvent during replay: {}", e);
+                            }
                         }
                     }
                 }
@@ -219,21 +223,24 @@ impl PandaContainer {
         };
         drop(node_lock);
 
-        let (incoming_tx, mut incoming_rx) = mpsc::channel::<IncomingOperation>(32);
+        let (incoming_tx, mut incoming_rx) = mpsc::channel::<SubscriptionEvent>(32);
 
-        node.subscribe_to_region_topic(region_topic, incoming_tx).await?;
+        node.subscribe_to_region_topic(region_topic, SubscriptionFrom::Frontier, incoming_tx)
+            .await?;
 
         let events_tx = self.lores_events_tx.clone();
         tokio::spawn(async move {
-            while let Some(incoming) = incoming_rx.recv().await {
-                match Self::decode_incoming_to_lores_event(incoming) {
-                    Ok(lores_event) => {
-                        if events_tx.send(lores_event).await.is_err() {
-                            break;
+            while let Some(event) = incoming_rx.recv().await {
+                if let SubscriptionEvent::Operation(incoming) = event {
+                    match Self::decode_incoming_to_lores_event(incoming) {
+                        Ok(lores_event) => {
+                            if events_tx.send(lores_event).await.is_err() {
+                                break;
+                            }
                         }
-                    }
-                    Err(e) => {
-                        warn!("Failed to decode LoResEvent from operation: {}", e);
+                        Err(e) => {
+                            warn!("Failed to decode LoResEvent from operation: {}", e);
+                        }
                     }
                 }
             }

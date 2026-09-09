@@ -8,11 +8,18 @@ service Panda {
   // propagated to peers regardless of their current availability.
   rpc Publish(PublishRequest) returns (PublishResponse);
 
-  // Subscribe to a region+namespace topic and receive a stream of operations.
-  // The stream delivers only operations that arrive after the subscription is
-  // established. HTTP/2 flow control provides natural backpressure: the server
-  // will not send faster than the client reads.
-  rpc Subscribe(SubscribeRequest) returns (stream OperationEvent);
+  // Subscribe to a region+namespace topic and receive a stream of events.
+  // By default the stream delivers only operations that arrive after the
+  // subscription is established. If `replay` is true, the server first streams
+  // every persisted operation for the topic from the beginning of the log, then
+  // continues with live operations.
+  //
+  // p2panda emits `ReplayStarted` and `ReplayEnded` lifecycle events around
+  // the historical replay. The client can use `ReplayEnded` to know when it
+  // has caught up and is receiving live operations. HTTP/2 flow control
+  // provides natural backpressure: the server will not send faster than the
+  // client reads.
+  rpc Subscribe(SubscribeRequest) returns (stream SubscribeEvent);
 
   // Returns information about the connected server node.
   rpc Info(InfoRequest) returns (InfoResponse);
@@ -44,12 +51,28 @@ message PublishResponse {
   bytes node_id = 2;
 }
 
+message SubscriptionCursor {
+  oneof mode {
+    // Replay all persisted operations for the topic from the beginning of the
+    // log, then continue with live operations. Emits `ReplayStarted` and
+    // `ReplayEnded` lifecycle events.
+    bool beginning = 1;
+
+    // Stream only operations which arrive after the subscription is
+    // established. No replay lifecycle events are emitted.
+    bool live = 2;
+  }
+}
+
 message SubscribeRequest {
   // String identifying this application consistantly across all nodes in the region.
   string app_id = 1;
   // String identifying this specific app instance on this server. Use something that
   // can be rotated if you want to reset the app's state (e.g. a fresh database).
   string instance_id = 2;
+  // Determines where the subscription stream starts. Defaults to `live` if
+  // unset.
+  SubscriptionCursor cursor = 3;
 }
 
 message OperationEvent {
@@ -63,6 +86,32 @@ message OperationEvent {
   uint64 timestamp = 4;
   // Encoded operation payload (e.g. CBOR).
   bytes payload = 5;
+}
+
+// Emitted once at the beginning of a replay, before any historical operations.
+message ReplayStarted {
+  // Number of operations that will be replayed.
+  uint32 total_operations = 1;
+}
+
+// Emitted once after all historical operations have been replayed. From this
+// point on the stream delivers live operations (until the next replay).
+message ReplayEnded {}
+
+// Events delivered by the `Subscribe` stream. The oneof mirrors p2panda's
+// `StreamEvent::ReplayStarted` and `StreamEvent::ReplayEnded` lifecycle events.
+message SubscribeEvent {
+  oneof event {
+    // A regular operation, either historical (before `ReplayEnded`) or live
+    // (after `ReplayEnded`).
+    OperationEvent operation = 1;
+
+    // Historical replay has started. Emitted only when `replay = true`.
+    ReplayStarted replay_started = 2;
+
+    // Historical replay has finished. Emitted only when `replay = true`.
+    ReplayEnded replay_ended = 3;
+  }
 }
 
 message InfoRequest {

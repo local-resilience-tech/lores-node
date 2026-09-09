@@ -4,10 +4,10 @@ use lores_p2panda_client::PandaClient;
 
 use crate::backoff::Backoff;
 use crate::consumer::OperationConsumer;
-use crate::node::{map_store_error, NodeError};
+use crate::node::{NodeError, map_store_error};
 use crate::stores::{OperationStore, StoreError};
 use crate::types::NodeEvent;
-use tokio::sync::{broadcast, watch, Mutex};
+use tokio::sync::{Mutex, broadcast, watch};
 
 /// Drives a remote subscription in a loop, reconnecting with exponential
 /// backoff on any failure.

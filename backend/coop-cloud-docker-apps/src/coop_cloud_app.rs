@@ -21,11 +21,11 @@ pub struct CoopCloudApp {
 }
 
 pub fn build_coop_cloud_app_from_labels(labels: &CoopCloudServiceLabels) -> Result<CoopCloudApp, anyhow::Error> {
-    let recipe = labels.recipe().ok_or_else(|| anyhow::anyhow!("Missing recipe label"))?;
+    let recipe = labels.recipe().unwrap_or_else(|| "unknown-recipe".to_string());
 
     Ok(CoopCloudApp {
         name: recipe.clone(),
-        recipe: recipe.clone(),
+        recipe,
         version: labels.version(),
         url: Some(AppUrl {
             internet_url: app_url(labels.host()),
@@ -58,9 +58,13 @@ mod tests {
     #[test]
     fn test_build_app_gets_version() {
         let labels = CoopCloudServiceLabels::new(
-            vec![version_label("foobar", "1.2.3"), stack_namespace_label("foobar")]
-                .into_iter()
-                .collect(),
+            vec![
+                version_label("foobar", "1.2.3"),
+                recipe_label("foobar", "my-recipe"),
+                stack_namespace_label("foobar"),
+            ]
+            .into_iter()
+            .collect(),
         )
         .unwrap();
 
@@ -70,18 +74,24 @@ mod tests {
 
     #[test]
     fn test_build_has_no_version_if_not_specified() {
-        let labels = CoopCloudServiceLabels::new(vec![stack_namespace_label("foobar")].into_iter().collect()).unwrap();
+        let labels = CoopCloudServiceLabels::new(
+            vec![recipe_label("foobar", "my-recipe"), stack_namespace_label("foobar")]
+                .into_iter()
+                .collect(),
+        )
+        .unwrap();
 
         let result = build_coop_cloud_app_from_labels(&labels).unwrap();
         assert_eq!(result.version, None);
     }
 
     #[test]
-    fn test_build_fails_if_no_recipe() {
+    fn test_build_uses_default_recipe_if_not_specified() {
         let labels = CoopCloudServiceLabels::new(vec![stack_namespace_label("foobar")].into_iter().collect()).unwrap();
 
-        let result = build_coop_cloud_app_from_labels(&labels);
-        assert!(result.is_err());
+        let result = build_coop_cloud_app_from_labels(&labels).unwrap();
+        assert_eq!(result.recipe, "unknown-recipe".to_string());
+        assert_eq!(result.name, "unknown-recipe".to_string());
     }
 
     #[test]
