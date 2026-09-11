@@ -30,11 +30,11 @@ export const useNodeHeartbeats = () => {
 
       const minutesSinceLastHeartbeat = differenceInMinutes(time, nodeTimestamp)
 
-      if (minutesSinceLastHeartbeat <= 1) {
+      if (minutesSinceLastHeartbeat <= 5) {
         return { label: "Active", color: "green" }
-      } else if (minutesSinceLastHeartbeat <= 2) {
+      } else if (minutesSinceLastHeartbeat <= 30) {
         return { label: "Last active ~30 minutes ago", color: "yellow" }
-      } else if (minutesSinceLastHeartbeat <= 3) {
+      } else if (minutesSinceLastHeartbeat <= 60) {
         return { label: "Last active ~1 hour ago", color: "yellow" }
       } else {
         return { label: "Last active over 1 hour ago", color: "red" }
