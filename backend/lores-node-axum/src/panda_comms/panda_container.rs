@@ -1,9 +1,6 @@
-use std::{sync::Arc, time::Duration};
+use std::sync::Arc;
 use thiserror::Error;
-use tokio::{
-    sync::{Mutex, mpsc},
-    time::interval,
-};
+use tokio::sync::{Mutex, mpsc};
 use tracing::{info, warn};
 
 use lores_p2panda::{
@@ -66,15 +63,11 @@ impl PandaContainer {
     pub fn new(events_tx: mpsc::Sender<LoResEvent>) -> Self {
         let params = Arc::new(Mutex::new(NodeParams::default()));
 
-        let container = Self {
+        Self {
             params,
             node: Arc::new(Mutex::new(None)),
             lores_events_tx: events_tx,
-        };
-        // to do - where the publishing happens is tbd
-        container.publish_heartbeat();
-
-        container
+        }
     }
 
     pub async fn get_params(&self) -> NodeParams {
@@ -249,12 +242,9 @@ impl PandaContainer {
         Ok(())
     }
 
-    async fn publish_heartbeat(&self) -> Result<(), PandaPublishError> {
-        let public_key = self.get_public_key().await.unwrap();
-        let event_payload = LoResEventPayload::NodeHeartbeat(NodeHeartbeatDataV1 {
-            node_id: public_key.to_hex(),
-        });
-        // this is a machine initiated event so should it be attached to a node_steward still?
+    pub async fn publish_heartbeat(&self) -> Result<(), PandaPublishError> {
+        let event_payload = LoResEventPayload::NodeHeartbeat(NodeHeartbeatDataV1 {});
+
         let metadata = LoResEventMetadataV1 { node_steward_id: None };
         let encoded_payload =
             encode_lores_event_payload(event_payload, metadata).map_err(|e| PandaPublishError::AppError(format!("Encoding error: {e}")))?;
@@ -262,7 +252,7 @@ impl PandaContainer {
         let node_lock = self.node.lock().await;
         let node = match node_lock.as_ref() {
             Some(node) => node.clone(),
-            None => return Err(PandaPublishError::NodeNotStarted), // placeholder error
+            None => return Err(PandaPublishError::NodeNotStarted),
         };
         drop(node_lock);
         PandaNode::publish_ephemeral_heartbeat(node, encoded_payload).await?;

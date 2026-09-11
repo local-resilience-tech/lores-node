@@ -7,15 +7,11 @@ use crate::{
     panda_comms::lores_events::{LoResEventHeader, NodeHeartbeatDataV1},
 };
 
-pub struct NodeHeartbeatHandler {
-    payload: NodeHeartbeatDataV1,
-}
+pub struct NodeHeartbeatHandler {}
 
 impl NodeHeartbeatHandler {
-    pub fn new(payload: &NodeHeartbeatDataV1) -> Self {
-        Self {
-            payload: payload.clone(),
-        }
+    pub fn new(_payload: &NodeHeartbeatDataV1) -> Self {
+        Self {}
     }
 }
 

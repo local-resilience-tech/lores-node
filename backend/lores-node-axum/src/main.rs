@@ -101,6 +101,7 @@ async fn main() {
     let panda_container = PandaContainer::new(channel_tx);
     start_panda_event_handler(channel_rx, projections_pool.clone(), realtime_state.clone());
     start_panda(&config_state, &panda_container, &projections_pool).await;
+    let _ = &panda_container.publish_heartbeat().await;
 
     // GRPC SERVER
     let grpc_port = env::var("GRPC_PORT").unwrap_or_else(|_| "50051".to_string());

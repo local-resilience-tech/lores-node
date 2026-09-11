@@ -57,9 +57,7 @@ pub struct AppRegisteredDataV1 {
 }
 
 #[derive(Deserialize, Serialize, Clone, PartialEq, Debug)]
-pub struct NodeHeartbeatDataV1 {
-    pub node_id: String,
-}
+pub struct NodeHeartbeatDataV1 {}
 
 #[derive(Deserialize, Serialize, Clone, PartialEq, Debug)]
 pub enum LoResEventPayload {

@@ -88,6 +88,8 @@ pub struct PandaNode {
     pub public_key: VerifyingKey,
 }
 
+const HEARTBEAT_FREQUENCY_MINS: u64 = 5;
+
 impl PandaNode {
     pub async fn new(params: &RequiredNodeParams, database_url: &str) -> Result<Self, PandaNodeError> {
         let public_key = params.private_key.verifying_key();
@@ -315,16 +317,12 @@ impl PandaNode {
 
     pub async fn publish_ephemeral_heartbeat(self: Arc<Self>, heartbeat_message_payload: Vec<u8>) -> Result<(), PandaPublishError> {
         tokio::spawn(async move {
-            let mut timer = interval(Duration::from_mins(5)); // need to make this a const and ms probs
+            let mut timer = interval(Duration::from_mins(HEARTBEAT_FREQUENCY_MINS));
 
             loop {
-                // need to test this, I think the ref to self will prevent other
-                // threads from doing their work
                 timer.tick().await;
-                
-                let regions = self.get_regions().await;
-                
-                for region_id in regions {
+
+                for region_id in self.get_regions().await {
                     let admin_topic = RegionAdminTopic::new(region_id);
                     let topic_id = admin_topic.p2panda_topic();
                     let publishers = self.publishers.read().await;
@@ -333,9 +331,13 @@ impl PandaNode {
                         .find(|p| p.topic == topic_id)
                         .ok_or(PandaPublishError::NoSubscription(topic_id))
                         .unwrap();
+                    
                     match publisher.ephemeral_publisher.publish(heartbeat_message_payload.clone()).await {
-                        Ok(_) => {}
-                        Err(_) => break,
+                        Err(err) => {
+                            eprintln!("Error sending ephemeral message: {}", err);
+                            break;
+                        }
+                        _ => {}
                     }
                 }
             }
