@@ -331,7 +331,7 @@ impl PandaNode {
                         .find(|p| p.topic == topic_id)
                         .ok_or(PandaPublishError::NoSubscription(topic_id))
                         .unwrap();
-                    
+
                     match publisher.ephemeral_publisher.publish(heartbeat_message_payload.clone()).await {
                         Err(err) => {
                             eprintln!("Error sending ephemeral message: {}", err);

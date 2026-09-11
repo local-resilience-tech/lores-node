@@ -226,5 +226,3 @@ pub struct NodeHeartbeat {
     pub region_id: String,
     pub node_id: String,
 }
-
-
