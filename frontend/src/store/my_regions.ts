@@ -1,9 +1,24 @@
 import { createSlice, PayloadAction, WritableDraft } from "@reduxjs/toolkit"
-import type { Region, RegionNodeDetails, RegionWithNodes } from "../api/Api"
+import type {
+  NodeHeartbeat,
+  Region,
+  RegionNodeDetails,
+  RegionWithNodes,
+} from "../api/Api"
+
+export type TimestampedNodeHeartbeat = NodeHeartbeat & {
+  heartbeat: number | undefined
+}
+
+export type RegionWithTimestampedNodes = {
+  nodes: RegionNodeDetails[]
+  region: Region
+  nodeHeartbeats?: TimestampedNodeHeartbeat[]
+}
 
 export type MyRegionState = {
   activeRegionId?: string | null
-  all: RegionWithNodes[] | null
+  all: RegionWithTimestampedNodes[] | null
 }
 
 export type NodesMap = Map<number, RegionNodeDetails>
@@ -26,7 +41,7 @@ const regionsSlice = createSlice({
 
       state.all = regions
       state.activeRegionId = regions.length > 0 ? regions[0].region.id : null
-
+      hydrateNodeHeartbeats(state)
       return ensureRegionSlugs(state)
     },
     nodeJoinedRegion: (state, action: PayloadAction<RegionWithNodes>) => {
@@ -122,6 +137,43 @@ const regionsSlice = createSlice({
       }
       return state
     },
+    nodeHeartbeatReceived: (state, action: PayloadAction<NodeHeartbeat>) => {
+      const nodeHeartbeat = action.payload
+      const regionIndex = findRegionIndex(state, nodeHeartbeat.region_id)
+
+      if (regionIndex === -1) {
+        console.warn(
+          `Received node heartbeat for region ID ${nodeHeartbeat.region_id}, but that region is not in the state.`,
+        )
+        return state
+      }
+
+      const region = state.all![regionIndex]
+
+      if (!region.nodeHeartbeats) region.nodeHeartbeats = []
+
+      const nodeIndex = region.nodeHeartbeats.findIndex(
+        (n) => n.node_id === nodeHeartbeat.node_id,
+      )
+
+      const timestampedNode = {
+        heartbeat: Date.now(),
+        ...nodeHeartbeat,
+      }
+
+      if (nodeIndex === -1) {
+        region.nodeHeartbeats.push(timestampedNode)
+      } else {
+        region.nodeHeartbeats[nodeIndex] = timestampedNode
+      }
+
+      sessionStorage.setItem(
+        timestampedNode.node_id,
+        timestampedNode.heartbeat.toString(),
+      )
+
+      return state
+    },
   },
 })
 
@@ -141,9 +193,15 @@ function ensureRegionSlugs(
 
 export function activeRegionWithNodes(
   state: MyRegionState,
-): RegionWithNodes | null {
+): RegionWithTimestampedNodes | null {
   if (!state.activeRegionId || !state.all) return null
   return state.all.find((r) => r.region.id === state.activeRegionId) ?? null
+}
+
+export function activeRegionNodeHeartbeats(
+  state: MyRegionState,
+): TimestampedNodeHeartbeat[] | undefined {
+  return activeRegionWithNodes(state)?.nodeHeartbeats
 }
 
 export function activeRegion(state: MyRegionState): Region | null {
@@ -172,6 +230,31 @@ function findRegionIndex(state: MyRegionState, regionId: string): number {
   return state.all?.findIndex((r) => r.region.id === regionId) ?? -1
 }
 
+/**
+ * Node heartbeats aren't persisted in a projection, so
+ * on page reload we lose the current heartbeat state.
+ * Instead, these are persisted in sessionStorage.
+ * We hydrate the state with any existing heartbeats
+ * from sessionStorage.
+ */
+function hydrateNodeHeartbeats(state: MyRegionState) {
+  state.all?.forEach((r) => {
+    if (!r.nodeHeartbeats) r.nodeHeartbeats = []
+
+    r.nodes.forEach((n) => {
+      const nodeHeartbeat = sessionStorage.getItem(n.node_id)
+
+      if (nodeHeartbeat) {
+        r.nodeHeartbeats?.push({
+          node_id: n.node_id,
+          region_id: r.region.id,
+          heartbeat: Number(nodeHeartbeat),
+        })
+      }
+    })
+  })
+}
+
 export const {
   regionsLoaded,
   nodeJoinedRegion,
@@ -179,5 +262,6 @@ export const {
   regionNodeUpdated,
   regionUpdated,
   regionForgotten,
+  nodeHeartbeatReceived,
 } = regionsSlice.actions
 export default regionsSlice.reducer
