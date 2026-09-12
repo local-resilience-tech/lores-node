@@ -6,7 +6,7 @@ import regionsReducer, {
   regionNodeUpdated,
   regionUpdated,
   regionForgotten,
-  nodeHeartbeatReceived
+  nodeHeartbeatReceived,
 } from "./my_regions"
 import localAppsReducer, {
   localAppCreated,
