@@ -116,6 +116,9 @@ export type ClientEvent =
     }
   | {
       LocalAppsReloaded: LocalApp[];
+    }
+  | {
+      NodeHeartbeatReceived: NodeHeartbeat;
     };
 
 export interface CreateRegionData {
@@ -196,6 +199,11 @@ export interface NetworkNode {
 export interface NodeAppUrl {
   internet_url?: string | null;
   local_network_url?: string | null;
+}
+
+export interface NodeHeartbeat {
+  node_id: string;
+  region_id: string;
 }
 
 export interface NodeStatusResponse {
@@ -514,7 +522,7 @@ export class HttpClient<SecurityDataType = unknown> {
 
 /**
  * @title lores-node
- * @version 0.22.2
+ * @version 0.23.0
  * @license
  */
 export class Api<

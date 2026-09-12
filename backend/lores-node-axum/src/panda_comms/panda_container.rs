@@ -10,7 +10,7 @@ use lores_p2panda::{
     topic_status::ConnectionStatus,
 };
 
-use crate::api::auth_api::auth_backend::User;
+use crate::{api::auth_api::auth_backend::User, panda_comms::lores_events::NodeHeartbeatDataV1};
 
 pub struct NodeStatusSnapshot {
     pub topics: Vec<TopicStatusSnapshot>,
@@ -63,7 +63,7 @@ impl PandaContainer {
     pub fn new(events_tx: mpsc::Sender<LoResEvent>) -> Self {
         let params = Arc::new(Mutex::new(NodeParams::default()));
 
-        PandaContainer {
+        Self {
             params,
             node: Arc::new(Mutex::new(None)),
             lores_events_tx: events_tx,
@@ -238,6 +238,24 @@ impl PandaContainer {
                 }
             }
         });
+
+        Ok(())
+    }
+
+    pub async fn publish_heartbeat(&self) -> Result<(), PandaPublishError> {
+        let event_payload = LoResEventPayload::NodeHeartbeat(NodeHeartbeatDataV1 {});
+
+        let metadata = LoResEventMetadataV1 { node_steward_id: None };
+        let encoded_payload =
+            encode_lores_event_payload(event_payload, metadata).map_err(|e| PandaPublishError::AppError(format!("Encoding error: {e}")))?;
+
+        let node_lock = self.node.lock().await;
+        let node = match node_lock.as_ref() {
+            Some(node) => node.clone(),
+            None => return Err(PandaPublishError::NodeNotStarted),
+        };
+        drop(node_lock);
+        PandaNode::publish_ephemeral_heartbeat(node, encoded_payload).await?;
 
         Ok(())
     }

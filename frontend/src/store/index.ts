@@ -6,6 +6,7 @@ import regionsReducer, {
   regionNodeUpdated,
   regionUpdated,
   regionForgotten,
+  nodeHeartbeatReceived,
 } from "./my_regions"
 import localAppsReducer, {
   localAppCreated,
@@ -57,6 +58,8 @@ export async function handleClientEvent(event: ClientEvent) {
     store.dispatch(localAppUpdated(event.LocalAppUpdated))
   } else if ("LocalAppsReloaded" in event) {
     store.dispatch(localAppsLoaded(event.LocalAppsReloaded))
+  } else if ("NodeHeartbeatReceived" in event) {
+    store.dispatch(nodeHeartbeatReceived(event.NodeHeartbeatReceived))
   } else {
     console.warn("Unhandled event type:", event)
   }

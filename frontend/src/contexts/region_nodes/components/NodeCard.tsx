@@ -1,14 +1,16 @@
 import { Stack, Card, Text, Group, Badge, ThemeIcon } from "@mantine/core"
-import type { ReactNode } from "react"
+import { type ReactNode } from "react"
 import {
   IconAlertCircle,
   IconCircleCheck,
+  IconCircleFilled,
   IconClock,
   IconHelpCircle,
 } from "@tabler/icons-react"
 import { Anchor } from "../../../components"
 import { NodeState, RegionNodeDetails } from "../../../api/Api"
 import { nodeName } from "../../../store/my_regions"
+import { NodeHeartbeatDisplay } from "../../../hooks/useNodeHeartbeats"
 
 const IpLink = ({ ip }: { ip: string | undefined | null }) => {
   if (!ip) return <Text c="dimmed">unknown</Text>
@@ -24,14 +26,23 @@ interface NodeCardProps {
   node: RegionNodeDetails
   isRegionCreator?: boolean
   rightSection?: ReactNode
+  isThisNode?: boolean
+  nodeHeartbeatDisplay?: NodeHeartbeatDisplay
 }
 
 interface NodeStatusProps {
   state?: NodeState | null
   statusText?: string | null
+  isThisNode?: boolean
+  nodeHeartbeatDisplay?: NodeHeartbeatDisplay
 }
 
-function NodeStatus({ state, statusText }: NodeStatusProps) {
+function NodeStatus({
+  state,
+  statusText,
+  isThisNode,
+  nodeHeartbeatDisplay,
+}: NodeStatusProps) {
   const message = statusText?.trim() || undefined
 
   if (!state && !message) return null
@@ -56,22 +67,36 @@ function NodeStatus({ state, statusText }: NodeStatusProps) {
   })()
 
   return (
-    <Group gap="sm">
-      <Group gap={1} wrap="nowrap">
-        <ThemeIcon variant="light" color={stateColor} size="sm" radius="xl">
-          <Icon size={22} />
-        </ThemeIcon>
+    <Group gap="sm" justify="space-between">
+      <Group>
+        <Group gap={1} wrap="nowrap">
+          <ThemeIcon variant="light" color={stateColor} size="sm" radius="xl">
+            <Icon size={22} />
+          </ThemeIcon>
 
-        <Text span fw={500} size="sm" c={stateColor}>
-          {stateLabel}
-        </Text>
+          <Text span fw={500} size="sm" c={stateColor}>
+            {stateLabel}
+          </Text>
+        </Group>
+
+        {message ? (
+          <Text span size="sm">
+            {message}
+          </Text>
+        ) : null}
       </Group>
-
-      {message ? (
-        <Text span size="sm">
-          {message}
-        </Text>
-      ) : null}
+      <Group gap={3}>
+        {isThisNode ? (
+          <Badge color="gray">This node</Badge>
+        ) : nodeHeartbeatDisplay ? (
+          <>
+            <IconCircleFilled color={nodeHeartbeatDisplay.color} />
+            <Text span size="sm">
+              {nodeHeartbeatDisplay.label}
+            </Text>
+          </>
+        ) : null}
+      </Group>
     </Group>
   )
 }
@@ -80,6 +105,8 @@ export default function NodeCard({
   node,
   isRegionCreator,
   rightSection,
+  isThisNode,
+  nodeHeartbeatDisplay,
 }: NodeCardProps) {
   return (
     <Card key={node.id} withBorder>
@@ -107,7 +134,12 @@ export default function NodeCard({
           )}
         </Group>
 
-        <NodeStatus state={node.state} statusText={node.status_text} />
+        <NodeStatus
+          state={node.state}
+          statusText={node.status_text}
+          isThisNode={isThisNode}
+          nodeHeartbeatDisplay={nodeHeartbeatDisplay}
+        />
       </Stack>
     </Card>
   )
