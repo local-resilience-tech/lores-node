@@ -255,7 +255,7 @@ impl PandaContainer {
             None => return Err(PandaPublishError::NodeNotStarted),
         };
         drop(node_lock);
-        PandaNode::publish_ephemeral_heartbeat(node, encoded_payload).await?;
+        PandaNode::start_heartbeat_publication(node, encoded_payload).await?;
 
         Ok(())
     }

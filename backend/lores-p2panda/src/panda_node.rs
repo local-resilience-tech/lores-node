@@ -315,7 +315,7 @@ impl PandaNode {
         Ok(publish_future.hash())
     }
 
-    pub async fn publish_ephemeral_heartbeat(self: Arc<Self>, heartbeat_message_payload: Vec<u8>) -> Result<(), PandaPublishError> {
+    pub async fn start_heartbeat_publication(self: Arc<Self>, heartbeat_message_payload: Vec<u8>) -> Result<(), PandaPublishError> {
         tokio::spawn(async move {
             let mut timer = interval(Duration::from_mins(HEARTBEAT_FREQUENCY_MINS));
 
@@ -323,16 +323,7 @@ impl PandaNode {
                 timer.tick().await;
 
                 for region_id in self.get_regions().await {
-                    let admin_topic = RegionAdminTopic::new(region_id);
-                    let topic_id = admin_topic.p2panda_topic();
-                    let publishers = self.publishers.read().await;
-                    let publisher = publishers
-                        .iter()
-                        .find(|p| p.topic == topic_id)
-                        .ok_or(PandaPublishError::NoSubscription(topic_id))
-                        .unwrap();
-
-                    match publisher.ephemeral_publisher.publish(heartbeat_message_payload.clone()).await {
+                    match self.publish_single_heartbeat(&heartbeat_message_payload, &region_id).await {
                         Err(err) => {
                             eprintln!("Error sending ephemeral message: {}", err);
                             break;
@@ -344,6 +335,23 @@ impl PandaNode {
         });
 
         Ok(())
+    }
+
+    async fn publish_single_heartbeat(
+        &self,
+        heartbeat_message_payload: &Vec<u8>,
+        region_id: &RegionId,
+    ) -> Result<(), EphemeralPublishError> {
+        let admin_topic = RegionAdminTopic::new(region_id.clone());
+        let topic_id = admin_topic.p2panda_topic();
+        let publishers = self.publishers.read().await;
+        let publisher = publishers
+            .iter()
+            .find(|p| p.topic == topic_id)
+            .ok_or(PandaPublishError::NoSubscription(topic_id))
+            .unwrap();
+
+        publisher.ephemeral_publisher.publish(heartbeat_message_payload.clone()).await
     }
 
     pub async fn get_log_counts(&self) -> Result<Vec<LogCount>, SqliteError> {
