@@ -75,8 +75,8 @@ pub struct RequiredNodeParams {
 
 struct Publisher {
     topic: Topic,
-    stream_publisher: StreamPublisher<Vec<u8>>,
-    ephemeral_publisher: EphemeralStreamPublisher<Vec<u8>>,
+    stream_publisher: Option<StreamPublisher<Vec<u8>>>,
+    ephemeral_publisher: Option<EphemeralStreamPublisher<Vec<u8>>>,
 }
 
 pub struct PandaNode {
@@ -190,27 +190,78 @@ impl PandaNode {
         });
     }
 
-    async fn subscribe_to_topic(&self, topic_id: Topic, events_tx: mpsc::Sender<IncomingOperation>) -> Result<(), SubscriptionError> {
-        if self.publishers.read().await.iter().any(|p| &p.topic == &topic_id) {
-            return Err(SubscriptionError::AlreadySubscribed(topic_id));
-        }
+    async fn subscribe_to_topic_persisted(
+        &self,
+        topic_id: Topic,
+        events_tx: mpsc::Sender<IncomingOperation>,
+    ) -> Result<(), SubscriptionError> {
+        let mut publishers = self.publishers.write().await;
+        let existing_publisher = publishers.iter_mut().find(|p| &p.topic == &topic_id);
 
         let network = self.network.read().await;
         let (stream_publisher, stream_subscription) = network.stream_from::<Vec<u8>>(topic_id, StreamFrom::Frontier).await?;
-
-        let (ephemeral_publisher, ephemeral_subscription) = network.ephemeral_stream::<Vec<u8>>(topic_id).await?;
-
         drop(network);
 
-        let publisher = Publisher {
-            topic: topic_id,
-            stream_publisher,
-            ephemeral_publisher,
-        };
+        match existing_publisher {
+            Some(p) => {
+                if p.stream_publisher.is_some() {
+                    return Err(SubscriptionError::AlreadySubscribed(topic_id));
+                }
 
-        self.publishers.write().await.push(publisher);
-        self.subscribe_to_stream(&topic_id, events_tx.clone(), stream_subscription).await;
-        self.subscribe_to_ephemeral_stream(events_tx.clone(), ephemeral_subscription).await;
+                p.stream_publisher = Some(stream_publisher)
+            }
+            None => {
+                let publisher = Publisher {
+                    topic: topic_id,
+                    stream_publisher: Some(stream_publisher),
+                    ephemeral_publisher: None,
+                };
+
+                publishers.push(publisher);
+            }
+        }
+
+        drop(publishers);
+
+        self.subscribe_to_stream(&topic_id, events_tx, stream_subscription).await;
+
+        Ok(())
+    }
+
+    async fn subscribe_to_topic_ephemeral(
+        &self,
+        topic_id: Topic,
+        events_tx: mpsc::Sender<IncomingOperation>,
+    ) -> Result<(), SubscriptionError> {
+        let mut publishers = self.publishers.write().await;
+        let existing_publisher = publishers.iter_mut().find(|p| &p.topic == &topic_id);
+
+        let network = self.network.read().await;
+        let (ephemeral_publisher, ephemeral_subscription) = network.ephemeral_stream::<Vec<u8>>(topic_id).await?;
+        drop(network);
+
+        match existing_publisher {
+            Some(p) => {
+                if p.ephemeral_publisher.is_some() {
+                    return Err(SubscriptionError::AlreadySubscribed(topic_id));
+                }
+
+                p.ephemeral_publisher = Some(ephemeral_publisher);
+            }
+            None => {
+                let publisher = Publisher {
+                    topic: topic_id,
+                    stream_publisher: None,
+                    ephemeral_publisher: Some(ephemeral_publisher),
+                };
+
+                publishers.push(publisher);
+            }
+        }
+
+        drop(publishers);
+
+        self.subscribe_to_ephemeral_stream(events_tx, ephemeral_subscription).await;
 
         Ok(())
     }
@@ -297,7 +348,10 @@ impl PandaNode {
         events_tx: mpsc::Sender<IncomingOperation>,
     ) -> Result<(), SubscriptionError> {
         let topic = region_topic.p2panda_topic();
-        self.subscribe_to_topic(topic, events_tx).await
+        self.subscribe_to_topic_persisted(topic, events_tx.clone()).await?;
+        self.subscribe_to_topic_ephemeral(topic, events_tx.clone()).await?;
+
+        Ok(())
     }
 
     pub async fn publish_to_region_topic<T: RegionTopic>(&self, region_topic: &T, bytes: Vec<u8>) -> Result<Hash, PandaPublishError> {
@@ -309,9 +363,9 @@ impl PandaNode {
         let publishers = self.publishers.read().await;
         let publisher = publishers
             .iter()
-            .find(|p| p.topic == topic_id)
+            .find(|p| p.topic == topic_id && p.stream_publisher.is_some())
             .ok_or(PandaPublishError::NoSubscription(topic_id))?;
-        let publish_future = publisher.stream_publisher.publish(bytes).await?;
+        let publish_future = publisher.stream_publisher.to_owned().unwrap().publish(bytes).await?;
         Ok(publish_future.hash())
     }
 
@@ -347,11 +401,16 @@ impl PandaNode {
         let publishers = self.publishers.read().await;
         let publisher = publishers
             .iter()
-            .find(|p| p.topic == topic_id)
+            .find(|p| p.topic == topic_id && p.ephemeral_publisher.is_some())
             .ok_or(PandaPublishError::NoSubscription(topic_id))
             .unwrap();
 
-        publisher.ephemeral_publisher.publish(heartbeat_message_payload.clone()).await
+        publisher
+            .ephemeral_publisher
+            .to_owned()
+            .unwrap()
+            .publish(heartbeat_message_payload.clone())
+            .await
     }
 
     pub async fn get_log_counts(&self) -> Result<Vec<LogCount>, SqliteError> {
