@@ -15,6 +15,7 @@ import { RegionNodeDetails } from "../../../api/Api"
 import { getApi } from "../../../api"
 import { actionFailure, actionSuccess } from "../../../components"
 import { useSearchParams } from "react-router-dom"
+import { useNodeHeartbeats } from "../../../hooks"
 
 const defaultTab = "list"
 
@@ -25,6 +26,8 @@ export default function Nodes() {
   const thisNodeId = useAppSelector((state) => state.network?.node.id)
   const isNodeAdmin =
     thisNodeId != null && region?.region.creator_node_id === thisNodeId
+
+  const getNodeHeartbeatDisplay = useNodeHeartbeats()
 
   const [searchParams, setSearchParams] = useSearchParams()
   const activeTab = searchParams.get("tab") ?? defaultTab
@@ -116,6 +119,8 @@ export default function Nodes() {
             <NodesList
               nodes={member_nodes}
               regionCreatorId={region.region.creator_node_id}
+              thisNodeId={thisNodeId}
+              getNodeHeartbeatDisplay={getNodeHeartbeatDisplay}
             />
           </Tabs.Panel>
 
