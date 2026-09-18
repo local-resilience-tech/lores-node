@@ -90,10 +90,10 @@ function NodeStatus({
           <Badge color="gray">This node</Badge>
         ) : nodeHeartbeatDisplay ? (
           <>
-            <IconCircleFilled color={nodeHeartbeatDisplay.color} />
             <Text span size="sm">
               {nodeHeartbeatDisplay.label}
             </Text>
+            <IconCircleFilled color={nodeHeartbeatDisplay.color} />
           </>
         ) : null}
       </Group>
