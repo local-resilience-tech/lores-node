@@ -27,6 +27,7 @@ use tokio_stream::StreamExt;
 use crate::RegionAdminTopic;
 use crate::node_status::NodeStatus;
 use crate::region::{RegionId, RegionTopic};
+use crate::topic_status::TopicStatus;
 
 static DEFAULT_IROH_RELAY_URL: LazyLock<RelayUrl> =
     LazyLock::new(|| "https://euc1-1.relay.n0.iroh-canary.iroh.link".parse().expect("valid relay URL"));
@@ -236,7 +237,7 @@ impl PandaNode {
             ephemeral_publisher: None,
         });
 
-        Self::spawn_replay_task(subscription, events_tx);
+        Self::spawn_stream_task(subscription, events_tx, None, true, Some);
 
         Ok(())
     }
@@ -299,55 +300,6 @@ impl PandaNode {
             .collect())
     }
 
-    async fn subscribe_to_stream(
-        &self,
-        topic_id: &Topic,
-        events_tx: mpsc::Sender<IncomingOperation>,
-        mut subscription: StreamSubscription<Vec<u8>>,
-    ) {
-        let topic_status = self.node_status.write().await.register_topic(*topic_id);
-
-        tokio::spawn(async move {
-            while let Some(event) = subscription.next().await {
-                match event {
-                    StreamEvent::Processed { operation: op, .. } => {
-                        let (log_id, seq_num) = log_position(&op);
-                        let incoming = IncomingOperation {
-                            author: op.author(),
-                            topic: op.topic(),
-                            bytes: op.message().clone(),
-                            operation_id: op.id(),
-                            received_timestamp: op.timestamp(),
-                            log_id,
-                            seq_num,
-                        };
-                        if events_tx.send(incoming).await.is_err() {
-                            break;
-                        }
-                    }
-                    StreamEvent::DecodeFailed { error, .. } => {
-                        tracing::error!("failed decoding incoming operation: {error}");
-                    }
-                    StreamEvent::ReplayFailed { error, .. } => {
-                        tracing::error!("error replaying operation stream: {error}");
-                    }
-                    event @ (StreamEvent::SyncStarted { .. } | StreamEvent::SyncEnded { .. }) => {
-                        topic_status.write().await.handle_stream_event(&event);
-                    }
-                    StreamEvent::ImportStarted { .. } | StreamEvent::ImportEnded { .. } => {}
-                    StreamEvent::ReplayStarted { .. } | StreamEvent::ReplayEnded => {}
-                    StreamEvent::ProcessingFailed { error, .. } => {
-                        tracing::error!("operation processing failed: {error}");
-                    }
-                    StreamEvent::AckFailed { error, .. } => {
-                        tracing::error!("operation ack failed: {error}");
-                    }
-                    StreamEvent::Space { .. } | StreamEvent::Member(_) => {}
-                }
-            }
-        });
-    }
-
     async fn subscribe_to_ephemeral_stream(
         &self,
         events_tx: mpsc::Sender<IncomingOperation>,
@@ -405,7 +357,11 @@ impl PandaNode {
 
         drop(publishers);
 
-        self.subscribe_to_stream(&topic_id, events_tx, stream_subscription).await;
+        let topic_status = self.node_status.write().await.register_topic(topic_id);
+        Self::spawn_stream_task(stream_subscription, events_tx, Some(topic_status), false, |event| match event {
+            SubscriptionEvent::Operation(op) => Some(op),
+            SubscriptionEvent::ReplayStarted { .. } | SubscriptionEvent::ReplayEnded => None,
+        });
 
         Ok(())
     }
@@ -448,7 +404,18 @@ impl PandaNode {
         Ok(())
     }
 
-    fn spawn_replay_task(mut subscription: StreamSubscription<Vec<u8>>, events_tx: mpsc::Sender<SubscriptionEvent>) {
+    /// Spawns a task forwarding every event from `subscription` to `events_tx`,
+    /// via `map_event` (returning `None` drops the event). `topic_status`, if
+    /// given, is updated on sync events. If `stop_after_replay_ended`, the task
+    /// ends right after forwarding `ReplayEnded` instead of continuing to read
+    /// from `subscription` (see `replay_region_topic_as`'s doc comment).
+    fn spawn_stream_task<O: Send + 'static>(
+        mut subscription: StreamSubscription<Vec<u8>>,
+        events_tx: mpsc::Sender<O>,
+        topic_status: Option<Arc<RwLock<TopicStatus>>>,
+        stop_after_replay_ended: bool,
+        map_event: impl Fn(SubscriptionEvent) -> Option<O> + Send + 'static,
+    ) {
         tokio::spawn(async move {
             while let Some(event) = subscription.next().await {
                 match event {
@@ -463,34 +430,44 @@ impl PandaNode {
                             log_id,
                             seq_num,
                         };
-                        if events_tx.send(SubscriptionEvent::Operation(incoming)).await.is_err() {
+                        if let Some(mapped) = map_event(SubscriptionEvent::Operation(incoming))
+                            && events_tx.send(mapped).await.is_err()
+                        {
                             break;
                         }
                     }
                     StreamEvent::ReplayStarted { total_operations } => {
-                        if events_tx.send(SubscriptionEvent::ReplayStarted { total_operations }).await.is_err() {
+                        if let Some(mapped) = map_event(SubscriptionEvent::ReplayStarted { total_operations })
+                            && events_tx.send(mapped).await.is_err()
+                        {
                             break;
                         }
                     }
                     StreamEvent::ReplayEnded => {
-                        let _ = events_tx.send(SubscriptionEvent::ReplayEnded).await;
-                        // Stop explicitly instead of implicitly relying on
-                        // named-cursor streams not delivering live events.
-                        break;
+                        if let Some(mapped) = map_event(SubscriptionEvent::ReplayEnded) {
+                            let _ = events_tx.send(mapped).await;
+                        }
+                        if stop_after_replay_ended {
+                            break;
+                        }
                     }
                     StreamEvent::DecodeFailed { error, .. } => {
-                        tracing::error!("failed decoding operation during cursor subscription: {error}");
+                        tracing::error!("failed decoding operation: {error}");
                     }
                     StreamEvent::ReplayFailed { error, .. } => {
                         tracing::error!("error replaying operation stream: {error}");
                     }
-                    StreamEvent::SyncStarted { .. } | StreamEvent::SyncEnded { .. } => {}
+                    event @ (StreamEvent::SyncStarted { .. } | StreamEvent::SyncEnded { .. }) => {
+                        if let Some(status) = &topic_status {
+                            status.write().await.handle_stream_event(&event);
+                        }
+                    }
                     StreamEvent::ImportStarted { .. } | StreamEvent::ImportEnded { .. } => {}
                     StreamEvent::ProcessingFailed { error, .. } => {
-                        tracing::error!("operation processing failed during cursor subscription: {error}");
+                        tracing::error!("operation processing failed: {error}");
                     }
                     StreamEvent::AckFailed { error, .. } => {
-                        tracing::error!("operation ack failed during cursor subscription: {error}");
+                        tracing::error!("operation ack failed: {error}");
                     }
                     StreamEvent::Space { .. } | StreamEvent::Member(_) => {}
                 }
