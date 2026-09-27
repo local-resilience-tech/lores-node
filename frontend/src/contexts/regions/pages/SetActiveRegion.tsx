@@ -26,7 +26,7 @@ export default function SetActiveRegion({ children }: SetActiveRegionProps) {
 
       dispatch(activeRegionChanged(slugRegion.id))
     }
-  }, [regionSlug, currentActiveRegion])
+  }, [regionSlug, currentActiveRegion, dispatch, slugRegion])
 
   return children ? children : <Outlet />
 }

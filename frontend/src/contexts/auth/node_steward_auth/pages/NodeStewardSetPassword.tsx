@@ -18,7 +18,7 @@ export default function NodeStewardSetPassword() {
   ): Promise<ActionPromiseResult> => {
     return getApi()
       .authApi.nodeStewardSetPassword(values)
-      .then((response) => {
+      .then((_response) => {
         setSuccess(true)
         return actionSuccess()
       })

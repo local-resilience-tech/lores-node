@@ -1,11 +1,8 @@
 import { Stack, Title, Text } from "@mantine/core"
 import AdminLoginForm from "../components/AdminLoginForm"
 import { getApi } from "../../../../api"
-import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { actionFailure, ActionPromiseResult } from "../../../../components"
-
-type AuthResult = "unauthorized" | "server_error"
 
 export default function AdminLogin() {
   const navigate = useNavigate()
@@ -15,7 +12,7 @@ export default function AdminLogin() {
   }): Promise<ActionPromiseResult> =>
     getApi()
       .authApi.adminLogin(values)
-      .then((response) => {
+      .then((_response) => {
         navigate("/admin/node_stewards")
       })
       .catch(actionFailure)

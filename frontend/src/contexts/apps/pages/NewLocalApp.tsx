@@ -18,7 +18,7 @@ export default function NewLocalApp() {
   ): Promise<ActionPromiseResult> => {
     return getApi()
       .nodeStewardApi.createLocalApp(data)
-      .then((response) => {
+      .then((_response) => {
         navigate("/node/apps/")
         return actionSuccess()
       })

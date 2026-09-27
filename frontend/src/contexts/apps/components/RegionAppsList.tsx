@@ -1,4 +1,4 @@
-import { Badge, Group, Table, Text } from "@mantine/core"
+import { Badge, Group, Table } from "@mantine/core"
 import orderBy from "lodash.orderby"
 import { RegionAppWithInstallations, RegionNodeDetails } from "../../../api/Api"
 import { NodesMap } from "../../../store/my_regions"

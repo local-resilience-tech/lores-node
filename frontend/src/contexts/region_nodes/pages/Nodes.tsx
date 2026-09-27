@@ -40,8 +40,8 @@ export default function Nodes() {
   }
 
   const nodes = region.nodes || []
-  let member_nodes = [] as RegionNodeDetails[]
-  let join_request_nodes = [] as RegionNodeDetails[]
+  const member_nodes = [] as RegionNodeDetails[]
+  const join_request_nodes = [] as RegionNodeDetails[]
 
   for (const node of nodes) {
     if (node.status === "RequestedToJoin") {
@@ -58,7 +58,7 @@ export default function Nodes() {
         node_id: regionNode.node_id,
         region_id: regionNode.region_id,
       })
-      .then((result) => {
+      .then((_result) => {
         return actionSuccess()
       })
       .catch((error) => {

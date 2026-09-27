@@ -119,7 +119,7 @@ export const theme = createTheme({
   components: {
     InputWrapper: InputWrapper.extend({
       vars: (_theme: any, props: any) => {
-        var result: any = {
+        const result: any = {
           description: {
             lineHeight: "1.3",
             paddingBottom: "0.2em",

@@ -50,10 +50,11 @@ export default function AllNodeStewards() {
 
   useEffect(() => {
     listNodeStewards()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const getActions = (record: NodeSteward): NodeStewardAction[] => {
-    let result: NodeStewardAction[] = []
+    const result: NodeStewardAction[] = []
 
     if (record.status === NodeStewardStatus.TokenExpired) {
       result.push({

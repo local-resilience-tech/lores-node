@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { Container, Loader, Center } from "@mantine/core"
 
 import { useState } from "react"

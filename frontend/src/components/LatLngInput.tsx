@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { Group, Input, InputWrapperProps, NumberInput } from "@mantine/core"
 
 export interface EditableLatLng {

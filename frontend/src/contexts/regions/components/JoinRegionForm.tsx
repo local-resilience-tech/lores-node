@@ -52,7 +52,7 @@ export default function JoinRegionForm({ onSubmit }: JoinRegionFormProps) {
   const handleSubmit = (
     values: JoinRegionRequestData,
   ): Promise<ActionPromiseResult> => {
-    let result = {
+    const result = {
       ...values,
     }
     if (result.agreed_node_steward_conduct_url === "") {

@@ -7,20 +7,9 @@ import {
   IconClock,
   IconHelpCircle,
 } from "@tabler/icons-react"
-import { Anchor } from "../../../components"
 import { NodeState, RegionNodeDetails } from "../../../api/Api"
 import { nodeName } from "../../../store/my_regions"
 import { NodeHeartbeatDisplay } from "../../../hooks/useNodeHeartbeats"
-
-const IpLink = ({ ip }: { ip: string | undefined | null }) => {
-  if (!ip) return <Text c="dimmed">unknown</Text>
-
-  return (
-    <Anchor href={`https://${ip}`} newWindow>
-      {ip}
-    </Anchor>
-  )
-}
 
 interface NodeCardProps {
   node: RegionNodeDetails

@@ -1,4 +1,4 @@
-import { Outlet, useNavigate, useParams } from "react-router-dom"
+import { Outlet, useNavigate } from "react-router-dom"
 import { useAppDispatch, useAppSelector } from "../../../store"
 import { activeRegion, activeRegionChanged } from "../../../store/my_regions"
 import { useEffect } from "react"
@@ -32,7 +32,7 @@ export default function RedirectToRegion({ children }: RedirectToRegionProps) {
     } else {
       navigate(`/regions/${currentActiveRegion.slug}`)
     }
-  }, [currentActiveRegion, firstRegion])
+  }, [currentActiveRegion, dispatch, firstRegion, navigate])
 
   return children ? children : <Outlet />
 }

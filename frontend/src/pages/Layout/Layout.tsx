@@ -58,10 +58,9 @@ export default function Layout() {
   const dispatch = useAppDispatch()
   const navigate = useNavigate()
 
-  const readyForApps = true
   const pandaRunning = !!network
 
-  const {} = useWebSocket({
+  useWebSocket({
     url: getSocketUrl(),
     onOpen: (event: Event) => {
       console.log("WebSocket connection opened", event)

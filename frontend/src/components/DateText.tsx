@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { Text } from "@mantine/core"
 import { format, isThisYear, parseISO } from "date-fns"
 

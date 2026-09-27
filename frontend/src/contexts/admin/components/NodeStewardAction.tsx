@@ -1,11 +1,7 @@
 import { Button, MantineColor, Popover, Stack } from "@mantine/core"
 import { NodeSteward } from "../../../api/Api"
-import React, { useState } from "react"
-import {
-  ActionButton,
-  ActionPromiseResult,
-  ActionResult,
-} from "../../../components"
+import React from "react"
+import { ActionButton, ActionPromiseResult } from "../../../components"
 
 export interface NodeStewardAction {
   type: "reset_token" | "display_token" | "disable" | "enable"
@@ -29,22 +25,15 @@ function NodeStewardActionButton({
   action: NodeStewardAction
   record: NodeSteward
 }) {
-  const [result, setResult] = useState<ActionResult | undefined>(undefined)
-  const [loading, setLoading] = useState(false)
-
   const handleButtonPress = async (
     record: NodeSteward,
     handler: (record: NodeSteward) => Promise<ActionPromiseResult>
   ) => {
     try {
-      setLoading(true)
       const result = await handler(record)
       console.log("THE result:", result)
-      setResult(result || undefined)
     } catch (error) {
       console.error("Error occurred while handling button press:", error)
-    } finally {
-      setLoading(false)
     }
   }
 

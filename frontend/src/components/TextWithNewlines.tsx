@@ -1,4 +1,4 @@
-import { Box, Stack, Text } from "@mantine/core"
+import { Stack, Text } from "@mantine/core"
 
 export default function TextWithNewlines({
   text,

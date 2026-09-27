@@ -1,7 +1,6 @@
 import {
   ActionIcon,
   ActionIconProps,
-  Button,
   Group,
   HoverCard,
   PolymorphicComponentProps,

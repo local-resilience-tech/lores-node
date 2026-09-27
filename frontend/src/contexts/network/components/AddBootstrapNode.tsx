@@ -1,6 +1,5 @@
-import { useNavigate } from "react-router-dom"
 import { getApi } from "../../../api"
-import { BootstrapNodeRequest, CreateRegionData } from "../../../api/Api"
+import { BootstrapNodeRequest } from "../../../api/Api"
 import {
   actionFailure,
   ActionPromiseResult,

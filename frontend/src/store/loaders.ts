@@ -39,19 +39,6 @@ export async function loadInitialData(store: AppStore) {
   if (state.regionApps === null) loadRegionApps(store)
 }
 
-async function loadUser(store: AppStore) {
-  getApi()
-    .authApi.getCurrentUser()
-    .then((result) => {
-      console.log("EFFECT: fetchUser", result)
-      if (result) store.dispatch(meLoaded(result))
-    })
-    .catch((error) => {
-      console.error("Error fetching current user:", error)
-      return Promise.reject(redirect("/login"))
-    })
-}
-
 async function loadNetwork(store: AppStore) {
   const result = await fetchApiData(() => getApi().publicApi.showNetwork())
   console.log("EFFECT: fetchNetwork", result)

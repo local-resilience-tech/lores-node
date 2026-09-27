@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { ActionIcon, HoverCard, Stack, Text } from "@mantine/core"
 import { IconAlertCircle } from "@tabler/icons-react"
 import { useState } from "react"

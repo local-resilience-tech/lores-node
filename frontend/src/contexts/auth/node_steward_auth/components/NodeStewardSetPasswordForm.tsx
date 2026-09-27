@@ -1,9 +1,8 @@
-import { Button, PasswordInput, Stack, TextInput, Text } from "@mantine/core"
+import { Button, PasswordInput, Stack, TextInput } from "@mantine/core"
 import { useForm } from "@mantine/form"
 import { NodeStewardSetPasswordRequest } from "../../../../api/Api"
 import {
   ActionPromiseResult,
-  Anchor,
   DisplayActionResult,
   useOnSubmitWithResult,
 } from "../../../../components"
