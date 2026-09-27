@@ -110,7 +110,9 @@ impl ProjectionDb {
             .await?;
 
         for table in tables {
-            sqlx::raw_sql(AssertSqlSafe(format!("DROP TABLE IF EXISTS \"{table}\""))).execute(pool).await?;
+            sqlx::raw_sql(AssertSqlSafe(format!("DROP TABLE IF EXISTS \"{table}\"")))
+                .execute(pool)
+                .await?;
         }
 
         Ok(())

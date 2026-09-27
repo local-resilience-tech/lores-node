@@ -16,11 +16,10 @@ pub async fn truncate_all(pool: &SqlitePool) -> Result<(), sqlx::Error> {
 
     sqlx::query("PRAGMA foreign_keys = OFF").execute(&mut *conn).await?;
 
-    let tables: Vec<String> = sqlx::query_scalar::<_, String>(
-        "SELECT name FROM sqlite_master WHERE type = 'table' AND name != '_sqlx_migrations'",
-    )
-    .fetch_all(&mut *conn)
-    .await?;
+    let tables: Vec<String> =
+        sqlx::query_scalar::<_, String>("SELECT name FROM sqlite_master WHERE type = 'table' AND name != '_sqlx_migrations'")
+            .fetch_all(&mut *conn)
+            .await?;
 
     if !tables.is_empty() {
         let deletes = tables
