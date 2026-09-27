@@ -10,7 +10,7 @@ use tokio::task;
 use utoipa::ToSchema;
 
 use crate::{
-    config::config_state::LoresNodeConfigState,
+    config::LoresNodeConfigState,
     data::node_data::node_stewards::{NodeStewardIdentifier, NodeStewardsRepo},
 };
 
@@ -104,13 +104,13 @@ impl AuthnBackend for AppAuthBackend {
     }
 
     async fn get_user(&self, user_id: &UserId<Self>) -> Result<Option<Self::User>, Self::Error> {
-        if user_id.to_string() == ADMIN_USER_ID.to_string() {
+        if *user_id == ADMIN_USER_ID {
             let user = Self::User {
                 id: ADMIN_USER_ID.to_string(),
                 password_hash: self.expect_hashed_password().await?,
             };
 
-            return Ok(Some(user));
+            Ok(Some(user))
         } else {
             self.get_steward_user(user_id).await
         }
@@ -198,7 +198,7 @@ impl AppAuthBackend {
                 id: steward.id.clone(),
                 password_hash,
             })),
-            None => return Err(AuthError::NoPasswordSet),
+            None => Err(AuthError::NoPasswordSet),
         }
     }
 
@@ -248,13 +248,13 @@ impl AuthzBackend for AppAuthBackend {
     async fn get_group_permissions(&self, user: &Self::User) -> Result<HashSet<Self::Permission>, Self::Error> {
         let mut perms = HashSet::new();
 
-        if user.id == ADMIN_USER_ID.to_string() {
+        if user.id == ADMIN_USER_ID {
             perms.insert(Permission::from("admin"));
         } else {
             perms.insert(Permission::from("steward"));
         }
 
-        return Ok(perms);
+        Ok(perms)
     }
 }
 

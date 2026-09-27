@@ -3,7 +3,7 @@ use pwgen2::pwgen::config::PasswordConfigError;
 use pwgen2::pwgen::{PasswordConfig, generate_password};
 use tracing::warn;
 
-use crate::config::config_state::LoresNodeConfigState;
+use crate::config::LoresNodeConfigState;
 
 pub enum GeneratePasswordError {
     PasswordAlreadySet,
@@ -46,7 +46,7 @@ impl AdminUserRepo {
                 GeneratePasswordError::ServerError
             })?;
 
-        return Ok(password);
+        Ok(password)
     }
 
     pub async fn get_hashed_password(&self) -> Option<String> {

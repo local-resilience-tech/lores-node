@@ -41,6 +41,7 @@ impl RegionNodesWriteRepo {
         read_repo.find_required_by_keys(pool, node_id, region_id).await
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub async fn upsert_join_status_and_details(
         &self,
         pool: &SqlitePool,
@@ -103,7 +104,7 @@ impl RegionNodesWriteRepo {
         data: &RegionNodeUpdatedDataV1,
     ) -> Result<(), sqlx::Error> {
         let node_repo = NodesWriteRepo::init();
-        node_repo.upsert_id(pool, &node_id).await?;
+        node_repo.upsert_id(pool, node_id).await?;
 
         sqlx::query!(
             "INSERT INTO region_nodes (

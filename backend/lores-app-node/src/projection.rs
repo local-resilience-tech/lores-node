@@ -29,7 +29,6 @@ impl ProjectionDb {
     ///
     /// The `_schema` table is created and populated automatically.
     /// App developers should not include it in their schema file.
-
     pub async fn in_memory(schema_sql: &str) -> Result<(SqlitePool, bool), sqlx::Error> {
         tracing::info!("creating in-memory projection database");
         let options = SqliteConnectOptions::new().filename(":memory:").create_if_missing(true);

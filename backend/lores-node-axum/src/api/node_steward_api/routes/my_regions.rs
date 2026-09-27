@@ -12,7 +12,7 @@ use crate::{
         helpers::internal_server_error,
         public_api::{client_events::ClientEvent, realtime::RealtimeState},
     },
-    config::config_state::LoresNodeConfigState,
+    config::LoresNodeConfigState,
     data::{entities::LatLng, projections_read::regions::RegionsReadRepo},
     panda_comms::{
         PandaContainer, PandaSubscriptionError, RegionAdminTopic, RegionId, SubscriptionError,
@@ -106,7 +106,7 @@ async fn create_region(
 
     info!("Created new region with ID: {:?}", region_id);
 
-    return (StatusCode::OK, ()).into_response();
+    (StatusCode::OK, ()).into_response()
 }
 
 #[derive(Deserialize, ToSchema, Debug)]
@@ -179,7 +179,7 @@ async fn join_region(
         return internal_server_error(e).into_response();
     }
 
-    return (StatusCode::OK, ()).into_response();
+    (StatusCode::OK, ()).into_response()
 }
 
 #[derive(Deserialize, ToSchema, Debug)]
@@ -235,7 +235,7 @@ async fn approve_join_request(
         return internal_server_error(e).into_response();
     }
 
-    return (StatusCode::OK, ()).into_response();
+    (StatusCode::OK, ()).into_response()
 }
 
 #[derive(Deserialize, ToSchema, Debug)]
@@ -316,7 +316,7 @@ async fn update_map(
         return internal_server_error(e).into_response();
     }
 
-    return (StatusCode::OK, ()).into_response();
+    (StatusCode::OK, ()).into_response()
 }
 
 #[derive(Deserialize, ToSchema, Debug)]
@@ -375,7 +375,7 @@ async fn store_new_region_id(config_state: &LoresNodeConfigState) -> Result<Regi
     config_state
         .update(|config| {
             let mut result = config.clone();
-            let mut region_ids: Vec<String> = result.region_ids.unwrap_or_else(|| vec![]);
+            let mut region_ids: Vec<String> = result.region_ids.unwrap_or_else(std::vec::Vec::new);
 
             while region_id_string.is_none() || region_ids.contains(&region_id_string.clone().unwrap()) {
                 let new_id_string = RegionId::generate().to_hex();
@@ -407,7 +407,7 @@ async fn store_region_id(config_state: &LoresNodeConfigState, region_id: &Region
     config_state
         .update(|config| {
             let mut result = config.clone();
-            let mut region_ids: Vec<String> = result.region_ids.unwrap_or_else(|| vec![]);
+            let mut region_ids: Vec<String> = result.region_ids.unwrap_or_else(std::vec::Vec::new);
 
             if !region_ids.contains(&region_id.to_hex()) {
                 region_ids.push(region_id.to_hex());

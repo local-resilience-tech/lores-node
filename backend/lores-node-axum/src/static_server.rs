@@ -13,7 +13,7 @@ lazy_static! {
 }
 
 pub async fn frontend_handler(uri: Uri) -> Result<Response<Body>, (StatusCode, String)> {
-    let api_prefixes = vec!["/public_api", "/auth_api", "/admin_api", "/node_steward_api", "/ws"];
+    let api_prefixes = ["/public_api", "/auth_api", "/admin_api", "/node_steward_api", "/ws"];
     if api_prefixes.iter().any(|prefix| uri.path().starts_with(prefix)) {
         info!("API call detected, not serving static files for URI: {}", uri);
         return Err((StatusCode::NOT_FOUND, "API endpoint not found".to_string()));
@@ -31,12 +31,12 @@ pub async fn frontend_handler(uri: Uri) -> Result<Response<Body>, (StatusCode, S
                 uri.clone(),
                 spa_file_path_string
             );
-            return serve_file(uri.clone(), spa_file_path_string).await;
+            serve_file(uri.clone(), spa_file_path_string).await
         }
         other => {
             // If the status is not OK or NOT_FOUND, return the response as is
             info!("Got other status: {}", other);
-            return Ok(res);
+            Ok(res)
         }
     }
 }
@@ -48,7 +48,7 @@ async fn serve_file(uri: Uri, spa_file_path_string: String) -> Result<Response<B
         Ok(res) => Ok(res.map(Body::new)),
         Err(err) => {
             info!("Error serving static file: {}", err);
-            return Err((StatusCode::INTERNAL_SERVER_ERROR, format!("Something went wrong: {}", err)));
+            Err((StatusCode::INTERNAL_SERVER_ERROR, format!("Something went wrong: {}", err)))
         }
     }
 }
@@ -61,7 +61,7 @@ async fn serve_dir(uri: Uri, static_dir: String) -> Result<Response<Body>, (Stat
         Ok(res) => Ok(res.map(Body::new)),
         Err(err) => {
             info!("Error serving static file: {}", err);
-            return Err((StatusCode::INTERNAL_SERVER_ERROR, format!("Something went wrong: {}", err)));
+            Err((StatusCode::INTERNAL_SERVER_ERROR, format!("Something went wrong: {}", err)))
         }
     }
 }

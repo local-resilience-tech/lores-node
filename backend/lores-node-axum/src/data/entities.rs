@@ -166,15 +166,11 @@ pub struct NodeAppUrl {
 
 #[derive(Serialize, Deserialize, ToSchema, Debug, Clone, PartialEq, Eq)]
 #[serde(rename_all = "lowercase")]
+#[derive(Default)]
 pub enum LocalAppSource {
+    #[default]
     Docker,
     Db,
-}
-
-impl Default for LocalAppSource {
-    fn default() -> Self {
-        Self::Docker
-    }
 }
 
 #[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]

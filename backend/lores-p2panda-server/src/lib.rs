@@ -373,8 +373,8 @@ fn resolve_region_error_to_status(e: ResolveRegionIdError, ids: &AppInstanceIds)
             "No region bound to app '{}' instance '{}'. Use your lores-node installation to bind this app to a region, matching both the app name and instance ID.",
             ids.app_id, ids.instance_id,
         )),
-        ResolveRegionIdError::Internal => Status::internal(format!(
-            "Failed to resolve region for app instance. This may be an internal server issue with lores-node.",
-        )),
+        ResolveRegionIdError::Internal => {
+            Status::internal("Failed to resolve region for app instance. This may be an internal server issue with lores-node.".to_string())
+        }
     }
 }

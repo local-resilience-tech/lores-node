@@ -5,7 +5,7 @@ use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::{
     DatabaseState,
-    config::config_state::LoresNodeConfigState,
+    config::LoresNodeConfigState,
     data::{entities::RegionNode, projections_read::region_nodes::RegionNodesReadRepo},
 };
 

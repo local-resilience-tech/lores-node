@@ -35,7 +35,7 @@ impl RegionNodesReadRepo {
         .fetch_optional(pool)
         .await?;
 
-        return Ok(node);
+        Ok(node)
     }
 
     pub async fn append_detail_nodes_to_list(&self, pool: &SqlitePool, regions: Vec<Region>) -> Result<Vec<RegionWithNodes>, sqlx::Error> {
@@ -81,7 +81,7 @@ impl RegionNodesReadRepo {
         .fetch_optional(pool)
         .await?;
 
-        return Ok(node);
+        Ok(node)
     }
 
     pub async fn find_all_detailed(&self, pool: &SqlitePool, region_id: &str) -> Result<Vec<RegionNodeDetails>, sqlx::Error> {

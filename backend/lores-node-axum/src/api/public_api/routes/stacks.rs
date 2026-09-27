@@ -61,7 +61,7 @@ async fn list_stacks() -> impl IntoResponse {
         }
         Err(e) => {
             warn!("Error fetching Docker stacks: {}", e);
-            return (StatusCode::INTERNAL_SERVER_ERROR, Json(())).into_response();
+            (StatusCode::INTERNAL_SERVER_ERROR, Json(())).into_response()
         }
     }
 }

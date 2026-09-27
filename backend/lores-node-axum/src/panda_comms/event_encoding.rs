@@ -25,12 +25,12 @@ fn decode_lores_wire_event(encoded_payload: &[u8]) -> Result<LoResWirePayload, D
     match result {
         Ok(decoded_payload) => {
             // Successfully decoded
-            return Ok(decoded_payload);
+            Ok(decoded_payload)
         }
         Err(e) => {
             // Handle the error
             warn!("Failed to decode payload: {}", e);
-            return Err(e);
+            Err(e)
         }
     }
 }

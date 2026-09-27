@@ -21,7 +21,7 @@ pub fn json_object_lines_to_array(input: &str) -> String {
     result.push_str(first_line);
 
     for line in lines {
-        result.push_str(",");
+        result.push(',');
         result.push_str(line);
     }
 

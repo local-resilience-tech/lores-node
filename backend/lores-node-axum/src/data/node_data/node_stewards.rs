@@ -100,7 +100,7 @@ impl NodeStewardsRepo {
         .bind(&row.name)
         .bind(&row.hashed_password)
         .bind(&row.password_reset_token)
-        .bind(&row.password_reset_token_expires_at)
+        .bind(row.password_reset_token_expires_at)
         .bind(row.enabled)
         .execute(pool)
         .await?;
@@ -132,7 +132,7 @@ impl NodeStewardsRepo {
             ",
         )
         .bind(&row.password_reset_token)
-        .bind(&row.password_reset_token_expires_at)
+        .bind(row.password_reset_token_expires_at)
         .bind(&row.id)
         .execute(pool)
         .await?;

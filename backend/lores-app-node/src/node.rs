@@ -203,7 +203,7 @@ impl<Op: Clone + Serialize + Send + 'static> AppNode<Op> {
             )))
         })?;
         let mut guard = client.lock().await;
-        let client: &mut lores_p2panda_client::PandaClient = &mut *guard;
+        let client: &mut lores_p2panda_client::PandaClient = &mut guard;
         client.get_node(&self.app_id, &self.instance_id, node_id.into()).await
     }
 

@@ -63,7 +63,7 @@ pub struct IncomingOperation {
 #[derive(Debug, Error)]
 pub enum PandaNodeError {
     #[error(transparent)]
-    NodeSpawn(#[from] SpawnError),
+    NodeSpawn(#[from] Box<SpawnError>),
     #[error(transparent)]
     Database(#[from] sqlx::Error),
 }
@@ -133,7 +133,7 @@ impl PandaNode {
             builder = builder.relay_url(best_relay_url);
         }
 
-        let node = builder.spawn().await?;
+        let node = builder.spawn().await.map_err(|err| PandaNodeError::NodeSpawn(Box::new(err)))?;
 
         // Open a read-only pool against the same file for diagnostic queries.
         let pool = open_pool(database_url).await?;
@@ -221,7 +221,7 @@ impl PandaNode {
         events_tx: mpsc::Sender<IncomingOperation>,
     ) -> Result<(), SubscriptionError> {
         let mut publishers = self.publishers.write().await;
-        let existing_publisher = publishers.iter_mut().find(|p| &p.topic == &topic_id);
+        let existing_publisher = publishers.iter_mut().find(|p| p.topic == topic_id);
 
         let network = self.network.read().await;
         let (stream_publisher, stream_subscription) = network.stream_from::<Vec<u8>>(topic_id, StreamFrom::Frontier, None).await?;
@@ -259,7 +259,7 @@ impl PandaNode {
         events_tx: mpsc::Sender<IncomingOperation>,
     ) -> Result<(), SubscriptionError> {
         let mut publishers = self.publishers.write().await;
-        let existing_publisher = publishers.iter_mut().find(|p| &p.topic == &topic_id);
+        let existing_publisher = publishers.iter_mut().find(|p| p.topic == topic_id);
 
         let network = self.network.read().await;
         let (ephemeral_publisher, ephemeral_subscription) = network.ephemeral_stream::<Vec<u8>>(topic_id).await?;
@@ -403,12 +403,9 @@ impl PandaNode {
                 timer.tick().await;
 
                 for region_id in self.get_regions().await {
-                    match self.publish_single_heartbeat(&heartbeat_message_payload, &region_id).await {
-                        Err(err) => {
-                            eprintln!("Error sending ephemeral message: {}", err);
-                            break;
-                        }
-                        _ => {}
+                    if let Err(err) = self.publish_single_heartbeat(&heartbeat_message_payload, &region_id).await {
+                        eprintln!("Error sending ephemeral message: {}", err);
+                        break;
                     }
                 }
             }
@@ -417,11 +414,7 @@ impl PandaNode {
         Ok(())
     }
 
-    async fn publish_single_heartbeat(
-        &self,
-        heartbeat_message_payload: &Vec<u8>,
-        region_id: &RegionId,
-    ) -> Result<(), EphemeralPublishError> {
+    async fn publish_single_heartbeat(&self, heartbeat_message_payload: &[u8], region_id: &RegionId) -> Result<(), EphemeralPublishError> {
         let admin_topic = RegionAdminTopic::new(region_id.clone());
         let topic_id = admin_topic.p2panda_topic();
         let publishers = self.publishers.read().await;
@@ -435,7 +428,7 @@ impl PandaNode {
             .ephemeral_publisher
             .to_owned()
             .unwrap()
-            .publish(heartbeat_message_payload.clone())
+            .publish(heartbeat_message_payload.to_vec())
             .await
     }
 

@@ -45,10 +45,10 @@ impl UpdateNodeDetails {
             return Err("Name must be a valid slug".to_string());
         }
 
-        if let Some(public_ipv4) = &self.public_ipv4 {
-            if public_ipv4.trim().is_empty() {
-                return Err("Public IPv4 cannot be empty".to_string());
-            }
+        if let Some(public_ipv4) = &self.public_ipv4
+            && public_ipv4.trim().is_empty()
+        {
+            return Err("Public IPv4 cannot be empty".to_string());
         }
 
         if let Some(latlng) = &self.latlng {

@@ -7,7 +7,7 @@ use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::{
     DatabaseState,
-    config::config_state::LoresNodeConfigState,
+    config::LoresNodeConfigState,
     data::node_data::node_stewards::{NodeStewardIdentifier, NodeStewardsRepo},
 };
 
@@ -144,7 +144,7 @@ async fn node_steward_login(
         return (StatusCode::INTERNAL_SERVER_ERROR, Json(NodeStewardLoginError::InternalServerError)).into_response();
     }
 
-    return (StatusCode::OK, Json(UserRef::from_backend_user(&user))).into_response();
+    (StatusCode::OK, Json(UserRef::from_backend_user(&user))).into_response()
 }
 
 #[derive(Debug, Clone, Deserialize, ToSchema)]

@@ -15,7 +15,7 @@ use tokio::sync::mpsc;
 
 use crate::{
     api::public_api::realtime::RealtimeState,
-    config::config_state::LoresNodeConfigState,
+    config::LoresNodeConfigState,
     data::{projections_write::nodes::NodesWriteRepo, setup::operation_database_url},
     event_handlers::handle_event,
 };
