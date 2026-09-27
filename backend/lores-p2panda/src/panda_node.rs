@@ -167,6 +167,138 @@ impl PandaNode {
         })
     }
 
+    /// Returns the shared [`NodeStatus`] covering all subscribed topics.
+    pub async fn get_node_status(&self) -> Arc<RwLock<NodeStatus>> {
+        self.node_status.clone()
+    }
+
+    /// Record that this node is participating in `region_id`. Used by
+    /// [`Self::get_regions`] and exposed via the gRPC `ListRegions` RPC.
+    pub async fn register_region(&self, region_id: RegionId) {
+        self.regions.write().await.insert(region_id);
+    }
+
+    /// Returns all registered region IDs.
+    pub async fn get_regions(&self) -> Vec<RegionId> {
+        self.regions.read().await.iter().cloned().collect()
+    }
+
+    /// Insert a bootstrap node at runtime.
+    pub async fn insert_bootstrap(&self, node_id: NodeId, relay_url: Option<RelayUrl>) -> Result<(), Box<NetworkError>> {
+        let relay_url = relay_url.unwrap_or_else(|| DEFAULT_IROH_RELAY_URL.clone());
+        let network = self.network.read().await;
+
+        network.insert_bootstrap(node_id, relay_url).await.map_err(Box::new)
+    }
+
+    pub async fn subscribe_to_region_topic<T: RegionTopic>(
+        &self,
+        region_topic: &T,
+        events_tx: mpsc::Sender<IncomingOperation>,
+    ) -> Result<(), SubscriptionError> {
+        let topic = region_topic.p2panda_topic();
+        self.subscribe_to_topic_persisted(topic, events_tx.clone()).await?;
+        self.subscribe_to_topic_ephemeral(topic, events_tx.clone()).await?;
+
+        Ok(())
+    }
+
+    /// Replays `region_topic` under its own named cursor, independent of the
+    /// node's primary frontier subscription and of any other cursor name on
+    /// the same topic. Replays every persisted operation from the beginning
+    /// of the log, then emits `ReplayEnded` and stops.
+    ///
+    /// Reusing the same `cursor_name` for more than one concurrent call is not
+    /// recommended.
+    pub async fn replay_region_topic_as<T: RegionTopic>(
+        &self,
+        region_topic: &T,
+        cursor_name: impl Into<String>,
+        events_tx: mpsc::Sender<SubscriptionEvent>,
+    ) -> Result<(), SubscriptionError> {
+        let topic_id = region_topic.p2panda_topic();
+
+        let network = self.network.read().await;
+        let (stream_publisher, subscription) = network
+            .stream_from::<Vec<u8>>(topic_id, StreamFrom::Start, Some(cursor_name.into()))
+            .await?;
+        drop(network);
+
+        // p2panda's `SyncHandle::drop` tears down the *whole topic's* sync
+        // session, not just this handle's — dropping this publisher would
+        // silently kill the primary subscription and any other named-cursor
+        // subscriptions sharing the topic. Keep it alive indefinitely instead
+        // of dropping it, even though this subscription never publishes
+        // through it itself.
+        self.publishers.write().await.push(Publisher {
+            topic: topic_id,
+            stream_publisher: Some(stream_publisher),
+            ephemeral_publisher: None,
+        });
+
+        Self::spawn_replay_task(subscription, events_tx);
+
+        Ok(())
+    }
+
+    pub async fn publish_to_region_topic<T: RegionTopic>(&self, region_topic: &T, bytes: Vec<u8>) -> Result<Hash, PandaPublishError> {
+        let topic = region_topic.p2panda_topic();
+        self.publish(topic, bytes).await
+    }
+
+    pub async fn start_heartbeat_publication(self: Arc<Self>, heartbeat_message_payload: Vec<u8>) -> Result<(), PandaPublishError> {
+        tokio::spawn(async move {
+            let mut timer = interval(Duration::from_mins(HEARTBEAT_FREQUENCY_MINS));
+
+            loop {
+                timer.tick().await;
+
+                for region_id in self.get_regions().await {
+                    if let Err(err) = self.publish_single_heartbeat(&heartbeat_message_payload, &region_id).await {
+                        eprintln!("Error sending ephemeral message: {}", err);
+                        break;
+                    }
+                }
+            }
+        });
+
+        Ok(())
+    }
+
+    pub async fn get_log_counts(&self) -> Result<Vec<LogCount>, sqlx::Error> {
+        let rows = sqlx::query("SELECT public_key, COUNT(*) AS total FROM operations_v1 GROUP BY public_key")
+            .fetch_all(&self.pool)
+            .await?;
+
+        Ok(rows
+            .into_iter()
+            .map(|row| LogCount {
+                node_id: row.get("public_key"),
+                total: row.get("total"),
+            })
+            .collect())
+    }
+
+    pub async fn get_operation_counts_by_topic(&self) -> Result<Vec<OperationCountByAuthorAndTopic>, sqlx::Error> {
+        let rows = sqlx::query(
+            "SELECT lower(hex(substr(t.topic, 3))) AS topic_hex, t.author, COUNT(o.hash) AS total
+             FROM topics_v1 t
+             JOIN operations_v1 o ON o.verifying_key = t.author AND o.log_id = t.data_id
+             GROUP BY t.topic, t.author",
+        )
+        .fetch_all(&self.pool)
+        .await?;
+
+        Ok(rows
+            .into_iter()
+            .map(|row| OperationCountByAuthorAndTopic {
+                topic_hex: row.get("topic_hex"),
+                author_node_id: row.get("author"),
+                count: row.get("total"),
+            })
+            .collect())
+    }
+
     async fn subscribe_to_stream(
         &self,
         topic_id: &Topic,
@@ -316,80 +448,6 @@ impl PandaNode {
         Ok(())
     }
 
-    /// Returns the shared [`NodeStatus`] covering all subscribed topics.
-    pub async fn get_node_status(&self) -> Arc<RwLock<NodeStatus>> {
-        self.node_status.clone()
-    }
-
-    /// Record that this node is participating in `region_id`. Used by
-    /// [`Self::get_regions`] and exposed via the gRPC `ListRegions` RPC.
-    pub async fn register_region(&self, region_id: RegionId) {
-        self.regions.write().await.insert(region_id);
-    }
-
-    /// Returns all registered region IDs.
-    pub async fn get_regions(&self) -> Vec<RegionId> {
-        self.regions.read().await.iter().cloned().collect()
-    }
-
-    /// Insert a bootstrap node at runtime.
-    pub async fn insert_bootstrap(&self, node_id: NodeId, relay_url: Option<RelayUrl>) -> Result<(), Box<NetworkError>> {
-        let relay_url = relay_url.unwrap_or_else(|| DEFAULT_IROH_RELAY_URL.clone());
-        let network = self.network.read().await;
-
-        network.insert_bootstrap(node_id, relay_url).await.map_err(Box::new)
-    }
-
-    pub async fn subscribe_to_region_topic<T: RegionTopic>(
-        &self,
-        region_topic: &T,
-        events_tx: mpsc::Sender<IncomingOperation>,
-    ) -> Result<(), SubscriptionError> {
-        let topic = region_topic.p2panda_topic();
-        self.subscribe_to_topic_persisted(topic, events_tx.clone()).await?;
-        self.subscribe_to_topic_ephemeral(topic, events_tx.clone()).await?;
-
-        Ok(())
-    }
-
-    /// Replays `region_topic` under its own named cursor, independent of the
-    /// node's primary frontier subscription and of any other cursor name on
-    /// the same topic. Replays every persisted operation from the beginning
-    /// of the log, then emits `ReplayEnded` and stops.
-    ///
-    /// Reusing the same `cursor_name` for more than one concurrent call is not
-    /// recommended.
-    pub async fn replay_region_topic_as<T: RegionTopic>(
-        &self,
-        region_topic: &T,
-        cursor_name: impl Into<String>,
-        events_tx: mpsc::Sender<SubscriptionEvent>,
-    ) -> Result<(), SubscriptionError> {
-        let topic_id = region_topic.p2panda_topic();
-
-        let network = self.network.read().await;
-        let (stream_publisher, subscription) = network
-            .stream_from::<Vec<u8>>(topic_id, StreamFrom::Start, Some(cursor_name.into()))
-            .await?;
-        drop(network);
-
-        // p2panda's `SyncHandle::drop` tears down the *whole topic's* sync
-        // session, not just this handle's — dropping this publisher would
-        // silently kill the primary subscription and any other named-cursor
-        // subscriptions sharing the topic. Keep it alive indefinitely instead
-        // of dropping it, even though this subscription never publishes
-        // through it itself.
-        self.publishers.write().await.push(Publisher {
-            topic: topic_id,
-            stream_publisher: Some(stream_publisher),
-            ephemeral_publisher: None,
-        });
-
-        Self::spawn_replay_task(subscription, events_tx);
-
-        Ok(())
-    }
-
     fn spawn_replay_task(mut subscription: StreamSubscription<Vec<u8>>, events_tx: mpsc::Sender<SubscriptionEvent>) {
         tokio::spawn(async move {
             while let Some(event) = subscription.next().await {
@@ -440,91 +498,35 @@ impl PandaNode {
         });
     }
 
-    pub async fn publish_to_region_topic<T: RegionTopic>(&self, region_topic: &T, bytes: Vec<u8>) -> Result<Hash, PandaPublishError> {
-        let topic = region_topic.p2panda_topic();
-        self.publish(topic, bytes).await
+    async fn stream_publisher_for(&self, topic_id: Topic) -> Result<StreamPublisher<Vec<u8>>, PandaPublishError> {
+        self.publishers
+            .read()
+            .await
+            .iter()
+            .find_map(|p| (p.topic == topic_id).then(|| p.stream_publisher.clone()).flatten())
+            .ok_or(PandaPublishError::NoSubscription(topic_id))
+    }
+
+    async fn ephemeral_publisher_for(&self, topic_id: Topic) -> Result<EphemeralStreamPublisher<Vec<u8>>, PandaPublishError> {
+        self.publishers
+            .read()
+            .await
+            .iter()
+            .find_map(|p| (p.topic == topic_id).then(|| p.ephemeral_publisher.clone()).flatten())
+            .ok_or(PandaPublishError::NoSubscription(topic_id))
     }
 
     async fn publish(&self, topic_id: Topic, bytes: Vec<u8>) -> Result<Hash, PandaPublishError> {
-        let publishers = self.publishers.read().await;
-        let publisher = publishers
-            .iter()
-            .find(|p| p.topic == topic_id && p.stream_publisher.is_some())
-            .ok_or(PandaPublishError::NoSubscription(topic_id))?;
-        let publish_future = publisher.stream_publisher.to_owned().unwrap().publish(bytes).await?;
-        Ok(publish_future.hash())
-    }
-
-    pub async fn start_heartbeat_publication(self: Arc<Self>, heartbeat_message_payload: Vec<u8>) -> Result<(), PandaPublishError> {
-        tokio::spawn(async move {
-            let mut timer = interval(Duration::from_mins(HEARTBEAT_FREQUENCY_MINS));
-
-            loop {
-                timer.tick().await;
-
-                for region_id in self.get_regions().await {
-                    if let Err(err) = self.publish_single_heartbeat(&heartbeat_message_payload, &region_id).await {
-                        eprintln!("Error sending ephemeral message: {}", err);
-                        break;
-                    }
-                }
-            }
-        });
-
-        Ok(())
+        let publisher = self.stream_publisher_for(topic_id).await?;
+        Ok(publisher.publish(bytes).await?.hash())
     }
 
     async fn publish_single_heartbeat(&self, heartbeat_message_payload: &[u8], region_id: &RegionId) -> Result<(), PandaPublishError> {
-        let admin_topic = RegionAdminTopic::new(region_id.clone());
-        let topic_id = admin_topic.p2panda_topic();
-        let publishers = self.publishers.read().await;
-        let publisher = publishers
-            .iter()
-            .find(|p| p.topic == topic_id && p.ephemeral_publisher.is_some())
-            .ok_or(PandaPublishError::NoSubscription(topic_id))?;
-
-        publisher
-            .ephemeral_publisher
-            .to_owned()
-            .unwrap()
-            .publish(heartbeat_message_payload.to_vec())
-            .await?;
+        let topic_id = RegionAdminTopic::new(region_id.clone()).p2panda_topic();
+        let publisher = self.ephemeral_publisher_for(topic_id).await?;
+        publisher.publish(heartbeat_message_payload.to_vec()).await?;
 
         Ok(())
-    }
-
-    pub async fn get_log_counts(&self) -> Result<Vec<LogCount>, sqlx::Error> {
-        let rows = sqlx::query("SELECT public_key, COUNT(*) AS total FROM operations_v1 GROUP BY public_key")
-            .fetch_all(&self.pool)
-            .await?;
-
-        Ok(rows
-            .into_iter()
-            .map(|row| LogCount {
-                node_id: row.get("public_key"),
-                total: row.get("total"),
-            })
-            .collect())
-    }
-
-    pub async fn get_operation_counts_by_topic(&self) -> Result<Vec<OperationCountByAuthorAndTopic>, sqlx::Error> {
-        let rows = sqlx::query(
-            "SELECT lower(hex(substr(t.topic, 3))) AS topic_hex, t.author, COUNT(o.hash) AS total
-             FROM topics_v1 t
-             JOIN operations_v1 o ON o.verifying_key = t.author AND o.log_id = t.data_id
-             GROUP BY t.topic, t.author",
-        )
-        .fetch_all(&self.pool)
-        .await?;
-
-        Ok(rows
-            .into_iter()
-            .map(|row| OperationCountByAuthorAndTopic {
-                topic_hex: row.get("topic_hex"),
-                author_node_id: row.get("author"),
-                count: row.get("total"),
-            })
-            .collect())
     }
 }
 
