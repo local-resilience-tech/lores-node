@@ -20,6 +20,9 @@ serde = { workspace = true, optional = true }
 tonic = "0.14"
 tonic-prost = "0.14"
 
+[dev-dependencies]
+tokio-test = "0.4"
+
 [build-dependencies]
 tonic-prost-build = "0.14"
 

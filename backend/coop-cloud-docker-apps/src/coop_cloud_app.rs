@@ -58,9 +58,13 @@ mod tests {
     #[test]
     fn test_build_app_gets_version() {
         let labels = CoopCloudServiceLabels::new(
-            vec![version_label("foobar", "1.2.3"), stack_namespace_label("foobar")]
-                .into_iter()
-                .collect(),
+            vec![
+                version_label("foobar", "1.2.3"),
+                stack_namespace_label("foobar"),
+                recipe_label("foobar", "my-recipe"),
+            ]
+            .into_iter()
+            .collect(),
         )
         .unwrap();
 
@@ -70,7 +74,12 @@ mod tests {
 
     #[test]
     fn test_build_has_no_version_if_not_specified() {
-        let labels = CoopCloudServiceLabels::new(vec![stack_namespace_label("foobar")].into_iter().collect()).unwrap();
+        let labels = CoopCloudServiceLabels::new(
+            vec![stack_namespace_label("foobar"), recipe_label("foobar", "my-recipe")]
+                .into_iter()
+                .collect(),
+        )
+        .unwrap();
 
         let result = build_coop_cloud_app_from_labels(&labels).unwrap();
         assert_eq!(result.version, None);

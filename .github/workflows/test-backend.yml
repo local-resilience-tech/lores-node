@@ -1,0 +1,54 @@
+name: Test backend
+
+on:
+  pull_request:
+    paths:
+      - "backend/**"
+      - ".github/workflows/test-backend.yml"
+  push:
+    branches: [main]
+    paths:
+      - "backend/**"
+      - ".github/workflows/test-backend.yml"
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./backend
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential libssl-dev pkg-config
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo registry
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/registry
+          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Cache cargo index
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/git
+          key: ${{ runner.os }}-cargo-git-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Cache cargo build
+        uses: actions/cache@v4
+        with:
+          path: backend/target
+          key: ${{ runner.os }}-cargo-build-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Run cargo tests
+        run: cargo test --workspace --locked
