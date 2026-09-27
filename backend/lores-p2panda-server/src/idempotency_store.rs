@@ -97,10 +97,15 @@ impl IdempotencyStore {
 mod tests {
     use super::*;
     use lores_p2panda::{RegionAppTopic, RegionId};
-    use sqlx::SqlitePool;
+    use sqlx::sqlite::SqlitePoolOptions;
 
     async fn test_store() -> IdempotencyStore {
-        let db = SqlitePool::connect("sqlite::memory:").await.unwrap();
+        // Use a single in-memory connection so all queries see the same database state.
+        let db = SqlitePoolOptions::new()
+            .max_connections(1)
+            .connect("sqlite::memory:")
+            .await
+            .unwrap();
         // Use a very long cleanup frequency so the background task never fires during tests.
         IdempotencyStore::new(db, Duration::from_secs(u64::MAX / 2), Duration::from_hours(48))
             .await
