@@ -1,7 +1,11 @@
 use crate::{config::config_state::LoresNodeConfigState, panda_comms::build_public_key_from_hex};
 use hex;
+use lores_p2panda::{Credentials, credentials_from_seed};
 use p2panda_core::{SigningKey, VerifyingKey, identity::SIGNING_KEY_LEN};
+use rand::RngExt;
 use tracing::info;
+
+const IDENTITY_SECRET_SEED_LEN: usize = 32;
 
 pub struct ThisP2PandaNodeRepo {}
 
@@ -19,6 +23,12 @@ impl ThisP2PandaNodeRepo {
             .into_iter()
             .filter_map(|bootstrap_node_id| build_public_key_from_hex(&bootstrap_node_id).ok())
             .collect()
+    }
+
+    pub async fn get_or_create_credentials(&self, config_state: &LoresNodeConfigState) -> Result<Credentials, anyhow::Error> {
+        let signing_key = self.get_or_create_private_key(config_state).await?;
+        let identity_secret_seed = self.get_or_create_identity_secret_seed(config_state).await?;
+        Ok(credentials_from_seed(signing_key, identity_secret_seed))
     }
 
     pub async fn get_or_create_private_key(&self, config_state: &LoresNodeConfigState) -> Result<SigningKey, anyhow::Error> {
@@ -65,6 +75,45 @@ impl ThisP2PandaNodeRepo {
                 result
             })
             .await
+    }
+
+    async fn get_or_create_identity_secret_seed(
+        &self,
+        config_state: &LoresNodeConfigState,
+    ) -> Result<[u8; IDENTITY_SECRET_SEED_LEN], anyhow::Error> {
+        let config = config_state.get().await;
+
+        if let Some(seed_hex) = config.identity_secret_seed_hex {
+            if let Ok(seed) = Self::parse_identity_secret_seed(&seed_hex) {
+                return Ok(seed);
+            }
+        }
+
+        let mut seed = [0u8; IDENTITY_SECRET_SEED_LEN];
+        rand::rng().fill(&mut seed);
+
+        self.set_identity_secret_seed_hex(config_state, hex::encode(seed)).await?;
+
+        info!("Created new identity secret seed");
+        Ok(seed)
+    }
+
+    async fn set_identity_secret_seed_hex(&self, config_state: &LoresNodeConfigState, seed_hex: String) -> Result<(), anyhow::Error> {
+        config_state
+            .update(|config| {
+                let mut result = config.clone();
+                result.identity_secret_seed_hex = Some(seed_hex);
+                result
+            })
+            .await
+    }
+
+    fn parse_identity_secret_seed(seed_hex: &str) -> Result<[u8; IDENTITY_SECRET_SEED_LEN], anyhow::Error> {
+        let bytes = hex::decode(seed_hex)?;
+        let seed: [u8; IDENTITY_SECRET_SEED_LEN] = bytes
+            .try_into()
+            .map_err(|_| anyhow::anyhow!("identity secret seed must be {} bytes", IDENTITY_SECRET_SEED_LEN))?;
+        Ok(seed)
     }
 
     // TODO: This should be in p2panda-core, submit a PR

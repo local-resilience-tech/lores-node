@@ -1,6 +1,6 @@
 use std::pin::Pin;
 
-use futures::{stream, StreamExt};
+use futures::{StreamExt, stream};
 use sqlx::SqlitePool;
 
 use crate::stores::{OperationStore, OperationStream, RawOperationEvent, StoreError, StorePublishResult};

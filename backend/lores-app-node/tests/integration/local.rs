@@ -2,7 +2,7 @@ use std::time::Duration;
 
 use lores_app_node::AppNode;
 
-use crate::common::{memory_pool, TestOp};
+use crate::common::{TestOp, memory_pool};
 
 /// A local-only node broadcasts published operations to loopback subscribers
 /// and re-emits persisted operations on replay.

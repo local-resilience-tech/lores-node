@@ -6,11 +6,12 @@ pub mod topic_status;
 pub use node_status::NodeStatus;
 pub use panda_node::{
     IncomingOperation, LogCount, OperationCountByAuthorAndTopic, PandaNode, PandaNodeError, PandaPublishError, RequiredNodeParams,
-    SubscriptionError,
+    SubscriptionError, credentials_from_seed,
 };
 pub use region::{RegionAdminTopic, RegionAppTopic, RegionId, RegionTopic};
 pub use topic_status::{ConnectionStatus, TopicStatus};
 
+pub use p2panda::Credentials;
 pub use p2panda_core;
 pub use p2panda_core::Topic;
 pub use p2panda_net::iroh_endpoint::RelayUrl;

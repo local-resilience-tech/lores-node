@@ -11,8 +11,10 @@ use p2panda::streams::{
     StreamSubscription,
 };
 use p2panda_core::{Hash, SigningKey, Topic, VerifyingKey};
+use p2panda_encryption::Rng;
+use p2panda_encryption::crypto::x25519::SecretKey;
 use p2panda_net::iroh_endpoint::RelayUrl;
-use p2panda_store::SqliteError;
+use serde::{Deserialize, Serialize};
 use sqlx::Row;
 use sqlx::sqlite::{SqliteConnectOptions, SqlitePool, SqlitePoolOptions};
 use thiserror::Error;
@@ -26,6 +28,28 @@ use crate::region::{RegionId, RegionTopic};
 
 static DEFAULT_IROH_RELAY_URL: LazyLock<RelayUrl> =
     LazyLock::new(|| "https://euc1-1.relay.n0.iroh-canary.iroh.link".parse().expect("valid relay URL"));
+
+/// Internal mirror of `p2panda::credentials::Inner` so we can build a
+/// `p2panda::Credentials` from an existing signing key and identity secret.
+#[derive(Serialize, Deserialize)]
+struct CredentialsInner {
+    signing_key: SigningKey,
+    identity_secret_key: SecretKey,
+}
+
+pub fn credentials_from_seed(signing_key: SigningKey, identity_secret_seed: [u8; 32]) -> p2panda::Credentials {
+    let identity_secret_key = SecretKey::from_rng(&Rng::from_seed(identity_secret_seed)).expect("derive identity secret from seed");
+    credentials_from_keys(signing_key, identity_secret_key)
+}
+
+fn credentials_from_keys(signing_key: SigningKey, identity_secret_key: SecretKey) -> p2panda::Credentials {
+    let inner = CredentialsInner {
+        signing_key,
+        identity_secret_key,
+    };
+    let value = serde_json::to_value(&inner).expect("serialize credentials inner");
+    serde_json::from_value(value).expect("deserialize p2panda credentials")
+}
 
 #[derive(Clone)]
 pub struct IncomingOperation {
@@ -67,7 +91,7 @@ pub enum SubscriptionError {
 }
 
 pub struct RequiredNodeParams {
-    pub private_key: SigningKey,
+    pub credentials: p2panda::Credentials,
     pub network_id: Hash,
     pub bootstrap_node_ids: Vec<VerifyingKey>,
     pub relay_url: Option<RelayUrl>,
@@ -92,12 +116,12 @@ const HEARTBEAT_FREQUENCY_MINS: u64 = 5;
 
 impl PandaNode {
     pub async fn new(params: &RequiredNodeParams, database_url: &str) -> Result<Self, PandaNodeError> {
-        let public_key = params.private_key.verifying_key();
+        let public_key = params.credentials.verifying_key();
         let network_id: [u8; 32] = *params.network_id.as_bytes();
 
         let mut builder = Node::builder()
             .network_id(network_id)
-            .signing_key(params.private_key.clone())
+            .credentials(params.credentials.clone())
             .database_url(database_url);
 
         if cfg!(not(test)) {
@@ -164,6 +188,7 @@ impl PandaNode {
                     StreamEvent::AckFailed { error, .. } => {
                         tracing::error!("operation ack failed: {error}");
                     }
+                    StreamEvent::Space { .. } | StreamEvent::Member(_) => {}
                 }
             }
         });
@@ -199,7 +224,7 @@ impl PandaNode {
         let existing_publisher = publishers.iter_mut().find(|p| &p.topic == &topic_id);
 
         let network = self.network.read().await;
-        let (stream_publisher, stream_subscription) = network.stream_from::<Vec<u8>>(topic_id, StreamFrom::Frontier).await?;
+        let (stream_publisher, stream_subscription) = network.stream_from::<Vec<u8>>(topic_id, StreamFrom::Frontier, None).await?;
         drop(network);
 
         match existing_publisher {
@@ -302,7 +327,7 @@ impl PandaNode {
     /// publishing is handled by the existing subscription.
     pub async fn replay_topic(&self, topic_id: Topic, events_tx: mpsc::Sender<IncomingOperation>) -> Result<(), SubscriptionError> {
         let network = self.network.read().await;
-        let (_publisher, mut subscription) = network.stream_from::<Vec<u8>>(topic_id, StreamFrom::Start).await?;
+        let (_publisher, mut subscription) = network.stream_from::<Vec<u8>>(topic_id, StreamFrom::Start, None).await?;
         drop(network);
 
         tokio::spawn(async move {
@@ -335,6 +360,7 @@ impl PandaNode {
                     StreamEvent::AckFailed { error, .. } => {
                         tracing::error!("operation ack failed during replay: {error}");
                     }
+                    StreamEvent::Space { .. } | StreamEvent::Member(_) => {}
                 }
             }
         });
@@ -413,7 +439,7 @@ impl PandaNode {
             .await
     }
 
-    pub async fn get_log_counts(&self) -> Result<Vec<LogCount>, SqliteError> {
+    pub async fn get_log_counts(&self) -> Result<Vec<LogCount>, sqlx::Error> {
         let rows = sqlx::query("SELECT public_key, COUNT(*) AS total FROM operations_v1 GROUP BY public_key")
             .fetch_all(&self.pool)
             .await?;
@@ -427,7 +453,7 @@ impl PandaNode {
             .collect())
     }
 
-    pub async fn get_operation_counts_by_topic(&self) -> Result<Vec<OperationCountByAuthorAndTopic>, SqliteError> {
+    pub async fn get_operation_counts_by_topic(&self) -> Result<Vec<OperationCountByAuthorAndTopic>, sqlx::Error> {
         let rows = sqlx::query(
             "SELECT lower(hex(substr(t.topic, 3))) AS topic_hex, t.author, COUNT(o.hash) AS total
              FROM topics_v1 t
@@ -467,4 +493,16 @@ async fn open_pool(database_url: &str) -> Result<SqlitePool, sqlx::Error> {
     let options = SqliteConnectOptions::new().filename(path).create_if_missing(true);
 
     SqlitePoolOptions::new().max_connections(4).connect_with(options).await
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn credentials_from_seed_roundtrip() {
+        let signing_key = SigningKey::from_bytes(&[1; 32]);
+        let creds = credentials_from_seed(signing_key.clone(), [2; 32]);
+        assert_eq!(creds.verifying_key(), signing_key.verifying_key());
+    }
 }
