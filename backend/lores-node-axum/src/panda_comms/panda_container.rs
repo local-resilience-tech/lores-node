@@ -189,7 +189,7 @@ impl PandaContainer {
                     let SubscriptionEvent::Operation(incoming) = event else {
                         continue;
                     };
-                    match Self::decode_incoming_to_lores_event(incoming) {
+                    match Self::decode_incoming_to_lores_event(*incoming) {
                         Ok(lores_event) => {
                             if events_tx.send(lores_event).await.is_err() {
                                 break;

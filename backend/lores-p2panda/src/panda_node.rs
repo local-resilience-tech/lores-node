@@ -75,7 +75,7 @@ fn log_position<M>(op: &p2panda::streams::ProcessedOperation<M>) -> (Option<LogI
 /// replay lifecycle so callers can tell historical operations from live ones.
 #[derive(Clone)]
 pub enum SubscriptionEvent {
-    Operation(IncomingOperation),
+    Operation(Box<IncomingOperation>),
     ReplayStarted { total_operations: u32 },
     ReplayEnded,
 }
@@ -359,7 +359,7 @@ impl PandaNode {
 
         let topic_status = self.node_status.write().await.register_topic(topic_id);
         Self::spawn_stream_task(stream_subscription, events_tx, Some(topic_status), false, |event| match event {
-            SubscriptionEvent::Operation(op) => Some(op),
+            SubscriptionEvent::Operation(op) => Some(*op),
             SubscriptionEvent::ReplayStarted { .. } | SubscriptionEvent::ReplayEnded => None,
         });
 
@@ -430,7 +430,7 @@ impl PandaNode {
                             log_id,
                             seq_num,
                         };
-                        if let Some(mapped) = map_event(SubscriptionEvent::Operation(incoming))
+                        if let Some(mapped) = map_event(SubscriptionEvent::Operation(Box::new(incoming)))
                             && events_tx.send(mapped).await.is_err()
                         {
                             break;
