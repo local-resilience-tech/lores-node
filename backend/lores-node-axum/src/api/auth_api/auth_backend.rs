@@ -1,7 +1,6 @@
 use std::collections::HashSet;
 use tracing::{info, warn};
 
-use async_trait::async_trait;
 use axum_login::{AuthUser, AuthnBackend, AuthzBackend, UserId};
 use password_auth::verify_password;
 use serde::{Deserialize, Serialize};
@@ -92,7 +91,6 @@ pub enum AuthError {
     ServerError,
 }
 
-#[async_trait]
 impl AuthnBackend for AppAuthBackend {
     type User = User;
     type Credentials = Credentials;
@@ -244,7 +242,6 @@ impl From<&str> for Permission {
     }
 }
 
-#[async_trait]
 impl AuthzBackend for AppAuthBackend {
     type Permission = Permission;
 

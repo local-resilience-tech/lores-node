@@ -54,7 +54,7 @@ async fn get_current_user(
         return (StatusCode::INTERNAL_SERVER_ERROR, Json(GetCurrentNodeStewardError::AdminNotFound)).into_response();
     }
 
-    let auth_user = match auth_session.user {
+    let auth_user = match auth_session.user().await {
         Some(user) => user,
         None => {
             warn!("Failed to get current user");
@@ -107,7 +107,7 @@ enum NodeStewardLoginError {
     )
 )]
 async fn node_steward_login(
-    mut auth_session: AuthSession,
+    auth_session: AuthSession,
     axum::extract::Json(node_steward_creds): axum::extract::Json<NodeStewardCredentials>,
 ) -> impl IntoResponse {
     let creds = Credentials::NodeSteward(node_steward_creds);

@@ -134,7 +134,7 @@ async fn register_app(
 
     // Publish the operation
     if let Err(e) = panda_container
-        .publish_persisted(&RegionAdminTopic::new(region_id), event_payload, auth_session.user)
+        .publish_persisted(&RegionAdminTopic::new(region_id), event_payload, auth_session.user().await)
         .await
     {
         return internal_server_error(e).into_response();

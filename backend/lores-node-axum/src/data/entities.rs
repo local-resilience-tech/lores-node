@@ -36,7 +36,7 @@ impl<'r> Decode<'r, Sqlite> for LatLng {
 }
 
 impl<'q> Encode<'q, Sqlite> for LatLng {
-    fn encode_by_ref(&self, buf: &mut <Sqlite as Database>::ArgumentBuffer<'q>) -> Result<IsNull, BoxDynError> {
+    fn encode_by_ref(&self, buf: &mut <Sqlite as Database>::ArgumentBuffer) -> Result<IsNull, BoxDynError> {
         let raw = serde_json::to_string(self).expect("Failed to serialize LatLng");
         <String as Encode<Sqlite>>::encode(raw, buf)
     }

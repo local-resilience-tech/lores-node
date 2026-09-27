@@ -65,7 +65,7 @@ enum AdminLoginError {
     )
 )]
 async fn admin_login(
-    mut auth_session: AuthSession,
+    auth_session: AuthSession,
     axum::extract::Json(admin_creds): axum::extract::Json<AdminCredentials>,
 ) -> impl IntoResponse {
     let creds = Credentials::Admin(admin_creds);

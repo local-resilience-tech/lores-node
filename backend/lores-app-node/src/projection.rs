@@ -1,5 +1,5 @@
 use sha2::{Digest, Sha256};
-use sqlx::{SqlitePool, sqlite::SqliteConnectOptions};
+use sqlx::{AssertSqlSafe, SqlitePool, sqlite::SqliteConnectOptions};
 
 /// A SQLite pool initialised from a DDL schema string.
 ///
@@ -97,7 +97,7 @@ impl ProjectionDb {
             .await?;
 
         // Apply the app-supplied schema.
-        sqlx::raw_sql(schema_sql).execute(pool).await?;
+        sqlx::raw_sql(AssertSqlSafe(schema_sql.to_string())).execute(pool).await?;
 
         tracing::info!("projection schema applied");
         Ok(())
@@ -110,7 +110,7 @@ impl ProjectionDb {
             .await?;
 
         for table in tables {
-            sqlx::raw_sql(&format!("DROP TABLE IF EXISTS \"{table}\"")).execute(pool).await?;
+            sqlx::raw_sql(AssertSqlSafe(format!("DROP TABLE IF EXISTS \"{table}\""))).execute(pool).await?;
         }
 
         Ok(())

@@ -21,7 +21,7 @@ p2panda-net = "0.7.1"
 p2panda-store = "0.7.1"
 prost = "0.14"
 serde = { version = "1.0.219" }
-sqlx = { version = "0.8.6", default-features = false }
+sqlx = { version = "0.9", default-features = false }
 thiserror = "2.0.17"
 tokio = { version = "1.46.1" }
 tokio-stream = { version = "0.1.18" }
@@ -40,3 +40,5 @@ p2panda-spaces = { git = "https://github.com/jadehopepunk/p2panda.git", branch =
 p2panda-store = { git = "https://github.com/jadehopepunk/p2panda.git", branch = "expose-named-stream-cursors" }
 p2panda-stream = { git = "https://github.com/jadehopepunk/p2panda.git", branch = "expose-named-stream-cursors" }
 p2panda-sync = { git = "https://github.com/jadehopepunk/p2panda.git", branch = "expose-named-stream-cursors" }
+tower-sessions-sqlx-store = { git = "https://github.com/maxcountryman/tower-sessions-stores.git", rev = "75cb75792d0a8d9231723b07e7524897201ef73b" }
+axum-login = { git = "https://github.com/maxcountryman/axum-login.git", rev = "151c72d7a1b4646830f86b4332e6bd6e34d719a7" }

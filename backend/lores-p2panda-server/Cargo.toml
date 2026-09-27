@@ -8,7 +8,7 @@ publish = false
 [dependencies]
 lores-p2panda = { path = "../lores-p2panda" }
 prost = { workspace = true }
-sqlx = { workspace = true, features = ["runtime-tokio-native-tls", "sqlite"] }
+sqlx = { workspace = true, features = ["runtime-tokio", "tls-native-tls", "sqlite"] }
 thiserror = { workspace = true }
 tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
 tokio-stream = { workspace = true, features = ["sync"] }

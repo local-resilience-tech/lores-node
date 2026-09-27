@@ -7,9 +7,8 @@ publish = false
 
 [dependencies]
 anyhow = "1.0.100"
-async-trait = "0.1.89"
 axum = { version = "0.8.5", features = ["ws"] }
-axum-login = "0.17.0"
+axum-login = "0.18.0"
 chrono = { version = "0.4.42", features = ["serde"] }
 confy = "1.0.0"
 copy_dir = "0.1.3"
@@ -26,7 +25,8 @@ serde_json = "1.0.145"
 serde_yaml = "0.9.34"
 short-uuid = "0.2.0"
 sqlx = { workspace = true, features = [
-  "runtime-tokio-native-tls",
+  "runtime-tokio",
+  "tls-native-tls",
   "sqlite",
   "chrono",
 ] }
@@ -37,7 +37,7 @@ tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
 tokio-stream = { workspace = true }
 tower = "0.5.2"
 tower-http = { version = "0.6.6", features = ["cors", "fs", "trace"] }
-tower-sessions = { version = "0.14.0", features = ["signed"] }
+tower-sessions = { version = "0.15", features = ["signed"] }
 tower-sessions-sqlx-store = { version = "0.15", features = ["sqlite"] }
 tracing = "0.1.41"
 tracing-subscriber = { version = "0.3.20", features = ["env-filter"] }
