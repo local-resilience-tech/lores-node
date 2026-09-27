@@ -1,15 +1,15 @@
-name: Test backend
+name: Check backend
 
 on:
   pull_request:
     paths:
       - "backend/**"
-      - ".github/workflows/test-backend.yml"
+      - ".github/workflows/check-backend.yml"
   push:
     branches: [main]
     paths:
       - "backend/**"
-      - ".github/workflows/test-backend.yml"
+      - ".github/workflows/check-backend.yml"
 
 env:
   CARGO_TERM_COLOR: always

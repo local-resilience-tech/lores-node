@@ -1,15 +1,15 @@
-name: Lint and format frontend
+name: Check frontend
 
 on:
   pull_request:
     paths:
       - "frontend/**"
-      - ".github/workflows/lint-frontend.yml"
+      - ".github/workflows/check-frontend.yml"
   push:
     branches: [main]
     paths:
       - "frontend/**"
-      - ".github/workflows/lint-frontend.yml"
+      - ".github/workflows/check-frontend.yml"
 
 jobs:
   lint-and-format:
