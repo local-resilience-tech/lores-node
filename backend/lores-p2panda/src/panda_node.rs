@@ -474,22 +474,23 @@ impl PandaNode {
         Ok(())
     }
 
-    async fn publish_single_heartbeat(&self, heartbeat_message_payload: &[u8], region_id: &RegionId) -> Result<(), EphemeralPublishError> {
+    async fn publish_single_heartbeat(&self, heartbeat_message_payload: &[u8], region_id: &RegionId) -> Result<(), PandaPublishError> {
         let admin_topic = RegionAdminTopic::new(region_id.clone());
         let topic_id = admin_topic.p2panda_topic();
         let publishers = self.publishers.read().await;
         let publisher = publishers
             .iter()
             .find(|p| p.topic == topic_id && p.ephemeral_publisher.is_some())
-            .ok_or(PandaPublishError::NoSubscription(topic_id))
-            .unwrap();
+            .ok_or(PandaPublishError::NoSubscription(topic_id))?;
 
         publisher
             .ephemeral_publisher
             .to_owned()
             .unwrap()
             .publish(heartbeat_message_payload.to_vec())
-            .await
+            .await?;
+
+        Ok(())
     }
 
     pub async fn get_log_counts(&self) -> Result<Vec<LogCount>, sqlx::Error> {
