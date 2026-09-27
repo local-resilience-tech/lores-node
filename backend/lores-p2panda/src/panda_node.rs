@@ -316,10 +316,6 @@ impl PandaNode {
         Ok(())
     }
 
-    pub async fn get_subscribed_topics(&self) -> Vec<Topic> {
-        self.publishers.read().await.iter().map(|p| &p.topic).cloned().collect()
-    }
-
     /// Returns the shared [`NodeStatus`] covering all subscribed topics.
     pub async fn get_node_status(&self) -> Arc<RwLock<NodeStatus>> {
         self.node_status.clone()
@@ -342,58 +338,6 @@ impl PandaNode {
         let network = self.network.read().await;
 
         network.insert_bootstrap(node_id, relay_url).await.map_err(Box::new)
-    }
-
-    /// Creates a new `StreamFrom::Start` stream for `topic_id` and forwards every
-    /// `StreamEvent::Processed` operation to `events_tx`.  Unlike
-    /// `subscribe_to_topic` this does not guard against the topic already being
-    /// subscribed, so it can be called while a live frontier subscription is
-    /// active.  The publisher half of the stream is dropped immediately because
-    /// publishing is handled by the existing subscription.
-    pub async fn replay_topic(&self, topic_id: Topic, events_tx: mpsc::Sender<IncomingOperation>) -> Result<(), SubscriptionError> {
-        let network = self.network.read().await;
-        let (_publisher, mut subscription) = network.stream_from::<Vec<u8>>(topic_id, StreamFrom::Start, None).await?;
-        drop(network);
-
-        tokio::spawn(async move {
-            while let Some(event) = subscription.next().await {
-                match event {
-                    StreamEvent::Processed { operation: op, .. } => {
-                        let (log_id, seq_num) = log_position(&op);
-                        let incoming = IncomingOperation {
-                            author: op.author(),
-                            topic: op.topic(),
-                            bytes: op.message().clone(),
-                            operation_id: op.id(),
-                            received_timestamp: op.timestamp(),
-                            log_id,
-                            seq_num,
-                        };
-                        if events_tx.send(incoming).await.is_err() {
-                            break;
-                        }
-                    }
-                    StreamEvent::DecodeFailed { error, .. } => {
-                        tracing::error!("failed decoding operation during replay: {error}");
-                    }
-                    StreamEvent::ReplayFailed { error, .. } => {
-                        tracing::error!("error during operation replay: {error}");
-                    }
-                    StreamEvent::SyncStarted { .. } | StreamEvent::SyncEnded { .. } => {}
-                    StreamEvent::ImportStarted { .. } | StreamEvent::ImportEnded { .. } => {}
-                    StreamEvent::ReplayStarted { .. } | StreamEvent::ReplayEnded => {}
-                    StreamEvent::ProcessingFailed { error, .. } => {
-                        tracing::error!("operation processing failed during replay: {error}");
-                    }
-                    StreamEvent::AckFailed { error, .. } => {
-                        tracing::error!("operation ack failed during replay: {error}");
-                    }
-                    StreamEvent::Space { .. } | StreamEvent::Member(_) => {}
-                }
-            }
-        });
-
-        Ok(())
     }
 
     pub async fn subscribe_to_region_topic<T: RegionTopic>(
