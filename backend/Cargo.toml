@@ -13,18 +13,18 @@ members = [
 default-members = ["lores-node-axum"]
 
 [workspace.dependencies]
-hex = "0.4.3"
+hex = "0.4"
 p2panda = "0.7.1"
 p2panda-core = "0.7.1"
 p2panda-encryption = "0.7.1"
 p2panda-net = "0.7.1"
 p2panda-store = "0.7.1"
 prost = "0.14"
-serde = { version = "1.0.219" }
+serde = { version = "1.0" }
 sqlx = { version = "0.9", default-features = false }
-thiserror = "2.0.17"
-tokio = { version = "1.46.1" }
-tokio-stream = { version = "0.1.18" }
+thiserror = "2.0"
+tokio = { version = "1.46" }
+tokio-stream = { version = "0.1" }
 tonic = "0.14"
 tonic-prost = "0.14"
 tonic-prost-build = "0.14"

@@ -6,18 +6,18 @@ rust-version = "1.96"
 publish = false
 
 [dependencies]
-anyhow = "1.0.100"
-axum = { version = "0.8.5", features = ["ws"] }
-axum-login = "0.18.0"
-chrono = { version = "0.4.42", features = ["serde"] }
-confy = "2.0.0"
-futures-util = "0.3.31"
-lazy_static = "1.5.0"
-password-auth = "1.0.0"
-pwgen2 = "0.7.3"
+anyhow = "1.0"
+axum = { version = "0.8", features = ["ws"] }
+axum-login = "0.18"
+chrono = { version = "0.4", features = ["serde"] }
+confy = "2.0"
+futures-util = "0.3"
+lazy_static = "1.5"
+password-auth = "1.0"
+pwgen2 = "0.7"
 serde = { workspace = true, features = ["derive"] }
-serde_json = "1.0.145"
-short-uuid = "0.2.0"
+serde_json = "1.0"
+short-uuid = "0.2"
 sqlx = { workspace = true, features = [
   "runtime-tokio",
   "tls-native-tls",
@@ -25,14 +25,14 @@ sqlx = { workspace = true, features = [
   "chrono",
 ] }
 thiserror = { workspace = true }
-time = "0.3.44"
+time = "0.3"
 tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
-tower = "0.5.2"
-tower-http = { version = "0.6.6", features = ["cors", "fs", "trace"] }
+tower = "0.5"
+tower-http = { version = "0.6", features = ["cors", "fs", "trace"] }
 tower-sessions = { version = "0.15", features = ["signed"] }
 tower-sessions-sqlx-store = { version = "0.15", features = ["sqlite"] }
-tracing = "0.1.41"
-tracing-subscriber = { version = "0.3.20", features = ["env-filter"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 utoipa = "6.0"
 utoipa-axum = "0.3"
 utoipa-swagger-ui = { version = "10.0", features = ["axum", "vendored"] }
@@ -42,5 +42,5 @@ lores-p2panda-server = { path = "../lores-p2panda-server" }
 coop-cloud-docker-apps = { path = "../coop-cloud-docker-apps" }
 p2panda-core = { workspace = true }
 tonic = { workspace = true }
-rand = "0.10.0"
-regex = "1.12.3"
+rand = "0.10"
+regex = "1.12"
