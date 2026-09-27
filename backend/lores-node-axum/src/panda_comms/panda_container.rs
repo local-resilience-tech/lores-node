@@ -4,8 +4,8 @@ use tokio::sync::{Mutex, mpsc};
 use tracing::{info, warn};
 
 use lores_p2panda::{
-    IncomingOperation, PandaNodeError, RegionAdminTopic, RegionId, RegionTopic, RelayUrl, Topic,
-    p2panda_core::{Hash, SigningKey, VerifyingKey, identity::VERIFYING_KEY_LEN},
+    Credentials, IncomingOperation, PandaNodeError, RegionAdminTopic, RegionId, RegionTopic, RelayUrl, Topic,
+    p2panda_core::{Hash, VerifyingKey, identity::VERIFYING_KEY_LEN},
     panda_node::{LogCount, OperationCountByAuthorAndTopic, PandaNode, PandaPublishError, RequiredNodeParams, SubscriptionError},
     topic_status::ConnectionStatus,
 };
@@ -33,7 +33,7 @@ use super::{
 
 #[derive(Default, Clone)]
 pub struct NodeParams {
-    pub private_key: Option<SigningKey>,
+    pub credentials: Option<Credentials>,
     pub network_name: Option<String>,
     pub bootstrap_node_ids: Vec<VerifyingKey>,
 }
@@ -80,9 +80,9 @@ impl PandaContainer {
         params_lock.network_name = Some(network_name);
     }
 
-    pub async fn set_private_key(&self, private_key: SigningKey) {
+    pub async fn set_credentials(&self, credentials: Credentials) {
         let mut params_lock = self.params.lock().await;
-        params_lock.private_key = Some(private_key);
+        params_lock.credentials = Some(credentials);
     }
 
     pub async fn set_bootstrap_node_ids(&self, bootstrap_node_ids: Vec<VerifyingKey>) {
@@ -95,12 +95,12 @@ impl PandaContainer {
 
         let params = self.get_params().await;
 
-        let private_key: Option<SigningKey> = params.private_key;
+        let credentials: Option<Credentials> = params.credentials;
         let network_name: Option<String> = params.network_name;
         let boostrap_node_ids: Vec<VerifyingKey> = params.bootstrap_node_ids;
 
-        if private_key.is_none() {
-            info!("P2Panda: No private key found, not starting network");
+        if credentials.is_none() {
+            info!("P2Panda: No credentials found, not starting network");
             return Ok(());
         }
 
@@ -109,10 +109,10 @@ impl PandaContainer {
             return Ok(());
         }
 
-        let private_key = private_key.unwrap();
+        let credentials = credentials.unwrap();
         let network_name = network_name.unwrap();
 
-        self.start_for(private_key, network_name, &boostrap_node_ids, operations_database_url)
+        self.start_for(credentials, network_name, &boostrap_node_ids, operations_database_url)
             .await?;
 
         Ok(())
@@ -120,13 +120,13 @@ impl PandaContainer {
 
     async fn start_for(
         &self,
-        private_key: SigningKey,
+        credentials: Credentials,
         network_name: String,
         boostrap_node_ids: &Vec<VerifyingKey>,
         operations_database_url: &str,
     ) -> Result<(), PandaNodeError> {
         let required_params = RequiredNodeParams {
-            private_key,
+            credentials,
             network_id: Hash::digest(network_name.as_bytes()),
             bootstrap_node_ids: boostrap_node_ids.clone(),
             relay_url: None,
@@ -157,9 +157,9 @@ impl PandaContainer {
 
     pub async fn get_public_key(&self) -> Result<VerifyingKey, Box<dyn std::error::Error>> {
         let params_lock = self.params.lock().await;
-        match params_lock.private_key {
-            Some(ref key) => Ok(key.verifying_key()),
-            None => Err("Private key not set".into()),
+        match params_lock.credentials {
+            Some(ref credentials) => Ok(credentials.verifying_key()),
+            None => Err("Credentials not set".into()),
         }
     }
 

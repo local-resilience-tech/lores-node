@@ -12,6 +12,7 @@ lazy_static! {
 pub struct LoresNodeConfig {
     pub public_key_hex: Option<String>,
     pub private_key_hex: Option<String>,
+    pub identity_secret_seed_hex: Option<String>,
     pub network_name: Option<String>,
     pub region_name: Option<String>,
     pub bootstrap_node_ids: Option<Vec<String>>,
@@ -24,6 +25,7 @@ impl ::std::default::Default for LoresNodeConfig {
         Self {
             public_key_hex: None,
             private_key_hex: None,
+            identity_secret_seed_hex: None,
             network_name: Some("lores".to_string()),
             region_name: None,
             region_ids: None,

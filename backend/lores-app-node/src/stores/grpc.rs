@@ -6,8 +6,8 @@ use lores_p2panda_client::{PandaClient, PandaError, PublishResult};
 use tokio::sync::Mutex;
 
 use crate::{
-    stores::{OperationStore, OperationStream, RawOperationEvent, StoreError, StorePublishResult},
     NodeId, OperationId,
+    stores::{OperationStore, OperationStream, RawOperationEvent, StoreError, StorePublishResult},
 };
 
 impl From<PandaError> for StoreError {

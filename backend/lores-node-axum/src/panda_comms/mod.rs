@@ -34,15 +34,15 @@ pub async fn start_panda(config_state: &LoresNodeConfigState, container: &PandaC
         }
     }
 
-    let private_key = match repo.get_or_create_private_key(config_state).await {
-        Ok(key) => key,
+    let credentials = match repo.get_or_create_credentials(config_state).await {
+        Ok(credentials) => credentials,
         Err(e) => {
-            info!("Failed to get or create private key: {:?}", e);
+            info!("Failed to get or create credentials: {:?}", e);
             return;
         }
     };
 
-    let public_key = private_key.verifying_key();
+    let public_key = credentials.verifying_key();
 
     NodesWriteRepo::init()
         .upsert_id(projections_pool, &public_key.to_hex())
@@ -51,7 +51,7 @@ pub async fn start_panda(config_state: &LoresNodeConfigState, container: &PandaC
             panic!("failed to upsert node id; backend cannot continue: {:?}", e);
         });
 
-    container.set_private_key(private_key).await;
+    container.set_credentials(credentials).await;
 
     let bootstrap_node_ids = repo.get_bootstrap_node_ids(config_state).await;
     container.set_bootstrap_node_ids(bootstrap_node_ids).await;

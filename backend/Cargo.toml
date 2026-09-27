@@ -14,7 +14,11 @@ default-members = ["lores-node-axum"]
 
 [workspace.dependencies]
 hex = "0.4.3"
-p2panda-core = "0.7.0"
+p2panda = "0.7.1"
+p2panda-core = "0.7.1"
+p2panda-encryption = "0.7.1"
+p2panda-net = "0.7.1"
+p2panda-store = "0.7.1"
 prost = "0.14"
 serde = { version = "1.0.219" }
 sqlx = { version = "0.8.6", default-features = false }
@@ -24,3 +28,15 @@ tokio-stream = { version = "0.1.18" }
 tonic = "0.14"
 tonic-prost = "0.14"
 tonic-prost-build = "0.14"
+
+[patch.crates-io]
+p2panda = { git = "https://github.com/jadehopepunk/p2panda.git", branch = "expose-named-stream-cursors" }
+p2panda-auth = { git = "https://github.com/jadehopepunk/p2panda.git", branch = "expose-named-stream-cursors" }
+p2panda-core = { git = "https://github.com/jadehopepunk/p2panda.git", branch = "expose-named-stream-cursors" }
+p2panda-discovery = { git = "https://github.com/jadehopepunk/p2panda.git", branch = "expose-named-stream-cursors" }
+p2panda-encryption = { git = "https://github.com/jadehopepunk/p2panda.git", branch = "expose-named-stream-cursors" }
+p2panda-net = { git = "https://github.com/jadehopepunk/p2panda.git", branch = "expose-named-stream-cursors" }
+p2panda-spaces = { git = "https://github.com/jadehopepunk/p2panda.git", branch = "expose-named-stream-cursors" }
+p2panda-store = { git = "https://github.com/jadehopepunk/p2panda.git", branch = "expose-named-stream-cursors" }
+p2panda-stream = { git = "https://github.com/jadehopepunk/p2panda.git", branch = "expose-named-stream-cursors" }
+p2panda-sync = { git = "https://github.com/jadehopepunk/p2panda.git", branch = "expose-named-stream-cursors" }
