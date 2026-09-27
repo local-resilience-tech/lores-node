@@ -14,7 +14,7 @@ confy = "2.0"
 futures-util = "0.3"
 lazy_static = "1.5"
 password-auth = "1.0"
-pwgen2 = "0.7"
+pwgen2 = "0.8"
 serde = { workspace = true, features = ["derive"] }
 serde_json = "1.0"
 short-uuid = "0.2"
@@ -28,7 +28,7 @@ thiserror = { workspace = true }
 time = "0.3"
 tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
 tower = "0.5"
-tower-http = { version = "0.6", features = ["cors", "fs", "trace"] }
+tower-http = { version = "0.7", features = ["cors", "fs", "trace"] }
 tower-sessions = { version = "0.15", features = ["signed"] }
 tower-sessions-sqlx-store = { version = "0.15", features = ["sqlite"] }
 tracing = "0.1"

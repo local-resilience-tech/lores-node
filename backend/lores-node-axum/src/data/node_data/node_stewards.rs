@@ -1,4 +1,5 @@
 use chrono::NaiveDateTime;
+use pwgen2::pwgen::config::PasswordConfigError;
 use pwgen2::pwgen::{PasswordConfig, generate_password};
 use serde::Serialize;
 use short_uuid::ShortUuid;
@@ -53,9 +54,10 @@ impl NodeStewardRow {
         }
     }
 
-    pub fn set_password_reset_token(&mut self) {
-        self.password_reset_token = Some(new_password_reset_token());
+    pub fn set_password_reset_token(&mut self) -> Result<(), PasswordConfigError> {
+        self.password_reset_token = Some(new_password_reset_token()?);
         self.password_reset_token_expires_at = Some(new_reset_token_expiry());
+        Ok(())
     }
 
     pub fn token_equals(&self, token: &str) -> bool {
@@ -180,8 +182,8 @@ fn new_node_steward_id() -> String {
     ShortUuid::generate().to_string()
 }
 
-fn new_password_reset_token() -> String {
-    let pw_config = PasswordConfig::alphanumeric(8).unwrap();
+fn new_password_reset_token() -> Result<String, PasswordConfigError> {
+    let pw_config = PasswordConfig::alphanumeric(8)?;
     generate_password(&pw_config)
 }
 

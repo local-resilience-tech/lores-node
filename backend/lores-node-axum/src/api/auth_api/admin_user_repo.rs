@@ -1,4 +1,5 @@
 use password_auth::generate_hash;
+use pwgen2::pwgen::config::PasswordConfigError;
 use pwgen2::pwgen::{PasswordConfig, generate_password};
 use tracing::warn;
 
@@ -25,7 +26,10 @@ impl AdminUserRepo {
             return Err(GeneratePasswordError::PasswordAlreadySet);
         }
 
-        let password = self.generate_admin_password();
+        let password = self.generate_admin_password().map_err(|e| {
+            warn!("Error generating admin password: {}", e);
+            GeneratePasswordError::ServerError
+        })?;
 
         // Hash the password and store in config
         let hashed_password = generate_hash(&password);
@@ -54,8 +58,8 @@ impl AdminUserRepo {
         self.get_hashed_password().await.is_some()
     }
 
-    fn generate_admin_password(&self) -> String {
-        let pw_config = PasswordConfig::new(20).unwrap();
+    fn generate_admin_password(&self) -> Result<String, PasswordConfigError> {
+        let pw_config = PasswordConfig::new(20)?;
         generate_password(&pw_config)
     }
 
