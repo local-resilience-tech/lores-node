@@ -1,21 +1,14 @@
 import { Stack, Title, Text } from "@mantine/core"
 import { getApi } from "../../../../api"
 import { NodeStewardSetPasswordRequest } from "../../../../api/Api"
-import {
-  actionFailure,
-  ActionPromiseResult,
-  actionSuccess,
-  Anchor,
-} from "../../../../components"
+import { actionFailure, ActionPromiseResult, actionSuccess, Anchor } from "../../../../components"
 import NodeStewardSetPasswordForm from "../components/NodeStewardSetPasswordForm"
 import { useState } from "react"
 
 export default function NodeStewardSetPassword() {
   const [success, setSuccess] = useState(false)
 
-  const onSubmit = async (
-    values: NodeStewardSetPasswordRequest
-  ): Promise<ActionPromiseResult> => {
+  const onSubmit = async (values: NodeStewardSetPasswordRequest): Promise<ActionPromiseResult> => {
     return getApi()
       .authApi.nodeStewardSetPassword(values)
       .then((_response) => {
@@ -46,10 +39,7 @@ export default function NodeStewardSetPassword() {
       {!success && (
         <Stack gap="lg">
           <Stack gap="md">
-            <Text>
-              You should have been given your id and one-use token by the node
-              admin.
-            </Text>
+            <Text>You should have been given your id and one-use token by the node admin.</Text>
           </Stack>
           <NodeStewardSetPasswordForm onSubmit={onSubmit} />
         </Stack>

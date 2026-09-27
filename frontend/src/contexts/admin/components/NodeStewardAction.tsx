@@ -18,17 +18,8 @@ const names: Record<NodeStewardAction["type"], string> = {
   enable: "Enable",
 }
 
-function NodeStewardActionButton({
-  action,
-  record,
-}: {
-  action: NodeStewardAction
-  record: NodeSteward
-}) {
-  const handleButtonPress = async (
-    record: NodeSteward,
-    handler: (record: NodeSteward) => Promise<ActionPromiseResult>
-  ) => {
+function NodeStewardActionButton({ action, record }: { action: NodeStewardAction; record: NodeSteward }) {
+  const handleButtonPress = async (record: NodeSteward, handler: (record: NodeSteward) => Promise<ActionPromiseResult>) => {
     try {
       const result = await handler(record)
       console.log("THE result:", result)
@@ -46,10 +37,7 @@ function NodeStewardActionButton({
 
   if (action.handler) {
     return (
-      <ActionButton
-        onClick={() => handleButtonPress(record, action.handler!)}
-        {...buttonProps}
-      >
+      <ActionButton onClick={() => handleButtonPress(record, action.handler!)} {...buttonProps}>
         {buttonText}
       </ActionButton>
     )
@@ -69,21 +57,11 @@ function NodeStewardActionButton({
   return null
 }
 
-export default function NodeStewardActions({
-  actions,
-  record,
-}: {
-  actions: NodeStewardAction[]
-  record: NodeSteward
-}) {
+export default function NodeStewardActions({ actions, record }: { actions: NodeStewardAction[]; record: NodeSteward }) {
   return (
     <Stack align="flex-start">
       {actions.map((action) => (
-        <NodeStewardActionButton
-          key={action.type}
-          action={action}
-          record={record}
-        />
+        <NodeStewardActionButton key={action.type} action={action} record={record} />
       ))}
     </Stack>
   )

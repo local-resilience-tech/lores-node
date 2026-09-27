@@ -1,12 +1,5 @@
 import { Stack, Title, Text, Group } from "@mantine/core"
-import {
-  ActionPromiseResult,
-  actionSuccess,
-  actionFailure,
-  ActionButton,
-  CopyIconButton,
-  Anchor,
-} from "../../../../components"
+import { ActionPromiseResult, actionSuccess, actionFailure, ActionButton, CopyIconButton, Anchor } from "../../../../components"
 import { getApi } from "../../../../api"
 import { useEffect, useState } from "react"
 
@@ -38,8 +31,7 @@ export default function SetupAdmin() {
     checkHasPassword()
   }, [])
 
-  let state: "has_password" | "needs_password" | "password_generated" =
-    "needs_password"
+  let state: "has_password" | "needs_password" | "password_generated" = "needs_password"
 
   if (hasPassword === true) {
     state = "has_password"
@@ -68,15 +60,10 @@ export default function SetupAdmin() {
       {state == "needs_password" && (
         <Stack gap="xl">
           <Stack gap="md">
+            <Text>The admin password is only used to create the users you use to steward this node. It can be reset at any time.</Text>
             <Text>
-              The admin password is only used to create the users you use to
-              steward this node. It can be reset at any time.
-            </Text>
-            <Text>
-              The password is auto-generated and only displayed to you this
-              once. If you're ready to store it in a safe place (an encrypted
-              password manager, for example), click the button below to
-              continue.
+              The password is auto-generated and only displayed to you this once. If you're ready to store it in a safe place (an encrypted
+              password manager, for example), click the button below to continue.
             </Text>
           </Stack>
           <ActionButton onClick={generatePassword} expand>
@@ -101,10 +88,7 @@ export default function SetupAdmin() {
             </Text>
             <CopyIconButton value={password} />
           </Group>
-          <Text>
-            Make sure to store this password in a safe place. When you've done
-            that, you can go ahead and:
-          </Text>
+          <Text>Make sure to store this password in a safe place. When you've done that, you can go ahead and:</Text>
           <Text>
             <Anchor href="../login">Login as admin</Anchor>
           </Text>

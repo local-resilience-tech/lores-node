@@ -7,11 +7,7 @@ interface CopyIconButtonProps {
   successText?: string
 }
 
-export default function CopyIconButton({
-  value,
-  prompt,
-  successText,
-}: CopyIconButtonProps) {
+export default function CopyIconButton({ value, prompt, successText }: CopyIconButtonProps) {
   return (
     <CopyButton value={value}>
       {({ copied, copy }) => (

@@ -22,16 +22,12 @@ const statusResponses: Record<number, string> = {
 export function actionFailure(error: any): ActionPromiseResult {
   console.error("Action failed:", error)
 
-  const errorString =
-    error.response?.data ||
-    statusResponses[error.response?.status] ||
-    "ServerError"
+  const errorString = error.response?.data || statusResponses[error.response?.status] || "ServerError"
 
   const errorResult = {
     success: false,
     error: errorString,
-    login_needed:
-      error.response?.status === 401 || error.response?.status === 403,
+    login_needed: error.response?.status === 401 || error.response?.status === 403,
   }
   console.log("Action result:", errorResult)
   return errorResult
@@ -62,23 +58,13 @@ export function useOnSubmitWithResult<ValType>(
 
 export type ActionResultHandlers = Record<string, React.ReactNode>
 
-export function DisplayFormError({
-  heading,
-  description,
-}: {
-  heading: string
-  description?: string | React.ReactNode
-}) {
+export function DisplayFormError({ heading, description }: { heading: string; description?: string | React.ReactNode }) {
   return (
     <Stack gap="md">
       <Text c="red" fw="bold" fs="lg">
         {heading}
       </Text>
-      {description && typeof description === "string" ? (
-        <Text c="red">{description}</Text>
-      ) : (
-        description
-      )}
+      {description && typeof description === "string" ? <Text c="red">{description}</Text> : description}
     </Stack>
   )
 }
@@ -90,12 +76,7 @@ interface DisplayActionResultProps {
   redirectToLogin?: boolean
 }
 
-export function DisplayActionResult({
-  result,
-  handlers = {},
-  displaySuccess = false,
-  redirectToLogin = true,
-}: DisplayActionResultProps) {
+export function DisplayActionResult({ result, handlers = {}, displaySuccess = false, redirectToLogin = true }: DisplayActionResultProps) {
   const navigate = useNavigate()
 
   if (!result) return null

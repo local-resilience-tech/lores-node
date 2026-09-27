@@ -68,322 +68,309 @@ export enum AdminLoginError {
 }
 
 export interface AdminCredentials {
-  password: string;
+  password: string
 }
 
 export interface AppInstallation {
-  app_name: string;
+  app_name: string
   /** @format int64 */
-  region_node_id: number;
-  version: string;
+  region_node_id: number
+  version: string
 }
 
 export interface AppRegionReference {
-  app: LocalApp;
-  region_id: string;
+  app: LocalApp
+  region_id: string
 }
 
 export interface ApproveJoinRequestData {
-  node_id: string;
-  region_id: string;
+  node_id: string
+  region_id: string
 }
 
 export interface BootstrapNodeRequest {
-  node_id: string;
+  node_id: string
 }
 
 export type ClientEvent =
   | {
-      NodeJoinedRegion: RegionWithNodes;
+      NodeJoinedRegion: RegionWithNodes
     }
   | {
-      RegionNodeUpdated: RegionNodeDetails;
+      RegionNodeUpdated: RegionNodeDetails
     }
   | {
-      RegionAppUpdated: RegionAppWithInstallations;
+      RegionAppUpdated: RegionAppWithInstallations
     }
   | {
-      RegionUpdated: Region;
+      RegionUpdated: Region
     }
   | {
-      RegionForgotten: string;
+      RegionForgotten: string
     }
   | {
-      LocalAppCreated: LocalApp;
+      LocalAppCreated: LocalApp
     }
   | {
-      LocalAppUpdated: LocalApp;
+      LocalAppUpdated: LocalApp
     }
   | {
-      LocalAppsReloaded: LocalApp[];
+      LocalAppsReloaded: LocalApp[]
     }
   | {
-      NodeHeartbeatReceived: NodeHeartbeat;
-    };
+      NodeHeartbeatReceived: NodeHeartbeat
+    }
 
 export interface CreateRegionData {
-  name: string;
-  node_steward_conduct_url?: string | null;
-  organisation_name?: string | null;
-  organisation_url?: string | null;
-  slug: string;
-  user_conduct_url?: string | null;
-  user_privacy_url?: string | null;
+  name: string
+  node_steward_conduct_url?: string | null
+  organisation_name?: string | null
+  organisation_url?: string | null
+  slug: string
+  user_conduct_url?: string | null
+  user_privacy_url?: string | null
 }
 
 export interface DockerService {
-  current_state: string;
-  current_state_duration: string;
-  id: string;
-  image: string;
-  name: string;
-  node_name: string;
+  current_state: string
+  current_state_duration: string
+  id: string
+  image: string
+  name: string
+  node_name: string
 }
 
 export interface DockerStackWithServices {
-  name: string;
-  services: DockerService[];
+  name: string
+  services: DockerService[]
 }
 
 export interface ForgetRegionData {
-  region_id: string;
+  region_id: string
 }
 
 export interface JoinRegionRequestData {
-  about_your_node: string;
-  about_your_stewards: string;
-  agreed_node_steward_conduct_url?: string | null;
-  region_id: string;
+  about_your_node: string
+  about_your_stewards: string
+  agreed_node_steward_conduct_url?: string | null
+  region_id: string
 }
 
 export interface LatLng {
   /** @format double */
-  lat: number;
+  lat: number
   /** @format double */
-  lng: number;
+  lng: number
 }
 
 export interface LocalApp {
-  bound_to_region_id?: string | null;
+  bound_to_region_id?: string | null
   /**
    * Instance ID declared via the `lores.instance_id` Docker service label.
    * `None` means the app did not declare one;
    */
-  instance_id?: string | null;
-  name: string;
-  source?: LocalAppSource;
-  url?: null | NodeAppUrl;
-  version: string;
+  instance_id?: string | null
+  name: string
+  source?: LocalAppSource
+  url?: null | NodeAppUrl
+  version: string
 }
 
 export interface LocalAppFormData {
-  instance_id?: string | null;
-  name: string;
-  version: string;
+  instance_id?: string | null
+  name: string
+  version: string
 }
 
 export interface LocalAppInstanceRef {
-  instance_id?: string | null;
-  name: string;
+  instance_id?: string | null
+  name: string
 }
 
 export interface Network {
-  name: string;
-  node: NetworkNode;
+  name: string
+  node: NetworkNode
 }
 
 export interface NetworkNode {
-  id: string;
+  id: string
 }
 
 export interface NodeAppUrl {
-  internet_url?: string | null;
-  local_network_url?: string | null;
+  internet_url?: string | null
+  local_network_url?: string | null
 }
 
 export interface NodeHeartbeat {
-  node_id: string;
-  region_id: string;
+  node_id: string
+  region_id: string
 }
 
 export interface NodeStatusResponse {
-  topics: TopicStatusEntry[];
+  topics: TopicStatusEntry[]
 }
 
 export interface NodeSteward {
-  created_at: string;
-  id: string;
-  name: string;
-  status: NodeStewardStatus;
+  created_at: string
+  id: string
+  name: string
+  status: NodeStewardStatus
 }
 
 export interface NodeStewardCreationData {
-  name: string;
+  name: string
 }
 
 export interface NodeStewardCreationResult {
-  node_steward: NodeSteward;
-  password_reset_token: string;
+  node_steward: NodeSteward
+  password_reset_token: string
 }
 
 export interface NodeStewardCredentials {
-  id: string;
-  password: string;
+  id: string
+  password: string
 }
 
 export interface NodeStewardSetPasswordRequest {
-  id: string;
-  new_password: string;
-  token: string;
+  id: string
+  new_password: string
+  token: string
 }
 
 export interface NodeStewardUser {
-  id: string;
-  name: string;
+  id: string
+  name: string
 }
 
 export interface OperationCountEntry {
-  author_node_id: string;
+  author_node_id: string
   /** @format int64 */
-  count: number;
-  topic: string;
+  count: number
+  topic: string
 }
 
 export interface P2PandaLogCount {
-  node_id: string;
+  node_id: string
   /** @format int64 */
-  total: number;
+  total: number
 }
 
 export interface P2PandaLogCounts {
-  counts: P2PandaLogCount[];
+  counts: P2PandaLogCount[]
 }
 
 export interface P2PandaNodeDetails {
-  panda_node_id: string;
+  panda_node_id: string
 }
 
 export interface PeerConnectionEntry {
-  node_id: string;
-  status: PeerConnectionStatus;
+  node_id: string
+  status: PeerConnectionStatus
 }
 
 export interface Region {
-  creator_node_id?: string | null;
-  id: string;
-  map?: null | RegionMap;
-  name?: string | null;
-  node_steward_conduct_url?: string | null;
-  organisation_name?: string | null;
-  organisation_url?: string | null;
-  slug?: string | null;
-  user_conduct_url?: string | null;
-  user_privacy_url?: string | null;
+  creator_node_id?: string | null
+  id: string
+  map?: null | RegionMap
+  name?: string | null
+  node_steward_conduct_url?: string | null
+  organisation_name?: string | null
+  organisation_url?: string | null
+  slug?: string | null
+  user_conduct_url?: string | null
+  user_privacy_url?: string | null
 }
 
 export interface RegionAppWithInstallations {
-  installations: AppInstallation[];
-  name: string;
-  region_id: string;
+  installations: AppInstallation[]
+  name: string
+  region_id: string
 }
 
 export interface RegionMap {
-  map_data_url: string;
-  max_latlng: LatLng;
-  min_latlng: LatLng;
+  map_data_url: string
+  max_latlng: LatLng
+  min_latlng: LatLng
 }
 
 export interface RegionNodeDetails {
-  about_your_node?: string | null;
-  about_your_stewards?: string | null;
-  agreed_node_steward_conduct_url?: string | null;
-  domain_on_internet?: string | null;
-  domain_on_local_network?: string | null;
+  about_your_node?: string | null
+  about_your_stewards?: string | null
+  agreed_node_steward_conduct_url?: string | null
+  domain_on_internet?: string | null
+  domain_on_local_network?: string | null
   /** @format int64 */
-  id: number;
-  latlng?: null | LatLng;
-  name?: string | null;
-  node_id: string;
-  public_ipv4?: string | null;
-  region_id: string;
-  state?: null | NodeState;
-  status?: null | RegionNodeStatus;
-  status_text?: string | null;
+  id: number
+  latlng?: null | LatLng
+  name?: string | null
+  node_id: string
+  public_ipv4?: string | null
+  region_id: string
+  state?: null | NodeState
+  status?: null | RegionNodeStatus
+  status_text?: string | null
 }
 
 export interface RegionNodeStatusData {
-  state?: null | NodeState;
-  text?: string | null;
+  state?: null | NodeState
+  text?: string | null
 }
 
 export interface RegionWithNodes {
-  nodes: RegionNodeDetails[];
-  region: Region;
+  nodes: RegionNodeDetails[]
+  region: Region
 }
 
 export interface TopicStatusEntry {
-  connections: PeerConnectionEntry[];
-  topic_hex: string;
+  connections: PeerConnectionEntry[]
+  topic_hex: string
 }
 
 export interface UpdateMapData {
-  image_data_url: string;
-  max_latlng: LatLng;
-  min_latlng: LatLng;
-  region_id: string;
+  image_data_url: string
+  max_latlng: LatLng
+  min_latlng: LatLng
+  region_id: string
 }
 
 export interface UpdateNodeDetails {
-  domain_on_internet?: string | null;
-  domain_on_local_network?: string | null;
-  latlng?: null | LatLng;
-  name: string;
-  public_ipv4?: string | null;
+  domain_on_internet?: string | null
+  domain_on_local_network?: string | null
+  latlng?: null | LatLng
+  name: string
+  public_ipv4?: string | null
 }
 
 export interface UserRef {
-  user_id: string;
+  user_id: string
 }
 
-import type {
-  AxiosInstance,
-  AxiosRequestConfig,
-  AxiosResponse,
-  HeadersDefaults,
-  ResponseType,
-} from "axios";
-import axios from "axios";
+import type { AxiosInstance, AxiosRequestConfig, AxiosResponse, HeadersDefaults, ResponseType } from "axios"
+import axios from "axios"
 
-export type QueryParamsType = Record<string | number, any>;
+export type QueryParamsType = Record<string | number, any>
 
-export interface FullRequestParams
-  extends Omit<AxiosRequestConfig, "data" | "params" | "url" | "responseType"> {
+export interface FullRequestParams extends Omit<AxiosRequestConfig, "data" | "params" | "url" | "responseType"> {
   /** set parameter to `true` for call `securityWorker` for this request */
-  secure?: boolean;
+  secure?: boolean
   /** request path */
-  path: string;
+  path: string
   /** content type of request body */
-  type?: ContentType;
+  type?: ContentType
   /** query params */
-  query?: QueryParamsType;
+  query?: QueryParamsType
   /** format of response (i.e. response.json() -> format: "json") */
-  format?: ResponseType;
+  format?: ResponseType
   /** request body */
-  body?: unknown;
+  body?: unknown
 }
 
-export type RequestParams = Omit<
-  FullRequestParams,
-  "body" | "method" | "query" | "path"
->;
+export type RequestParams = Omit<FullRequestParams, "body" | "method" | "query" | "path">
 
-export interface ApiConfig<SecurityDataType = unknown>
-  extends Omit<AxiosRequestConfig, "data" | "cancelToken"> {
-  securityWorker?: (
-    securityData: SecurityDataType | null,
-  ) => Promise<AxiosRequestConfig | void> | AxiosRequestConfig | void;
-  secure?: boolean;
-  format?: ResponseType;
+export interface ApiConfig<SecurityDataType = unknown> extends Omit<AxiosRequestConfig, "data" | "cancelToken"> {
+  securityWorker?: (securityData: SecurityDataType | null) => Promise<AxiosRequestConfig | void> | AxiosRequestConfig | void
+  secure?: boolean
+  format?: ResponseType
 }
 
 export enum ContentType {
@@ -395,80 +382,64 @@ export enum ContentType {
 }
 
 export class HttpClient<SecurityDataType = unknown> {
-  public instance: AxiosInstance;
-  private securityData: SecurityDataType | null = null;
-  private securityWorker?: ApiConfig<SecurityDataType>["securityWorker"];
-  private secure?: boolean;
-  private format?: ResponseType;
+  public instance: AxiosInstance
+  private securityData: SecurityDataType | null = null
+  private securityWorker?: ApiConfig<SecurityDataType>["securityWorker"]
+  private secure?: boolean
+  private format?: ResponseType
 
-  constructor({
-    securityWorker,
-    secure,
-    format,
-    ...axiosConfig
-  }: ApiConfig<SecurityDataType> = {}) {
+  constructor({ securityWorker, secure, format, ...axiosConfig }: ApiConfig<SecurityDataType> = {}) {
     this.instance = axios.create({
       ...axiosConfig,
       baseURL: axiosConfig.baseURL || "",
-    });
-    this.secure = secure;
-    this.format = format;
-    this.securityWorker = securityWorker;
+    })
+    this.secure = secure
+    this.format = format
+    this.securityWorker = securityWorker
   }
 
   public setSecurityData = (data: SecurityDataType | null) => {
-    this.securityData = data;
-  };
+    this.securityData = data
+  }
 
-  protected mergeRequestParams(
-    params1: AxiosRequestConfig,
-    params2?: AxiosRequestConfig,
-  ): AxiosRequestConfig {
-    const method = params1.method || (params2 && params2.method);
+  protected mergeRequestParams(params1: AxiosRequestConfig, params2?: AxiosRequestConfig): AxiosRequestConfig {
+    const method = params1.method || (params2 && params2.method)
 
     return {
       ...this.instance.defaults,
       ...params1,
       ...(params2 || {}),
       headers: {
-        ...((method &&
-          this.instance.defaults.headers[
-            method.toLowerCase() as keyof HeadersDefaults
-          ]) ||
-          {}),
+        ...((method && this.instance.defaults.headers[method.toLowerCase() as keyof HeadersDefaults]) || {}),
         ...(params1.headers || {}),
         ...((params2 && params2.headers) || {}),
       },
-    };
+    }
   }
 
   protected stringifyFormItem(formItem: unknown) {
     if (typeof formItem === "object" && formItem !== null) {
-      return JSON.stringify(formItem);
+      return JSON.stringify(formItem)
     } else {
-      return `${formItem}`;
+      return `${formItem}`
     }
   }
 
   protected createFormData(input: Record<string, unknown>): FormData {
     if (input instanceof FormData) {
-      return input;
+      return input
     }
     return Object.keys(input || {}).reduce((formData, key) => {
-      const property = input[key];
-      const propertyContent: any[] =
-        property instanceof Array ? property : [property];
+      const property = input[key]
+      const propertyContent: any[] = property instanceof Array ? property : [property]
 
       for (const formItem of propertyContent) {
-        const isFileType = formItem instanceof Blob || formItem instanceof File;
-        formData.append(
-          key,
-          isFileType ? formItem : this.stringifyFormItem(formItem),
-        );
+        const isFileType = formItem instanceof Blob || formItem instanceof File
+        formData.append(key, isFileType ? formItem : this.stringifyFormItem(formItem))
       }
 
-      return formData;
-    }, new FormData());
+      return formData
+    }, new FormData())
   }
 
   public request = async <T = any, _E = any>({
@@ -481,29 +452,16 @@ export class HttpClient<SecurityDataType = unknown> {
     ...params
   }: FullRequestParams): Promise<AxiosResponse<T>> => {
     const secureParams =
-      ((typeof secure === "boolean" ? secure : this.secure) &&
-        this.securityWorker &&
-        (await this.securityWorker(this.securityData))) ||
-      {};
-    const requestParams = this.mergeRequestParams(params, secureParams);
-    const responseFormat = format || this.format || undefined;
+      ((typeof secure === "boolean" ? secure : this.secure) && this.securityWorker && (await this.securityWorker(this.securityData))) || {}
+    const requestParams = this.mergeRequestParams(params, secureParams)
+    const responseFormat = format || this.format || undefined
 
-    if (
-      type === ContentType.FormData &&
-      body &&
-      body !== null &&
-      typeof body === "object"
-    ) {
-      body = this.createFormData(body as Record<string, unknown>);
+    if (type === ContentType.FormData && body && body !== null && typeof body === "object") {
+      body = this.createFormData(body as Record<string, unknown>)
     }
 
-    if (
-      type === ContentType.Text &&
-      body &&
-      body !== null &&
-      typeof body !== "string"
-    ) {
-      body = JSON.stringify(body);
+    if (type === ContentType.Text && body && body !== null && typeof body !== "string") {
+      body = JSON.stringify(body)
     }
 
     return this.instance.request({
@@ -516,8 +474,8 @@ export class HttpClient<SecurityDataType = unknown> {
       responseType: responseFormat,
       data: body,
       url: path,
-    });
-  };
+    })
+  }
 }
 
 /**
@@ -525,9 +483,7 @@ export class HttpClient<SecurityDataType = unknown> {
  * @version 0.23.0
  * @license
  */
-export class Api<
-  SecurityDataType extends unknown,
-> extends HttpClient<SecurityDataType> {
+export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDataType> {
   adminApi = {
     /**
      * No description
@@ -549,10 +505,7 @@ export class Api<
      * @name CreateNodeSteward
      * @request POST:/admin_api/node_stewards
      */
-    createNodeSteward: (
-      data: NodeStewardCreationData,
-      params: RequestParams = {},
-    ) =>
+    createNodeSteward: (data: NodeStewardCreationData, params: RequestParams = {}) =>
       this.request<NodeStewardCreationResult, string>({
         path: `/admin_api/node_stewards`,
         method: "POST",
@@ -603,7 +556,7 @@ export class Api<
         format: "json",
         ...params,
       }),
-  };
+  }
   authApi = {
     /**
      * No description
@@ -667,10 +620,7 @@ export class Api<
      * @name NodeStewardLogin
      * @request POST:/auth_api/node_steward/login
      */
-    nodeStewardLogin: (
-      data: NodeStewardCredentials,
-      params: RequestParams = {},
-    ) =>
+    nodeStewardLogin: (data: NodeStewardCredentials, params: RequestParams = {}) =>
       this.request<UserRef, NodeStewardLoginError>({
         path: `/auth_api/node_steward/login`,
         method: "POST",
@@ -686,10 +636,7 @@ export class Api<
      * @name NodeStewardSetPassword
      * @request POST:/auth_api/node_steward/set_password
      */
-    nodeStewardSetPassword: (
-      data: NodeStewardSetPasswordRequest,
-      params: RequestParams = {},
-    ) =>
+    nodeStewardSetPassword: (data: NodeStewardSetPasswordRequest, params: RequestParams = {}) =>
       this.request<any, NodeStewardSetPasswordError>({
         path: `/auth_api/node_steward/set_password`,
         method: "POST",
@@ -698,7 +645,7 @@ export class Api<
         format: "json",
         ...params,
       }),
-  };
+  }
   nodeStewardApi = {
     /**
      * No description
@@ -722,10 +669,7 @@ export class Api<
      * @name DeleteLocalAppRecord
      * @request DELETE:/node_steward_api/local_apps/delete
      */
-    deleteLocalAppRecord: (
-      data: LocalAppInstanceRef,
-      params: RequestParams = {},
-    ) =>
+    deleteLocalAppRecord: (data: LocalAppInstanceRef, params: RequestParams = {}) =>
       this.request<any, string>({
         path: `/node_steward_api/local_apps/delete`,
         method: "DELETE",
@@ -773,11 +717,7 @@ export class Api<
      * @name UpdateThisRegionNode
      * @request PUT:/node_steward_api/my_region_nodes/{region_id_string}/my_node
      */
-    updateThisRegionNode: (
-      regionIdString: string,
-      data: UpdateNodeDetails,
-      params: RequestParams = {},
-    ) =>
+    updateThisRegionNode: (regionIdString: string, data: UpdateNodeDetails, params: RequestParams = {}) =>
       this.request<void, string>({
         path: `/node_steward_api/my_region_nodes/${regionIdString}/my_node`,
         method: "PUT",
@@ -792,11 +732,7 @@ export class Api<
      * @name PostRegionNodeStatus
      * @request POST:/node_steward_api/my_region_nodes/{region_id_string}/status
      */
-    postRegionNodeStatus: (
-      regionIdString: string,
-      data: RegionNodeStatusData,
-      params: RequestParams = {},
-    ) =>
+    postRegionNodeStatus: (regionIdString: string, data: RegionNodeStatusData, params: RequestParams = {}) =>
       this.request<any, string>({
         path: `/node_steward_api/my_region_nodes/${regionIdString}/status`,
         method: "POST",
@@ -812,10 +748,7 @@ export class Api<
      * @name ApproveJoinRequest
      * @request PUT:/node_steward_api/my_regions/approve_join_request
      */
-    approveJoinRequest: (
-      data: ApproveJoinRequestData,
-      params: RequestParams = {},
-    ) =>
+    approveJoinRequest: (data: ApproveJoinRequestData, params: RequestParams = {}) =>
       this.request<any, string>({
         path: `/node_steward_api/my_regions/approve_join_request`,
         method: "PUT",
@@ -895,10 +828,7 @@ export class Api<
      * @name AddBootstrapNode
      * @request POST:/node_steward_api/network/bootstrap
      */
-    addBootstrapNode: (
-      data: BootstrapNodeRequest,
-      params: RequestParams = {},
-    ) =>
+    addBootstrapNode: (data: BootstrapNodeRequest, params: RequestParams = {}) =>
       this.request<any, string>({
         path: `/node_steward_api/network/bootstrap`,
         method: "POST",
@@ -934,7 +864,7 @@ export class Api<
         method: "POST",
         ...params,
       }),
-  };
+  }
   publicApi = {
     /**
      * No description
@@ -1061,5 +991,5 @@ export class Api<
         format: "json",
         ...params,
       }),
-  };
+  }
 }

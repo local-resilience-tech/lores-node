@@ -1,13 +1,4 @@
-import {
-  Breadcrumbs,
-  Container,
-  Stack,
-  Title,
-  Text,
-  Card,
-  Group,
-  ActionIcon,
-} from "@mantine/core"
+import { Breadcrumbs, Container, Stack, Title, Text, Card, Group, ActionIcon } from "@mantine/core"
 import { actionFailure, actionSuccess, Anchor } from "../../../components"
 import { useNavigate, useParams } from "react-router-dom"
 import { useAppSelector } from "../../../store"
@@ -24,22 +15,11 @@ export default function ShowLocalApp() {
     appName: string
     instanceId: string
   }>()
-  const instanceId: string | null =
-    instanceIdParam === "-" ? null : instanceIdParam || null
+  const instanceId: string | null = instanceIdParam === "-" ? null : instanceIdParam || null
 
-  const app = useAppSelector((state) =>
-    (state.localApps || []).find(
-      (app) => app.name === appName && app.instance_id === instanceId,
-    ),
-  )
+  const app = useAppSelector((state) => (state.localApps || []).find((app) => app.name === appName && app.instance_id === instanceId))
   const region = useAppSelector((state) => activeRegion(state.my_regions))
-  const appRegion = useAppSelector((state) =>
-    app
-      ? state.my_regions.all?.find(
-          (r) => r.region.id === app.bound_to_region_id,
-        )
-      : undefined,
-  )
+  const appRegion = useAppSelector((state) => (app ? state.my_regions.all?.find((r) => r.region.id === app.bound_to_region_id) : undefined))
   const navigate = useNavigate()
 
   if (!appName) {
@@ -49,8 +29,7 @@ export default function ShowLocalApp() {
   if (!app) {
     return (
       <Container>
-        Error: App not found with name "{appName}" and instance ID "{instanceId}
-        "
+        Error: App not found with name "{appName}" and instance ID "{instanceId}"
       </Container>
     )
   }
@@ -108,15 +87,13 @@ export default function ShowLocalApp() {
           </Card>
         )}
 
-        {onRegister &&
-          region &&
-          (!appRegion || appRegion.region.id !== region.id) && (
-            <IfNodeSteward>
-              <ActionButton size="sm" onClick={() => onRegister()}>
-                {appRegion ? "Change to" : "Register with"} {region.slug}
-              </ActionButton>
-            </IfNodeSteward>
-          )}
+        {onRegister && region && (!appRegion || appRegion.region.id !== region.id) && (
+          <IfNodeSteward>
+            <ActionButton size="sm" onClick={() => onRegister()}>
+              {appRegion ? "Change to" : "Register with"} {region.slug}
+            </ActionButton>
+          </IfNodeSteward>
+        )}
       </Stack>
     </Container>
   )

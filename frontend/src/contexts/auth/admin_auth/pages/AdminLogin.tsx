@@ -7,9 +7,7 @@ import { actionFailure, ActionPromiseResult } from "../../../../components"
 export default function AdminLogin() {
   const navigate = useNavigate()
 
-  const onSubmit = async (values: {
-    password: string
-  }): Promise<ActionPromiseResult> =>
+  const onSubmit = async (values: { password: string }): Promise<ActionPromiseResult> =>
     getApi()
       .authApi.adminLogin(values)
       .then((_response) => {
@@ -26,14 +24,8 @@ export default function AdminLogin() {
         <Title order={1}>Log in as node admin</Title>
       </Stack>
       <Stack gap="md">
-        <Text>
-          Logging in as the node admin is done with the password you received
-          during setup.
-        </Text>
-        <Text>
-          The only thing you can do as the admin is setup regular users for this
-          node that you use for all other operations.
-        </Text>
+        <Text>Logging in as the node admin is done with the password you received during setup.</Text>
+        <Text>The only thing you can do as the admin is setup regular users for this node that you use for all other operations.</Text>
       </Stack>
 
       <AdminLoginForm onSubmit={onSubmit} />

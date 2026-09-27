@@ -6,11 +6,7 @@ import { IconPlus } from "@tabler/icons-react"
 import { NodeSteward, NodeStewardStatus } from "../../../api/Api"
 import NodeStewardsList from "../components/NodeStewardsList"
 import { NodeStewardAction } from "../components/NodeStewardAction"
-import {
-  actionFailure,
-  ActionPromiseResult,
-  actionSuccess,
-} from "../../../components"
+import { actionFailure, ActionPromiseResult, actionSuccess } from "../../../components"
 import DisplayOneTimeToken from "../components/DisplayOneTimeToken"
 
 export default function AllNodeStewards() {
@@ -36,9 +32,7 @@ export default function AllNodeStewards() {
   }
 
   const updateLocalNodeSteward = (record: NodeSteward) => {
-    setNodeStewards((prev) =>
-      prev.map((steward) => (steward.id === record.id ? record : steward))
-    )
+    setNodeStewards((prev) => prev.map((steward) => (steward.id === record.id ? record : steward)))
   }
 
   const updateStewardToken = (id: string, token: string) => {
@@ -113,13 +107,7 @@ export default function AllNodeStewards() {
         type: "display_token",
         buttonColor: "blue",
         primary: false,
-        overlay: (
-          <DisplayOneTimeToken
-            steward={record}
-            password_reset_token={stewardTokens[record.id]}
-            maw={400}
-          />
-        ),
+        overlay: <DisplayOneTimeToken steward={record} password_reset_token={stewardTokens[record.id]} maw={400} />,
       })
     }
 
@@ -142,10 +130,8 @@ export default function AllNodeStewards() {
               No node stewards found
             </Text>
             <Text c="dimmed">
-              Node stewards are users who administer and manage this node. You
-              can't do anything with this admin account other than manage node
-              stewards, so you should probably create a node steward account for
-              yourself using the "
+              Node stewards are users who administer and manage this node. You can't do anything with this admin account other than manage
+              node stewards, so you should probably create a node steward account for yourself using the "
               <Text span fw="bold" c="blue">
                 +
               </Text>
@@ -155,9 +141,7 @@ export default function AllNodeStewards() {
         </Card>
       )}
 
-      {nodeStewards.length > 0 && (
-        <NodeStewardsList nodeStewards={nodeStewards} getActions={getActions} />
-      )}
+      {nodeStewards.length > 0 && <NodeStewardsList nodeStewards={nodeStewards} getActions={getActions} />}
     </Stack>
   )
 }

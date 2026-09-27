@@ -63,9 +63,7 @@ async function loadRegionApps(store: AppStore) {
   if (result) store.dispatch(regionAppsLoaded(result))
 }
 
-const fetchApiData = async <T>(
-  apiCall: () => Promise<{ status: number; data: T }>,
-): Promise<T | null> => {
+const fetchApiData = async <T>(apiCall: () => Promise<{ status: number; data: T }>): Promise<T | null> => {
   const result = await apiCall()
   if (result.status >= 200 && result.status < 300) return result.data
   return null

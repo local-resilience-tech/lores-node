@@ -2,23 +2,14 @@ import { Stack, Title, Text } from "@mantine/core"
 import NodeStewardLoginForm from "../components/NodeStewardLoginForm"
 import { getApi } from "../../../../api"
 import { useNavigate } from "react-router-dom"
-import {
-  NodeStewardCredentials,
-  NodeStewardLoginError,
-} from "../../../../api/Api"
+import { NodeStewardCredentials, NodeStewardLoginError } from "../../../../api/Api"
 import { AxiosError } from "axios"
-import {
-  actionFailure,
-  ActionPromiseResult,
-  Anchor,
-} from "../../../../components"
+import { actionFailure, ActionPromiseResult, Anchor } from "../../../../components"
 
 export default function NodeStewardLogin() {
   const navigate = useNavigate()
 
-  const onSubmit = async (
-    values: NodeStewardCredentials
-  ): Promise<ActionPromiseResult> => {
+  const onSubmit = async (values: NodeStewardCredentials): Promise<ActionPromiseResult> => {
     return getApi()
       .authApi.nodeStewardLogin(values)
       .then((response) => {
@@ -40,8 +31,7 @@ export default function NodeStewardLogin() {
       </Stack>
       <Stack gap="md">
         <Text>
-          Node stewards are users who manage this node. If you are a new node
-          steward, you will have been given a one-use token{" "}
+          Node stewards are users who manage this node. If you are a new node steward, you will have been given a one-use token{" "}
           <Anchor href="../set_password">to set a password</Anchor>.
         </Text>
       </Stack>

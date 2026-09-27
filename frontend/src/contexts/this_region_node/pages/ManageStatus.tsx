@@ -8,16 +8,12 @@ import { useNavigate } from "react-router-dom"
 import { myActiveRegionNode } from "../../../store/my_regions"
 
 export default function ManageStatus() {
-  const node = useAppSelector((state) =>
-    myActiveRegionNode(state.my_regions, state.network?.node.id),
-  )
+  const node = useAppSelector((state) => myActiveRegionNode(state.my_regions, state.network?.node.id))
   const navigate = useNavigate()
 
   if (!node) return null
 
-  const postStatus = async (
-    data: RegionNodeStatusData,
-  ): Promise<ActionPromiseResult> => {
+  const postStatus = async (data: RegionNodeStatusData): Promise<ActionPromiseResult> => {
     return getApi()
       .nodeStewardApi.postRegionNodeStatus(node.region_id, data)
       .then((_) => {

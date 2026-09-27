@@ -1,19 +1,9 @@
-import {
-  ActionIcon,
-  ActionIconProps,
-  Group,
-  HoverCard,
-  PolymorphicComponentProps,
-  Text,
-} from "@mantine/core"
+import { ActionIcon, ActionIconProps, Group, HoverCard, PolymorphicComponentProps, Text } from "@mantine/core"
 import { IconAlertCircle, IconX } from "@tabler/icons-react"
 import { useState } from "react"
 import { ActionPromiseResult, ActionResult } from "./ActionResult"
 
-type LoadingActionIconProps = PolymorphicComponentProps<
-  "button",
-  ActionIconProps
-> & {
+type LoadingActionIconProps = PolymorphicComponentProps<"button", ActionIconProps> & {
   children?: React.ReactNode
   onClick?: () => Promise<ActionPromiseResult>
   successColor?: string
@@ -86,21 +76,13 @@ export default function LoadingActionIcon({
   }
 
   return (
-    <ActionIcon
-      {...props}
-      onClick={handleClick}
-      loading={loading}
-      {...resultProps}
-    >
+    <ActionIcon {...props} onClick={handleClick} loading={loading} {...resultProps}>
       {result?.error && showResult && errorIcon ? (
         <HoverCard width={280} shadow="md">
           <HoverCard.Target>{errorIcon}</HoverCard.Target>
           <HoverCard.Dropdown>
             <Group justify="space-between" align="flex-start">
-              <Text size="sm">
-                {result.error ||
-                  "An error occurred while performing the action."}
-              </Text>
+              <Text size="sm">{result.error || "An error occurred while performing the action."}</Text>
               <ActionIcon
                 key="close-error"
                 radius="xl"

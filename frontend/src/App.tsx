@@ -1,23 +1,8 @@
-import {
-  LoaderFunction,
-  Navigate,
-  RouterProvider,
-  createBrowserRouter,
-} from "react-router-dom"
+import { LoaderFunction, Navigate, RouterProvider, createBrowserRouter } from "react-router-dom"
 import { Layout } from "./pages"
-import {
-  EditRegionNode,
-  ManageStatus,
-  ThisRegionNode,
-} from "./contexts/this_region_node"
+import { EditRegionNode, ManageStatus, ThisRegionNode } from "./contexts/this_region_node"
 import { EventLog } from "./contexts/this_p2panda_node"
-import {
-  ShowLocalApp,
-  LocalApps,
-  RegionApps,
-  NewLocalApp,
-  EditLocalApp,
-} from "./contexts/apps"
+import { ShowLocalApp, LocalApps, RegionApps, NewLocalApp, EditLocalApp } from "./contexts/apps"
 import { Nodes } from "./contexts/region_nodes"
 import { MantineProvider } from "@mantine/core"
 import { ModalsProvider } from "@mantine/modals"
@@ -28,30 +13,16 @@ import store, { AppStore, loadInitialData } from "./store"
 import { Stacks } from "./contexts/stacks"
 import { AdminLogin, AuthLayout, SetupAdmin } from "./contexts/auth/admin_auth"
 import { AdminLayout, NewNodeSteward, AllNodeStewards } from "./contexts/admin"
-import {
-  NodeStewardLogin,
-  NodeStewardSetPassword,
-  RequireNodeSteward,
-} from "./contexts/auth/node_steward_auth"
+import { NodeStewardLogin, NodeStewardSetPassword, RequireNodeSteward } from "./contexts/auth/node_steward_auth"
 
 // Import styles of packages that you've installed.
 // All packages except `@mantine/hooks` require styles imports
 import "@mantine/core/styles.css"
 import "@mantine/notifications/styles.css"
 import { P2PandaNode } from "./contexts/network"
-import {
-  SetActiveRegion,
-  SetupRegion,
-  EnsureJoinedRegion,
-  RedirectToRegion,
-  ShowRegion,
-  EditRegionMap,
-} from "./contexts/regions"
+import { SetActiveRegion, SetupRegion, EnsureJoinedRegion, RedirectToRegion, ShowRegion, EditRegionMap } from "./contexts/regions"
 
-function withStore(
-  func: (store: AppStore) => any,
-  store: AppStore,
-): LoaderFunction<any> {
+function withStore(func: (store: AppStore) => any, store: AppStore): LoaderFunction<any> {
   const wrappedFunc: LoaderFunction<any> = async () => {
     return func(store)
   }
@@ -196,11 +167,7 @@ const router = createBrowserRouter([
 
 function App() {
   return (
-    <MantineProvider
-      defaultColorScheme="dark"
-      theme={theme}
-      cssVariablesResolver={cssVariablesResolver}
-    >
+    <MantineProvider defaultColorScheme="dark" theme={theme} cssVariablesResolver={cssVariablesResolver}>
       <ModalsProvider>
         <Notifications />
         <ReduxProvider store={store}>

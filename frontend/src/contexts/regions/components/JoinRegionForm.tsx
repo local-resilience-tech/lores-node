@@ -1,10 +1,6 @@
 import { TextInput, Button, Stack, Text, Textarea } from "@mantine/core"
 import { useForm } from "@mantine/form"
-import {
-  ActionPromiseResult,
-  DisplayActionResult,
-  useOnSubmitWithResult,
-} from "../../../components"
+import { ActionPromiseResult, DisplayActionResult, useOnSubmitWithResult } from "../../../components"
 import { JoinRegionRequestData } from "../../../api/Api"
 
 interface JoinRegionFormProps {
@@ -12,8 +8,7 @@ interface JoinRegionFormProps {
 }
 
 export default function JoinRegionForm({ onSubmit }: JoinRegionFormProps) {
-  const [actionResult, onSubmitWithResult] =
-    useOnSubmitWithResult<JoinRegionRequestData>(onSubmit)
+  const [actionResult, onSubmitWithResult] = useOnSubmitWithResult<JoinRegionRequestData>(onSubmit)
 
   const form = useForm<JoinRegionRequestData>({
     mode: "controlled",
@@ -41,17 +36,14 @@ export default function JoinRegionForm({ onSubmit }: JoinRegionFormProps) {
       },
       agreed_node_steward_conduct_url: (value) => {
         if (value) {
-          if (value && !/^https?:\/\/\S+$/.test(value))
-            return "Must be a valid URL starting with http:// or https://"
+          if (value && !/^https?:\/\/\S+$/.test(value)) return "Must be a valid URL starting with http:// or https://"
         }
         return null
       },
     },
   })
 
-  const handleSubmit = (
-    values: JoinRegionRequestData,
-  ): Promise<ActionPromiseResult> => {
+  const handleSubmit = (values: JoinRegionRequestData): Promise<ActionPromiseResult> => {
     const result = {
       ...values,
     }
@@ -66,20 +58,12 @@ export default function JoinRegionForm({ onSubmit }: JoinRegionFormProps) {
     <form onSubmit={form.onSubmit(handleSubmit)}>
       <Stack gap="lg">
         <Text>
-          To request to join a region, you need to know the ID of the region.
-          This will be a fairly long string (64 characters) that is generated
-          when the region is created. You can ask the creator of the region for
-          this ID.
+          To request to join a region, you need to know the ID of the region. This will be a fairly long string (64 characters) that is
+          generated when the region is created. You can ask the creator of the region for this ID.
         </Text>
 
         <Stack>
-          <TextInput
-            label="Region ID"
-            placeholder="Enter region ID"
-            key="region_id"
-            withAsterisk
-            {...form.getInputProps("region_id")}
-          />
+          <TextInput label="Region ID" placeholder="Enter region ID" key="region_id" withAsterisk {...form.getInputProps("region_id")} />
 
           <Textarea
             label="About Your Node"

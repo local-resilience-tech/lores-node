@@ -8,21 +8,14 @@ interface SetActiveRegionProps {
 }
 
 export default function SetActiveRegion({ children }: SetActiveRegionProps) {
-  const currentActiveRegion = useAppSelector((state) =>
-    activeRegion(state.my_regions),
-  )
+  const currentActiveRegion = useAppSelector((state) => activeRegion(state.my_regions))
   const { regionSlug } = useParams<{ regionSlug: string }>()
-  const slugRegion = useAppSelector(
-    (state) =>
-      state.my_regions.all?.find((r) => r.region.slug === regionSlug)?.region,
-  )
+  const slugRegion = useAppSelector((state) => state.my_regions.all?.find((r) => r.region.slug === regionSlug)?.region)
   const dispatch = useAppDispatch()
 
   useEffect(() => {
     if (slugRegion && currentActiveRegion?.id !== slugRegion?.id) {
-      console.log(
-        `Active region (${currentActiveRegion?.slug}) does not match URL slug (${regionSlug})`,
-      )
+      console.log(`Active region (${currentActiveRegion?.slug}) does not match URL slug (${regionSlug})`)
 
       dispatch(activeRegionChanged(slugRegion.id))
     }

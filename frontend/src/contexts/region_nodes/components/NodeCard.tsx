@@ -1,12 +1,6 @@
 import { Stack, Card, Text, Group, Badge, ThemeIcon } from "@mantine/core"
 import { type ReactNode } from "react"
-import {
-  IconAlertCircle,
-  IconCircleCheck,
-  IconCircleFilled,
-  IconClock,
-  IconHelpCircle,
-} from "@tabler/icons-react"
+import { IconAlertCircle, IconCircleCheck, IconCircleFilled, IconClock, IconHelpCircle } from "@tabler/icons-react"
 import { NodeState, RegionNodeDetails } from "../../../api/Api"
 import { nodeName } from "../../../store/my_regions"
 import { NodeHeartbeatDisplay } from "../../../hooks/useNodeHeartbeats"
@@ -26,12 +20,7 @@ interface NodeStatusProps {
   nodeHeartbeatDisplay?: NodeHeartbeatDisplay
 }
 
-function NodeStatus({
-  state,
-  statusText,
-  isThisNode,
-  nodeHeartbeatDisplay,
-}: NodeStatusProps) {
+function NodeStatus({ state, statusText, isThisNode, nodeHeartbeatDisplay }: NodeStatusProps) {
   const message = statusText?.trim() || undefined
 
   if (!state && !message) return null
@@ -90,13 +79,7 @@ function NodeStatus({
   )
 }
 
-export default function NodeCard({
-  node,
-  isRegionCreator,
-  rightSection,
-  isThisNode,
-  nodeHeartbeatDisplay,
-}: NodeCardProps) {
+export default function NodeCard({ node, isRegionCreator, rightSection, isThisNode, nodeHeartbeatDisplay }: NodeCardProps) {
   return (
     <Card key={node.id} withBorder>
       <Stack>
@@ -105,13 +88,7 @@ export default function NodeCard({
             <Text fw={500} size="lg">
               {nodeName(node)}
             </Text>
-            <Text
-              size="sm"
-              ff="monospace"
-              maw="90%"
-              truncate="end"
-              title={node.node_id}
-            >
+            <Text size="sm" ff="monospace" maw="90%" truncate="end" title={node.node_id}>
               {node.node_id}
             </Text>
           </Stack>
@@ -123,12 +100,7 @@ export default function NodeCard({
           )}
         </Group>
 
-        <NodeStatus
-          state={node.state}
-          statusText={node.status_text}
-          isThisNode={isThisNode}
-          nodeHeartbeatDisplay={nodeHeartbeatDisplay}
-        />
+        <NodeStatus state={node.state} statusText={node.status_text} isThisNode={isThisNode} nodeHeartbeatDisplay={nodeHeartbeatDisplay} />
       </Stack>
     </Card>
   )

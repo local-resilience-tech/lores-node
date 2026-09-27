@@ -8,12 +8,8 @@ interface RedirectToRegionProps {
 }
 
 export default function RedirectToRegion({ children }: RedirectToRegionProps) {
-  const currentActiveRegion = useAppSelector((state) =>
-    activeRegion(state.my_regions),
-  )
-  const firstRegion = useAppSelector(
-    (state) => state.my_regions.all?.[0]?.region,
-  )
+  const currentActiveRegion = useAppSelector((state) => activeRegion(state.my_regions))
+  const firstRegion = useAppSelector((state) => state.my_regions.all?.[0]?.region)
 
   const dispatch = useAppDispatch()
   const navigate = useNavigate()
@@ -21,9 +17,7 @@ export default function RedirectToRegion({ children }: RedirectToRegionProps) {
   useEffect(() => {
     if (!currentActiveRegion) {
       if (firstRegion) {
-        console.log(
-          `No active region set, but regions exist. Setting active region to first region (${firstRegion.slug})`,
-        )
+        console.log(`No active region set, but regions exist. Setting active region to first region (${firstRegion.slug})`)
         dispatch(activeRegionChanged(firstRegion.id))
         navigate(`/regions/${firstRegion.slug}`)
       } else {

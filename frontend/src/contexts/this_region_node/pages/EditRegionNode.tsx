@@ -8,16 +8,12 @@ import { useNavigate } from "react-router-dom"
 import { myActiveRegionNode, nodeName } from "../../../store/my_regions"
 
 export default function EditRegionNode() {
-  const node = useAppSelector((state) =>
-    myActiveRegionNode(state.my_regions, state.network?.node.id),
-  )
+  const node = useAppSelector((state) => myActiveRegionNode(state.my_regions, state.network?.node.id))
   const navigate = useNavigate()
 
   if (!node) return null
 
-  const updateNode = async (
-    data: UpdateNodeDetails,
-  ): Promise<ActionPromiseResult> => {
+  const updateNode = async (data: UpdateNodeDetails): Promise<ActionPromiseResult> => {
     return getApi()
       .nodeStewardApi.updateThisRegionNode(node.region_id, data)
       .then(() => {

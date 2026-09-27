@@ -1,10 +1,5 @@
 import { createSlice, PayloadAction, WritableDraft } from "@reduxjs/toolkit"
-import type {
-  NodeHeartbeat,
-  Region,
-  RegionNodeDetails,
-  RegionWithNodes,
-} from "../api/Api"
+import type { NodeHeartbeat, Region, RegionNodeDetails, RegionWithNodes } from "../api/Api"
 
 export type TimestampedNodeHeartbeat = NodeHeartbeat & {
   heartbeat: number | undefined
@@ -46,9 +41,7 @@ const regionsSlice = createSlice({
     },
     nodeJoinedRegion: (state, action: PayloadAction<RegionWithNodes>) => {
       const region = action.payload
-      const existingRegion = state.all?.find(
-        (r) => r.region.id === region.region.id,
-      )
+      const existingRegion = state.all?.find((r) => r.region.id === region.region.id)
 
       if (!state.all) state.all = []
 
@@ -56,9 +49,7 @@ const regionsSlice = createSlice({
         state.all.push(region)
         if (!state.activeRegionId) state.activeRegionId = region.region.id
       } else {
-        const index = state.all.findIndex(
-          (r) => r.region.id === region.region.id,
-        )
+        const index = state.all.findIndex((r) => r.region.id === region.region.id)
         state.all[index] = region
       }
 
@@ -73,9 +64,7 @@ const regionsSlice = createSlice({
         if (regionExists) {
           state.activeRegionId = newRegionId
         } else {
-          console.warn(
-            `Attempted to set active region to ${newRegionId}, but it does not exist in the regions list.`,
-          )
+          console.warn(`Attempted to set active region to ${newRegionId}, but it does not exist in the regions list.`)
         }
       }
 
@@ -86,16 +75,12 @@ const regionsSlice = createSlice({
       const regionIndex = findRegionIndex(state, updatedNode.region_id)
 
       if (regionIndex === -1) {
-        console.warn(
-          `Received node update for region ID ${updatedNode.region_id}, but that region is not in the state.`,
-        )
+        console.warn(`Received node update for region ID ${updatedNode.region_id}, but that region is not in the state.`)
         return state
       }
 
       const region = state.all![regionIndex]
-      const nodeIndex = region.nodes.findIndex(
-        (n) => n.node_id === updatedNode.node_id,
-      )
+      const nodeIndex = region.nodes.findIndex((n) => n.node_id === updatedNode.node_id)
 
       if (nodeIndex === -1) {
         // Node not found, add it to the list
@@ -112,9 +97,7 @@ const regionsSlice = createSlice({
       const regionIndex = findRegionIndex(state, updatedRegion.id)
 
       if (regionIndex === -1) {
-        console.warn(
-          `Received region update for region ID ${updatedRegion.id}, but that region is not in the state.`,
-        )
+        console.warn(`Received region update for region ID ${updatedRegion.id}, but that region is not in the state.`)
         return state
       }
 
@@ -142,9 +125,7 @@ const regionsSlice = createSlice({
       const regionIndex = findRegionIndex(state, nodeHeartbeat.region_id)
 
       if (regionIndex === -1) {
-        console.warn(
-          `Received node heartbeat for region ID ${nodeHeartbeat.region_id}, but that region is not in the state.`,
-        )
+        console.warn(`Received node heartbeat for region ID ${nodeHeartbeat.region_id}, but that region is not in the state.`)
         return state
       }
 
@@ -152,9 +133,7 @@ const regionsSlice = createSlice({
 
       if (!region.nodeHeartbeats) region.nodeHeartbeats = []
 
-      const nodeIndex = region.nodeHeartbeats.findIndex(
-        (n) => n.node_id === nodeHeartbeat.node_id,
-      )
+      const nodeIndex = region.nodeHeartbeats.findIndex((n) => n.node_id === nodeHeartbeat.node_id)
 
       const timestampedNode = {
         heartbeat: Date.now(),
@@ -167,19 +146,14 @@ const regionsSlice = createSlice({
         region.nodeHeartbeats[nodeIndex] = timestampedNode
       }
 
-      sessionStorage.setItem(
-        timestampedNode.node_id,
-        timestampedNode.heartbeat.toString(),
-      )
+      sessionStorage.setItem(timestampedNode.node_id, timestampedNode.heartbeat.toString())
 
       return state
     },
   },
 })
 
-function ensureRegionSlugs(
-  state: WritableDraft<MyRegionState>,
-): WritableDraft<MyRegionState> {
+function ensureRegionSlugs(state: WritableDraft<MyRegionState>): WritableDraft<MyRegionState> {
   if (!state.all) return state
 
   state.all.forEach((regionWithNodes) => {
@@ -191,16 +165,12 @@ function ensureRegionSlugs(
   return state
 }
 
-export function activeRegionWithNodes(
-  state: MyRegionState,
-): RegionWithTimestampedNodes | null {
+export function activeRegionWithNodes(state: MyRegionState): RegionWithTimestampedNodes | null {
   if (!state.activeRegionId || !state.all) return null
   return state.all.find((r) => r.region.id === state.activeRegionId) ?? null
 }
 
-export function activeRegionNodeHeartbeats(
-  state: MyRegionState,
-): TimestampedNodeHeartbeat[] | undefined {
+export function activeRegionNodeHeartbeats(state: MyRegionState): TimestampedNodeHeartbeat[] | undefined {
   return activeRegionWithNodes(state)?.nodeHeartbeats
 }
 
@@ -209,10 +179,7 @@ export function activeRegion(state: MyRegionState): Region | null {
   return regionWithNodes ? regionWithNodes.region : null
 }
 
-export function myActiveRegionNode(
-  state: MyRegionState,
-  myNodeId: string | null | undefined,
-): RegionNodeDetails | null {
+export function myActiveRegionNode(state: MyRegionState, myNodeId: string | null | undefined): RegionNodeDetails | null {
   if (!myNodeId) return null
 
   const regionWithNodes = activeRegionWithNodes(state)

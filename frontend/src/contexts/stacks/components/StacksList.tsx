@@ -7,11 +7,7 @@ interface StacksListProps {
 }
 
 function buildServiceCells(service: DockerService): ReactNode[] {
-  return [
-    <Table.Td>{service.name}</Table.Td>,
-    <Table.Td>{service.image}</Table.Td>,
-    <Table.Td>{service.current_state}</Table.Td>,
-  ]
+  return [<Table.Td>{service.name}</Table.Td>, <Table.Td>{service.image}</Table.Td>, <Table.Td>{service.current_state}</Table.Td>]
 }
 
 export default function StacksList({ stacks }: StacksListProps) {
@@ -34,16 +30,10 @@ export default function StacksList({ stacks }: StacksListProps) {
           <>
             <Table.Tr key={stack.name}>
               <Table.Td rowSpan={stack.services.length}>{stack.name}</Table.Td>
-              {stack.services.length > 0 ? (
-                buildServiceCells(stack.services[0])
-              ) : (
-                <Table.Td colSpan={3}>No services</Table.Td>
-              )}
+              {stack.services.length > 0 ? buildServiceCells(stack.services[0]) : <Table.Td colSpan={3}>No services</Table.Td>}
             </Table.Tr>
             {stack.services.slice(1).map((service) => (
-              <Table.Tr key={service.name}>
-                {buildServiceCells(service)}
-              </Table.Tr>
+              <Table.Tr key={service.name}>{buildServiceCells(service)}</Table.Tr>
             ))}
           </>
         ))}

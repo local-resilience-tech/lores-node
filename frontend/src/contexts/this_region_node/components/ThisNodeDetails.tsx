@@ -1,11 +1,7 @@
 import { Table } from "@mantine/core"
 import { RegionNodeDetails } from "../../../api/Api"
 
-export default function ThisNodeDetails({
-  node,
-}: {
-  node: RegionNodeDetails | null
-}) {
+export default function ThisNodeDetails({ node }: { node: RegionNodeDetails | null }) {
   return (
     <Table>
       <Table.Tbody>

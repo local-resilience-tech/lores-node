@@ -26,19 +26,11 @@ export default function NodesList({
     <Stack>
       {nodes.map((node) => {
         const isRegionCreator = regionCreatorId === node.node_id
-        const nodeHeartbeatDisplay =
-          getNodeheartbeatDisplay && getNodeheartbeatDisplay(node.node_id)
+        const nodeHeartbeatDisplay = getNodeheartbeatDisplay && getNodeheartbeatDisplay(node.node_id)
         const isThisNode = node.node_id === thisNodeId
 
         if (node.status == RegionNodeStatus.RequestedToJoin) {
-          return (
-            <NodeJoinRequestCard
-              key={node.id}
-              node={node}
-              onApprove={onApprove}
-              canAdminister={canAdminister}
-            />
-          )
+          return <NodeJoinRequestCard key={node.id} node={node} onApprove={onApprove} canAdminister={canAdminister} />
         }
         return (
           <NodeCard

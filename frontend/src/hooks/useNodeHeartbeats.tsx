@@ -13,14 +13,9 @@ export type NodeHeartbeatDisplay = {
 export const useNodeHeartbeats = () => {
   const [time, setTime] = useState(() => Date.now())
 
-  const nodeHeartbeats = useAppSelector((state) =>
-    activeRegionNodeHeartbeats(state.my_regions),
-  )
+  const nodeHeartbeats = useAppSelector((state) => activeRegionNodeHeartbeats(state.my_regions))
 
-  const awaitingUpdateState = useMemo(
-    () => ({ label: "Awaiting update", color: "gray" }),
-    [],
-  )
+  const awaitingUpdateState = useMemo(() => ({ label: "Awaiting update", color: "gray" }), [])
 
   const setHeartbeatDisplay = useCallback(
     (nodeTimestamp: number | undefined) => {
@@ -53,8 +48,7 @@ export const useNodeHeartbeats = () => {
     return map
   }
 
-  const [nodeState, setNodeStatus] =
-    useState<Map<string, NodeHeartbeatDisplay>>(setInitialNodeState)
+  const [nodeState, setNodeStatus] = useState<Map<string, NodeHeartbeatDisplay>>(setInitialNodeState)
 
   function getHeartbeatDisplay(nodeId: string): NodeHeartbeatDisplay {
     return nodeState.get(nodeId) ?? awaitingUpdateState

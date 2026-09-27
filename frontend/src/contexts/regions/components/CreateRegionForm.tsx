@@ -1,10 +1,6 @@
 import { TextInput, Button, Stack, Text } from "@mantine/core"
 import { useForm } from "@mantine/form"
-import {
-  ActionPromiseResult,
-  DisplayActionResult,
-  useOnSubmitWithResult,
-} from "../../../components"
+import { ActionPromiseResult, DisplayActionResult, useOnSubmitWithResult } from "../../../components"
 import { CreateRegionData } from "../../../api/Api"
 
 interface CreateRegionFormProps {
@@ -12,8 +8,7 @@ interface CreateRegionFormProps {
 }
 
 export default function CreateRegionForm({ onSubmit }: CreateRegionFormProps) {
-  const [actionResult, onSubmitWithResult] =
-    useOnSubmitWithResult<CreateRegionData>(onSubmit)
+  const [actionResult, onSubmitWithResult] = useOnSubmitWithResult<CreateRegionData>(onSubmit)
 
   const form = useForm<CreateRegionData>({
     mode: "controlled",
@@ -30,8 +25,7 @@ export default function CreateRegionForm({ onSubmit }: CreateRegionFormProps) {
       slug: (value) => {
         if (!value) return "This is required"
         if (value.length > 50) return "Must be less than 50 characters"
-        if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(value))
-          return "Lowercase letters and numbers only, no spaces, hyphens allowed"
+        if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(value)) return "Lowercase letters and numbers only, no spaces, hyphens allowed"
         return null
       },
       name: (value) => {
@@ -47,29 +41,25 @@ export default function CreateRegionForm({ onSubmit }: CreateRegionFormProps) {
       },
       organisation_url: (value) => {
         if (value) {
-          if (value && !/^https?:\/\/\S+$/.test(value))
-            return "Must be a valid URL starting with http:// or https://"
+          if (value && !/^https?:\/\/\S+$/.test(value)) return "Must be a valid URL starting with http:// or https://"
         }
         return null
       },
       node_steward_conduct_url: (value) => {
         if (value) {
-          if (value && !/^https?:\/\/\S+$/.test(value))
-            return "Must be a valid URL starting with http:// or https://"
+          if (value && !/^https?:\/\/\S+$/.test(value)) return "Must be a valid URL starting with http:// or https://"
         }
         return null
       },
       user_conduct_url: (value) => {
         if (value) {
-          if (value && !/^https?:\/\/\S+$/.test(value))
-            return "Must be a valid URL starting with http:// or https://"
+          if (value && !/^https?:\/\/\S+$/.test(value)) return "Must be a valid URL starting with http:// or https://"
         }
         return null
       },
       user_privacy_url: (value) => {
         if (value) {
-          if (value && !/^https?:\/\/\S+$/.test(value))
-            return "Must be a valid URL starting with http:// or https://"
+          if (value && !/^https?:\/\/\S+$/.test(value)) return "Must be a valid URL starting with http:// or https://"
         }
         return null
       },
@@ -79,10 +69,7 @@ export default function CreateRegionForm({ onSubmit }: CreateRegionFormProps) {
   return (
     <form onSubmit={form.onSubmit(onSubmitWithResult)}>
       <Stack gap="lg">
-        <Text>
-          When you create a new region, it will get a unique ID, but you can
-          choose some details to describe it.
-        </Text>
+        <Text>When you create a new region, it will get a unique ID, but you can choose some details to describe it.</Text>
 
         <Stack>
           <TextInput

@@ -30,11 +30,7 @@ export default function RegionAppsList({ apps, nodes }: AppsListProps) {
               <Group gap={4}>
                 {app.installations.map((installation) => {
                   const node = nodes.get(installation.region_node_id)
-                  return (
-                    node && (
-                      <NodeName key={installation.region_node_id} node={node} />
-                    )
-                  )
+                  return node && <NodeName key={installation.region_node_id} node={node} />
                 })}
               </Group>
             </Table.Td>

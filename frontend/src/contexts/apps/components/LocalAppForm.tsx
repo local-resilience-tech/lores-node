@@ -2,11 +2,7 @@ import { Button, Group, Stack, TextInput } from "@mantine/core"
 import { Anchor } from "../../../components"
 import { useForm } from "@mantine/form"
 import { LocalAppFormData } from "../../../api/Api"
-import {
-  ActionPromiseResult,
-  DisplayActionResult,
-  useOnSubmitWithResult,
-} from "../../../components"
+import { ActionPromiseResult, DisplayActionResult, useOnSubmitWithResult } from "../../../components"
 
 interface LocalAppFormProps {
   onSubmit: (data: LocalAppFormData) => Promise<ActionPromiseResult>
@@ -16,15 +12,8 @@ interface LocalAppFormProps {
   disableKeyFields?: boolean
 }
 
-export default function LocalAppForm({
-  onSubmit,
-  submitLabel,
-  cancelPath,
-  initialValues,
-  disableKeyFields,
-}: LocalAppFormProps) {
-  const [actionResult, onSubmitWithResult] =
-    useOnSubmitWithResult<LocalAppFormData>(onSubmit)
+export default function LocalAppForm({ onSubmit, submitLabel, cancelPath, initialValues, disableKeyFields }: LocalAppFormProps) {
+  const [actionResult, onSubmitWithResult] = useOnSubmitWithResult<LocalAppFormData>(onSubmit)
 
   const form = useForm<LocalAppFormData>({
     mode: "controlled",

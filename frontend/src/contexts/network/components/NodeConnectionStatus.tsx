@@ -48,9 +48,7 @@ export default function NodeConnectionStatus({ nodeStatus }: Props) {
                       <TruncatedId id={conn.node_id} />
                     </Table.Td>
                     <Table.Td>
-                      <Badge color={peerStatusColor[conn.status]}>
-                        {conn.status}
-                      </Badge>
+                      <Badge color={peerStatusColor[conn.status]}>{conn.status}</Badge>
                     </Table.Td>
                   </Table.Tr>
                 ))}

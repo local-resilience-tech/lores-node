@@ -1,11 +1,4 @@
-import {
-  Badge,
-  Container,
-  Stack,
-  Tabs,
-  Title,
-  useMantineTheme,
-} from "@mantine/core"
+import { Badge, Container, Stack, Tabs, Title, useMantineTheme } from "@mantine/core"
 import NodesList from "../components/NodesList"
 import NodesMap from "../components/NodesMap"
 import { useAppSelector } from "../../../store"
@@ -20,12 +13,9 @@ import { useNodeHeartbeats } from "../../../hooks"
 const defaultTab = "list"
 
 export default function Nodes() {
-  const region = useAppSelector((state) =>
-    activeRegionWithNodes(state.my_regions),
-  )
+  const region = useAppSelector((state) => activeRegionWithNodes(state.my_regions))
   const thisNodeId = useAppSelector((state) => state.network?.node.id)
-  const isNodeAdmin =
-    thisNodeId != null && region?.region.creator_node_id === thisNodeId
+  const isNodeAdmin = thisNodeId != null && region?.region.creator_node_id === thisNodeId
 
   const getNodeHeartbeatDisplay = useNodeHeartbeats()
 
@@ -79,24 +69,13 @@ export default function Nodes() {
           </Title>
         </Stack>
 
-        <Tabs
-          value={activeTab}
-          onChange={(value) =>
-            setSearchParams({ tab: value ?? defaultTab }, { replace: true })
-          }
-        >
+        <Tabs value={activeTab} onChange={(value) => setSearchParams({ tab: value ?? defaultTab }, { replace: true })}>
           <Tabs.List>
-            <Tabs.Tab
-              value="list"
-              leftSection={<IconList size={tabIconSize} />}
-            >
+            <Tabs.Tab value="list" leftSection={<IconList size={tabIconSize} />}>
               List
             </Tabs.Tab>
             {regionMap ? (
-              <Tabs.Tab
-                value="map"
-                leftSection={<IconMapPin size={tabIconSize} />}
-              >
+              <Tabs.Tab value="map" leftSection={<IconMapPin size={tabIconSize} />}>
                 Map
               </Tabs.Tab>
             ) : null}
@@ -126,11 +105,7 @@ export default function Nodes() {
 
           {regionMap ? (
             <Tabs.Panel value="map" pt="lg">
-              <NodesMap
-                map={regionMap}
-                nodes={member_nodes}
-                regionCreatorId={region.region.creator_node_id}
-              />
+              <NodesMap map={regionMap} nodes={member_nodes} regionCreatorId={region.region.creator_node_id} />
             </Tabs.Panel>
           ) : null}
 

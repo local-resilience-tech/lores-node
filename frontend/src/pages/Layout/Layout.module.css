@@ -1,9 +1,5 @@
 .header {
-  background: linear-gradient(
-    to bottom,
-    var(--lores-orange3),
-    var(--lores-orange5)
-  );
+  background: linear-gradient(to bottom, var(--lores-orange3), var(--lores-orange5));
   border: none;
   --mantine-color-dimmed: var(--lores-orange1);
   border-color: var(--lores-orange6) !important;
@@ -24,12 +20,7 @@
 }
 
 .navbar {
-  background: linear-gradient(
-    to bottom,
-    var(--lores-burnt-orange6) 0%,
-    var(--lores-burnt-orange5) 100px,
-    var(--lores-burnt-orange5) 100%
-  );
+  background: linear-gradient(to bottom, var(--lores-burnt-orange6) 0%, var(--lores-burnt-orange5) 100px, var(--lores-burnt-orange5) 100%);
   border: none !important;
   --mantine-color-dimmed: var(--lores-burnt-orange1);
 }
@@ -88,12 +79,7 @@ a.navlink_to_setup span {
 }
 
 .main {
-  background: linear-gradient(
-    to bottom,
-    var(--lores-blue6) 0%,
-    var(--lores-blue5) 100px,
-    var(--lores-blue5) 100%
-  );
+  background: linear-gradient(to bottom, var(--lores-blue6) 0%, var(--lores-blue5) 100px, var(--lores-blue5) 100%);
 }
 
 .section_title {

@@ -14,12 +14,7 @@ export function toLatLng(editable: EditableLatLng): {
   lat: number
   lng: number
 } | null {
-  if (
-    editable.lat === null ||
-    editable.lat === undefined ||
-    editable.lng === null ||
-    editable.lng === undefined
-  ) {
+  if (editable.lat === null || editable.lat === undefined || editable.lng === null || editable.lng === undefined) {
     return null
   }
 
@@ -29,16 +24,12 @@ export function toLatLng(editable: EditableLatLng): {
   }
 }
 
-export function validateOptionalLatLng(
-  value: EditableLatLng | null | undefined,
-): string | null {
+export function validateOptionalLatLng(value: EditableLatLng | null | undefined): string | null {
   if (!value || (value.lat == null && value.lng == null)) return null
   return validateLatLng(value)
 }
 
-export function validateLatLng(
-  value: EditableLatLng | null | undefined,
-): string | null {
+export function validateLatLng(value: EditableLatLng | null | undefined): string | null {
   if (!value) {
     return "Latitude and longitude are required"
   }
@@ -62,21 +53,9 @@ type LatLngInputProps = Omit<InputWrapperProps, "onChange"> & {
   onChange: (value: EditableLatLng) => void
 }
 
-export default function LatLngInput({
-  label,
-  description,
-  withAsterisk,
-  error,
-  value,
-  onChange,
-}: LatLngInputProps) {
+export default function LatLngInput({ label, description, withAsterisk, error, value, onChange }: LatLngInputProps) {
   return (
-    <Input.Wrapper
-      label={label}
-      description={description}
-      error={error}
-      withAsterisk={withAsterisk}
-    >
+    <Input.Wrapper label={label} description={description} error={error} withAsterisk={withAsterisk}>
       <Group>
         <NumberInput
           placeholder="Latitude"

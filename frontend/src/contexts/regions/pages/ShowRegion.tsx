@@ -7,10 +7,7 @@ import { IfNodeSteward } from "../../auth/node_steward_auth"
 
 export default function ShowRegion() {
   const { regionSlug } = useParams<{ regionSlug: string }>()
-  const region = useAppSelector(
-    (state) =>
-      state.my_regions.all?.find((r) => r.region.slug === regionSlug)?.region,
-  )
+  const region = useAppSelector((state) => state.my_regions.all?.find((r) => r.region.slug === regionSlug)?.region)
   const myNodeId = useAppSelector((state) => state.network?.node.id)
 
   if (!region) return <div>Region not found</div>

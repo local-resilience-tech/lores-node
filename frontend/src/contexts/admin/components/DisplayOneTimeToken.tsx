@@ -8,17 +8,10 @@ interface DisplayOneTimeTokenProps {
   maw?: number
 }
 
-export default function DisplayOneTimeToken({
-  steward,
-  password_reset_token,
-  maw,
-}: DisplayOneTimeTokenProps) {
+export default function DisplayOneTimeToken({ steward, password_reset_token, maw }: DisplayOneTimeTokenProps) {
   return (
     <Stack gap="md" maw={maw}>
-      <Text>
-        Please give the following details to {steward.name} to allow them to
-        complete the setup of their account.
-      </Text>
+      <Text>Please give the following details to {steward.name} to allow them to complete the setup of their account.</Text>
 
       <Table>
         <Table.Tbody>
@@ -39,10 +32,7 @@ export default function DisplayOneTimeToken({
         successText="copied"
       />
 
-      <Text>
-        The temporary access code will be valid for one use within the next 24
-        hours.
-      </Text>
+      <Text>The temporary access code will be valid for one use within the next 24 hours.</Text>
     </Stack>
   )
 }

@@ -20,20 +20,12 @@ interface NodeJoinRequestCardProps {
   onApprove?: (node: RegionNodeDetails) => Promise<ActionPromiseResult>
 }
 
-export default function NodeJoinRequestCard({
-  node,
-  canAdminister,
-  onApprove,
-}: NodeJoinRequestCardProps) {
+export default function NodeJoinRequestCard({ node, canAdminister, onApprove }: NodeJoinRequestCardProps) {
   const theme = useMantineTheme()
   const highlightColor = theme.colors.orange[6]
 
   return (
-    <Card
-      key={node.id}
-      styles={{ root: { borderColor: highlightColor } }}
-      withBorder
-    >
+    <Card key={node.id} styles={{ root: { borderColor: highlightColor } }} withBorder>
       <Stack>
         <Text fw="bold" c={highlightColor}>
           Join Request
@@ -67,9 +59,7 @@ export default function NodeJoinRequestCard({
         <IfNodeSteward>
           {canAdminister && onApprove && (
             <Group justify="flex-end" gap="md">
-              <ActionButton onClick={() => onApprove(node)}>
-                Approve
-              </ActionButton>
+              <ActionButton onClick={() => onApprove(node)}>Approve</ActionButton>
             </Group>
           )}
         </IfNodeSteward>

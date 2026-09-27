@@ -1,23 +1,15 @@
 import { Button, PasswordInput, Stack, TextInput, Text } from "@mantine/core"
 import { useForm } from "@mantine/form"
 import { NodeStewardCredentials } from "../../../../api/Api"
-import {
-  ActionPromiseResult,
-  Anchor,
-  DisplayActionResult,
-  useOnSubmitWithResult,
-} from "../../../../components"
+import { ActionPromiseResult, Anchor, DisplayActionResult, useOnSubmitWithResult } from "../../../../components"
 import { DisplayFormError } from "../../../../components/ActionResult"
 
 interface NodeStewardLoginFormProps {
   onSubmit: (values: NodeStewardCredentials) => Promise<ActionPromiseResult>
 }
 
-export default function NodeStewardLoginForm({
-  onSubmit,
-}: NodeStewardLoginFormProps) {
-  const [actionResult, onSubmitWithResult] =
-    useOnSubmitWithResult<NodeStewardCredentials>(onSubmit)
+export default function NodeStewardLoginForm({ onSubmit }: NodeStewardLoginFormProps) {
+  const [actionResult, onSubmitWithResult] = useOnSubmitWithResult<NodeStewardCredentials>(onSubmit)
 
   const form = useForm({
     mode: "uncontrolled",
@@ -37,17 +29,9 @@ export default function NodeStewardLoginForm({
   return (
     <form onSubmit={form.onSubmit(onSubmitWithResult)}>
       <Stack gap="lg">
-        <TextInput
-          label="ID"
-          placeholder="Node steward ID"
-          {...form.getInputProps("id")}
-        />
+        <TextInput label="ID" placeholder="Node steward ID" {...form.getInputProps("id")} />
 
-        <PasswordInput
-          label="Password"
-          placeholder="Node steward password"
-          {...form.getInputProps("password")}
-        />
+        <PasswordInput label="Password" placeholder="Node steward password" {...form.getInputProps("password")} />
 
         <DisplayActionResult
           result={actionResult}
@@ -58,27 +42,16 @@ export default function NodeStewardLoginForm({
                 heading="Login failed - No password set."
                 description={
                   <Text c="red">
-                    This user has not set up their password yet.{" "}
-                    <Anchor href="../set_password">
-                      Click here to set a password
-                    </Anchor>
-                    .
+                    This user has not set up their password yet. <Anchor href="../set_password">Click here to set a password</Anchor>.
                   </Text>
                 }
               />
             ),
-            InvalidCredentials: (
-              <DisplayFormError heading="Login failed - Invalid credentials." />
-            ),
+            InvalidCredentials: <DisplayFormError heading="Login failed - Invalid credentials." />,
             AccountDisabled: (
               <DisplayFormError
                 heading="Login failed - Your account is disabled."
-                description={
-                  <Text c="red">
-                    The node admin user has disabled your account, you can reach
-                    out to them for assistance.
-                  </Text>
-                }
+                description={<Text c="red">The node admin user has disabled your account, you can reach out to them for assistance.</Text>}
               />
             ),
           }}

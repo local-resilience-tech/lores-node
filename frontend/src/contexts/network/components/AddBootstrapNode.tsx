@@ -1,10 +1,6 @@
 import { getApi } from "../../../api"
 import { BootstrapNodeRequest } from "../../../api/Api"
-import {
-  actionFailure,
-  ActionPromiseResult,
-  actionSuccess,
-} from "../../../components"
+import { actionFailure, ActionPromiseResult, actionSuccess } from "../../../components"
 
 import AddBootstrapNodeForm from "./AddBootstrapNodeForm"
 
@@ -13,9 +9,7 @@ interface AddBootstrapNodeProps {
 }
 
 export default function AddBootstrapNode({ onSuccess }: AddBootstrapNodeProps) {
-  const onSubmit = async (
-    data: BootstrapNodeRequest,
-  ): Promise<ActionPromiseResult> => {
+  const onSubmit = async (data: BootstrapNodeRequest): Promise<ActionPromiseResult> => {
     console.log("Adding bootstrap node with data", data)
     return getApi()
       .nodeStewardApi.addBootstrapNode(data)
