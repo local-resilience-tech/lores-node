@@ -10,7 +10,7 @@ anyhow = "1.0.100"
 axum = { version = "0.8.5", features = ["ws"] }
 axum-login = "0.18.0"
 chrono = { version = "0.4.42", features = ["serde"] }
-confy = "1.0.0"
+confy = "2.0.0"
 copy_dir = "0.1.3"
 futures-util = "0.3.31"
 git2 = { version = "0.20.2", features = ["vendored-openssl"] }
