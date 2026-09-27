@@ -22,4 +22,4 @@ tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
 tokio-stream = { workspace = true }
 tracing = "0.1"
 hex = { workspace = true }
-rand = "0.9"
+rand = "0.10.3"

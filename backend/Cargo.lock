@@ -3060,7 +3060,7 @@ dependencies = [
  "p2panda-encryption",
  "p2panda-net",
  "p2panda-store",
- "rand 0.9.5",
+ "rand 0.10.3",
  "serde",
  "serde_json",
  "sqlx",
