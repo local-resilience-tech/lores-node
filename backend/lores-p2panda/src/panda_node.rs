@@ -1,3 +1,4 @@
+use std::borrow::Borrow;
 use std::collections::HashSet;
 use std::sync::{Arc, LazyLock};
 use std::time::Duration;
@@ -6,11 +7,12 @@ use p2panda::Node;
 use p2panda::NodeId;
 use p2panda::network::NetworkError;
 use p2panda::node::SpawnError;
+use p2panda::operation::{Header, LogId};
 use p2panda::streams::{
     EphemeralPublishError, EphemeralStreamPublisher, EphemeralStreamSubscription, PublishError, StreamEvent, StreamFrom, StreamPublisher,
     StreamSubscription,
 };
-use p2panda_core::{Hash, SigningKey, Topic, VerifyingKey};
+use p2panda_core::{Hash, SeqNum, SigningKey, Topic, VerifyingKey};
 use p2panda_encryption::Rng;
 use p2panda_encryption::crypto::x25519::SecretKey;
 use p2panda_net::iroh_endpoint::RelayUrl;
@@ -25,6 +27,7 @@ use tokio_stream::StreamExt;
 use crate::RegionAdminTopic;
 use crate::node_status::NodeStatus;
 use crate::region::{RegionId, RegionTopic};
+use crate::topic_status::TopicStatus;
 
 static DEFAULT_IROH_RELAY_URL: LazyLock<RelayUrl> =
     LazyLock::new(|| "https://euc1-1.relay.n0.iroh-canary.iroh.link".parse().expect("valid relay URL"));
@@ -58,6 +61,23 @@ pub struct IncomingOperation {
     pub bytes: Vec<u8>,
     pub operation_id: Hash,
     pub received_timestamp: u64,
+    pub log_id: Option<LogId>,
+    pub seq_num: Option<SeqNum>,
+}
+
+/// Reads the log position of a processed (persisted) operation.
+fn log_position<M>(op: &p2panda::streams::ProcessedOperation<M>) -> (Option<LogId>, Option<SeqNum>) {
+    let header: &Header = Borrow::<Header>::borrow(&op);
+    (Some(header.extensions.log_id()), Some(header.seq_num))
+}
+
+/// Events emitted by a named-cursor topic subscription, surfacing p2panda's own
+/// replay lifecycle so callers can tell historical operations from live ones.
+#[derive(Clone)]
+pub enum SubscriptionEvent {
+    Operation(Box<IncomingOperation>),
+    ReplayStarted { total_operations: u32 },
+    ReplayEnded,
 }
 
 #[derive(Debug, Error)]
@@ -148,50 +168,136 @@ impl PandaNode {
         })
     }
 
-    async fn subscribe_to_stream(
-        &self,
-        topic_id: &Topic,
-        events_tx: mpsc::Sender<IncomingOperation>,
-        mut subscription: StreamSubscription<Vec<u8>>,
-    ) {
-        let topic_status = self.node_status.write().await.register_topic(*topic_id);
+    /// Returns the shared [`NodeStatus`] covering all subscribed topics.
+    pub async fn get_node_status(&self) -> Arc<RwLock<NodeStatus>> {
+        self.node_status.clone()
+    }
 
+    /// Record that this node is participating in `region_id`. Used by
+    /// [`Self::get_regions`] and exposed via the gRPC `ListRegions` RPC.
+    pub async fn register_region(&self, region_id: RegionId) {
+        self.regions.write().await.insert(region_id);
+    }
+
+    /// Returns all registered region IDs.
+    pub async fn get_regions(&self) -> Vec<RegionId> {
+        self.regions.read().await.iter().cloned().collect()
+    }
+
+    /// Insert a bootstrap node at runtime.
+    pub async fn insert_bootstrap(&self, node_id: NodeId, relay_url: Option<RelayUrl>) -> Result<(), Box<NetworkError>> {
+        let relay_url = relay_url.unwrap_or_else(|| DEFAULT_IROH_RELAY_URL.clone());
+        let network = self.network.read().await;
+
+        network.insert_bootstrap(node_id, relay_url).await.map_err(Box::new)
+    }
+
+    pub async fn subscribe_to_region_topic<T: RegionTopic>(
+        &self,
+        region_topic: &T,
+        events_tx: mpsc::Sender<IncomingOperation>,
+    ) -> Result<(), SubscriptionError> {
+        let topic = region_topic.p2panda_topic();
+        self.subscribe_to_topic_persisted(topic, events_tx.clone()).await?;
+        self.subscribe_to_topic_ephemeral(topic, events_tx.clone()).await?;
+
+        Ok(())
+    }
+
+    /// Replays `region_topic` under its own named cursor, independent of the
+    /// node's primary frontier subscription and of any other cursor name on
+    /// the same topic. Replays every persisted operation from the beginning
+    /// of the log, then emits `ReplayEnded` and stops.
+    ///
+    /// Reusing the same `cursor_name` for more than one concurrent call is not
+    /// recommended.
+    pub async fn replay_region_topic_as<T: RegionTopic>(
+        &self,
+        region_topic: &T,
+        cursor_name: impl Into<String>,
+        events_tx: mpsc::Sender<SubscriptionEvent>,
+    ) -> Result<(), SubscriptionError> {
+        let topic_id = region_topic.p2panda_topic();
+
+        let network = self.network.read().await;
+        let (stream_publisher, subscription) = network
+            .stream_from::<Vec<u8>>(topic_id, StreamFrom::Start, Some(cursor_name.into()))
+            .await?;
+        drop(network);
+
+        // p2panda's `SyncHandle::drop` tears down the *whole topic's* sync
+        // session, not just this handle's — dropping this publisher would
+        // silently kill the primary subscription and any other named-cursor
+        // subscriptions sharing the topic. Keep it alive indefinitely instead
+        // of dropping it, even though this subscription never publishes
+        // through it itself.
+        self.publishers.write().await.push(Publisher {
+            topic: topic_id,
+            stream_publisher: Some(stream_publisher),
+            ephemeral_publisher: None,
+        });
+
+        Self::spawn_stream_task(subscription, events_tx, None, true, Some);
+
+        Ok(())
+    }
+
+    pub async fn publish_to_region_topic<T: RegionTopic>(&self, region_topic: &T, bytes: Vec<u8>) -> Result<Hash, PandaPublishError> {
+        let topic = region_topic.p2panda_topic();
+        self.publish(topic, bytes).await
+    }
+
+    pub async fn start_heartbeat_publication(self: Arc<Self>, heartbeat_message_payload: Vec<u8>) -> Result<(), PandaPublishError> {
         tokio::spawn(async move {
-            while let Some(event) = subscription.next().await {
-                match event {
-                    StreamEvent::Processed { operation: op, .. } => {
-                        let incoming = IncomingOperation {
-                            author: op.author(),
-                            topic: op.topic(),
-                            bytes: op.message().clone(),
-                            operation_id: op.id(),
-                            received_timestamp: op.timestamp(),
-                        };
-                        if events_tx.send(incoming).await.is_err() {
-                            break;
-                        }
+            let mut timer = interval(Duration::from_mins(HEARTBEAT_FREQUENCY_MINS));
+
+            loop {
+                timer.tick().await;
+
+                for region_id in self.get_regions().await {
+                    if let Err(err) = self.publish_single_heartbeat(&heartbeat_message_payload, &region_id).await {
+                        eprintln!("Error sending ephemeral message: {}", err);
+                        break;
                     }
-                    StreamEvent::DecodeFailed { error, .. } => {
-                        tracing::error!("failed decoding incoming operation: {error}");
-                    }
-                    StreamEvent::ReplayFailed { error, .. } => {
-                        tracing::error!("error replaying operation stream: {error}");
-                    }
-                    event @ (StreamEvent::SyncStarted { .. } | StreamEvent::SyncEnded { .. }) => {
-                        topic_status.write().await.handle_stream_event(&event);
-                    }
-                    StreamEvent::ImportStarted { .. } | StreamEvent::ImportEnded { .. } => {}
-                    StreamEvent::ReplayStarted { .. } | StreamEvent::ReplayEnded => {}
-                    StreamEvent::ProcessingFailed { error, .. } => {
-                        tracing::error!("operation processing failed: {error}");
-                    }
-                    StreamEvent::AckFailed { error, .. } => {
-                        tracing::error!("operation ack failed: {error}");
-                    }
-                    StreamEvent::Space { .. } | StreamEvent::Member(_) => {}
                 }
             }
         });
+
+        Ok(())
+    }
+
+    pub async fn get_log_counts(&self) -> Result<Vec<LogCount>, sqlx::Error> {
+        let rows = sqlx::query("SELECT public_key, COUNT(*) AS total FROM operations_v1 GROUP BY public_key")
+            .fetch_all(&self.pool)
+            .await?;
+
+        Ok(rows
+            .into_iter()
+            .map(|row| LogCount {
+                node_id: row.get("public_key"),
+                total: row.get("total"),
+            })
+            .collect())
+    }
+
+    pub async fn get_operation_counts_by_topic(&self) -> Result<Vec<OperationCountByAuthorAndTopic>, sqlx::Error> {
+        let rows = sqlx::query(
+            "SELECT lower(hex(substr(t.topic, 3))) AS topic_hex, t.author, COUNT(o.hash) AS total
+             FROM topics_v1 t
+             JOIN operations_v1 o ON o.verifying_key = t.author AND o.log_id = t.data_id
+             GROUP BY t.topic, t.author",
+        )
+        .fetch_all(&self.pool)
+        .await?;
+
+        Ok(rows
+            .into_iter()
+            .map(|row| OperationCountByAuthorAndTopic {
+                topic_hex: row.get("topic_hex"),
+                author_node_id: row.get("author"),
+                count: row.get("total"),
+            })
+            .collect())
     }
 
     async fn subscribe_to_ephemeral_stream(
@@ -207,6 +313,9 @@ impl PandaNode {
                     bytes: event.body().clone(),
                     received_timestamp: event.timestamp(),
                     operation_id: Hash::digest(event.body().clone()),
+                    // Ephemeral messages aren't part of any log.
+                    log_id: None,
+                    seq_num: None,
                 };
                 if events_tx.send(incoming).await.is_err() {
                     break;
@@ -248,7 +357,11 @@ impl PandaNode {
 
         drop(publishers);
 
-        self.subscribe_to_stream(&topic_id, events_tx, stream_subscription).await;
+        let topic_status = self.node_status.write().await.register_topic(topic_id);
+        Self::spawn_stream_task(stream_subscription, events_tx, Some(topic_status), false, |event| match event {
+            SubscriptionEvent::Operation(op) => Some(*op),
+            SubscriptionEvent::ReplayStarted { .. } | SubscriptionEvent::ReplayEnded => None,
+        });
 
         Ok(())
     }
@@ -291,179 +404,106 @@ impl PandaNode {
         Ok(())
     }
 
-    pub async fn get_subscribed_topics(&self) -> Vec<Topic> {
-        self.publishers.read().await.iter().map(|p| &p.topic).cloned().collect()
-    }
-
-    /// Returns the shared [`NodeStatus`] covering all subscribed topics.
-    pub async fn get_node_status(&self) -> Arc<RwLock<NodeStatus>> {
-        self.node_status.clone()
-    }
-
-    /// Record that this node is participating in `region_id`. Used by
-    /// [`Self::get_regions`] and exposed via the gRPC `ListRegions` RPC.
-    pub async fn register_region(&self, region_id: RegionId) {
-        self.regions.write().await.insert(region_id);
-    }
-
-    /// Returns all registered region IDs.
-    pub async fn get_regions(&self) -> Vec<RegionId> {
-        self.regions.read().await.iter().cloned().collect()
-    }
-
-    /// Insert a bootstrap node at runtime.
-    pub async fn insert_bootstrap(&self, node_id: NodeId, relay_url: Option<RelayUrl>) -> Result<(), Box<NetworkError>> {
-        let relay_url = relay_url.unwrap_or_else(|| DEFAULT_IROH_RELAY_URL.clone());
-        let network = self.network.read().await;
-
-        network.insert_bootstrap(node_id, relay_url).await.map_err(Box::new)
-    }
-
-    /// Creates a new `StreamFrom::Start` stream for `topic_id` and forwards every
-    /// `StreamEvent::Processed` operation to `events_tx`.  Unlike
-    /// `subscribe_to_topic` this does not guard against the topic already being
-    /// subscribed, so it can be called while a live frontier subscription is
-    /// active.  The publisher half of the stream is dropped immediately because
-    /// publishing is handled by the existing subscription.
-    pub async fn replay_topic(&self, topic_id: Topic, events_tx: mpsc::Sender<IncomingOperation>) -> Result<(), SubscriptionError> {
-        let network = self.network.read().await;
-        let (_publisher, mut subscription) = network.stream_from::<Vec<u8>>(topic_id, StreamFrom::Start, None).await?;
-        drop(network);
-
+    /// Spawns a task forwarding every event from `subscription` to `events_tx`,
+    /// via `map_event` (returning `None` drops the event). `topic_status`, if
+    /// given, is updated on sync events. If `stop_after_replay_ended`, the task
+    /// ends right after forwarding `ReplayEnded` instead of continuing to read
+    /// from `subscription` (see `replay_region_topic_as`'s doc comment).
+    fn spawn_stream_task<O: Send + 'static>(
+        mut subscription: StreamSubscription<Vec<u8>>,
+        events_tx: mpsc::Sender<O>,
+        topic_status: Option<Arc<RwLock<TopicStatus>>>,
+        stop_after_replay_ended: bool,
+        map_event: impl Fn(SubscriptionEvent) -> Option<O> + Send + 'static,
+    ) {
         tokio::spawn(async move {
             while let Some(event) = subscription.next().await {
                 match event {
                     StreamEvent::Processed { operation: op, .. } => {
+                        let (log_id, seq_num) = log_position(&op);
                         let incoming = IncomingOperation {
                             author: op.author(),
                             topic: op.topic(),
                             bytes: op.message().clone(),
                             operation_id: op.id(),
                             received_timestamp: op.timestamp(),
+                            log_id,
+                            seq_num,
                         };
-                        if events_tx.send(incoming).await.is_err() {
+                        if let Some(mapped) = map_event(SubscriptionEvent::Operation(Box::new(incoming)))
+                            && events_tx.send(mapped).await.is_err()
+                        {
+                            break;
+                        }
+                    }
+                    StreamEvent::ReplayStarted { total_operations } => {
+                        if let Some(mapped) = map_event(SubscriptionEvent::ReplayStarted { total_operations })
+                            && events_tx.send(mapped).await.is_err()
+                        {
+                            break;
+                        }
+                    }
+                    StreamEvent::ReplayEnded => {
+                        if let Some(mapped) = map_event(SubscriptionEvent::ReplayEnded) {
+                            let _ = events_tx.send(mapped).await;
+                        }
+                        if stop_after_replay_ended {
                             break;
                         }
                     }
                     StreamEvent::DecodeFailed { error, .. } => {
-                        tracing::error!("failed decoding operation during replay: {error}");
+                        tracing::error!("failed decoding operation: {error}");
                     }
                     StreamEvent::ReplayFailed { error, .. } => {
-                        tracing::error!("error during operation replay: {error}");
+                        tracing::error!("error replaying operation stream: {error}");
                     }
-                    StreamEvent::SyncStarted { .. } | StreamEvent::SyncEnded { .. } => {}
+                    event @ (StreamEvent::SyncStarted { .. } | StreamEvent::SyncEnded { .. }) => {
+                        if let Some(status) = &topic_status {
+                            status.write().await.handle_stream_event(&event);
+                        }
+                    }
                     StreamEvent::ImportStarted { .. } | StreamEvent::ImportEnded { .. } => {}
-                    StreamEvent::ReplayStarted { .. } | StreamEvent::ReplayEnded => {}
                     StreamEvent::ProcessingFailed { error, .. } => {
-                        tracing::error!("operation processing failed during replay: {error}");
+                        tracing::error!("operation processing failed: {error}");
                     }
                     StreamEvent::AckFailed { error, .. } => {
-                        tracing::error!("operation ack failed during replay: {error}");
+                        tracing::error!("operation ack failed: {error}");
                     }
                     StreamEvent::Space { .. } | StreamEvent::Member(_) => {}
                 }
             }
         });
-
-        Ok(())
     }
 
-    pub async fn subscribe_to_region_topic<T: RegionTopic>(
-        &self,
-        region_topic: &T,
-        events_tx: mpsc::Sender<IncomingOperation>,
-    ) -> Result<(), SubscriptionError> {
-        let topic = region_topic.p2panda_topic();
-        self.subscribe_to_topic_persisted(topic, events_tx.clone()).await?;
-        self.subscribe_to_topic_ephemeral(topic, events_tx.clone()).await?;
-
-        Ok(())
+    async fn stream_publisher_for(&self, topic_id: Topic) -> Result<StreamPublisher<Vec<u8>>, PandaPublishError> {
+        self.publishers
+            .read()
+            .await
+            .iter()
+            .find_map(|p| (p.topic == topic_id).then(|| p.stream_publisher.clone()).flatten())
+            .ok_or(PandaPublishError::NoSubscription(topic_id))
     }
 
-    pub async fn publish_to_region_topic<T: RegionTopic>(&self, region_topic: &T, bytes: Vec<u8>) -> Result<Hash, PandaPublishError> {
-        let topic = region_topic.p2panda_topic();
-        self.publish(topic, bytes).await
+    async fn ephemeral_publisher_for(&self, topic_id: Topic) -> Result<EphemeralStreamPublisher<Vec<u8>>, PandaPublishError> {
+        self.publishers
+            .read()
+            .await
+            .iter()
+            .find_map(|p| (p.topic == topic_id).then(|| p.ephemeral_publisher.clone()).flatten())
+            .ok_or(PandaPublishError::NoSubscription(topic_id))
     }
 
     async fn publish(&self, topic_id: Topic, bytes: Vec<u8>) -> Result<Hash, PandaPublishError> {
-        let publishers = self.publishers.read().await;
-        let publisher = publishers
-            .iter()
-            .find(|p| p.topic == topic_id && p.stream_publisher.is_some())
-            .ok_or(PandaPublishError::NoSubscription(topic_id))?;
-        let publish_future = publisher.stream_publisher.to_owned().unwrap().publish(bytes).await?;
-        Ok(publish_future.hash())
+        let publisher = self.stream_publisher_for(topic_id).await?;
+        Ok(publisher.publish(bytes).await?.hash())
     }
 
-    pub async fn start_heartbeat_publication(self: Arc<Self>, heartbeat_message_payload: Vec<u8>) -> Result<(), PandaPublishError> {
-        tokio::spawn(async move {
-            let mut timer = interval(Duration::from_mins(HEARTBEAT_FREQUENCY_MINS));
-
-            loop {
-                timer.tick().await;
-
-                for region_id in self.get_regions().await {
-                    if let Err(err) = self.publish_single_heartbeat(&heartbeat_message_payload, &region_id).await {
-                        eprintln!("Error sending ephemeral message: {}", err);
-                        break;
-                    }
-                }
-            }
-        });
+    async fn publish_single_heartbeat(&self, heartbeat_message_payload: &[u8], region_id: &RegionId) -> Result<(), PandaPublishError> {
+        let topic_id = RegionAdminTopic::new(region_id.clone()).p2panda_topic();
+        let publisher = self.ephemeral_publisher_for(topic_id).await?;
+        publisher.publish(heartbeat_message_payload.to_vec()).await?;
 
         Ok(())
-    }
-
-    async fn publish_single_heartbeat(&self, heartbeat_message_payload: &[u8], region_id: &RegionId) -> Result<(), EphemeralPublishError> {
-        let admin_topic = RegionAdminTopic::new(region_id.clone());
-        let topic_id = admin_topic.p2panda_topic();
-        let publishers = self.publishers.read().await;
-        let publisher = publishers
-            .iter()
-            .find(|p| p.topic == topic_id && p.ephemeral_publisher.is_some())
-            .ok_or(PandaPublishError::NoSubscription(topic_id))
-            .unwrap();
-
-        publisher
-            .ephemeral_publisher
-            .to_owned()
-            .unwrap()
-            .publish(heartbeat_message_payload.to_vec())
-            .await
-    }
-
-    pub async fn get_log_counts(&self) -> Result<Vec<LogCount>, sqlx::Error> {
-        let rows = sqlx::query("SELECT public_key, COUNT(*) AS total FROM operations_v1 GROUP BY public_key")
-            .fetch_all(&self.pool)
-            .await?;
-
-        Ok(rows
-            .into_iter()
-            .map(|row| LogCount {
-                node_id: row.get("public_key"),
-                total: row.get("total"),
-            })
-            .collect())
-    }
-
-    pub async fn get_operation_counts_by_topic(&self) -> Result<Vec<OperationCountByAuthorAndTopic>, sqlx::Error> {
-        let rows = sqlx::query(
-            "SELECT lower(hex(substr(t.topic, 3))) AS topic_hex, t.author, COUNT(o.hash) AS total
-             FROM topics_v1 t
-             JOIN operations_v1 o ON o.verifying_key = t.author AND o.log_id = t.data_id
-             GROUP BY t.topic, t.author",
-        )
-        .fetch_all(&self.pool)
-        .await?;
-
-        Ok(rows
-            .into_iter()
-            .map(|row| OperationCountByAuthorAndTopic {
-                topic_hex: row.get("topic_hex"),
-                author_node_id: row.get("author"),
-                count: row.get("total"),
-            })
-            .collect())
     }
 }
 
@@ -491,11 +531,134 @@ async fn open_pool(database_url: &str) -> Result<SqlitePool, sqlx::Error> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::region::RegionAppTopic;
 
     #[test]
     fn credentials_from_seed_roundtrip() {
         let signing_key = SigningKey::from_bytes(&[1; 32]);
         let creds = credentials_from_seed(signing_key.clone(), [2; 32]);
         assert_eq!(creds.verifying_key(), signing_key.verifying_key());
+    }
+
+    async fn spawn_test_node() -> PandaNode {
+        let dir = tempfile::tempdir().unwrap();
+        let db_path = dir.path().join("node.sqlite");
+        std::mem::forget(dir); // keep the tempdir alive for the node's lifetime
+
+        let params = RequiredNodeParams {
+            credentials: p2panda::Credentials::generate(),
+            network_id: Hash::from_bytes([0u8; 32]),
+            bootstrap_node_ids: vec![],
+            relay_url: None,
+        };
+        PandaNode::new(&params, db_path.to_str().unwrap()).await.unwrap()
+    }
+
+    async fn next_event(rx: &mut mpsc::Receiver<SubscriptionEvent>) -> SubscriptionEvent {
+        tokio::time::timeout(Duration::from_secs(5), rx.recv())
+            .await
+            .expect("timed out waiting for subscription event")
+            .expect("subscription channel closed unexpectedly")
+    }
+
+    async fn next_operation_bytes(rx: &mut mpsc::Receiver<SubscriptionEvent>) -> Vec<u8> {
+        match next_event(rx).await {
+            SubscriptionEvent::Operation(op) => op.bytes,
+            _ => panic!("expected an operation event, got a lifecycle event instead"),
+        }
+    }
+
+    #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
+    async fn primary_subscription_receives_own_published_operations() {
+        let node = spawn_test_node().await;
+        let topic = RegionAppTopic::new(RegionId::generate(), "test-app");
+
+        let (primary_tx, mut primary_rx) = mpsc::channel::<IncomingOperation>(32);
+        node.subscribe_to_region_topic(&topic, primary_tx).await.unwrap();
+
+        node.publish_to_region_topic(&topic, b"first".to_vec()).await.unwrap();
+
+        let received = tokio::time::timeout(Duration::from_secs(10), primary_rx.recv())
+            .await
+            .expect("timed out waiting for own published operation");
+        assert_eq!(received.unwrap().bytes, b"first");
+    }
+
+    /// Two named-cursor replays of the same topic run independently from the
+    /// start, without interfering with each other's ack state.
+    #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
+    async fn named_cursor_replays_are_independent() {
+        let node = spawn_test_node().await;
+        let topic = RegionAppTopic::new(RegionId::generate(), "test-app");
+
+        // The primary subscription is required before publishing works.
+        let (primary_tx, mut primary_rx) = mpsc::channel::<IncomingOperation>(32);
+        node.subscribe_to_region_topic(&topic, primary_tx).await.unwrap();
+
+        node.publish_to_region_topic(&topic, b"first".to_vec()).await.unwrap();
+        node.publish_to_region_topic(&topic, b"second".to_vec()).await.unwrap();
+
+        // Drain the primary subscription's copies so they don't pile up.
+        tokio::time::timeout(Duration::from_secs(5), primary_rx.recv()).await.unwrap();
+        tokio::time::timeout(Duration::from_secs(5), primary_rx.recv()).await.unwrap();
+
+        // Instance "a" replays from the start under its own cursor name.
+        let (tx_a, mut rx_a) = mpsc::channel::<SubscriptionEvent>(32);
+        node.replay_region_topic_as(&topic, "instance-a", tx_a).await.unwrap();
+
+        assert!(matches!(
+            next_event(&mut rx_a).await,
+            SubscriptionEvent::ReplayStarted { total_operations: 2 }
+        ));
+        assert_eq!(next_operation_bytes(&mut rx_a).await, b"first");
+        assert_eq!(next_operation_bytes(&mut rx_a).await, b"second");
+        assert!(matches!(next_event(&mut rx_a).await, SubscriptionEvent::ReplayEnded));
+
+        // Instance "b" independently replays the same history under a
+        // different cursor name, unaffected by instance "a"'s cursor.
+        let (tx_b, mut rx_b) = mpsc::channel::<SubscriptionEvent>(32);
+        node.replay_region_topic_as(&topic, "instance-b", tx_b).await.unwrap();
+
+        assert!(matches!(
+            next_event(&mut rx_b).await,
+            SubscriptionEvent::ReplayStarted { total_operations: 2 }
+        ));
+        assert_eq!(next_operation_bytes(&mut rx_b).await, b"first");
+        assert_eq!(next_operation_bytes(&mut rx_b).await, b"second");
+        assert!(matches!(next_event(&mut rx_b).await, SubscriptionEvent::ReplayEnded));
+    }
+
+    /// The replay task stops right after `ReplayEnded` — a live operation
+    /// published afterwards must never reach it, and the channel must close
+    /// (not just go quiet) to prove the task actually ended.
+    #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
+    async fn named_cursor_replay_stops_after_replay_ended() {
+        let node = spawn_test_node().await;
+        let topic = RegionAppTopic::new(RegionId::generate(), "test-app");
+
+        let (primary_tx, mut primary_rx) = mpsc::channel::<IncomingOperation>(32);
+        node.subscribe_to_region_topic(&topic, primary_tx).await.unwrap();
+
+        node.publish_to_region_topic(&topic, b"first".to_vec()).await.unwrap();
+        tokio::time::timeout(Duration::from_secs(5), primary_rx.recv()).await.unwrap();
+
+        let (tx, mut rx) = mpsc::channel::<SubscriptionEvent>(32);
+        node.replay_region_topic_as(&topic, "instance-a", tx).await.unwrap();
+
+        assert!(matches!(
+            next_event(&mut rx).await,
+            SubscriptionEvent::ReplayStarted { total_operations: 1 }
+        ));
+        assert_eq!(next_operation_bytes(&mut rx).await, b"first");
+        assert!(matches!(next_event(&mut rx).await, SubscriptionEvent::ReplayEnded));
+
+        // Published after replay ended: a still-running subscription would
+        // deliver this as a live operation.
+        node.publish_to_region_topic(&topic, b"second".to_vec()).await.unwrap();
+
+        let event = tokio::time::timeout(Duration::from_secs(5), rx.recv())
+            .await
+            .expect("recv should return promptly once the subscription task has ended");
+        assert!(event.is_none(), "expected the channel to be closed, but got another event");
     }
 }
