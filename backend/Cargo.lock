@@ -2835,7 +2835,6 @@ dependencies = [
  "thiserror 2.0.21",
  "time",
  "tokio",
- "tokio-stream",
  "tonic",
  "tower",
  "tower-http",
@@ -2846,7 +2845,6 @@ dependencies = [
  "utoipa",
  "utoipa-axum",
  "utoipa-swagger-ui",
- "uuid",
 ]
 
 [[package]]

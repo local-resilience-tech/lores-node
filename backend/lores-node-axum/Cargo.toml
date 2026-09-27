@@ -27,7 +27,6 @@ sqlx = { workspace = true, features = [
 thiserror = { workspace = true }
 time = "0.3.44"
 tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
-tokio-stream = { workspace = true }
 tower = "0.5.2"
 tower-http = { version = "0.6.6", features = ["cors", "fs", "trace"] }
 tower-sessions = { version = "0.15", features = ["signed"] }
@@ -37,7 +36,6 @@ tracing-subscriber = { version = "0.3.20", features = ["env-filter"] }
 utoipa = "5.3.1"
 utoipa-axum = "0.2.0"
 utoipa-swagger-ui = { version = "9.0.2", features = ["axum", "vendored"] }
-uuid = "1.18.1"
 hex = { workspace = true }
 lores-p2panda = { path = "../lores-p2panda" }
 lores-p2panda-server = { path = "../lores-p2panda-server" }
