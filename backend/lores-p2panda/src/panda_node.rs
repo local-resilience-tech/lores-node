@@ -312,11 +312,11 @@ impl PandaNode {
     }
 
     /// Insert a bootstrap node at runtime.
-    pub async fn insert_bootstrap(&self, node_id: NodeId, relay_url: Option<RelayUrl>) -> Result<(), NetworkError> {
+    pub async fn insert_bootstrap(&self, node_id: NodeId, relay_url: Option<RelayUrl>) -> Result<(), Box<NetworkError>> {
         let relay_url = relay_url.unwrap_or_else(|| DEFAULT_IROH_RELAY_URL.clone());
         let network = self.network.read().await;
 
-        network.insert_bootstrap(node_id, relay_url).await
+        network.insert_bootstrap(node_id, relay_url).await.map_err(Box::new)
     }
 
     /// Creates a new `StreamFrom::Start` stream for `topic_id` and forwards every
