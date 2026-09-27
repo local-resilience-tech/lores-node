@@ -81,7 +81,7 @@ impl ProjectionDb {
     fn hash(schema_sql: &str) -> String {
         let mut hasher = Sha256::new();
         hasher.update(schema_sql.as_bytes());
-        format!("{:x}", hasher.finalize())
+        hex::encode(hasher.finalize())
     }
 
     async fn apply_schema(pool: &SqlitePool, schema_sql: &str) -> Result<(), sqlx::Error> {
