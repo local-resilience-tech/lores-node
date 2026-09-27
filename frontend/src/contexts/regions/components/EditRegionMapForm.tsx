@@ -1,17 +1,8 @@
 import { Button, Stack, Text, FileInput } from "@mantine/core"
 import { useForm } from "@mantine/form"
-import {
-  ActionPromiseResult,
-  DisplayActionResult,
-  useOnSubmitWithResult,
-} from "../../../components"
+import { ActionPromiseResult, DisplayActionResult, useOnSubmitWithResult } from "../../../components"
 import { UpdateMapData } from "../../../api/Api"
-import LatLngInput, {
-  EditableLatLng,
-  emptyEditableLatLng,
-  toLatLng,
-  validateLatLng,
-} from "../../../components/LatLngInput"
+import LatLngInput, { EditableLatLng, emptyEditableLatLng, toLatLng, validateLatLng } from "../../../components/LatLngInput"
 
 export interface UpdateMapFormData {
   image_file: File | null
@@ -25,12 +16,8 @@ interface EditRegionMapFormProps {
   onSubmit: (data: UpdateMapData) => Promise<ActionPromiseResult>
 }
 
-export default function EditRegionMapForm({
-  onSubmit,
-  regionId,
-}: EditRegionMapFormProps) {
-  const [actionResult, onSubmitWithResult] =
-    useOnSubmitWithResult<UpdateMapData>(onSubmit)
+export default function EditRegionMapForm({ onSubmit, regionId }: EditRegionMapFormProps) {
+  const [actionResult, onSubmitWithResult] = useOnSubmitWithResult<UpdateMapData>(onSubmit)
 
   const form = useForm<UpdateMapFormData>({
     mode: "controlled",
@@ -46,9 +33,7 @@ export default function EditRegionMapForm({
     },
   })
 
-  const convertDataAndSubmit = async (
-    data: UpdateMapFormData,
-  ): Promise<ActionPromiseResult> => {
+  const convertDataAndSubmit = async (data: UpdateMapFormData): Promise<ActionPromiseResult> => {
     const dataUrl = await convertFileToDataUrl(data.image_file)
 
     const updateData: UpdateMapData = {
@@ -63,10 +48,7 @@ export default function EditRegionMapForm({
   return (
     <form onSubmit={form.onSubmit(convertDataAndSubmit)}>
       <Stack gap="lg">
-        <Text>
-          When you edit the map for a region, you can update the image and the
-          geographical boundaries.
-        </Text>
+        <Text>When you edit the map for a region, you can update the image and the geographical boundaries.</Text>
 
         <Stack>
           <FileInput
@@ -107,9 +89,7 @@ export default function EditRegionMapForm({
   )
 }
 
-async function convertFileToDataUrl(
-  file: File | null,
-): Promise<string | null | undefined> {
+async function convertFileToDataUrl(file: File | null): Promise<string | null | undefined> {
   if (!file) return null
 
   return new Promise((resolve) => {

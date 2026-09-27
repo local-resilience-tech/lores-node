@@ -27,13 +27,10 @@ export default function TopicCountsTable({ counts, regions, myNodeId }: Props) {
     )
   }
 
-  const byTopic = counts.reduce<Record<string, OperationCountEntry[]>>(
-    (acc, entry) => {
-      ;(acc[entry.topic] ??= []).push(entry)
-      return acc
-    },
-    {},
-  )
+  const byTopic = counts.reduce<Record<string, OperationCountEntry[]>>((acc, entry) => {
+    ;(acc[entry.topic] ??= []).push(entry)
+    return acc
+  }, {})
 
   return (
     <Stack gap="lg">
@@ -43,9 +40,7 @@ export default function TopicCountsTable({ counts, regions, myNodeId }: Props) {
             <Title order={4}>
               {regionById[topic]?.name ? (
                 <Tooltip label={topic}>
-                  <span style={{ cursor: "default" }}>
-                    {regionById[topic].name}
-                  </span>
+                  <span style={{ cursor: "default" }}>{regionById[topic].name}</span>
                 </Tooltip>
               ) : (
                 <HexId value={topic} />
@@ -61,13 +56,7 @@ export default function TopicCountsTable({ counts, regions, myNodeId }: Props) {
             </Table.Thead>
             <Table.Tbody>
               {[...entries]
-                .sort((a, b) =>
-                  a.author_node_id === myNodeId
-                    ? -1
-                    : b.author_node_id === myNodeId
-                      ? 1
-                      : 0,
-                )
+                .sort((a, b) => (a.author_node_id === myNodeId ? -1 : b.author_node_id === myNodeId ? 1 : 0))
                 .map((entry, i) => {
                   const isMe = entry.author_node_id === myNodeId
                   return (

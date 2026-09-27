@@ -16,7 +16,7 @@ Add `lores-dev-server` to your app project as a library dependency and wrap it i
 
 Then, you need an entrypoint to it. It's recommended that you create a crate called `[YOURAPPNAME]-dev-server` with the following main.rs.
 
-```rust
+```rust,no_run
 // src/main.rs
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {

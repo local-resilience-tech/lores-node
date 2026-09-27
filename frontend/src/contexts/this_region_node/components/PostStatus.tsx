@@ -2,19 +2,10 @@ import { Stack, TextInput, Button, Select } from "@mantine/core"
 import { useForm } from "@mantine/form"
 
 import type { RegionNodeStatusData } from "../../../api/Api"
-import {
-  ActionPromiseResult,
-  DisplayActionResult,
-  useOnSubmitWithResult,
-} from "../../../components"
+import { ActionPromiseResult, DisplayActionResult, useOnSubmitWithResult } from "../../../components"
 
-export default function PostStatus({
-  onSubmit,
-}: {
-  onSubmit: (data: RegionNodeStatusData) => Promise<ActionPromiseResult>
-}) {
-  const [actionResult, onSubmitWithResult] =
-    useOnSubmitWithResult<RegionNodeStatusData>(onSubmit)
+export default function PostStatus({ onSubmit }: { onSubmit: (data: RegionNodeStatusData) => Promise<ActionPromiseResult> }) {
+  const [actionResult, onSubmitWithResult] = useOnSubmitWithResult<RegionNodeStatusData>(onSubmit)
 
   const form = useForm<RegionNodeStatusData>({
     mode: "controlled",

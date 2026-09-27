@@ -17,9 +17,7 @@ export function getSocketUrl(): string {
   const apiUrl = getApiUrl()
 
   const withWsProtocol = apiUrl.replace(/^https?/, "ws")
-  const ensureTrailingSlash = withWsProtocol.endsWith("/")
-    ? withWsProtocol
-    : `${withWsProtocol}/`
+  const ensureTrailingSlash = withWsProtocol.endsWith("/") ? withWsProtocol : `${withWsProtocol}/`
 
   return ensureTrailingSlash + "ws"
 }

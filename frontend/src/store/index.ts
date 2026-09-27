@@ -1,18 +1,8 @@
 import { useDispatch, useSelector, useStore } from "react-redux"
 import { configureStore } from "@reduxjs/toolkit"
 import networkReducer from "./network"
-import regionsReducer, {
-  nodeJoinedRegion,
-  regionNodeUpdated,
-  regionUpdated,
-  regionForgotten,
-  nodeHeartbeatReceived,
-} from "./my_regions"
-import localAppsReducer, {
-  localAppCreated,
-  localAppsLoaded,
-  localAppUpdated,
-} from "./local_apps"
+import regionsReducer, { nodeJoinedRegion, regionNodeUpdated, regionUpdated, regionForgotten, nodeHeartbeatReceived } from "./my_regions"
+import localAppsReducer, { localAppCreated, localAppsLoaded, localAppUpdated } from "./local_apps"
 import regionAppsReducer, { regionAppUpdated } from "./region_apps"
 import meReducer from "./me"
 import { ClientEvent } from "../api/Api"

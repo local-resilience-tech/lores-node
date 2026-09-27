@@ -11,11 +11,7 @@ type NodesMapProps = {
   regionCreatorId?: string | null
 }
 
-export default function NodesMap({
-  map,
-  nodes,
-  regionCreatorId,
-}: NodesMapProps) {
+export default function NodesMap({ map, nodes, regionCreatorId }: NodesMapProps) {
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null)
 
   if (!map.map_data_url) {
@@ -24,11 +20,7 @@ export default function NodesMap({
 
   const nodesWithPosition = nodes.flatMap((node) => {
     if (!node.latlng) return []
-    const position = interpolatePosition(
-      map.min_latlng,
-      map.max_latlng,
-      node.latlng,
-    )
+    const position = interpolatePosition(map.min_latlng, map.max_latlng, node.latlng)
     return [{ node, position }]
   })
 
@@ -42,13 +34,7 @@ export default function NodesMap({
       }}
       onClick={() => setSelectedNodeId(null)}
     >
-      <Image
-        src={map.map_data_url}
-        alt="Region map"
-        w="100%"
-        h="auto"
-        radius={0}
-      />
+      <Image src={map.map_data_url} alt="Region map" w="100%" h="auto" radius={0} />
       {nodesWithPosition.map(({ node, position }) => (
         <Popover
           key={node.node_id}
@@ -62,12 +48,7 @@ export default function NodesMap({
           middlewares={{ flip: true, shift: { padding: 8 } }}
         >
           <Popover.Target>
-            <Tooltip
-              label={node.name ?? node.node_id}
-              withArrow
-              color="gray"
-              disabled={selectedNodeId === node.node_id}
-            >
+            <Tooltip label={node.name ?? node.node_id} withArrow color="gray" disabled={selectedNodeId === node.node_id}>
               <Box
                 style={{
                   position: "absolute",
@@ -79,25 +60,15 @@ export default function NodesMap({
                 }}
                 onClick={(event) => {
                   event.stopPropagation()
-                  setSelectedNodeId((current) =>
-                    current === node.node_id ? null : node.node_id,
-                  )
+                  setSelectedNodeId((current) => (current === node.node_id ? null : node.node_id))
                 }}
               >
-                <IconMapPinFilled
-                  color="blue"
-                  size={36}
-                  style={{ display: "block" }}
-                />
+                <IconMapPinFilled color="blue" size={36} style={{ display: "block" }} />
               </Box>
             </Tooltip>
           </Popover.Target>
 
-          <Popover.Dropdown
-            onClick={(event) => event.stopPropagation()}
-            p={0}
-            style={{ width: "min(420px, calc(100vw - 1rem))" }}
-          >
+          <Popover.Dropdown onClick={(event) => event.stopPropagation()} p={0} style={{ width: "min(420px, calc(100vw - 1rem))" }}>
             <NodeCard
               node={node}
               isRegionCreator={regionCreatorId === node.node_id}
@@ -122,16 +93,9 @@ export default function NodesMap({
   )
 }
 
-function interpolatePosition(
-  min: LatLng,
-  max: LatLng,
-  source: LatLng,
-): Coordinate2D {
+function interpolatePosition(min: LatLng, max: LatLng, source: LatLng): Coordinate2D {
   const minCoordinate = Coordinate2D.fromLatLng(min)
   const maxCoordinate = Coordinate2D.fromLatLng(max)
 
-  return Coordinate2D.fromLatLng(source)
-    .normalizeBetween(minCoordinate, maxCoordinate)
-    .invertYWithinUnitRange()
-    .toScreenPercent()
+  return Coordinate2D.fromLatLng(source).normalizeBetween(minCoordinate, maxCoordinate).invertYWithinUnitRange().toScreenPercent()
 }

@@ -1,11 +1,4 @@
-import {
-  AppShell,
-  Breadcrumbs,
-  Burger,
-  Container,
-  Group,
-  Text,
-} from "@mantine/core"
+import { AppShell, Burger, Container, Group, Text } from "@mantine/core"
 import { Outlet } from "react-router"
 import { useDisclosure } from "@mantine/hooks"
 import { Anchor, NavLink } from "../../../components"
@@ -19,11 +12,7 @@ export default function AdminLayout() {
   const [opened, { toggle }] = useDisclosure()
 
   return (
-    <AppShell
-      header={{ height: 60 }}
-      navbar={{ width: 300, breakpoint: "sm", collapsed: { mobile: !opened } }}
-      padding="md"
-    >
+    <AppShell header={{ height: 60 }} navbar={{ width: 300, breakpoint: "sm", collapsed: { mobile: !opened } }} padding="md">
       <AppShell.Header>
         <Group h="100%" px="md">
           <Burger opened={opened} onClick={toggle} hiddenFrom="sm" size="sm" />

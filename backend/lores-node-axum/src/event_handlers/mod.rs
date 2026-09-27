@@ -32,7 +32,7 @@ pub async fn handle_event(event: LoResEvent, pool: &SqlitePool, realtime_state: 
 
     let handler = get_handler(&payload);
 
-    if let Err(e) = handler.validate(&header, &pool).await {
+    if let Err(e) = handler.validate(&header, pool).await {
         warn!("This event is not valid: {:?}", e);
         return;
     }

@@ -1,7 +1,4 @@
-import {
-  NavLink as MantineNavLink,
-  type NavLinkProps as MantineNavLinkProps,
-} from "@mantine/core"
+import { NavLink as MantineNavLink, type NavLinkProps as MantineNavLinkProps } from "@mantine/core"
 import { Link } from "react-router-dom"
 
 export type NavLinkProps = MantineNavLinkProps & {

@@ -2,22 +2,13 @@ import { Breadcrumbs, Container, Stack, Title, Text } from "@mantine/core"
 import { useNavigate, useParams } from "react-router-dom"
 import { getApi } from "../../../api"
 import { LocalAppFormData } from "../../../api/Api"
-import {
-  ActionButton,
-  actionFailure,
-  ActionPromiseResult,
-  actionSuccess,
-  Anchor,
-} from "../../../components"
+import { ActionButton, actionFailure, ActionPromiseResult, actionSuccess, Anchor } from "../../../components"
 import LocalAppForm from "../components/LocalAppForm"
 import { useAppSelector } from "../../../store"
 import { awaitConfirmModal } from "../../shared/components/Modal"
 import { actionCancelled } from "../../../components/ActionResult"
 
-function appPath(
-  appName: string | undefined,
-  instanceId: string | undefined | null,
-) {
+function appPath(appName: string | undefined, instanceId: string | undefined | null) {
   return `/node/apps/app/${encodeURIComponent(appName || "-")}/${encodeURIComponent(instanceId || "-")}`
 }
 
@@ -28,14 +19,9 @@ export default function EditLocalApp() {
     appName: string
     instanceId: string
   }>()
-  const instanceId: string | null =
-    instanceIdParam === "-" ? null : instanceIdParam || null
+  const instanceId: string | null = instanceIdParam === "-" ? null : instanceIdParam || null
 
-  const app = useAppSelector((state) =>
-    (state.localApps || []).find(
-      (app) => app.name === appName && app.instance_id === instanceId,
-    ),
-  )
+  const app = useAppSelector((state) => (state.localApps || []).find((app) => app.name === appName && app.instance_id === instanceId))
 
   if (!appName) {
     return <Container>Error: App name is required</Container>
@@ -44,15 +30,12 @@ export default function EditLocalApp() {
   if (!app) {
     return (
       <Container>
-        Error: App not found with name "{appName}" and instance ID "{instanceId}
-        "
+        Error: App not found with name "{appName}" and instance ID "{instanceId}"
       </Container>
     )
   }
 
-  const onSubmit = async (
-    data: LocalAppFormData,
-  ): Promise<ActionPromiseResult> => {
+  const onSubmit = async (data: LocalAppFormData): Promise<ActionPromiseResult> => {
     return getApi()
       .nodeStewardApi.updateLocalApp(data)
       .then(() => {
@@ -66,8 +49,7 @@ export default function EditLocalApp() {
     const confirmed = await awaitConfirmModal(
       "Delete app",
       <Text size="sm">
-        Are you sure you want to delete <strong>{appName}</strong>? This action
-        cannot be undone.
+        Are you sure you want to delete <strong>{appName}</strong>? This action cannot be undone.
       </Text>,
     )
     if (!confirmed) return actionCancelled()

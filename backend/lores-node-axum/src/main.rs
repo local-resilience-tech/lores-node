@@ -24,7 +24,7 @@ use crate::{
         auth_api::auth_backend::AppAuthBackend,
         public_api::realtime::{self, RealtimeState},
     },
-    config::{config::LoresNodeConfig, config_state::LoresNodeConfigState},
+    config::{LoresNodeConfig, LoresNodeConfigState},
     panda_comms::{PandaContainer, lores_events::LoResEvent, start_panda, start_panda_event_handler},
     static_server::frontend_handler,
 };

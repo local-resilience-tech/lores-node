@@ -33,7 +33,14 @@ pub struct DevPandaService {
     counter: Arc<AtomicU64>,
     /// Every operation published to each `app_id`, retained only when tests
     /// need to introspect published operations.
+    #[allow(clippy::type_complexity)]
     observed: Option<Arc<RwLock<HashMap<String, Vec<OperationEvent>>>>>,
+}
+
+impl Default for DevPandaService {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl DevPandaService {

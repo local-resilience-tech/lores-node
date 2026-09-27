@@ -13,12 +13,7 @@ interface RegionSelectorProps {
 
 const ADD_NEW_VALUE = "__add_new__"
 
-export function RegionSelector({
-  regions,
-  selected,
-  onChange,
-  addNewPath,
-}: RegionSelectorProps) {
+export function RegionSelector({ regions, selected, onChange, addNewPath }: RegionSelectorProps) {
   const navigate = useNavigate()
 
   const combobox = useCombobox({
@@ -65,10 +60,7 @@ export function RegionSelector({
       <Combobox.Target>
         <Group justify="flex-start" gap={4}>
           <Text span>{selected?.name ?? "Unknown"}</Text>
-          <ActionIcon
-            onClick={() => combobox.toggleDropdown()}
-            variant="transparent"
-          >
+          <ActionIcon onClick={() => combobox.toggleDropdown()} variant="transparent">
             <IconChevronDown size={iconSize} />
           </ActionIcon>
         </Group>

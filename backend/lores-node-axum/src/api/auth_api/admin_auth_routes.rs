@@ -4,7 +4,7 @@ use tracing::warn;
 use utoipa::ToSchema;
 use utoipa_axum::{router::OpenApiRouter, routes};
 
-use crate::config::config_state::LoresNodeConfigState;
+use crate::config::LoresNodeConfigState;
 
 use super::{
     UserRef,
@@ -65,7 +65,7 @@ enum AdminLoginError {
     )
 )]
 async fn admin_login(
-    mut auth_session: AuthSession,
+    auth_session: AuthSession,
     axum::extract::Json(admin_creds): axum::extract::Json<AdminCredentials>,
 ) -> impl IntoResponse {
     let creds = Credentials::Admin(admin_creds);
@@ -94,5 +94,5 @@ async fn admin_login(
         return (StatusCode::INTERNAL_SERVER_ERROR, Json(AdminLoginError::InternalServerError)).into_response();
     }
 
-    return (StatusCode::OK, Json(UserRef::from_backend_user(&user))).into_response();
+    (StatusCode::OK, Json(UserRef::from_backend_user(&user))).into_response()
 }

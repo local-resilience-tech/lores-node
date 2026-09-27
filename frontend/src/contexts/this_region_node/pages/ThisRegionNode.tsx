@@ -1,12 +1,4 @@
-import {
-  Stack,
-  Title,
-  Text,
-  Card,
-  Group,
-  ActionIcon,
-  Button,
-} from "@mantine/core"
+import { Stack, Title, Text, Card, Group, ActionIcon, Button } from "@mantine/core"
 import { useAppSelector } from "../../../store"
 import ThisNodeDetails from "../components/ThisNodeDetails"
 import { useNavigate } from "react-router-dom"
@@ -17,9 +9,7 @@ import { myActiveRegionNode, nodeName } from "../../../store/my_regions"
 
 export default function ThisRegionNode() {
   const navigate = useNavigate()
-  const node = useAppSelector((state) =>
-    myActiveRegionNode(state.my_regions, state.network?.node.id),
-  )
+  const node = useAppSelector((state) => myActiveRegionNode(state.my_regions, state.network?.node.id))
 
   if (!node) return null
 
@@ -54,10 +44,7 @@ export default function ThisRegionNode() {
         <Title order={2}>Node Status</Title>
         <Card>
           <Card.Section>
-            <DisplayStatus
-              state={node?.state}
-              status_text={node?.status_text}
-            />
+            <DisplayStatus state={node?.state} status_text={node?.status_text} />
           </Card.Section>
         </Card>
         <IfNodeSteward>

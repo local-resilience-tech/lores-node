@@ -10,9 +10,7 @@ export default function LocalApps() {
   const apps = useAppSelector((state) => state.localApps)
   const navigate = useNavigate()
 
-  const sortedApps = apps
-    ? orderBy(apps, ["app.name", "app.instance_id"])
-    : null
+  const sortedApps = apps ? orderBy(apps, ["app.name", "app.instance_id"]) : null
 
   return (
     <Container>

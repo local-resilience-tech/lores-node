@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { Text } from "@mantine/core"
 import { format, isThisYear, parseISO } from "date-fns"
 
@@ -13,8 +14,7 @@ export default function DateText({ date, formatString }: DateTextProps) {
 
   if (!date) return null
 
-  const finalFormatString =
-    formatString || "LLL d" + (isThisYear(date) ? "" : ", yyyy")
+  const finalFormatString = formatString || "LLL d" + (isThisYear(date) ? "" : ", yyyy")
 
   const formattedDate = format(date, finalFormatString)
   return <Text span>{formattedDate}</Text>

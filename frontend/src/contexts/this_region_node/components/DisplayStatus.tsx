@@ -5,10 +5,7 @@ interface DisplayStatusProps {
   status_text?: string | null
 }
 
-export default function ThisNodeDetails({
-  state,
-  status_text,
-}: DisplayStatusProps) {
+export default function ThisNodeDetails({ state, status_text }: DisplayStatusProps) {
   return (
     <Table>
       <Table.Tbody>

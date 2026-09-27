@@ -8,16 +8,10 @@ export { default as ShowRegion } from "./pages/ShowRegion"
 export { default as EditRegionMap } from "./pages/EditRegionMap"
 
 export function regionDisplayName(region: Region): string {
-  return (
-    [region.name, region.slug, region.id.slice(0, 12)].filter(Boolean)[0] ||
-    "Unnamed"
-  )
+  return [region.name, region.slug, region.id.slice(0, 12)].filter(Boolean)[0] || "Unnamed"
 }
 
-export function changeRegionInPath(
-  newRegionSlug: string | null | undefined,
-  currentPath: string,
-): string {
+export function changeRegionInPath(newRegionSlug: string | null | undefined, currentPath: string): string {
   if (!newRegionSlug) return currentPath
 
   // If path starts with /regions/<slug>, replace the slug with newRegionSlug

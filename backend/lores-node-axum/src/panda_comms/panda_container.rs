@@ -122,13 +122,13 @@ impl PandaContainer {
         &self,
         credentials: Credentials,
         network_name: String,
-        boostrap_node_ids: &Vec<VerifyingKey>,
+        boostrap_node_ids: &[VerifyingKey],
         operations_database_url: &str,
     ) -> Result<(), PandaNodeError> {
         let required_params = RequiredNodeParams {
             credentials,
             network_id: Hash::digest(network_name.as_bytes()),
-            bootstrap_node_ids: boostrap_node_ids.clone(),
+            bootstrap_node_ids: boostrap_node_ids.to_owned(),
             relay_url: None,
         };
 

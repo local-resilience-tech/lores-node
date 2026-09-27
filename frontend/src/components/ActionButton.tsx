@@ -1,12 +1,4 @@
-import {
-  ActionIcon,
-  ButtonProps,
-  Button,
-  Group,
-  HoverCard,
-  PolymorphicComponentProps,
-  Text,
-} from "@mantine/core"
+import { ActionIcon, ButtonProps, Button, Group, HoverCard, PolymorphicComponentProps, Text } from "@mantine/core"
 import { IconAlertCircle, IconX } from "@tabler/icons-react"
 import { useState } from "react"
 import { ActionPromiseResult, ActionResult } from "./ActionResult"
@@ -86,13 +78,7 @@ export default function ActionButton({
   }
 
   const button = (
-    <Button
-      {...props}
-      onClick={handleClick}
-      loading={loading}
-      {...resultProps}
-      style={{ flexGrow: expand ? 1 : 0 }}
-    >
+    <Button {...props} onClick={handleClick} loading={loading} {...resultProps} style={{ flexGrow: expand ? 1 : 0 }}>
       {children}
     </Button>
   )
@@ -105,10 +91,7 @@ export default function ActionButton({
           <HoverCard.Target>{errorIcon}</HoverCard.Target>
           <HoverCard.Dropdown>
             <Group justify="space-between" align="flex-start">
-              <Text size="sm">
-                {result.error ||
-                  "An error occurred while performing the action."}
-              </Text>
+              <Text size="sm">{result.error || "An error occurred while performing the action."}</Text>
               <ActionIcon
                 key="close-error"
                 radius="xl"

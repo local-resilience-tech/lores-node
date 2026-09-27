@@ -3,10 +3,7 @@ import type { RegionAppWithInstallations } from "../api/Api"
 
 export type AppsState = RegionAppWithInstallations[] | null
 
-export function regionAppsForRegion(
-  state: AppsState,
-  regionId: string | null | undefined,
-): RegionAppWithInstallations[] {
+export function regionAppsForRegion(state: AppsState, regionId: string | null | undefined): RegionAppWithInstallations[] {
   if (!state || !regionId) {
     return [] as RegionAppWithInstallations[]
   }
@@ -21,10 +18,7 @@ const regionAppsSlice = createSlice({
     regionAppsLoaded: (_state, action: PayloadAction<AppsState>) => {
       return action.payload
     },
-    regionAppUpdated: (
-      state,
-      action: PayloadAction<RegionAppWithInstallations>,
-    ) => {
+    regionAppUpdated: (state, action: PayloadAction<RegionAppWithInstallations>) => {
       const updatedApp = action.payload
 
       if (state) {

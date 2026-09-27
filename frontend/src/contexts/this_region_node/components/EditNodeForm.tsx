@@ -1,17 +1,8 @@
 import { useForm } from "@mantine/form"
 import type { RegionNodeDetails, UpdateNodeDetails } from "../../../api/Api"
 import { Button, Stack, TextInput } from "@mantine/core"
-import {
-  ActionPromiseResult,
-  DisplayActionResult,
-  useOnSubmitWithResult,
-} from "../../../components"
-import LatLngInput, {
-  EditableLatLng,
-  emptyEditableLatLng,
-  toLatLng,
-  validateOptionalLatLng,
-} from "../../../components/LatLngInput"
+import { ActionPromiseResult, DisplayActionResult, useOnSubmitWithResult } from "../../../components"
+import LatLngInput, { EditableLatLng, emptyEditableLatLng, toLatLng, validateOptionalLatLng } from "../../../components/LatLngInput"
 import isValidHostname from "is-valid-hostname"
 import { isIPv4 } from "@chainsafe/is-ip"
 
@@ -33,8 +24,7 @@ const defaultInitialValues: UpdateNodeFormData = {
 }
 
 export default function EditNodeForm({ node, onSubmit }: EditNodeFormProps) {
-  const [actionResult, onSubmitWithResult] =
-    useOnSubmitWithResult<UpdateNodeDetails>(onSubmit)
+  const [actionResult, onSubmitWithResult] = useOnSubmitWithResult<UpdateNodeDetails>(onSubmit)
   const nodeLatLng = (
     node as RegionNodeDetails & {
       latlng?: { lat?: number | null; lng?: number | null } | null
@@ -74,8 +64,7 @@ export default function EditNodeForm({ node, onSubmit }: EditNodeFormProps) {
       name: (value) => {
         if (!value) return "This is required"
         if (value.length > 50) return "Must be less than 50 characters"
-        if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(value))
-          return "Lowercase letters, numbers and hyphens only, no spaces"
+        if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(value)) return "Lowercase letters, numbers and hyphens only, no spaces"
         return null
       },
       public_ipv4: (value) => {

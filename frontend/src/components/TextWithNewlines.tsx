@@ -1,10 +1,6 @@
-import { Box, Stack, Text } from "@mantine/core"
+import { Stack, Text } from "@mantine/core"
 
-export default function TextWithNewlines({
-  text,
-}: {
-  text: string | null | undefined
-}) {
+export default function TextWithNewlines({ text }: { text: string | null | undefined }) {
   if (!text) return null
 
   const lines = text.split("\n\n")

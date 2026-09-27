@@ -21,10 +21,7 @@ interface NodeStewardsListProps {
   getActions: (record: NodeSteward) => NodeStewardAction[]
 }
 
-export default function NodeStewardsList({
-  nodeStewards,
-  getActions,
-}: NodeStewardsListProps) {
+export default function NodeStewardsList({ nodeStewards, getActions }: NodeStewardsListProps) {
   return (
     <Table>
       <Table.Thead>
@@ -48,10 +45,7 @@ export default function NodeStewardsList({
               <NodeStewardStatusIndicator status={steward.status} />
             </Table.Td>
             <Table.Td>
-              <NodeStewardActions
-                actions={getActions(steward)}
-                record={steward}
-              />
+              <NodeStewardActions actions={getActions(steward)} record={steward} />
             </Table.Td>
           </Table.Tr>
         ))}

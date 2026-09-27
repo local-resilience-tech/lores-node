@@ -7,7 +7,7 @@ use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::{
     DatabaseState,
-    config::config_state::LoresNodeConfigState,
+    config::LoresNodeConfigState,
     data::projections_write::truncate_all,
     panda_comms::{PandaContainer, build_public_key_from_hex},
 };

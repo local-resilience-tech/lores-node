@@ -15,10 +15,7 @@ export class Coordinate2D {
   }
 
   normalizeBetween(min: Coordinate2D, max: Coordinate2D): Coordinate2D {
-    return new Coordinate2D(
-      Coordinate2D.interpolateAxis(min.x, max.x, this.x),
-      Coordinate2D.interpolateAxis(min.y, max.y, this.y),
-    )
+    return new Coordinate2D(Coordinate2D.interpolateAxis(min.x, max.x, this.x), Coordinate2D.interpolateAxis(min.y, max.y, this.y))
   }
 
   invertYWithinUnitRange(): Coordinate2D {
@@ -29,11 +26,7 @@ export class Coordinate2D {
     return new Coordinate2D(this.x * 100, this.y * 100)
   }
 
-  private static interpolateAxis(
-    min: number,
-    max: number,
-    source: number,
-  ): number {
+  private static interpolateAxis(min: number, max: number, source: number): number {
     const range = max - min
     if (range === 0) return 0.5
 

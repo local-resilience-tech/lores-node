@@ -6,7 +6,7 @@ use utoipa_axum::{router::OpenApiRouter, routes};
 use crate::{
     DatabaseState,
     api::helpers::internal_server_error,
-    config::config_state::LoresNodeConfigState,
+    config::LoresNodeConfigState,
     data::{
         entities::{Region, RegionWithNodes},
         projections_read::{region_nodes::RegionNodesReadRepo, regions::RegionsReadRepo},
@@ -43,13 +43,9 @@ async fn list_regions(
 
             region_ids
                 .into_iter()
-                .map(|id| {
-                    let region_id = match RegionId::from_hex(&id) {
-                        Ok(id) => id,
-                        Err(_) => panic!("Invalid region ID in config: {}", id),
-                    };
-
-                    region_id
+                .map(|id| match RegionId::from_hex(&id) {
+                    Ok(id) => id,
+                    Err(_) => panic!("Invalid region ID in config: {}", id),
                 })
                 .collect()
         }

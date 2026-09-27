@@ -1,21 +1,14 @@
 import { Text, Button, Stack, TextInput } from "@mantine/core"
 import { useForm } from "@mantine/form"
 import { BootstrapNodeRequest } from "../../../api/Api"
-import {
-  ActionPromiseResult,
-  DisplayActionResult,
-  useOnSubmitWithResult,
-} from "../../../components"
+import { ActionPromiseResult, DisplayActionResult, useOnSubmitWithResult } from "../../../components"
 
 interface AddBootstrapFormProps {
   onSubmit: (data: BootstrapNodeRequest) => Promise<ActionPromiseResult>
 }
 
-export default function AddBootstrapNodeForm({
-  onSubmit,
-}: AddBootstrapFormProps) {
-  const [actionResult, onSubmitWithResult] =
-    useOnSubmitWithResult<BootstrapNodeRequest>(onSubmit)
+export default function AddBootstrapNodeForm({ onSubmit }: AddBootstrapFormProps) {
+  const [actionResult, onSubmitWithResult] = useOnSubmitWithResult<BootstrapNodeRequest>(onSubmit)
 
   const form = useForm<BootstrapNodeRequest>({
     mode: "controlled",
@@ -27,8 +20,7 @@ export default function AddBootstrapNodeForm({
         if (!value) return "This is required"
 
         // Must be hexadecimal and 64 characters long
-        if (!/^[a-fA-F0-9]{64}$/.test(value))
-          return "Must be a valid 64-character hexadecimal string"
+        if (!/^[a-fA-F0-9]{64}$/.test(value)) return "Must be a valid 64-character hexadecimal string"
         return null
       },
     },
@@ -37,10 +29,7 @@ export default function AddBootstrapNodeForm({
   return (
     <form onSubmit={form.onSubmit(onSubmitWithResult)}>
       <Stack gap="lg">
-        <Text>
-          When you add a bootstrap node, it will be used to help initialize the
-          network.
-        </Text>
+        <Text>When you add a bootstrap node, it will be used to help initialize the network.</Text>
 
         <Stack>
           <TextInput

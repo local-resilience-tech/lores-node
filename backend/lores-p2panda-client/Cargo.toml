@@ -17,13 +17,17 @@ license-file = "LICENSE.txt"
 hex.workspace = true
 prost = "0.14"
 serde = { workspace = true, optional = true }
-tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
-tokio-stream = "0.1"
 tonic = "0.14"
 tonic-prost = "0.14"
+
+[dev-dependencies]
+tokio-test = "0.4"
 
 [build-dependencies]
 tonic-prost-build = "0.14"
 
 [features]
 serde = ["dep:serde"]
+
+[package.metadata.cargo-machete]
+ignored = ["prost", "tonic-prost"]

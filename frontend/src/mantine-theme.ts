@@ -1,27 +1,7 @@
-import {
-  Card,
-  Combobox,
-  createTheme,
-  Input,
-  InputWrapper,
-  Paper,
-  Tabs,
-  CSSVariablesResolver,
-} from "@mantine/core"
+import { Card, Combobox, createTheme, Input, InputWrapper, Paper, Tabs, CSSVariablesResolver } from "@mantine/core"
 
 // Lores website orange palette (--orange0 through --orange9)
-const loresOrange: [
-  string,
-  string,
-  string,
-  string,
-  string,
-  string,
-  string,
-  string,
-  string,
-  string,
-] = [
+const loresOrange: [string, string, string, string, string, string, string, string, string, string] = [
   "#fff4e1", // orange0
   "#ffe8cc", // orange1
   "#fed09b", // orange2
@@ -35,18 +15,7 @@ const loresOrange: [
 ]
 
 // Lores website burnt-orange palette (--burnt-orange0 through --burnt-orange9)
-const loresBurntOrange: [
-  string,
-  string,
-  string,
-  string,
-  string,
-  string,
-  string,
-  string,
-  string,
-  string,
-] = [
+const loresBurntOrange: [string, string, string, string, string, string, string, string, string, string] = [
   "#fdf0ed", // burnt-orange0
   "#f6bfb2", // burnt-orange1
   "#ee8e77", // burnt-orange2
@@ -60,18 +29,7 @@ const loresBurntOrange: [
 ]
 
 // Lores website blue palette (--blue0 through --blue9)
-const loresBlue: [
-  string,
-  string,
-  string,
-  string,
-  string,
-  string,
-  string,
-  string,
-  string,
-  string,
-] = [
+const loresBlue: [string, string, string, string, string, string, string, string, string, string] = [
   "#edf8fd", // blue0
   "#b8dff3", // blue1
   "#89c2e5", // blue2
@@ -119,7 +77,7 @@ export const theme = createTheme({
   components: {
     InputWrapper: InputWrapper.extend({
       vars: (_theme: any, props: any) => {
-        var result: any = {
+        const result: any = {
           description: {
             lineHeight: "1.3",
             paddingBottom: "0.2em",

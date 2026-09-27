@@ -1,11 +1,7 @@
 import { Button, MantineColor, Popover, Stack } from "@mantine/core"
 import { NodeSteward } from "../../../api/Api"
-import React, { useState } from "react"
-import {
-  ActionButton,
-  ActionPromiseResult,
-  ActionResult,
-} from "../../../components"
+import React from "react"
+import { ActionButton, ActionPromiseResult } from "../../../components"
 
 export interface NodeStewardAction {
   type: "reset_token" | "display_token" | "disable" | "enable"
@@ -22,29 +18,13 @@ const names: Record<NodeStewardAction["type"], string> = {
   enable: "Enable",
 }
 
-function NodeStewardActionButton({
-  action,
-  record,
-}: {
-  action: NodeStewardAction
-  record: NodeSteward
-}) {
-  const [result, setResult] = useState<ActionResult | undefined>(undefined)
-  const [loading, setLoading] = useState(false)
-
-  const handleButtonPress = async (
-    record: NodeSteward,
-    handler: (record: NodeSteward) => Promise<ActionPromiseResult>
-  ) => {
+function NodeStewardActionButton({ action, record }: { action: NodeStewardAction; record: NodeSteward }) {
+  const handleButtonPress = async (record: NodeSteward, handler: (record: NodeSteward) => Promise<ActionPromiseResult>) => {
     try {
-      setLoading(true)
       const result = await handler(record)
       console.log("THE result:", result)
-      setResult(result || undefined)
     } catch (error) {
       console.error("Error occurred while handling button press:", error)
-    } finally {
-      setLoading(false)
     }
   }
 
@@ -57,10 +37,7 @@ function NodeStewardActionButton({
 
   if (action.handler) {
     return (
-      <ActionButton
-        onClick={() => handleButtonPress(record, action.handler!)}
-        {...buttonProps}
-      >
+      <ActionButton onClick={() => handleButtonPress(record, action.handler!)} {...buttonProps}>
         {buttonText}
       </ActionButton>
     )
@@ -80,21 +57,11 @@ function NodeStewardActionButton({
   return null
 }
 
-export default function NodeStewardActions({
-  actions,
-  record,
-}: {
-  actions: NodeStewardAction[]
-  record: NodeSteward
-}) {
+export default function NodeStewardActions({ actions, record }: { actions: NodeStewardAction[]; record: NodeSteward }) {
   return (
     <Stack align="flex-start">
       {actions.map((action) => (
-        <NodeStewardActionButton
-          key={action.type}
-          action={action}
-          record={record}
-        />
+        <NodeStewardActionButton key={action.type} action={action} record={record} />
       ))}
     </Stack>
   )

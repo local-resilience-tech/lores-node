@@ -1,5 +1,5 @@
 use sha2::{Digest, Sha256};
-use sqlx::{SqlitePool, sqlite::SqliteConnectOptions};
+use sqlx::{AssertSqlSafe, SqlitePool, sqlite::SqliteConnectOptions};
 
 /// A SQLite pool initialised from a DDL schema string.
 ///
@@ -29,7 +29,6 @@ impl ProjectionDb {
     ///
     /// The `_schema` table is created and populated automatically.
     /// App developers should not include it in their schema file.
-
     pub async fn in_memory(schema_sql: &str) -> Result<(SqlitePool, bool), sqlx::Error> {
         tracing::info!("creating in-memory projection database");
         let options = SqliteConnectOptions::new().filename(":memory:").create_if_missing(true);
@@ -81,7 +80,7 @@ impl ProjectionDb {
     fn hash(schema_sql: &str) -> String {
         let mut hasher = Sha256::new();
         hasher.update(schema_sql.as_bytes());
-        format!("{:x}", hasher.finalize())
+        hex::encode(hasher.finalize())
     }
 
     async fn apply_schema(pool: &SqlitePool, schema_sql: &str) -> Result<(), sqlx::Error> {
@@ -97,7 +96,7 @@ impl ProjectionDb {
             .await?;
 
         // Apply the app-supplied schema.
-        sqlx::raw_sql(schema_sql).execute(pool).await?;
+        sqlx::raw_sql(AssertSqlSafe(schema_sql.to_string())).execute(pool).await?;
 
         tracing::info!("projection schema applied");
         Ok(())
@@ -110,7 +109,9 @@ impl ProjectionDb {
             .await?;
 
         for table in tables {
-            sqlx::raw_sql(&format!("DROP TABLE IF EXISTS \"{table}\"")).execute(pool).await?;
+            sqlx::raw_sql(AssertSqlSafe(format!("DROP TABLE IF EXISTS \"{table}\"")))
+                .execute(pool)
+                .await?;
         }
 
         Ok(())

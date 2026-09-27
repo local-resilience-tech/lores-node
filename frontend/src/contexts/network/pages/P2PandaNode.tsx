@@ -53,11 +53,7 @@ export default function P2PandaNode() {
             </Table.Tr>
           </Table.Tbody>
         </Table>
-        <Button
-          variant="outline"
-          leftSection={<IconPlug />}
-          onClick={toggleBootstrap}
-        >
+        <Button variant="outline" leftSection={<IconPlug />} onClick={toggleBootstrap}>
           Add bootstrap node
         </Button>
         <Collapse expanded={openedBootstrap}>

@@ -45,10 +45,10 @@ impl UpdateNodeDetails {
             return Err("Name must be a valid slug".to_string());
         }
 
-        if let Some(public_ipv4) = &self.public_ipv4 {
-            if public_ipv4.trim().is_empty() {
-                return Err("Public IPv4 cannot be empty".to_string());
-            }
+        if let Some(public_ipv4) = &self.public_ipv4
+            && public_ipv4.trim().is_empty()
+        {
+            return Err("Public IPv4 cannot be empty".to_string());
         }
 
         if let Some(latlng) = &self.latlng {
@@ -102,7 +102,7 @@ async fn update_this_region_node(
 
     // Publish the operation
     if let Err(e) = panda_container
-        .publish_persisted(&RegionAdminTopic::new(region_id), event_payload, auth_session.user)
+        .publish_persisted(&RegionAdminTopic::new(region_id), event_payload, auth_session.user().await)
         .await
     {
         return internal_server_error(e).into_response();
@@ -151,7 +151,7 @@ async fn post_region_node_status(
     info!("Created event payload: {:?}", event_payload);
 
     if let Err(e) = panda_container
-        .publish_persisted(&RegionAdminTopic::new(region_id), event_payload, auth_session.user)
+        .publish_persisted(&RegionAdminTopic::new(region_id), event_payload, auth_session.user().await)
         .await
     {
         return internal_server_error(e).into_response();

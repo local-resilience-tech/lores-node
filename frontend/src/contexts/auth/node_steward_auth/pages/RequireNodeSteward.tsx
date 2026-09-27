@@ -16,16 +16,13 @@ function NodeStewardMissing() {
         <Title order={1}>This page is for node stewards</Title>
       </Stack>
       <Text>
-        You must be a Node Steward to view this page. If that's you, please{" "}
-        <Anchor href="/auth/node_steward/login">log in</Anchor>.
+        You must be a Node Steward to view this page. If that's you, please <Anchor href="/auth/node_steward/login">log in</Anchor>.
       </Text>
     </Stack>
   )
 }
 
-export default function RequireNodeSteward({
-  children,
-}: RequireNodeStewardProps) {
+export default function RequireNodeSteward({ children }: RequireNodeStewardProps) {
   const me = useAppSelector((state) => state.me)
   if (!me) {
     return <NodeStewardMissing />

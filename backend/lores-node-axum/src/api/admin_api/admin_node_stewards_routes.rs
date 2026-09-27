@@ -102,7 +102,10 @@ async fn create_node_steward(
     extract::Json(input): extract::Json<NodeStewardCreationData>,
 ) -> impl IntoResponse {
     let mut new_row = NodeStewardRow::new(input.name);
-    new_row.set_password_reset_token();
+    if let Err(e) = new_row.set_password_reset_token() {
+        warn!("Error generating password reset token: {:?}", e);
+        return (StatusCode::INTERNAL_SERVER_ERROR, "server error".to_string()).into_response();
+    }
 
     let repo = NodeStewardsRepo::init();
     let result = repo.create(&db.node_data_pool, &new_row).await;
@@ -143,7 +146,10 @@ async fn reset_node_steward_token(Extension(db): Extension<DatabaseState>, Path(
             return (StatusCode::INTERNAL_SERVER_ERROR, ()).into_response();
         }
     };
-    row.set_password_reset_token();
+    if let Err(e) = row.set_password_reset_token() {
+        warn!("Error generating password reset token: {:?}", e);
+        return (StatusCode::INTERNAL_SERVER_ERROR, ()).into_response();
+    }
 
     let result = repo.update_password_reset_token(&db.node_data_pool, &row).await;
 

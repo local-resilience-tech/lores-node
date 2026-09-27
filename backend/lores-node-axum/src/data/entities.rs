@@ -36,7 +36,7 @@ impl<'r> Decode<'r, Sqlite> for LatLng {
 }
 
 impl<'q> Encode<'q, Sqlite> for LatLng {
-    fn encode_by_ref(&self, buf: &mut <Sqlite as Database>::ArgumentBuffer<'q>) -> Result<IsNull, BoxDynError> {
+    fn encode_by_ref(&self, buf: &mut <Sqlite as Database>::ArgumentBuffer) -> Result<IsNull, BoxDynError> {
         let raw = serde_json::to_string(self).expect("Failed to serialize LatLng");
         <String as Encode<Sqlite>>::encode(raw, buf)
     }
@@ -166,15 +166,11 @@ pub struct NodeAppUrl {
 
 #[derive(Serialize, Deserialize, ToSchema, Debug, Clone, PartialEq, Eq)]
 #[serde(rename_all = "lowercase")]
+#[derive(Default)]
 pub enum LocalAppSource {
+    #[default]
     Docker,
     Db,
-}
-
-impl Default for LocalAppSource {
-    fn default() -> Self {
-        Self::Docker
-    }
 }
 
 #[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]

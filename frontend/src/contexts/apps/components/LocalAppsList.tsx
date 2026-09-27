@@ -11,9 +11,7 @@ interface AppsListProps {
 
 export default function LocalAppsList({ apps }: AppsListProps) {
   const regions = useAppSelector((state) => state.my_regions.all)
-  const activeRegionId = useAppSelector(
-    (state) => state.my_regions.activeRegionId,
-  )
+  const activeRegionId = useAppSelector((state) => state.my_regions.activeRegionId)
 
   return (
     <Table>
@@ -28,20 +26,14 @@ export default function LocalAppsList({ apps }: AppsListProps) {
       </Table.Thead>
       <Table.Tbody>
         {apps.map((app) => {
-          const region = regions?.find(
-            (r) => r.region.id === app.bound_to_region_id,
-          )
+          const region = regions?.find((r) => r.region.id === app.bound_to_region_id)
           return (
             <LocalAppRow
               key={`${app.name}-${app.instance_id}`}
               app={app}
               region={region}
               isActiveRegion={region?.region.id === activeRegionId}
-              unknownRegionId={
-                !region && app.bound_to_region_id
-                  ? app.bound_to_region_id
-                  : undefined
-              }
+              unknownRegionId={!region && app.bound_to_region_id ? app.bound_to_region_id : undefined}
             />
           )
         })}
@@ -57,12 +49,7 @@ interface LocalAppRowProps {
   unknownRegionId?: string
 }
 
-function LocalAppRow({
-  app,
-  region,
-  isActiveRegion,
-  unknownRegionId,
-}: LocalAppRowProps) {
+function LocalAppRow({ app, region, isActiveRegion, unknownRegionId }: LocalAppRowProps) {
   const regionName = region ? regionDisplayName(region.region) : ""
   const source = app.source ?? LocalAppSource.Docker
 
@@ -73,30 +60,17 @@ function LocalAppRow({
       <IconBrandDocker size={18} stroke={1.8} aria-hidden="true" />
     )
 
-  const sourceAltText =
-    source === LocalAppSource.Db ? "Database app" : "Docker app"
+  const sourceAltText = source === LocalAppSource.Db ? "Database app" : "Docker app"
 
   return (
     <Table.Tr key={app.name}>
-      <Table.Td
-        w={1}
-        style={{ whiteSpace: "nowrap", verticalAlign: "middle" }}
-        px="xs"
-      >
-        <span
-          role="img"
-          aria-label={sourceAltText}
-          style={{ display: "inline-flex", verticalAlign: "middle" }}
-        >
+      <Table.Td w={1} style={{ whiteSpace: "nowrap", verticalAlign: "middle" }} px="xs">
+        <span role="img" aria-label={sourceAltText} style={{ display: "inline-flex", verticalAlign: "middle" }}>
           {sourceIcon}
         </span>
       </Table.Td>
       <Table.Td>
-        <Anchor
-          href={`app/${encodeURIComponent(app.name || "-")}/${encodeURIComponent(app.instance_id || "-")}`}
-        >
-          {app.name}
-        </Anchor>
+        <Anchor href={`app/${encodeURIComponent(app.name || "-")}/${encodeURIComponent(app.instance_id || "-")}`}>{app.name}</Anchor>
       </Table.Td>
       <Table.Td>
         {app.instance_id ? (

@@ -77,7 +77,7 @@ impl RegionsReadRepo {
         .await?
         .map(Region::from);
 
-        return Ok(region);
+        Ok(region)
     }
 
     pub async fn find_all_for_node(&self, pool: &SqlitePool, node_id: &str) -> Result<Vec<Region>, sqlx::Error> {
@@ -110,6 +110,6 @@ impl RegionsReadRepo {
         .map(Region::from)
         .collect();
 
-        return Ok(regions);
+        Ok(regions)
     }
 }

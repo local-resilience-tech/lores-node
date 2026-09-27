@@ -36,7 +36,7 @@ impl AppRegisteredHandler {
 
         let installation = AppInstallation {
             app_name: self.payload.name.clone(),
-            region_node_id: region_node.id.clone(),
+            region_node_id: region_node.id,
             version: self.payload.version.clone(),
         };
         installations_write_repo.upsert(pool, installation).await?;

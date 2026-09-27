@@ -1,14 +1,4 @@
-import {
-  AppShell,
-  Avatar,
-  Badge,
-  Box,
-  Breadcrumbs,
-  Burger,
-  Container,
-  Group,
-  Text,
-} from "@mantine/core"
+import { AppShell, Avatar, Badge, Box, Breadcrumbs, Burger, Container, Group, Text } from "@mantine/core"
 import { Anchor, NavLink } from "../../components"
 import { Outlet, useNavigate } from "react-router-dom"
 import { useDisclosure } from "@mantine/hooks"
@@ -33,12 +23,7 @@ import useWebSocket from "react-use-websocket-lite"
 import { getSocketUrl } from "../../api"
 import { IfNodeSteward } from "../../contexts/auth/node_steward_auth"
 import { changeRegionInPath, RegionSelector } from "../../contexts/regions"
-import {
-  activeRegionWithNodes,
-  activeRegionChanged,
-  myActiveRegionNode,
-  nodeName,
-} from "../../store/my_regions"
+import { activeRegionWithNodes, activeRegionChanged, myActiveRegionNode, nodeName } from "../../store/my_regions"
 
 export default function Layout() {
   const [opened, { toggle }] = useDisclosure()
@@ -46,22 +31,17 @@ export default function Layout() {
 
   const network = useAppSelector((state) => state.network)
   const allRegions = useAppSelector((state) => state.my_regions.all ?? [])
-  const region = useAppSelector((state) =>
-    activeRegionWithNodes(state.my_regions),
-  )
-  const regionNode = useAppSelector((state) =>
-    myActiveRegionNode(state.my_regions, state.network?.node.id),
-  )
+  const region = useAppSelector((state) => activeRegionWithNodes(state.my_regions))
+  const regionNode = useAppSelector((state) => myActiveRegionNode(state.my_regions, state.network?.node.id))
   const nodesCount = 0
   const localAppsCount = useAppSelector((state) => state.localApps?.length)
   const me = useAppSelector((state) => state.me)
   const dispatch = useAppDispatch()
   const navigate = useNavigate()
 
-  const readyForApps = true
   const pandaRunning = !!network
 
-  const {} = useWebSocket({
+  useWebSocket({
     url: getSocketUrl(),
     onOpen: (event: Event) => {
       console.log("WebSocket connection opened", event)
@@ -77,30 +57,14 @@ export default function Layout() {
   })
 
   return (
-    <AppShell
-      header={{ height: 60 }}
-      navbar={{ width: 300, breakpoint: "sm", collapsed: { mobile: !opened } }}
-      padding="md"
-    >
+    <AppShell header={{ height: 60 }} navbar={{ width: 300, breakpoint: "sm", collapsed: { mobile: !opened } }} padding="md">
       <AppShell.Header className={classes.header}>
         <Group h="100%" px="md">
-          <Burger
-            opened={opened}
-            onClick={toggle}
-            hiddenFrom="sm"
-            size="sm"
-            color="var(--lores-burnt-orange8)"
-          />
+          <Burger opened={opened} onClick={toggle} hiddenFrom="sm" size="sm" color="var(--lores-burnt-orange8)" />
           <Anchor href="/">LoRes Mesh</Anchor>
           <Breadcrumbs className={classes.header_breadcrumbs}>
-            {region && (
-              <Text className={classes.header_text}>{region.region.name}</Text>
-            )}
-            {regionNode && (
-              <Text className={classes.header_text}>
-                {nodeName(regionNode)}
-              </Text>
-            )}
+            {region && <Text className={classes.header_text}>{region.region.name}</Text>}
+            {regionNode && <Text className={classes.header_text}>{nodeName(regionNode)}</Text>}
           </Breadcrumbs>
         </Group>
       </AppShell.Header>
@@ -155,11 +119,7 @@ export default function Layout() {
             href="/node/apps"
             leftSection={<IconApps size={iconSize} />}
             onClick={toggle}
-            rightSection={
-              localAppsCount !== undefined && (
-                <Badge circle>{localAppsCount}</Badge>
-              )
-            }
+            rightSection={localAppsCount !== undefined && <Badge circle>{localAppsCount}</Badge>}
           />
         </AppShell.Section>
 
@@ -179,17 +139,9 @@ export default function Layout() {
         )}
 
         {region && (
-          <AppShell.Section
-            className={classes.menu_section}
-            key={region.region.id}
-          >
+          <AppShell.Section className={classes.menu_section} key={region.region.id}>
             <Box className={classes.section_header}>
-              <Group
-                justify="center"
-                gap={4}
-                className={classes.section_title}
-                align="center"
-              >
+              <Group justify="center" gap={4} className={classes.section_title} align="center">
                 <Text span c="dimmed">
                   Region:
                 </Text>
@@ -199,10 +151,7 @@ export default function Layout() {
                   onChange={(region) => {
                     if (region) {
                       dispatch(activeRegionChanged(region.id))
-                      const newPath = changeRegionInPath(
-                        region.slug,
-                        window.location.pathname,
-                      )
+                      const newPath = changeRegionInPath(region.slug, window.location.pathname)
                       if (newPath !== window.location.pathname) {
                         navigate(newPath)
                       }
@@ -254,9 +203,7 @@ export default function Layout() {
             <NavLink
               label="P2Panda node"
               href="/network/node"
-              leftSection={
-                <img src={pangaLogoUrl} alt="P2Panda Icon" width={iconSize} />
-              }
+              leftSection={<img src={pangaLogoUrl} alt="P2Panda Icon" width={iconSize} />}
               onClick={toggle}
             />
           </AppShell.Section>
@@ -266,25 +213,13 @@ export default function Layout() {
             <Text className={classes.section_title} c="dimmed">
               Debug
             </Text>
-            <NavLink
-              label="Event log"
-              href="/debug/event_log"
-              leftSection={<IconTimelineEventText size={iconSize} />}
-              onClick={toggle}
-            />
-            <NavLink
-              label="Docker stacks"
-              href="/debug/stacks"
-              leftSection={<IconBrandDocker size={iconSize} />}
-              onClick={toggle}
-            />
+            <NavLink label="Event log" href="/debug/event_log" leftSection={<IconTimelineEventText size={iconSize} />} onClick={toggle} />
+            <NavLink label="Docker stacks" href="/debug/stacks" leftSection={<IconBrandDocker size={iconSize} />} onClick={toggle} />
 
             <NavLink
               c="dimmed"
               label={"v" + packageJson.version}
-              href={
-                packageJson.homepage + "/releases/tag/v" + packageJson.version
-              }
+              href={packageJson.homepage + "/releases/tag/v" + packageJson.version}
               leftSection={<IconBrandGithub size={18} />}
               onClick={toggle}
             />

@@ -12,30 +12,16 @@ export interface JsonSchemaFormProps {
   onSubmit: (data: any) => Promise<ActionPromiseResult>
 }
 
-export default function JsonSchemaForm({
-  schema,
-  displaySchema,
-  initialData,
-  onSubmit,
-}: JsonSchemaFormProps) {
+export default function JsonSchemaForm({ schema, displaySchema, initialData, onSubmit }: JsonSchemaFormProps) {
   const log = (type: any) => console.log.bind(console, type)
 
-  const [actionResult, onSubmitWithResult] =
-    useOnSubmitWithResult<any>(onSubmit)
+  const [_actionResult, onSubmitWithResult] = useOnSubmitWithResult<any>(onSubmit)
 
-  const handleSubmit = (data: any, event: FormEvent<any>) => {
+  const handleSubmit = (data: any, _event: FormEvent<any>) => {
     onSubmitWithResult(data.formData)
   }
 
-  const form = (
-    <Form
-      schema={schema}
-      formData={initialData}
-      validator={validator}
-      onSubmit={handleSubmit}
-      onError={log("errors")}
-    />
-  )
+  const form = <Form schema={schema} formData={initialData} validator={validator} onSubmit={handleSubmit} onError={log("errors")} />
 
   if (displaySchema) {
     return (

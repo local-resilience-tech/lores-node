@@ -1,5 +1,4 @@
-use crate::{config::config_state::LoresNodeConfigState, panda_comms::build_public_key_from_hex};
-use hex;
+use crate::{config::LoresNodeConfigState, panda_comms::build_public_key_from_hex};
 use lores_p2panda::{Credentials, credentials_from_seed};
 use p2panda_core::{SigningKey, VerifyingKey, identity::SIGNING_KEY_LEN};
 use rand::RngExt;
@@ -43,11 +42,7 @@ impl ThisP2PandaNodeRepo {
     async fn get_private_key(&self, config_state: &LoresNodeConfigState) -> Option<SigningKey> {
         let config = config_state.get().await;
 
-        config
-            .private_key_hex
-            .clone()
-            .map(|hex| Self::build_private_key_from_hex(hex))
-            .flatten()
+        config.private_key_hex.clone().and_then(Self::build_private_key_from_hex)
     }
 
     async fn create_private_key(&self, config_state: &LoresNodeConfigState) -> Result<SigningKey, anyhow::Error> {
@@ -83,10 +78,10 @@ impl ThisP2PandaNodeRepo {
     ) -> Result<[u8; IDENTITY_SECRET_SEED_LEN], anyhow::Error> {
         let config = config_state.get().await;
 
-        if let Some(seed_hex) = config.identity_secret_seed_hex {
-            if let Ok(seed) = Self::parse_identity_secret_seed(&seed_hex) {
-                return Ok(seed);
-            }
+        if let Some(seed_hex) = config.identity_secret_seed_hex
+            && let Ok(seed) = Self::parse_identity_secret_seed(&seed_hex)
+        {
+            return Ok(seed);
         }
 
         let mut seed = [0u8; IDENTITY_SECRET_SEED_LEN];

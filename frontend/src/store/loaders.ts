@@ -39,19 +39,6 @@ export async function loadInitialData(store: AppStore) {
   if (state.regionApps === null) loadRegionApps(store)
 }
 
-async function loadUser(store: AppStore) {
-  getApi()
-    .authApi.getCurrentUser()
-    .then((result) => {
-      console.log("EFFECT: fetchUser", result)
-      if (result) store.dispatch(meLoaded(result))
-    })
-    .catch((error) => {
-      console.error("Error fetching current user:", error)
-      return Promise.reject(redirect("/login"))
-    })
-}
-
 async function loadNetwork(store: AppStore) {
   const result = await fetchApiData(() => getApi().publicApi.showNetwork())
   console.log("EFFECT: fetchNetwork", result)
@@ -76,9 +63,7 @@ async function loadRegionApps(store: AppStore) {
   if (result) store.dispatch(regionAppsLoaded(result))
 }
 
-const fetchApiData = async <T>(
-  apiCall: () => Promise<{ status: number; data: T }>,
-): Promise<T | null> => {
+const fetchApiData = async <T>(apiCall: () => Promise<{ status: number; data: T }>): Promise<T | null> => {
   const result = await apiCall()
   if (result.status >= 200 && result.status < 300) return result.data
   return null

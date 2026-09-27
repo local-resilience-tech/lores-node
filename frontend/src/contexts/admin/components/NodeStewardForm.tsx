@@ -1,21 +1,14 @@
 import { Button, Stack, TextInput } from "@mantine/core"
 import { useForm } from "@mantine/form"
 import { NodeStewardCreationData } from "../../../api/Api"
-import {
-  ActionPromiseResult,
-  DisplayActionResult,
-  useOnSubmitWithResult,
-} from "../../../components"
+import { ActionPromiseResult, DisplayActionResult, useOnSubmitWithResult } from "../../../components"
 
 interface NodeStewardFormProps {
-  onSubmit: (
-    values: NodeStewardCreationData
-  ) => Promise<ActionPromiseResult | void>
+  onSubmit: (values: NodeStewardCreationData) => Promise<ActionPromiseResult | void>
 }
 
 export default function NodeStewardForm({ onSubmit }: NodeStewardFormProps) {
-  const [actionResult, onSubmitWithResult] =
-    useOnSubmitWithResult<NodeStewardCreationData>(onSubmit)
+  const [actionResult, onSubmitWithResult] = useOnSubmitWithResult<NodeStewardCreationData>(onSubmit)
 
   const form = useForm<NodeStewardCreationData>({
     initialValues: {
