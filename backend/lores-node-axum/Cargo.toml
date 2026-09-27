@@ -13,7 +13,6 @@ chrono = { version = "0.4.42", features = ["serde"] }
 confy = "2.0.0"
 futures-util = "0.3.31"
 lazy_static = "1.5.0"
-openssl = { version = "0.10.73", features = ["vendored"] }
 password-auth = "1.0.0"
 pwgen2 = "0.7.3"
 serde = { workspace = true, features = ["derive"] }
