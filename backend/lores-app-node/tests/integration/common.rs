@@ -12,20 +12,30 @@ pub struct TestOp {
     pub msg: String,
 }
 
-/// Start an in-memory dev server on a random free port and return its endpoint.
-pub async fn start_dev_server() -> String {
+/// Start an in-memory dev server on a random free port and return its endpoint
+/// together with a handle to the service.
+pub async fn start_dev_server_with_service() -> (String, DevPandaService) {
     let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
     let addr = listener.local_addr().unwrap();
+    let service = DevPandaService::new();
 
-    tokio::spawn(async move {
-        Server::builder()
-            .add_service(PandaServer::new(DevPandaService::new()))
-            .serve_with_incoming(TcpListenerStream::new(listener))
-            .await
-            .unwrap();
+    tokio::spawn({
+        let service = service.clone();
+        async move {
+            Server::builder()
+                .add_service(PandaServer::new(service))
+                .serve_with_incoming(TcpListenerStream::new(listener))
+                .await
+                .unwrap();
+        }
     });
 
-    format!("http://{addr}")
+    (format!("http://{addr}"), service)
+}
+
+/// Start an in-memory dev server on a random free port and return its endpoint.
+pub async fn start_dev_server() -> String {
+    start_dev_server_with_service().await.0
 }
 
 /// Waits up to 5 seconds for the first event, then drains any further events
@@ -33,7 +43,7 @@ pub async fn start_dev_server() -> String {
 /// on timeout or a closed channel, so callers see a clear assertion failure
 /// instead of a panic here.
 async fn drain<T: Clone>(rx: &mut tokio::sync::broadcast::Receiver<T>) -> Vec<T> {
-    let Ok(Ok(first)) = tokio::time::timeout(std::time::Duration::from_secs(5), rx.recv()).await else {
+    let Ok(Ok(first)) = tokio::time::timeout(std::time::Duration::from_secs(2), rx.recv()).await else {
         return Vec::new();
     };
 

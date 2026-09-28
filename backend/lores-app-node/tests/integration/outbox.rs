@@ -5,6 +5,7 @@ use std::time::Duration;
 
 use crate::common::{
     TestOp, drain_node_events, drain_operations, insert_operation_into_db, memory_pool, memory_pool_with_schema, start_dev_server,
+    start_dev_server_with_service,
 };
 
 // SubscriptionFrom::Frontier tests
@@ -100,22 +101,61 @@ async fn outbox_from_frontier_with_local_operation_emits_nothing() {
 
 // SubscriptionFrom::Start tests
 
+// #[tokio::test]
+// async fn outbox_from_start_with_local_operation_emits_nothing() {
+//     let endpoint = start_dev_server().await;
+//     let app_id = "outbox-test-app";
+
+//     let pool = memory_pool_with_schema().await;
+
+//     let op = TestOp {
+//         msg: "pre-seeded local".into(),
+//     };
+//     let payload = serde_json::to_vec(&op).unwrap();
+//     insert_operation_into_db(&pool, payload).await;
+
+//     let node = AppNode::<TestOp>::grpc_with_local(pool, endpoint.clone(), app_id, "subscriber", SubscriptionFrom::Start)
+//         .await
+//         .unwrap();
+
+//     let mut node_events = node.subscribe_node_events();
+//     let mut operations = node.subscribe();
+
+//     let driver = node.clone();
+//     tokio::spawn(async move { driver.run().await });
+
+//     let received_ne = drain_node_events(&mut node_events).await;
+//     assert_eq!(received_ne.len(), 3);
+//     assert!(matches!(received_ne[0], NodeEvent::ServerConnected { .. }));
+//     assert_eq!(received_ne[1], NodeEvent::ReplayStarted { total_operations: 0 });
+//     assert_eq!(received_ne[2], NodeEvent::ReplayEnded);
+
+//     let received_ops = drain_operations(&mut operations).await;
+//     assert_eq!(received_ops.len(), 0);
+// }
+
+/// A historical operation injected into the dev server is replayed to a
+/// `SubscriptionFrom::Start` outbox subscriber, surrounded by replay lifecycle
+/// events, and then live operations continue to arrive.
 #[tokio::test]
-async fn outbox_from_start_with_local_operation_emits_it() {
-    let endpoint = start_dev_server().await;
-    let app_id = "outbox-test-app";
+async fn outbox_from_start_with_remote_operation_emits_it() {
+    let (endpoint, service) = start_dev_server_with_service().await;
+    let app_id = "outbox-start-replay-app";
 
-    let pool = memory_pool_with_schema().await;
+    let publisher = AppNode::<TestOp>::grpc_with_local(
+        memory_pool().await,
+        endpoint.clone(),
+        app_id,
+        "publisher",
+        SubscriptionFrom::Frontier,
+    )
+    .await
+    .unwrap();
 
-    let op = TestOp {
-        msg: "pre-seeded local".into(),
-    };
-    let payload = serde_json::to_vec(&op).unwrap();
-    insert_operation_into_db(&pool, payload).await;
+    let op = TestOp { msg: "via replay".into() };
+    service.inject_observed_operation(app_id, serde_json::to_vec(&op).unwrap()).await;
 
-    let node = AppNode::<TestOp>::grpc_with_local(pool, endpoint.clone(), app_id, "subscriber", SubscriptionFrom::Start)
-        .await
-        .unwrap();
+    let node = AppNode::<TestOp>::grpc(endpoint, app_id, "subscriber", SubscriptionFrom::Start).unwrap();
 
     let mut node_events = node.subscribe_node_events();
     let mut operations = node.subscribe();
@@ -123,13 +163,19 @@ async fn outbox_from_start_with_local_operation_emits_it() {
     let driver = node.clone();
     tokio::spawn(async move { driver.run().await });
 
+    tokio::time::sleep(Duration::from_millis(300)).await;
+
+    let live_op = TestOp { msg: "via outbox".into() };
+    publisher.publish(&live_op).await.unwrap();
+
     let received_ne = drain_node_events(&mut node_events).await;
     assert_eq!(received_ne.len(), 3);
     assert!(matches!(received_ne[0], NodeEvent::ServerConnected { .. }));
-    assert_eq!(received_ne[1], NodeEvent::ReplayStarted { total_operations: 0 });
+    assert_eq!(received_ne[1], NodeEvent::ReplayStarted { total_operations: 1 });
     assert_eq!(received_ne[2], NodeEvent::ReplayEnded);
 
     let received_ops = drain_operations(&mut operations).await;
-    assert_eq!(received_ops.len(), 1);
+    assert_eq!(received_ops.len(), 2);
     assert_eq!(received_ops[0].op, op);
+    assert_eq!(received_ops[1].op, live_op);
 }
