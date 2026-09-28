@@ -92,15 +92,8 @@ pub(crate) trait OperationTransport: Send + Sync + 'static {
         &mut self,
         start_from: SubscriptionFrom,
     ) -> Pin<Box<dyn Future<Output = Result<OperationStream, TransportError>> + Send + '_>>;
-
-    /// Replay all operations in insertion order.
-    fn replay(&mut self) -> Pin<Box<dyn Future<Output = Result<OperationStream, TransportError>> + Send + '_>> {
-        Box::pin(async move {
-            let s: OperationStream = Box::pin(futures::stream::empty());
-            Ok(s)
-        })
-    }
 }
+
 pub(crate) mod grpc;
 pub(crate) mod local;
 pub(crate) mod outbox;

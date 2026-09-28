@@ -67,8 +67,4 @@ impl OperationTransport for OutboxTransport {
     ) -> Pin<Box<dyn std::future::Future<Output = Result<OperationStream, TransportError>> + Send + '_>> {
         self.remote.subscribe(start_from)
     }
-
-    fn replay(&mut self) -> Pin<Box<dyn std::future::Future<Output = Result<OperationStream, TransportError>> + Send + '_>> {
-        self.local.replay()
-    }
 }

@@ -109,14 +109,4 @@ impl OperationTransport for LocalTransport {
             Ok(s)
         })
     }
-
-    fn replay(&mut self) -> Pin<Box<dyn std::future::Future<Output = Result<OperationStream, TransportError>> + Send + '_>> {
-        Box::pin(async move {
-            let rows = self.stored_operations().await.map_err(|e| TransportError::Other(e.to_string()))?;
-
-            let s: OperationStream =
-                Box::pin(stream::iter(rows).map(|row| Ok(RawEvent::Operation(RawOperationEvent::new_local(row.payload)))));
-            Ok(s)
-        })
-    }
 }

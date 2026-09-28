@@ -224,22 +224,6 @@ impl<Op: Clone + Serialize + Send + 'static> AppNode<Op> {
         client.get_node(&self.app_id, &self.instance_id, node_id.into()).await
     }
 
-    /// Replay all locally-saved operations, broadcasting each through the
-    /// event channel.
-    pub async fn replay(&self) -> Result<(), TransportError>
-    where
-        Op: for<'de> Deserialize<'de>,
-    {
-        let mut stream = {
-            let mut t = self.operation_transport.lock().await;
-            t.replay().await?
-        };
-
-        let count = self.consumer.drain_stream(&mut stream, &self.node_event_tx).await?;
-        tracing::info!(count, "replay complete");
-        Ok(())
-    }
-
     /// Serialize and publish an operation, then broadcast it locally.
     pub async fn publish(&self, operation: &Op) -> Result<(), TransportError> {
         let local_id = Uuid::new_v4();
