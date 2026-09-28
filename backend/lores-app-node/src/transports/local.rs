@@ -6,6 +6,22 @@ use sqlx::SqlitePool;
 
 use crate::transports::{OperationStream, OperationTransport, RawEvent, RawOperationEvent, TransportError, TransportPublishResult};
 
+#[derive(sqlx::FromRow)]
+struct LocalOperationRow {
+    #[allow(dead_code)]
+    id: i64,
+    payload: Vec<u8>,
+}
+
+// impl sqlx::FromRow<'_, sqlx::sqlite::SqliteRow> for LocalOperationRow {
+//     fn from_row(row: &sqlx::sqlite::SqliteRow) -> Result<Self, sqlx::Error> {
+//         Ok(LocalOperationRow {
+//             id: row.try_get("id")?,
+//             payload: row.try_get("payload")?,
+//         })
+//     }
+// }
+
 /// [`OperationTransport`] implementation backed by a local SQLite database.
 ///
 /// Operations are persisted in insertion order. This transport is the foundation
@@ -46,6 +62,14 @@ impl LocalTransport {
             .await?;
         Ok(())
     }
+
+    async fn stored_operations(&self) -> Result<Vec<LocalOperationRow>, sqlx::Error> {
+        let rows = sqlx::query_as::<_, LocalOperationRow>("SELECT id, payload FROM lores_app_operations ORDER BY id ASC")
+            .fetch_all(&self.pool)
+            .await?;
+
+        Ok(rows)
+    }
 }
 
 impl OperationTransport for LocalTransport {
@@ -70,7 +94,17 @@ impl OperationTransport for LocalTransport {
         _start_from: SubscriptionFrom,
     ) -> Pin<Box<dyn std::future::Future<Output = Result<OperationStream, TransportError>> + Send + '_>> {
         Box::pin(async move {
-            let events = [RawEvent::ReplayStarted { total_operations: 0 }, RawEvent::ReplayEnded].map(Ok);
+            let rows = self.stored_operations().await.map_err(|e| TransportError::Other(e.to_string()))?;
+            let total_operations = rows.len() as u32;
+
+            let events = std::iter::once(RawEvent::ReplayStarted { total_operations })
+                .chain(
+                    rows.into_iter()
+                        .map(|row| RawEvent::Operation(RawOperationEvent::new_local(row.payload))),
+                )
+                .chain(std::iter::once(RawEvent::ReplayEnded))
+                .map(Ok);
+
             let s: OperationStream = Box::pin(stream::iter(events).chain(stream::pending()));
             Ok(s)
         })
@@ -78,13 +112,10 @@ impl OperationTransport for LocalTransport {
 
     fn replay(&mut self) -> Pin<Box<dyn std::future::Future<Output = Result<OperationStream, TransportError>> + Send + '_>> {
         Box::pin(async move {
-            let rows = sqlx::query_as::<_, (Vec<u8>,)>("SELECT payload FROM lores_app_operations ORDER BY id ASC")
-                .fetch_all(&self.pool)
-                .await
-                .map_err(|e| TransportError::Other(e.to_string()))?;
+            let rows = self.stored_operations().await.map_err(|e| TransportError::Other(e.to_string()))?;
 
             let s: OperationStream =
-                Box::pin(stream::iter(rows).map(|(payload,)| Ok(RawEvent::Operation(RawOperationEvent::new_local(payload)))));
+                Box::pin(stream::iter(rows).map(|row| Ok(RawEvent::Operation(RawOperationEvent::new_local(row.payload)))));
             Ok(s)
         })
     }
