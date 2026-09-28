@@ -3,7 +3,9 @@ use lores_p2panda_client::SubscriptionFrom;
 use pretty_assertions::assert_eq;
 use std::time::Duration;
 
-use crate::common::{TestOp, drain_node_events, drain_operations, memory_pool, start_dev_server};
+use crate::common::{
+    TestOp, drain_node_events, drain_operations, insert_operation_into_db, memory_pool, memory_pool_with_schema, start_dev_server,
+};
 
 // SubscriptionFrom::Frontier tests
 
@@ -65,37 +67,69 @@ async fn outbox_from_frontier_with_remote_operation_emits_it() {
     assert_eq!(received_ops[0].op, op);
 }
 
-// /// The outbox transport persists locally, delivers over gRPC, and drains the local
-// /// copy once delivery is acknowledged.
-// #[tokio::test]
-// async fn outbox_delivers_over_grpc_and_drains_local() {
-//     let endpoint = start_dev_server().await;
-//     let app_id = "outbox-test-app";
+#[tokio::test]
+async fn outbox_from_frontier_with_local_operation_emits_nothing() {
+    let endpoint = start_dev_server().await;
+    let app_id = "outbox-test-app";
 
-//     let publisher = AppNode::<TestOp>::grpc_with_local(
-//         memory_pool().await,
-//         endpoint.clone(),
-//         app_id,
-//         "publisher",
-//         SubscriptionFrom::Frontier,
-//     )
-//     .await
-//     .unwrap();
-//     let subscriber = AppNode::<TestOp>::grpc(endpoint, app_id, "subscriber", SubscriptionFrom::Frontier).unwrap();
+    let pool = memory_pool_with_schema().await;
 
-//     let mut events = subscriber.subscribe();
+    let op = TestOp {
+        msg: "pre-seeded local".into(),
+    };
+    let payload = serde_json::to_vec(&op).unwrap();
+    insert_operation_into_db(&pool, payload).await;
 
-//     let driver = subscriber.clone();
-//     tokio::spawn(async move { driver.run().await });
+    let node = AppNode::<TestOp>::grpc_with_local(pool, endpoint.clone(), app_id, "subscriber", SubscriptionFrom::Frontier)
+        .await
+        .unwrap();
 
-//     tokio::time::sleep(Duration::from_millis(300)).await;
+    let mut node_events = node.subscribe_node_events();
+    let mut operations = node.subscribe();
 
-//     let op = TestOp { msg: "via outbox".into() };
-//     publisher.publish(&op).await.unwrap();
+    let driver = node.clone();
+    tokio::spawn(async move { driver.run().await });
 
-//     let received = tokio::time::timeout(Duration::from_secs(5), events.recv())
-//         .await
-//         .expect("timed out waiting for operation")
-//         .expect("event channel closed");
-//     assert_eq!(received.op, op);
-// }
+    let received_ne = drain_node_events(&mut node_events).await;
+    assert_eq!(received_ne.len(), 1);
+    assert!(matches!(received_ne[0], NodeEvent::ServerConnected { .. }));
+
+    let received_ops = drain_operations(&mut operations).await;
+    assert_eq!(received_ops.len(), 0);
+}
+
+// SubscriptionFrom::Start tests
+
+#[tokio::test]
+async fn outbox_from_start_with_local_operation_emits_it() {
+    let endpoint = start_dev_server().await;
+    let app_id = "outbox-test-app";
+
+    let pool = memory_pool_with_schema().await;
+
+    let op = TestOp {
+        msg: "pre-seeded local".into(),
+    };
+    let payload = serde_json::to_vec(&op).unwrap();
+    insert_operation_into_db(&pool, payload).await;
+
+    let node = AppNode::<TestOp>::grpc_with_local(pool, endpoint.clone(), app_id, "subscriber", SubscriptionFrom::Start)
+        .await
+        .unwrap();
+
+    let mut node_events = node.subscribe_node_events();
+    let mut operations = node.subscribe();
+
+    let driver = node.clone();
+    tokio::spawn(async move { driver.run().await });
+
+    let received_ne = drain_node_events(&mut node_events).await;
+    assert_eq!(received_ne.len(), 3);
+    assert!(matches!(received_ne[0], NodeEvent::ServerConnected { .. }));
+    assert_eq!(received_ne[1], NodeEvent::ReplayStarted { total_operations: 0 });
+    assert_eq!(received_ne[2], NodeEvent::ReplayEnded);
+
+    let received_ops = drain_operations(&mut operations).await;
+    assert_eq!(received_ops.len(), 1);
+    assert_eq!(received_ops[0].op, op);
+}

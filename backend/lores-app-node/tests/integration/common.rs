@@ -64,3 +64,29 @@ pub async fn memory_pool() -> SqlitePool {
         .await
         .unwrap()
 }
+
+/// Returns an in-memory pool with the `lores_app_operations` schema already
+/// created, so tests can seed operations directly.
+pub async fn memory_pool_with_schema() -> SqlitePool {
+    let pool = memory_pool().await;
+    sqlx::query(
+        "CREATE TABLE IF NOT EXISTS lores_app_operations (
+            id         INTEGER PRIMARY KEY AUTOINCREMENT,
+            payload    BLOB    NOT NULL,
+            created_at INTEGER NOT NULL DEFAULT (unixepoch())
+        )",
+    )
+    .execute(&pool)
+    .await
+    .unwrap();
+    pool
+}
+
+/// Insert a raw operation payload into the `lores_app_operations` table.
+pub async fn insert_operation_into_db(pool: &SqlitePool, payload: Vec<u8>) {
+    sqlx::query("INSERT INTO lores_app_operations (payload) VALUES (?)")
+        .bind(payload)
+        .execute(pool)
+        .await
+        .unwrap();
+}
