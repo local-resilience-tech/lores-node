@@ -8,7 +8,7 @@ use tokio::sync::Mutex;
 
 use crate::{
     NodeId, OperationId,
-    stores::{OperationStore, OperationStream, RawOperationEvent, StoreError, StorePublishResult},
+    stores::{OperationStore, OperationStream, RawEvent, RawOperationEvent, StoreError, StorePublishResult},
 };
 
 impl From<PandaError> for StoreError {
@@ -75,13 +75,17 @@ impl OperationStore for GrpcOperationStore {
             let stream: OperationStream = Box::pin(response.into_inner().filter_map(|item| async move {
                 match item {
                     Ok(event) => match event.event {
-                        Some(SubscribeEventKind::Operation(op)) => Some(Ok(RawOperationEvent {
+                        Some(SubscribeEventKind::Operation(op)) => Some(Ok(RawEvent::Operation(RawOperationEvent {
                             payload: op.payload,
                             author: Some(op.author),
                             operation_id: Some(op.operation_id),
                             timestamp: Some(op.timestamp),
+                        }))),
+                        Some(SubscribeEventKind::ReplayStarted(rs)) => Some(Ok(RawEvent::ReplayStarted {
+                            total_operations: rs.total_operations,
                         })),
-                        _ => None,
+                        Some(SubscribeEventKind::ReplayEnded(_)) => Some(Ok(RawEvent::ReplayEnded)),
+                        None => None,
                     },
                     Err(s) => Some(Err(StoreError::Other(s.to_string()))),
                 }

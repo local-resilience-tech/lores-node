@@ -4,7 +4,7 @@ use futures::{StreamExt, stream};
 use lores_p2panda_client::SubscriptionFrom;
 use sqlx::SqlitePool;
 
-use crate::stores::{OperationStore, OperationStream, RawOperationEvent, StoreError, StorePublishResult};
+use crate::stores::{OperationStore, OperationStream, RawEvent, RawOperationEvent, StoreError, StorePublishResult};
 
 /// [`OperationStore`] implementation backed by a local SQLite database.
 ///
@@ -82,7 +82,7 @@ impl OperationStore for LocalOperationStore {
                 .await
                 .map_err(|e| StoreError::Other(e.to_string()))?;
 
-            let s: OperationStream = Box::pin(stream::iter(rows).map(|(payload,)| Ok(RawOperationEvent::new_local(payload))));
+            let s: OperationStream = Box::pin(stream::iter(rows).map(|(payload,)| Ok(RawEvent::Operation(RawOperationEvent::new_local(payload)))));
             Ok(s)
         })
     }

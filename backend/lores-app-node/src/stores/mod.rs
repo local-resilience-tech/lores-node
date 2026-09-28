@@ -58,8 +58,19 @@ impl RawOperationEvent {
     }
 }
 
-/// A boxed, heap-allocated stream of raw operation events.
-pub(crate) type OperationStream = Pin<Box<dyn Stream<Item = Result<RawOperationEvent, StoreError>> + Send>>;
+/// An item yielded by an [`OperationStore::subscribe`] stream: either an
+/// operation, or one of p2panda's replay lifecycle events
+pub(crate) enum RawEvent {
+    Operation(RawOperationEvent),
+    #[allow(dead_code)]
+    ReplayStarted {
+        total_operations: u32,
+    },
+    ReplayEnded,
+}
+
+/// A boxed, heap-allocated stream of raw subscription events.
+pub(crate) type OperationStream = Pin<Box<dyn Stream<Item = Result<RawEvent, StoreError>> + Send>>;
 
 /// Internal trait over raw-bytes operation delivery.
 ///

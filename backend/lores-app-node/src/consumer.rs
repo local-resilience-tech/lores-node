@@ -1,7 +1,7 @@
 use futures::StreamExt;
 use tokio::sync::broadcast;
 
-use crate::stores::{OperationStream, RawOperationEvent, StoreError};
+use crate::stores::{OperationStream, RawEvent, RawOperationEvent, StoreError};
 use crate::types::{AppNodeOperation, NodeId, OperationId};
 
 /// Deserializes raw operation payloads from a stream and broadcasts them to
@@ -45,12 +45,12 @@ impl<Op: Clone + Send + 'static> OperationConsumer<Op> {
         let mut count = 0usize;
         while let Some(item) = stream.next().await {
             match item {
-                Ok(RawOperationEvent {
+                Ok(RawEvent::Operation(RawOperationEvent {
                     payload,
                     author,
                     operation_id,
                     timestamp,
-                }) => match serde_json::from_slice::<Op>(&payload) {
+                })) => match serde_json::from_slice::<Op>(&payload) {
                     Ok(op) => {
                         let _ = self.event_tx.send(AppNodeOperation {
                             op,
@@ -63,6 +63,7 @@ impl<Op: Clone + Send + 'static> OperationConsumer<Op> {
                     }
                     Err(e) => tracing::warn!("Failed to deserialize operation: {e}"),
                 },
+                Ok(RawEvent::ReplayStarted { .. }) | Ok(RawEvent::ReplayEnded) => {}
                 Err(e) => return Err(e),
             }
         }
