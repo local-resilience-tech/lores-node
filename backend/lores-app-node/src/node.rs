@@ -80,9 +80,11 @@ impl From<tonic::transport::Error> for ConnectError {
 ///
 /// Construct via the named constructors rather than directly:
 /// ```no_run
-/// # use lores_app_node::AppNode;
+/// use lores_app_node::AppNode;
+/// use lores_p2panda_client::SubscriptionFrom;
+///
 /// # #[derive(Clone, serde::Serialize)] enum Op {}
-/// let node = AppNode::<Op>::grpc("http://[::1]:50051".into(), "my-app-id", "my-instance")?;
+/// let node = AppNode::<Op>::grpc("http://[::1]:50051".into(), "my-app-id", "my-instance", SubscriptionFrom::Frontier)?;
 /// # Ok::<(), lores_app_node::ConnectError>(())
 /// ```
 pub struct AppNode<Op> {
@@ -94,6 +96,7 @@ pub struct AppNode<Op> {
     node_event_tx: broadcast::Sender<NodeEvent>,
     /// Present only when this node is connected to a gRPC server.
     panda_client: Option<Arc<Mutex<PandaClient>>>,
+    start_from: SubscriptionFrom,
 }
 
 impl<Op> Clone for AppNode<Op> {
@@ -106,6 +109,7 @@ impl<Op> Clone for AppNode<Op> {
             error_tx: self.error_tx.clone(),
             node_event_tx: self.node_event_tx.clone(),
             panda_client: self.panda_client.clone(),
+            start_from: self.start_from.clone(),
         }
     }
 }
@@ -120,6 +124,7 @@ impl<Op: Clone + Serialize + Send + 'static> AppNode<Op> {
         instance_id: impl Into<String>,
         operation_store: Box<dyn OperationStore>,
         panda_client: Option<Arc<Mutex<PandaClient>>>,
+        start_from: SubscriptionFrom,
     ) -> Self {
         let (event_tx, _) = broadcast::channel(64);
         let (error_tx, _) = watch::channel(None);
@@ -133,15 +138,21 @@ impl<Op: Clone + Serialize + Send + 'static> AppNode<Op> {
             error_tx,
             node_event_tx,
             panda_client,
+            start_from,
         }
     }
 
     /// Create a local-only `AppNode` backed by a SQLite store.
     ///
     /// Operations are persisted locally and never forwarded to a remote node.
-    pub async fn local(pool: SqlitePool, app_id: impl Into<String>, instance_id: impl Into<String>) -> Result<Self, sqlx::Error> {
+    pub async fn local(
+        pool: SqlitePool,
+        app_id: impl Into<String>,
+        instance_id: impl Into<String>,
+        start_from: SubscriptionFrom,
+    ) -> Result<Self, sqlx::Error> {
         let store = LocalOperationStore::new(pool).await?;
-        Ok(Self::new(app_id, instance_id, Box::new(store), None))
+        Ok(Self::new(app_id, instance_id, Box::new(store), None, start_from))
     }
 
     /// Create an `AppNode` that persists to a local SQLite store and forwards
@@ -154,6 +165,7 @@ impl<Op: Clone + Serialize + Send + 'static> AppNode<Op> {
         grpc_addr: String,
         app_id: impl Into<String>,
         instance_id: impl Into<String>,
+        start_from: SubscriptionFrom,
     ) -> Result<Self, ConnectError> {
         let app_id = app_id.into();
         let instance_id = instance_id.into();
@@ -161,18 +173,23 @@ impl<Op: Clone + Serialize + Send + 'static> AppNode<Op> {
         let client = make_panda_client(grpc_addr)?;
         let remote = GrpcOperationStore::new(client.clone(), &app_id, &instance_id);
         let store = OutboxStore::new(local, remote);
-        Ok(Self::new(app_id, instance_id, Box::new(store), Some(client)))
+        Ok(Self::new(app_id, instance_id, Box::new(store), Some(client), start_from))
     }
 
     /// Create an `AppNode` connected to an external lores-node via gRPC.
     ///
     /// Uses a lazy connection — no network call until the first publish.
-    pub fn grpc(grpc_addr: String, app_id: impl Into<String>, instance_id: impl Into<String>) -> Result<Self, ConnectError> {
+    pub fn grpc(
+        grpc_addr: String,
+        app_id: impl Into<String>,
+        instance_id: impl Into<String>,
+        start_from: SubscriptionFrom,
+    ) -> Result<Self, ConnectError> {
         let app_id = app_id.into();
         let instance_id = instance_id.into();
         let client = make_panda_client(grpc_addr)?;
         let store = GrpcOperationStore::new(client.clone(), &app_id, &instance_id);
-        Ok(Self::new(app_id, instance_id, Box::new(store), Some(client)))
+        Ok(Self::new(app_id, instance_id, Box::new(store), Some(client), start_from))
     }
 
     /// Subscribe to operations published through this node (loopback).
@@ -252,7 +269,7 @@ impl<Op: Clone + Serialize + Send + 'static> AppNode<Op> {
     /// Retries on all transient failures with exponential backoff (1 s → 60 s).
     /// The backoff resets whenever the error variant changes (e.g. `GrpcUnavailable`
     /// → `RegionNotBound`). Call it with `tokio::spawn` from your application's `main`.
-    pub async fn run(&self, start_from: SubscriptionFrom)
+    pub async fn run(&self)
     where
         Op: for<'de> Deserialize<'de>,
     {
@@ -264,8 +281,9 @@ impl<Op: Clone + Serialize + Send + 'static> AppNode<Op> {
             self.panda_client.clone(),
             self.app_id.clone(),
             self.instance_id.clone(),
+            self.start_from.clone(),
         )
-        .run(start_from)
+        .run()
         .await;
     }
 }

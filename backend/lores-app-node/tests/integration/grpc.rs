@@ -12,13 +12,13 @@ async fn publishes_and_receives_operation_over_grpc() {
     let endpoint = start_dev_server().await;
     let app_id = "grpc-test-app";
 
-    let publisher = AppNode::<TestOp>::grpc(endpoint.clone(), app_id, "publisher").unwrap();
-    let subscriber = AppNode::<TestOp>::grpc(endpoint, app_id, "subscriber").unwrap();
+    let publisher = AppNode::<TestOp>::grpc(endpoint.clone(), app_id, "publisher", SubscriptionFrom::Frontier).unwrap();
+    let subscriber = AppNode::<TestOp>::grpc(endpoint, app_id, "subscriber", SubscriptionFrom::Frontier).unwrap();
 
     let mut events = subscriber.subscribe();
 
     let driver = subscriber.clone();
-    tokio::spawn(async move { driver.run(SubscriptionFrom::Frontier).await });
+    tokio::spawn(async move { driver.run().await });
 
     // The dev server only delivers operations that arrive after a subscription
     // is established, so wait for the subscriber to connect before publishing.

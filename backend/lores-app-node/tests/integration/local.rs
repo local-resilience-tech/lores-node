@@ -1,6 +1,7 @@
 use std::time::Duration;
 
 use lores_app_node::AppNode;
+use lores_p2panda_client::SubscriptionFrom;
 
 use crate::common::{TestOp, memory_pool};
 
@@ -8,7 +9,7 @@ use crate::common::{TestOp, memory_pool};
 /// and re-emits persisted operations on replay.
 #[tokio::test]
 async fn local_node_broadcasts_and_replays() {
-    let node = AppNode::<TestOp>::local(memory_pool().await, "local-test-app", "instance")
+    let node = AppNode::<TestOp>::local(memory_pool().await, "local-test-app", "instance", SubscriptionFrom::Frontier)
         .await
         .unwrap();
 

@@ -19,6 +19,7 @@ pub(crate) struct LiveSubscription<Op> {
     panda_client: Option<Arc<Mutex<PandaClient>>>,
     app_id: String,
     instance_id: String,
+    start_from: SubscriptionFrom,
 }
 
 impl<Op: Clone + Send + 'static> LiveSubscription<Op> {
@@ -30,6 +31,7 @@ impl<Op: Clone + Send + 'static> LiveSubscription<Op> {
         panda_client: Option<Arc<Mutex<PandaClient>>>,
         app_id: String,
         instance_id: String,
+        start_from: SubscriptionFrom,
     ) -> Self {
         Self {
             operation_store,
@@ -39,18 +41,19 @@ impl<Op: Clone + Send + 'static> LiveSubscription<Op> {
             panda_client,
             app_id,
             instance_id,
+            start_from,
         }
     }
 
     /// Run the subscription loop forever. Call with `tokio::spawn`.
-    pub(crate) async fn run(&self, start_from: SubscriptionFrom)
+    pub(crate) async fn run(&self)
     where
         Op: for<'de> serde::Deserialize<'de>,
     {
         let mut backoff = Backoff::new();
 
         loop {
-            let Some(mut stream) = self.try_subscribe(start_from, &mut backoff).await else {
+            let Some(mut stream) = self.try_subscribe(self.start_from.clone(), &mut backoff).await else {
                 continue;
             };
 

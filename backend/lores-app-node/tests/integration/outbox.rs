@@ -12,15 +12,21 @@ async fn outbox_delivers_over_grpc_and_drains_local() {
     let endpoint = start_dev_server().await;
     let app_id = "outbox-test-app";
 
-    let publisher = AppNode::<TestOp>::grpc_with_local(memory_pool().await, endpoint.clone(), app_id, "publisher")
-        .await
-        .unwrap();
-    let subscriber = AppNode::<TestOp>::grpc(endpoint, app_id, "subscriber").unwrap();
+    let publisher = AppNode::<TestOp>::grpc_with_local(
+        memory_pool().await,
+        endpoint.clone(),
+        app_id,
+        "publisher",
+        SubscriptionFrom::Frontier,
+    )
+    .await
+    .unwrap();
+    let subscriber = AppNode::<TestOp>::grpc(endpoint, app_id, "subscriber", SubscriptionFrom::Frontier).unwrap();
 
     let mut events = subscriber.subscribe();
 
     let driver = subscriber.clone();
-    tokio::spawn(async move { driver.run(SubscriptionFrom::Frontier).await });
+    tokio::spawn(async move { driver.run().await });
 
     tokio::time::sleep(Duration::from_millis(300)).await;
 
