@@ -31,6 +31,15 @@ pub struct AppNodeOperation<Op> {
 
 #[derive(Clone, Debug)]
 pub enum NodeEvent {
-    ServerConnected { node_id: NodeId, region: RegionInfo },
+    ServerConnected {
+        node_id: NodeId,
+        region: RegionInfo,
+    },
     ServerDisconnected,
+    /// Historical replay has started.
+    ReplayStarted {
+        total_operations: u32,
+    },
+    /// Historical replay has finished; the node is now receiving live operations.
+    ReplayEnded,
 }

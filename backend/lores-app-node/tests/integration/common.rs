@@ -28,6 +28,22 @@ pub async fn start_dev_server() -> String {
     format!("http://{addr}")
 }
 
+/// Waits up to 5 seconds for the first event, then drains any further events
+/// that have already arrived without waiting further. Returns an empty `Vec`
+/// on timeout or a closed channel, so callers see a clear assertion failure
+/// instead of a panic here.
+pub async fn drain_events<T: Clone>(rx: &mut tokio::sync::broadcast::Receiver<T>) -> Vec<T> {
+    let Ok(Ok(first)) = tokio::time::timeout(std::time::Duration::from_secs(5), rx.recv()).await else {
+        return Vec::new();
+    };
+
+    let mut events = vec![first];
+    while let Ok(event) = rx.try_recv() {
+        events.push(event);
+    }
+    events
+}
+
 /// A single-connection in-memory SQLite pool, so all queries share one database.
 pub async fn memory_pool() -> SqlitePool {
     SqlitePoolOptions::new()

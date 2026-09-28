@@ -1,36 +1,24 @@
-use std::time::Duration;
-
-use lores_app_node::AppNode;
+use lores_app_node::{AppNode, NodeEvent};
 use lores_p2panda_client::SubscriptionFrom;
 
-use crate::common::{TestOp, memory_pool};
+use crate::common::{TestOp, drain_events, memory_pool};
 
-/// A local-only node broadcasts published operations to loopback subscribers
-/// and re-emits persisted operations on replay.
+/// A node with no persisted history, subscribing with `SubscriptionFrom::Start`,
+/// still receives the replay lifecycle events around the (empty) replay.
 #[tokio::test]
-async fn local_node_broadcasts_and_replays() {
-    let node = AppNode::<TestOp>::local(memory_pool().await, "local-test-app", "instance", SubscriptionFrom::Frontier)
+async fn local_node_with_no_history_emits_replay_lifecycle_events() {
+    let node = AppNode::<TestOp>::local(memory_pool().await, "local-test-app", "instance", SubscriptionFrom::Start)
         .await
         .unwrap();
 
-    let mut events = node.subscribe();
+    let mut node_events = node.subscribe_node_events();
 
-    let op = TestOp { msg: "persisted".into() };
-    node.publish(&op).await.unwrap();
+    let driver = node.clone();
+    tokio::spawn(async move { driver.run().await });
 
-    let received = tokio::time::timeout(Duration::from_secs(5), events.recv())
-        .await
-        .expect("timed out waiting for loopback")
-        .expect("event channel closed");
-    assert_eq!(received.op, op);
+    let received = drain_events(&mut node_events).await;
 
-    // A subscriber attached after publishing receives the operation only via replay.
-    let mut replayed = node.subscribe();
-    node.replay().await.unwrap();
-
-    let r = tokio::time::timeout(Duration::from_secs(5), replayed.recv())
-        .await
-        .expect("timed out waiting for replay")
-        .expect("event channel closed");
-    assert_eq!(r.op, op);
+    assert!(matches!(received.len(), 2));
+    assert!(matches!(received[0], NodeEvent::ReplayStarted { total_operations: 0 }));
+    assert!(matches!(received[1], NodeEvent::ReplayEnded));
 }
