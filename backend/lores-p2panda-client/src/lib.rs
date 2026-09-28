@@ -5,7 +5,7 @@ pub mod proto {
     tonic::include_proto!("lores.panda.v2");
 }
 
-use proto::{GetNodeRequest, InfoRequest, OperationEvent, PublishRequest, SubscribeRequest, panda_client::PandaClient as TonicPandaClient};
+use proto::{GetNodeRequest, InfoRequest, PublishRequest, SubscribeEvent, SubscribeRequest, SubscriptionCursor, panda_client::PandaClient as TonicPandaClient};
 use tonic::{Code, Response, Status, Streaming};
 
 /// 32-byte p2panda operation hash returned by a successful publish.
@@ -116,6 +116,29 @@ pub struct RegionInfo {
 pub struct PublishResult {
     pub operation_id: OperationId,
     pub node_id: NodeId,
+}
+
+/// Determines where a subscription stream should begin.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum SubscriptionFrom {
+    /// Replay all persisted operations from the beginning, then continue live.
+    Start,
+    /// Stream only operations arriving after the subscription is established.
+    #[default]
+    Frontier,
+}
+
+impl From<SubscriptionFrom> for SubscriptionCursor {
+    fn from(from: SubscriptionFrom) -> Self {
+        match from {
+            SubscriptionFrom::Start => SubscriptionCursor {
+                mode: Some(proto::subscription_cursor::Mode::Start(true)),
+            },
+            SubscriptionFrom::Frontier => SubscriptionCursor {
+                mode: Some(proto::subscription_cursor::Mode::Frontier(true)),
+            },
+        }
+    }
 }
 
 /// Errors returned by [`PandaClient`] methods.
@@ -241,17 +264,25 @@ impl PandaClient {
     }
 
     /// Subscribe to a region+namespace topic and receive a stream of
-    /// [`OperationEvent`]s.
+    /// [`SubscribeEvent`]s.
+    ///
+    /// `from` determines where the stream begins. Use [`SubscriptionFrom::Start`]
+    /// to replay all persisted operations before continuing with live ones, or
+    /// [`SubscriptionFrom::Frontier`] (the default) to receive only operations
+    /// arriving after the subscription is established.
     ///
     /// HTTP/2 flow control provides natural backpressure.
     pub async fn subscribe(
         &mut self,
         app_id: impl Into<String>,
         instance_id: impl Into<String>,
-    ) -> Result<Response<Streaming<OperationEvent>>, PandaError> {
+        from: impl Into<SubscriptionFrom>,
+    ) -> Result<Response<Streaming<SubscribeEvent>>, PandaError> {
+        let from = from.into();
         let request = SubscribeRequest {
             app_id: app_id.into(),
             instance_id: instance_id.into(),
+            cursor: Some(from.into()),
         };
         self.inner.subscribe(request).await.map_err(PandaError::from)
     }
