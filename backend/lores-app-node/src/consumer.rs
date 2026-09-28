@@ -1,7 +1,7 @@
 use futures::StreamExt;
 use tokio::sync::broadcast;
 
-use crate::stores::{OperationStream, RawEvent, RawOperationEvent, StoreError};
+use crate::transports::{OperationStream, RawEvent, RawOperationEvent, TransportError};
 use crate::types::{AppNodeOperation, NodeId, OperationId};
 
 /// Deserializes raw operation payloads from a stream and broadcasts them to
@@ -38,7 +38,7 @@ impl<Op: Clone + Send + 'static> OperationConsumer<Op> {
     /// Returns `Ok(count)` if the stream ended cleanly, or `Err` on the first
     /// stream-level failure. Deserialization failures are logged as warnings
     /// and do not stop the drain.
-    pub(crate) async fn drain_stream(&self, stream: &mut OperationStream) -> Result<usize, StoreError>
+    pub(crate) async fn drain_stream(&self, stream: &mut OperationStream) -> Result<usize, TransportError>
     where
         Op: for<'de> serde::Deserialize<'de>,
     {

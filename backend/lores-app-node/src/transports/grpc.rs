@@ -8,27 +8,27 @@ use tokio::sync::Mutex;
 
 use crate::{
     NodeId, OperationId,
-    stores::{OperationStore, OperationStream, RawEvent, RawOperationEvent, StoreError, StorePublishResult},
+    transports::{OperationStream, OperationTransport, RawEvent, RawOperationEvent, TransportError, TransportPublishResult},
 };
 
-impl From<PandaError> for StoreError {
+impl From<PandaError> for TransportError {
     fn from(e: PandaError) -> Self {
         match e {
-            PandaError::RegionNotBound(msg) => StoreError::RegionNotBound(msg),
-            PandaError::Rpc(s) => StoreError::Other(s.to_string()),
+            PandaError::RegionNotBound(msg) => TransportError::RegionNotBound(msg),
+            PandaError::Rpc(s) => TransportError::Other(s.to_string()),
         }
     }
 }
 
-/// [`OperationStore`] implementation that forwards operations to a lores-node
+/// [`OperationTransport`] implementation that forwards operations to a lores-node
 /// instance via gRPC using [`PandaClient`].
-pub(crate) struct GrpcOperationStore {
+pub(crate) struct GrpcTransport {
     client: Arc<Mutex<PandaClient>>,
     app_id: String,
     instance_id: String,
 }
 
-impl GrpcOperationStore {
+impl GrpcTransport {
     pub(crate) fn new(client: Arc<Mutex<PandaClient>>, app_id: impl Into<String>, instance_id: impl Into<String>) -> Self {
         Self {
             client,
@@ -38,12 +38,12 @@ impl GrpcOperationStore {
     }
 }
 
-impl OperationStore for GrpcOperationStore {
+impl OperationTransport for GrpcTransport {
     fn publish(
         &mut self,
         payload: Vec<u8>,
         idempotency_key: Option<String>,
-    ) -> Pin<Box<dyn std::future::Future<Output = Result<StorePublishResult, StoreError>> + Send + '_>> {
+    ) -> Pin<Box<dyn std::future::Future<Output = Result<TransportPublishResult, TransportError>> + Send + '_>> {
         Box::pin(async move {
             let PublishResult { operation_id, node_id } = self
                 .client
@@ -51,8 +51,8 @@ impl OperationStore for GrpcOperationStore {
                 .await
                 .publish(&self.app_id, &self.instance_id, payload, idempotency_key.map(|k| k.into_bytes()))
                 .await
-                .map_err(StoreError::from)?;
-            Ok(StorePublishResult {
+                .map_err(TransportError::from)?;
+            Ok(TransportPublishResult {
                 operation_id: operation_id.into_non_empty().map(OperationId),
                 node_id: node_id.into_non_empty().map(NodeId),
             })
@@ -62,7 +62,7 @@ impl OperationStore for GrpcOperationStore {
     fn subscribe(
         &mut self,
         start_from: SubscriptionFrom,
-    ) -> Pin<Box<dyn std::future::Future<Output = Result<OperationStream, StoreError>> + Send + '_>> {
+    ) -> Pin<Box<dyn std::future::Future<Output = Result<OperationStream, TransportError>> + Send + '_>> {
         Box::pin(async move {
             let response = self
                 .client
@@ -70,7 +70,7 @@ impl OperationStore for GrpcOperationStore {
                 .await
                 .subscribe(&self.app_id, &self.instance_id, start_from)
                 .await
-                .map_err(StoreError::from)?;
+                .map_err(TransportError::from)?;
 
             let stream: OperationStream = Box::pin(response.into_inner().filter_map(|item| async move {
                 match item {
@@ -87,7 +87,7 @@ impl OperationStore for GrpcOperationStore {
                         Some(SubscribeEventKind::ReplayEnded(_)) => Some(Ok(RawEvent::ReplayEnded)),
                         None => None,
                     },
-                    Err(s) => Some(Err(StoreError::Other(s.to_string()))),
+                    Err(s) => Some(Err(TransportError::Other(s.to_string()))),
                 }
             }));
 

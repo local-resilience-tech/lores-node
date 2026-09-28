@@ -5,7 +5,7 @@ use lores_p2panda_client::SubscriptionFrom;
 
 use crate::common::{TestOp, memory_pool, start_dev_server};
 
-/// The outbox store persists locally, delivers over gRPC, and drains the local
+/// The outbox transport persists locally, delivers over gRPC, and drains the local
 /// copy once delivery is acknowledged.
 #[tokio::test]
 async fn outbox_delivers_over_grpc_and_drains_local() {
@@ -45,5 +45,5 @@ async fn outbox_delivers_over_grpc_and_drains_local() {
     publisher.replay().await.unwrap();
 
     let drained = tokio::time::timeout(Duration::from_millis(300), replayed.recv()).await;
-    assert!(drained.is_err(), "local store should be empty after successful delivery");
+    assert!(drained.is_err(), "local transport should be empty after successful delivery");
 }

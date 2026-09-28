@@ -7,11 +7,11 @@ use tokio::sync::{Mutex, broadcast, watch};
 use uuid::Uuid;
 
 use crate::consumer::OperationConsumer;
-use crate::stores::grpc::GrpcOperationStore;
-use crate::stores::local::LocalOperationStore;
-use crate::stores::outbox::OutboxStore;
-use crate::stores::{OperationStore, StoreError};
 use crate::subscription::LiveSubscription;
+use crate::transports::grpc::GrpcTransport;
+use crate::transports::local::LocalTransport;
+use crate::transports::outbox::OutboxTransport;
+use crate::transports::{OperationTransport, TransportError};
 use crate::types::{AppNodeOperation, NodeEvent};
 
 /// Errors emitted by the node that consumers (e.g. a WebSocket handler) may
@@ -36,7 +36,7 @@ impl std::fmt::Display for NodeError {
 /// Errors returned when constructing an [`AppNode`].
 #[derive(Debug)]
 pub enum ConnectError {
-    /// The local SQLite store could not be opened or migrated.
+    /// The local SQLite database could not be opened or migrated.
     Database(sqlx::Error),
     /// The provided gRPC address was invalid and no client could be built.
     InvalidGrpcAddress(tonic::transport::Error),
@@ -76,7 +76,7 @@ impl From<tonic::transport::Error> for ConnectError {
 ///
 /// Generic over the operation type `Op` — the application supplies its own
 /// operation enum and `AppNode` handles serialization, loopback broadcast, and
-/// error logging consistently across all operation store backends.
+/// error logging consistently across all operation transport backends.
 ///
 /// Construct via the named constructors rather than directly:
 /// ```no_run
@@ -90,7 +90,7 @@ impl From<tonic::transport::Error> for ConnectError {
 pub struct AppNode<Op> {
     pub app_id: String,
     pub instance_id: String,
-    operation_store: Arc<Mutex<Box<dyn OperationStore>>>,
+    operation_transport: Arc<Mutex<Box<dyn OperationTransport>>>,
     consumer: OperationConsumer<Op>,
     error_tx: watch::Sender<Option<NodeError>>,
     node_event_tx: broadcast::Sender<NodeEvent>,
@@ -104,7 +104,7 @@ impl<Op> Clone for AppNode<Op> {
         Self {
             app_id: self.app_id.clone(),
             instance_id: self.instance_id.clone(),
-            operation_store: self.operation_store.clone(),
+            operation_transport: self.operation_transport.clone(),
             consumer: self.consumer.clone(),
             error_tx: self.error_tx.clone(),
             node_event_tx: self.node_event_tx.clone(),
@@ -122,7 +122,7 @@ impl<Op: Clone + Serialize + Send + 'static> AppNode<Op> {
     fn new(
         app_id: impl Into<String>,
         instance_id: impl Into<String>,
-        operation_store: Box<dyn OperationStore>,
+        operation_transport: Box<dyn OperationTransport>,
         panda_client: Option<Arc<Mutex<PandaClient>>>,
         start_from: SubscriptionFrom,
     ) -> Self {
@@ -133,7 +133,7 @@ impl<Op: Clone + Serialize + Send + 'static> AppNode<Op> {
         Self {
             app_id: app_id.into(),
             instance_id: instance_id.into(),
-            operation_store: Arc::new(Mutex::new(operation_store)),
+            operation_transport: Arc::new(Mutex::new(operation_transport)),
             consumer,
             error_tx,
             node_event_tx,
@@ -142,7 +142,7 @@ impl<Op: Clone + Serialize + Send + 'static> AppNode<Op> {
         }
     }
 
-    /// Create a local-only `AppNode` backed by a SQLite store.
+    /// Create a local-only `AppNode` backed by a SQLite database.
     ///
     /// Operations are persisted locally and never forwarded to a remote node.
     pub async fn local(
@@ -151,11 +151,11 @@ impl<Op: Clone + Serialize + Send + 'static> AppNode<Op> {
         instance_id: impl Into<String>,
         start_from: SubscriptionFrom,
     ) -> Result<Self, sqlx::Error> {
-        let store = LocalOperationStore::new(pool).await?;
-        Ok(Self::new(app_id, instance_id, Box::new(store), None, start_from))
+        let transport = LocalTransport::new(pool).await?;
+        Ok(Self::new(app_id, instance_id, Box::new(transport), None, start_from))
     }
 
-    /// Create an `AppNode` that persists to a local SQLite store and forwards
+    /// Create an `AppNode` that persists to a local SQLite database and forwards
     /// to lores-node via gRPC, using the local row id as an idempotency key.
     ///
     /// If gRPC delivery fails the operation is retained locally for a future
@@ -169,11 +169,11 @@ impl<Op: Clone + Serialize + Send + 'static> AppNode<Op> {
     ) -> Result<Self, ConnectError> {
         let app_id = app_id.into();
         let instance_id = instance_id.into();
-        let local = LocalOperationStore::new(pool).await?;
+        let local = LocalTransport::new(pool).await?;
         let client = make_panda_client(grpc_addr)?;
-        let remote = GrpcOperationStore::new(client.clone(), &app_id, &instance_id);
-        let store = OutboxStore::new(local, remote);
-        Ok(Self::new(app_id, instance_id, Box::new(store), Some(client), start_from))
+        let remote = GrpcTransport::new(client.clone(), &app_id, &instance_id);
+        let transport = OutboxTransport::new(local, remote);
+        Ok(Self::new(app_id, instance_id, Box::new(transport), Some(client), start_from))
     }
 
     /// Create an `AppNode` connected to an external lores-node via gRPC.
@@ -188,8 +188,8 @@ impl<Op: Clone + Serialize + Send + 'static> AppNode<Op> {
         let app_id = app_id.into();
         let instance_id = instance_id.into();
         let client = make_panda_client(grpc_addr)?;
-        let store = GrpcOperationStore::new(client.clone(), &app_id, &instance_id);
-        Ok(Self::new(app_id, instance_id, Box::new(store), Some(client), start_from))
+        let transport = GrpcTransport::new(client.clone(), &app_id, &instance_id);
+        Ok(Self::new(app_id, instance_id, Box::new(transport), Some(client), start_from))
     }
 
     /// Subscribe to operations published through this node (loopback).
@@ -224,14 +224,14 @@ impl<Op: Clone + Serialize + Send + 'static> AppNode<Op> {
         client.get_node(&self.app_id, &self.instance_id, node_id.into()).await
     }
 
-    /// Replay all locally-stored operations, broadcasting each through the
+    /// Replay all locally-saved operations, broadcasting each through the
     /// event channel.
-    pub async fn replay(&self) -> Result<(), StoreError>
+    pub async fn replay(&self) -> Result<(), TransportError>
     where
         Op: for<'de> Deserialize<'de>,
     {
         let mut stream = {
-            let mut t = self.operation_store.lock().await;
+            let mut t = self.operation_transport.lock().await;
             t.replay().await?
         };
 
@@ -241,13 +241,13 @@ impl<Op: Clone + Serialize + Send + 'static> AppNode<Op> {
     }
 
     /// Serialize and publish an operation, then broadcast it locally.
-    pub async fn publish(&self, operation: &Op) -> Result<(), StoreError> {
+    pub async fn publish(&self, operation: &Op) -> Result<(), TransportError> {
         let local_id = Uuid::new_v4();
         let payload = serde_json::to_vec(operation).map_err(|e| {
             tracing::error!("Failed to serialize operation: {e}");
-            StoreError::Other(format!("Failed to serialize operation: {e}"))
+            TransportError::Other(format!("Failed to serialize operation: {e}"))
         })?;
-        let mut t = self.operation_store.lock().await;
+        let mut t = self.operation_transport.lock().await;
         let result = t.publish(payload, Some(local_id.to_string())).await?;
         drop(t);
 
@@ -274,7 +274,7 @@ impl<Op: Clone + Serialize + Send + 'static> AppNode<Op> {
         Op: for<'de> Deserialize<'de>,
     {
         LiveSubscription::new(
-            self.operation_store.clone(),
+            self.operation_transport.clone(),
             self.consumer.clone(),
             self.error_tx.clone(),
             self.node_event_tx.clone(),
@@ -288,9 +288,9 @@ impl<Op: Clone + Serialize + Send + 'static> AppNode<Op> {
     }
 }
 
-pub(crate) fn map_store_error(err: StoreError) -> NodeError {
+pub(crate) fn map_transport_error(err: TransportError) -> NodeError {
     match err {
-        StoreError::RegionNotBound(msg) => NodeError::RegionNotBound(msg),
-        StoreError::Other(_) => NodeError::GrpcUnavailable("Could not connect to the LoRes Node for this server".to_string()),
+        TransportError::RegionNotBound(msg) => NodeError::RegionNotBound(msg),
+        TransportError::Other(_) => NodeError::GrpcUnavailable("Could not connect to the LoRes Node for this server".to_string()),
     }
 }

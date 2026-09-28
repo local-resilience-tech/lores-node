@@ -4,18 +4,18 @@ use futures::{StreamExt, stream};
 use lores_p2panda_client::SubscriptionFrom;
 use sqlx::SqlitePool;
 
-use crate::stores::{OperationStore, OperationStream, RawEvent, RawOperationEvent, StoreError, StorePublishResult};
+use crate::transports::{OperationStream, OperationTransport, RawEvent, RawOperationEvent, TransportError, TransportPublishResult};
 
-/// [`OperationStore`] implementation backed by a local SQLite database.
+/// [`OperationTransport`] implementation backed by a local SQLite database.
 ///
-/// Operations are persisted in insertion order. This store is the foundation
+/// Operations are persisted in insertion order. This transport is the foundation
 /// for offline operation and the outgoing queue that a future drain task will
 /// deliver to lores-node.
-pub(crate) struct LocalOperationStore {
+pub(crate) struct LocalTransport {
     pool: SqlitePool,
 }
 
-impl LocalOperationStore {
+impl LocalTransport {
     pub(crate) async fn new(pool: SqlitePool) -> Result<Self, sqlx::Error> {
         sqlx::query(
             "CREATE TABLE IF NOT EXISTS lores_app_operations (
@@ -48,41 +48,42 @@ impl LocalOperationStore {
     }
 }
 
-impl OperationStore for LocalOperationStore {
+impl OperationTransport for LocalTransport {
     fn publish(
         &mut self,
         payload: Vec<u8>,
         _idempotency_key: Option<String>,
-    ) -> Pin<Box<dyn std::future::Future<Output = Result<StorePublishResult, StoreError>> + Send + '_>> {
+    ) -> Pin<Box<dyn std::future::Future<Output = Result<TransportPublishResult, TransportError>> + Send + '_>> {
         Box::pin(async move {
             self.insert(payload)
                 .await
-                .map(|_| StorePublishResult {
+                .map(|_| TransportPublishResult {
                     operation_id: None,
                     node_id: None,
                 })
-                .map_err(|e| StoreError::Other(e.to_string()))
+                .map_err(|e| TransportError::Other(e.to_string()))
         })
     }
 
     fn subscribe(
         &mut self,
         _start_from: SubscriptionFrom,
-    ) -> Pin<Box<dyn std::future::Future<Output = Result<OperationStream, StoreError>> + Send + '_>> {
+    ) -> Pin<Box<dyn std::future::Future<Output = Result<OperationStream, TransportError>> + Send + '_>> {
         Box::pin(async move {
             let s: OperationStream = Box::pin(stream::empty());
             Ok(s)
         })
     }
 
-    fn replay(&mut self) -> Pin<Box<dyn std::future::Future<Output = Result<OperationStream, StoreError>> + Send + '_>> {
+    fn replay(&mut self) -> Pin<Box<dyn std::future::Future<Output = Result<OperationStream, TransportError>> + Send + '_>> {
         Box::pin(async move {
             let rows = sqlx::query_as::<_, (Vec<u8>,)>("SELECT payload FROM lores_app_operations ORDER BY id ASC")
                 .fetch_all(&self.pool)
                 .await
-                .map_err(|e| StoreError::Other(e.to_string()))?;
+                .map_err(|e| TransportError::Other(e.to_string()))?;
 
-            let s: OperationStream = Box::pin(stream::iter(rows).map(|(payload,)| Ok(RawEvent::Operation(RawOperationEvent::new_local(payload)))));
+            let s: OperationStream =
+                Box::pin(stream::iter(rows).map(|(payload,)| Ok(RawEvent::Operation(RawOperationEvent::new_local(payload)))));
             Ok(s)
         })
     }
