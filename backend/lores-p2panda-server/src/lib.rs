@@ -39,7 +39,7 @@ impl Default for IdempotencyConfig {
 }
 
 pub mod proto {
-    tonic::include_proto!("lores.panda.v2");
+    tonic::include_proto!("lores.panda.v3");
 }
 
 use proto::{

@@ -1,1 +1,1 @@
-tonic::include_proto!("lores.panda.v2");
+tonic::include_proto!("lores.panda.v3");

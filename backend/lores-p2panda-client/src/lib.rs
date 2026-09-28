@@ -2,10 +2,13 @@ use std::fmt;
 use tonic::transport::Channel;
 
 pub mod proto {
-    tonic::include_proto!("lores.panda.v2");
+    tonic::include_proto!("lores.panda.v3");
 }
 
-use proto::{GetNodeRequest, InfoRequest, PublishRequest, SubscribeEvent, SubscribeRequest, SubscriptionCursor, panda_client::PandaClient as TonicPandaClient};
+use proto::{
+    GetNodeRequest, InfoRequest, PublishRequest, SubscribeEvent, SubscribeRequest, SubscriptionCursor,
+    panda_client::PandaClient as TonicPandaClient,
+};
 use tonic::{Code, Response, Status, Streaming};
 
 /// 32-byte p2panda operation hash returned by a successful publish.
