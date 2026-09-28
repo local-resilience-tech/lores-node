@@ -23,6 +23,7 @@ pub(crate) struct LiveSubscription<Op> {
 }
 
 impl<Op: Clone + Send + 'static> LiveSubscription<Op> {
+    #[allow(clippy::too_many_arguments)]
     pub(crate) fn new(
         transport: Arc<Mutex<Box<dyn OperationTransport>>>,
         consumer: OperationConsumer<Op>,
@@ -53,7 +54,7 @@ impl<Op: Clone + Send + 'static> LiveSubscription<Op> {
         let mut backoff = Backoff::new();
 
         loop {
-            let Some(mut stream) = self.try_subscribe(self.start_from.clone(), &mut backoff).await else {
+            let Some(mut stream) = self.try_subscribe(self.start_from, &mut backoff).await else {
                 continue;
             };
 

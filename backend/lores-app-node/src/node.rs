@@ -109,7 +109,7 @@ impl<Op> Clone for AppNode<Op> {
             error_tx: self.error_tx.clone(),
             node_event_tx: self.node_event_tx.clone(),
             panda_client: self.panda_client.clone(),
-            start_from: self.start_from.clone(),
+            start_from: self.start_from,
         }
     }
 }
@@ -265,7 +265,7 @@ impl<Op: Clone + Serialize + Send + 'static> AppNode<Op> {
             self.panda_client.clone(),
             self.app_id.clone(),
             self.instance_id.clone(),
-            self.start_from.clone(),
+            self.start_from,
         )
         .run()
         .await;
