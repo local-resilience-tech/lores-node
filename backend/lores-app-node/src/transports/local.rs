@@ -91,19 +91,26 @@ impl OperationTransport for LocalTransport {
 
     fn subscribe(
         &mut self,
-        _start_from: SubscriptionFrom,
+        start_from: SubscriptionFrom,
     ) -> Pin<Box<dyn std::future::Future<Output = Result<OperationStream, TransportError>> + Send + '_>> {
         Box::pin(async move {
-            let rows = self.stored_operations().await.map_err(|e| TransportError::Other(e.to_string()))?;
-            let total_operations = rows.len() as u32;
+            let events: Box<dyn Iterator<Item = Result<RawEvent, TransportError>> + Send> = match start_from {
+                SubscriptionFrom::Start => {
+                    let rows = self.stored_operations().await.map_err(|e| TransportError::Other(e.to_string()))?;
+                    let total_operations = rows.len() as u32;
 
-            let events = std::iter::once(RawEvent::ReplayStarted { total_operations })
-                .chain(
-                    rows.into_iter()
-                        .map(|row| RawEvent::Operation(RawOperationEvent::new_local(row.payload))),
-                )
-                .chain(std::iter::once(RawEvent::ReplayEnded))
-                .map(Ok);
+                    Box::new(
+                        std::iter::once(RawEvent::ReplayStarted { total_operations })
+                            .chain(
+                                rows.into_iter()
+                                    .map(|row| RawEvent::Operation(RawOperationEvent::new_local(row.payload))),
+                            )
+                            .chain(std::iter::once(RawEvent::ReplayEnded))
+                            .map(Ok),
+                    )
+                }
+                SubscriptionFrom::Frontier => Box::new(std::iter::empty()),
+            };
 
             let s: OperationStream = Box::pin(stream::iter(events).chain(stream::pending()));
             Ok(s)
