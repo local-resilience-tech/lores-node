@@ -1,6 +1,7 @@
 pub mod node_status;
 pub mod panda_node;
 pub mod region;
+pub mod replay_handoff;
 pub mod topic_status;
 
 pub use node_status::NodeStatus;
@@ -9,6 +10,7 @@ pub use panda_node::{
     SubscriptionError, SubscriptionEvent, credentials_from_seed,
 };
 pub use region::{RegionAdminTopic, RegionAppTopic, RegionId, RegionTopic};
+pub use replay_handoff::replay_then_live;
 pub use topic_status::{ConnectionStatus, TopicStatus};
 
 pub use p2panda::Credentials;

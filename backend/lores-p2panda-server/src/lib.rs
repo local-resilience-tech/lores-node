@@ -364,6 +364,7 @@ fn subscription_error_to_status(e: SubscriptionError) -> Status {
             warn!("subscription error: failed to create stream: {e}");
             Status::internal(e.to_string())
         }
+        SubscriptionError::ServerError => Status::internal("internal server error"),
     }
 }
 
