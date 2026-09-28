@@ -34,3 +34,4 @@ hex.workspace = true
 lores-dev-server = { path = "../lores-dev-server" }
 tokio = { version = "1", features = ["macros", "rt-multi-thread", "time"] }
 tokio-stream = { version = "0.1", features = ["net"] }
+pretty_assertions = "1"

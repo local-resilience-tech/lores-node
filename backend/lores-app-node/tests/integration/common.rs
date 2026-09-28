@@ -32,7 +32,7 @@ pub async fn start_dev_server() -> String {
 /// that have already arrived without waiting further. Returns an empty `Vec`
 /// on timeout or a closed channel, so callers see a clear assertion failure
 /// instead of a panic here.
-pub async fn drain_events<T: Clone>(rx: &mut tokio::sync::broadcast::Receiver<T>) -> Vec<T> {
+async fn drain<T: Clone>(rx: &mut tokio::sync::broadcast::Receiver<T>) -> Vec<T> {
     let Ok(Ok(first)) = tokio::time::timeout(std::time::Duration::from_secs(5), rx.recv()).await else {
         return Vec::new();
     };
@@ -42,6 +42,18 @@ pub async fn drain_events<T: Clone>(rx: &mut tokio::sync::broadcast::Receiver<T>
         events.push(event);
     }
     events
+}
+
+/// Drains a [`lores_app_node::NodeEvent`] receiver (see [`drain`]).
+pub async fn drain_node_events(rx: &mut tokio::sync::broadcast::Receiver<lores_app_node::NodeEvent>) -> Vec<lores_app_node::NodeEvent> {
+    drain(rx).await
+}
+
+/// Drains an [`lores_app_node::AppNodeOperation`] receiver (see [`drain`]).
+pub async fn drain_operations<Op: Clone>(
+    rx: &mut tokio::sync::broadcast::Receiver<lores_app_node::AppNodeOperation<Op>>,
+) -> Vec<lores_app_node::AppNodeOperation<Op>> {
+    drain(rx).await
 }
 
 /// A single-connection in-memory SQLite pool, so all queries share one database.

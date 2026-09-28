@@ -21,10 +21,10 @@
     "frontend/node_modules": true,
     "mprocs.log": true
   },
-  "explorerExclude.backup": {},
   "rust-analyzer.cargo.sysroot": "discover",
-  "cSpell.words": ["Aquadoggo", "iroh", "Liftoff", "Scrib"],
-  "ansible.python.interpreterPath": "/bin/python3",
+  "rust-analyzer.runnables.extraEnv": {
+    "RUST_BACKTRACE": "0"
+  },
   "editor.wordWrapColumn": 140,
   "[typescript]": {
     "editor.tabSize": 2,
@@ -33,17 +33,5 @@
   "[typescriptreact]": {
     "editor.tabSize": 2,
     "editor.detectIndentation": false // Optional: Disable automatic indentation detection
-  },
-  // Enable detailed logging (optional, for debugging)
-  "typescript.tsserver.log": "verbose",
-
-  // Optimize file watching for large projects
-  "typescript.tsserver.watchOptions": {
-    "watchFile": "useFsEvents", // Use OS-level file watching (faster)
-    "watchDirectory": "useFsEvents",
-    "fallbackPolling": "dynamicPriority" // Fallback to polling if fsEvents fails
-  },
-
-  // Show TypeScript errors in the Problems panel
-  "typescript.validate.enable": true
+  }
 }
