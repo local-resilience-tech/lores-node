@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use lores_p2panda_client::PandaClient;
+use lores_p2panda_client::{PandaClient, SubscriptionFrom};
 
 use crate::backoff::Backoff;
 use crate::consumer::OperationConsumer;
@@ -43,14 +43,14 @@ impl<Op: Clone + Send + 'static> LiveSubscription<Op> {
     }
 
     /// Run the subscription loop forever. Call with `tokio::spawn`.
-    pub(crate) async fn run(&self)
+    pub(crate) async fn run(&self, start_from: SubscriptionFrom)
     where
         Op: for<'de> serde::Deserialize<'de>,
     {
         let mut backoff = Backoff::new();
 
         loop {
-            let Some(mut stream) = self.try_subscribe(&mut backoff).await else {
+            let Some(mut stream) = self.try_subscribe(start_from, &mut backoff).await else {
                 continue;
             };
 
@@ -64,8 +64,8 @@ impl<Op: Clone + Send + 'static> LiveSubscription<Op> {
         }
     }
 
-    async fn try_subscribe(&self, backoff: &mut Backoff) -> Option<crate::stores::OperationStream> {
-        match self.operation_store.lock().await.subscribe().await {
+    async fn try_subscribe(&self, start_from: SubscriptionFrom, backoff: &mut Backoff) -> Option<crate::stores::OperationStream> {
+        match self.operation_store.lock().await.subscribe(start_from).await {
             Ok(s) => {
                 self.error_tx.send_replace(None);
                 backoff.reset();

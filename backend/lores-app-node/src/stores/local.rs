@@ -1,6 +1,7 @@
 use std::pin::Pin;
 
 use futures::{StreamExt, stream};
+use lores_p2panda_client::SubscriptionFrom;
 use sqlx::SqlitePool;
 
 use crate::stores::{OperationStore, OperationStream, RawOperationEvent, StoreError, StorePublishResult};
@@ -64,7 +65,10 @@ impl OperationStore for LocalOperationStore {
         })
     }
 
-    fn subscribe(&mut self) -> Pin<Box<dyn std::future::Future<Output = Result<OperationStream, StoreError>> + Send + '_>> {
+    fn subscribe(
+        &mut self,
+        _start_from: SubscriptionFrom,
+    ) -> Pin<Box<dyn std::future::Future<Output = Result<OperationStream, StoreError>> + Send + '_>> {
         Box::pin(async move {
             let s: OperationStream = Box::pin(stream::empty());
             Ok(s)

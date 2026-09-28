@@ -1,5 +1,7 @@
 use std::pin::Pin;
 
+use lores_p2panda_client::SubscriptionFrom;
+
 use crate::stores::grpc::GrpcOperationStore;
 use crate::stores::local::LocalOperationStore;
 use crate::stores::{OperationStore, OperationStream, StoreError, StorePublishResult};
@@ -59,8 +61,11 @@ impl OperationStore for OutboxStore {
         })
     }
 
-    fn subscribe(&mut self) -> Pin<Box<dyn std::future::Future<Output = Result<OperationStream, StoreError>> + Send + '_>> {
-        self.remote.subscribe()
+    fn subscribe(
+        &mut self,
+        start_from: SubscriptionFrom,
+    ) -> Pin<Box<dyn std::future::Future<Output = Result<OperationStream, StoreError>> + Send + '_>> {
+        self.remote.subscribe(start_from)
     }
 
     fn replay(&mut self) -> Pin<Box<dyn std::future::Future<Output = Result<OperationStream, StoreError>> + Send + '_>> {

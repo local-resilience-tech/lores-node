@@ -1,6 +1,7 @@
 use std::time::Duration;
 
 use lores_app_node::AppNode;
+use lores_p2panda_client::SubscriptionFrom;
 
 use crate::common::{TestOp, start_dev_server};
 
@@ -17,7 +18,7 @@ async fn publishes_and_receives_operation_over_grpc() {
     let mut events = subscriber.subscribe();
 
     let driver = subscriber.clone();
-    tokio::spawn(async move { driver.run().await });
+    tokio::spawn(async move { driver.run(SubscriptionFrom::Frontier).await });
 
     // The dev server only delivers operations that arrive after a subscription
     // is established, so wait for the subscriber to connect before publishing.

@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use lores_p2panda_client::PandaClient;
+use lores_p2panda_client::{PandaClient, SubscriptionFrom};
 use serde::{Deserialize, Serialize};
 use sqlx::SqlitePool;
 use tokio::sync::{Mutex, broadcast, watch};
@@ -252,7 +252,7 @@ impl<Op: Clone + Serialize + Send + 'static> AppNode<Op> {
     /// Retries on all transient failures with exponential backoff (1 s → 60 s).
     /// The backoff resets whenever the error variant changes (e.g. `GrpcUnavailable`
     /// → `RegionNotBound`). Call it with `tokio::spawn` from your application's `main`.
-    pub async fn run(&self)
+    pub async fn run(&self, start_from: SubscriptionFrom)
     where
         Op: for<'de> Deserialize<'de>,
     {
@@ -265,7 +265,7 @@ impl<Op: Clone + Serialize + Send + 'static> AppNode<Op> {
             self.app_id.clone(),
             self.instance_id.clone(),
         )
-        .run()
+        .run(start_from)
         .await;
     }
 }

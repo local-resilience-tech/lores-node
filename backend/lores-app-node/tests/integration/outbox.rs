@@ -1,6 +1,7 @@
 use std::time::Duration;
 
 use lores_app_node::AppNode;
+use lores_p2panda_client::SubscriptionFrom;
 
 use crate::common::{TestOp, memory_pool, start_dev_server};
 
@@ -19,7 +20,7 @@ async fn outbox_delivers_over_grpc_and_drains_local() {
     let mut events = subscriber.subscribe();
 
     let driver = subscriber.clone();
-    tokio::spawn(async move { driver.run().await });
+    tokio::spawn(async move { driver.run(SubscriptionFrom::Frontier).await });
 
     tokio::time::sleep(Duration::from_millis(300)).await;
 

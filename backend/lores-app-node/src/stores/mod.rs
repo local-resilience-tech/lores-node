@@ -2,6 +2,7 @@ use std::future::Future;
 use std::pin::Pin;
 
 use futures::Stream;
+use lores_p2panda_client::SubscriptionFrom;
 
 use crate::types::{NodeId, OperationId};
 
@@ -76,7 +77,8 @@ pub(crate) trait OperationStore: Send + Sync + 'static {
     ///
     /// The outer `Result` covers connection-time errors (e.g. `RegionNotBound`).
     /// The inner stream yields individual operation payloads or per-item errors.
-    fn subscribe(&mut self) -> Pin<Box<dyn Future<Output = Result<OperationStream, StoreError>> + Send + '_>>;
+    fn subscribe(&mut self, start_from: SubscriptionFrom)
+    -> Pin<Box<dyn Future<Output = Result<OperationStream, StoreError>> + Send + '_>>;
 
     /// Replay all operations in insertion order.
     fn replay(&mut self) -> Pin<Box<dyn Future<Output = Result<OperationStream, StoreError>> + Send + '_>> {
