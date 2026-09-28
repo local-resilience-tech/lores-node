@@ -70,7 +70,8 @@ impl OperationTransport for LocalTransport {
         _start_from: SubscriptionFrom,
     ) -> Pin<Box<dyn std::future::Future<Output = Result<OperationStream, TransportError>> + Send + '_>> {
         Box::pin(async move {
-            let s: OperationStream = Box::pin(stream::pending());
+            let events = [RawEvent::ReplayStarted { total_operations: 0 }, RawEvent::ReplayEnded].map(Ok);
+            let s: OperationStream = Box::pin(stream::iter(events).chain(stream::pending()));
             Ok(s)
         })
     }

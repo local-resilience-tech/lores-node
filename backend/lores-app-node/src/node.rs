@@ -235,7 +235,7 @@ impl<Op: Clone + Serialize + Send + 'static> AppNode<Op> {
             t.replay().await?
         };
 
-        let count = self.consumer.drain_stream(&mut stream).await?;
+        let count = self.consumer.drain_stream(&mut stream, &self.node_event_tx).await?;
         tracing::info!(count, "replay complete");
         Ok(())
     }

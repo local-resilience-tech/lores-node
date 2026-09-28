@@ -57,7 +57,7 @@ impl<Op: Clone + Send + 'static> LiveSubscription<Op> {
                 continue;
             };
 
-            if let Err(e) = self.consumer.drain_stream(&mut stream).await {
+            if let Err(e) = self.consumer.drain_stream(&mut stream, &self.node_event_tx).await {
                 self.handle_mid_stream_error(e);
                 backoff.reset();
             }
