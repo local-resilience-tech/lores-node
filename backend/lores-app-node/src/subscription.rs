@@ -1,44 +1,48 @@
 use std::sync::Arc;
 
-use lores_p2panda_client::PandaClient;
+use lores_p2panda_client::{PandaClient, SubscriptionFrom};
 
 use crate::backoff::Backoff;
 use crate::consumer::OperationConsumer;
-use crate::node::{NodeError, map_store_error};
-use crate::stores::{OperationStore, StoreError};
+use crate::node::{NodeError, map_transport_error};
+use crate::transports::{OperationTransport, TransportError};
 use crate::types::NodeEvent;
 use tokio::sync::{Mutex, broadcast, watch};
 
 /// Drives a remote subscription in a loop, reconnecting with exponential
 /// backoff on any failure.
 pub(crate) struct LiveSubscription<Op> {
-    operation_store: Arc<Mutex<Box<dyn OperationStore>>>,
+    transport: Arc<Mutex<Box<dyn OperationTransport>>>,
     consumer: OperationConsumer<Op>,
     error_tx: watch::Sender<Option<NodeError>>,
     node_event_tx: broadcast::Sender<NodeEvent>,
     panda_client: Option<Arc<Mutex<PandaClient>>>,
     app_id: String,
     instance_id: String,
+    start_from: SubscriptionFrom,
 }
 
 impl<Op: Clone + Send + 'static> LiveSubscription<Op> {
+    #[allow(clippy::too_many_arguments)]
     pub(crate) fn new(
-        operation_store: Arc<Mutex<Box<dyn OperationStore>>>,
+        transport: Arc<Mutex<Box<dyn OperationTransport>>>,
         consumer: OperationConsumer<Op>,
         error_tx: watch::Sender<Option<NodeError>>,
         node_event_tx: broadcast::Sender<NodeEvent>,
         panda_client: Option<Arc<Mutex<PandaClient>>>,
         app_id: String,
         instance_id: String,
+        start_from: SubscriptionFrom,
     ) -> Self {
         Self {
-            operation_store,
+            transport,
             consumer,
             error_tx,
             node_event_tx,
             panda_client,
             app_id,
             instance_id,
+            start_from,
         }
     }
 
@@ -50,11 +54,11 @@ impl<Op: Clone + Send + 'static> LiveSubscription<Op> {
         let mut backoff = Backoff::new();
 
         loop {
-            let Some(mut stream) = self.try_subscribe(&mut backoff).await else {
+            let Some(mut stream) = self.try_subscribe(self.start_from, &mut backoff).await else {
                 continue;
             };
 
-            if let Err(e) = self.consumer.drain_stream(&mut stream).await {
+            if let Err(e) = self.consumer.drain_stream(&mut stream, &self.node_event_tx).await {
                 self.handle_mid_stream_error(e);
                 backoff.reset();
             }
@@ -64,22 +68,22 @@ impl<Op: Clone + Send + 'static> LiveSubscription<Op> {
         }
     }
 
-    async fn try_subscribe(&self, backoff: &mut Backoff) -> Option<crate::stores::OperationStream> {
-        match self.operation_store.lock().await.subscribe().await {
+    async fn try_subscribe(&self, start_from: SubscriptionFrom, backoff: &mut Backoff) -> Option<crate::transports::OperationStream> {
+        match self.transport.lock().await.subscribe(start_from).await {
             Ok(s) => {
                 self.error_tx.send_replace(None);
                 backoff.reset();
                 self.fetch_and_emit_server_info().await;
                 Some(s)
             }
-            Err(err @ StoreError::RegionNotBound(_)) => {
+            Err(err @ TransportError::RegionNotBound(_)) => {
                 tracing::warn!("Subscribe failed — region not bound (retrying in {:?})", backoff.current);
-                backoff.set_error_and_advance(&self.error_tx, map_store_error(err)).await;
+                backoff.set_error_and_advance(&self.error_tx, map_transport_error(err)).await;
                 None
             }
-            Err(err @ StoreError::Other(_)) => {
+            Err(err @ TransportError::Other(_)) => {
                 tracing::error!("Subscribe failed: {err} (retrying in {:?})", backoff.current);
-                backoff.set_error_and_advance(&self.error_tx, map_store_error(err)).await;
+                backoff.set_error_and_advance(&self.error_tx, map_transport_error(err)).await;
                 None
             }
         }
@@ -104,8 +108,8 @@ impl<Op: Clone + Send + 'static> LiveSubscription<Op> {
         }
     }
 
-    fn handle_mid_stream_error(&self, err: StoreError) {
+    fn handle_mid_stream_error(&self, err: TransportError) {
         tracing::warn!("Stream disconnected (reconnecting): {err}");
-        self.error_tx.send_replace(Some(map_store_error(err)));
+        self.error_tx.send_replace(Some(map_transport_error(err)));
     }
 }

@@ -1185,6 +1185,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ab03c107fafeb3ee9f5925686dbb7a73bc76e3932abb0d2b365cb64b169cf04c"
 
 [[package]]
+name = "diff"
+version = "0.1.13"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "56254986775e3233ffa9c4d7d3faaf6d36a2c09d30b20687e9f88bc8bafc16c8"
+
+[[package]]
 name = "digest"
 version = "0.10.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2794,12 +2800,13 @@ dependencies = [
 
 [[package]]
 name = "lores-app-node"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "futures",
  "hex",
  "lores-dev-server",
  "lores-p2panda-client",
+ "pretty_assertions",
  "serde",
  "serde_json",
  "sha2 0.11.0",
@@ -2813,7 +2820,7 @@ dependencies = [
 
 [[package]]
 name = "lores-dev-server"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "futures",
  "hex",
@@ -4080,6 +4087,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "85eae3c4ed2f50dcfe72643da4befc30deadb458a9b590d720cde2f2b1e97da9"
 dependencies = [
  "zerocopy",
+]
+
+[[package]]
+name = "pretty_assertions"
+version = "1.4.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3ae130e2f271fbc2ac3a40fb1d07180839cdbbe443c7a27e1e3c13c5cac0116d"
+dependencies = [
+ "diff",
+ "yansi",
 ]
 
 [[package]]
@@ -6678,6 +6695,12 @@ dependencies = [
  "serde",
  "zeroize",
 ]
+
+[[package]]
+name = "yansi"
+version = "1.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cfe53a6657fd280eaa890a3bc59152892ffa3e30101319d168b781ed6529b049"
 
 [[package]]
 name = "yoke"
