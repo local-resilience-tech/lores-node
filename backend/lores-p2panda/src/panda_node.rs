@@ -108,6 +108,8 @@ pub enum SubscriptionError {
     AlreadySubscribed(Topic),
     #[error(transparent)]
     CreateStream(#[from] p2panda::node::CreateStreamError),
+    #[error("internal server error")]
+    ServerError,
 }
 
 pub struct RequiredNodeParams {
@@ -298,6 +300,21 @@ impl PandaNode {
                 count: row.get("total"),
             })
             .collect())
+    }
+
+    pub async fn has_operations_for_topic(&self, topic_id: Topic) -> Result<bool, sqlx::Error> {
+        let row = sqlx::query(
+            "SELECT EXISTS(
+                SELECT 1 FROM topics_v1 t
+                JOIN operations_v1 o ON o.verifying_key = t.author AND o.log_id = t.data_id
+                WHERE lower(hex(substr(t.topic, 3))) = ?
+             ) AS present",
+        )
+        .bind(topic_id.to_hex())
+        .fetch_one(&self.pool)
+        .await?;
+
+        Ok(row.get::<i64, _>("present") != 0)
     }
 
     async fn subscribe_to_ephemeral_stream(

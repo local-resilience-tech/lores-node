@@ -4,12 +4,15 @@ use std::pin::Pin;
 use std::sync::Arc;
 use tracing::{info, warn};
 
-use lores_p2panda::{IncomingOperation, PandaNode, PandaPublishError, RegionAppTopic, RegionId, RegionTopic, SubscriptionError, Topic};
+use lores_p2panda::{
+    IncomingOperation, PandaNode, PandaPublishError, RegionAppTopic, RegionId, RegionTopic, SubscriptionError, SubscriptionEvent, Topic,
+    replay_then_live,
+};
 use sqlx::SqlitePool;
 use std::time::Duration;
 use tokio::sync::{Mutex, RwLock, broadcast};
 use tokio_stream::StreamExt;
-use tokio_stream::wrappers::BroadcastStream;
+use tokio_stream::wrappers::{BroadcastStream, ReceiverStream};
 use tonic::{Request, Response, Status};
 
 mod idempotency_store;
@@ -36,11 +39,12 @@ impl Default for IdempotencyConfig {
 }
 
 pub mod proto {
-    tonic::include_proto!("lores.panda.v2");
+    tonic::include_proto!("lores.panda.v3");
 }
 
 use proto::{
-    GetNodeRequest, GetNodeResponse, InfoRequest, InfoResponse, OperationEvent, PublishRequest, PublishResponse, SubscribeRequest,
+    GetNodeRequest, GetNodeResponse, InfoRequest, InfoResponse, OperationEvent, PublishRequest, PublishResponse, ReplayEnded,
+    ReplayStarted, SubscribeEvent, SubscribeRequest, SubscriptionCursor,
     panda_server::{Panda, PandaServer},
 };
 
@@ -229,7 +233,7 @@ impl Panda for PandaService {
         }))
     }
 
-    type SubscribeStream = Pin<Box<dyn tokio_stream::Stream<Item = Result<OperationEvent, Status>> + Send + 'static>>;
+    type SubscribeStream = Pin<Box<dyn tokio_stream::Stream<Item = Result<SubscribeEvent, Status>> + Send + 'static>>;
 
     async fn subscribe(&self, request: Request<SubscribeRequest>) -> Result<Response<Self::SubscribeStream>, Status> {
         let req = request.into_inner();
@@ -264,15 +268,26 @@ impl Panda for PandaService {
         let receiver = self.ensure_broadcast_subscription(&node, &region_app_topic).await?;
 
         // Record the region/namespace so ListRegions can report it.
-        node.register_region(region_app_topic.region_id).await;
+        node.register_region(region_app_topic.region_id.clone()).await;
 
-        let stream = BroadcastStream::new(receiver).filter_map(|result| match result {
-            Ok(op) => Some(Ok(incoming_to_event(op))),
-            // Lagged means the consumer fell behind; skip the lost messages.
-            Err(_lagged) => None,
-        });
-
-        Ok(Response::new(Box::pin(stream)))
+        if wants_replay(req.cursor) {
+            // Scoped per app instance: cursor names are keyed globally by name
+            // alone, not by (topic, name), so reusing one name across app
+            // instances would corrupt their replay positions.
+            let cursor_name = format!("{}:{}", region_app_topic.app_id, ids.instance_id);
+            let events = replay_then_live(&node, &region_app_topic, cursor_name, receiver)
+                .await
+                .map_err(subscription_error_to_status)?;
+            let stream = ReceiverStream::new(events).map(|event| Ok(subscription_event_to_proto(event)));
+            Ok(Response::new(Box::pin(stream)))
+        } else {
+            let stream = BroadcastStream::new(receiver).filter_map(|result| match result {
+                Ok(op) => Some(Ok(operation_to_subscribe_event(op))),
+                // Lagged means the consumer fell behind; skip the lost messages.
+                Err(_lagged) => None,
+            });
+            Ok(Response::new(Box::pin(stream)))
+        }
     }
 
     async fn info(&self, request: Request<InfoRequest>) -> Result<Response<InfoResponse>, Status> {
@@ -327,6 +342,28 @@ fn incoming_to_event(op: IncomingOperation) -> OperationEvent {
     }
 }
 
+fn operation_to_subscribe_event(op: IncomingOperation) -> SubscribeEvent {
+    SubscribeEvent {
+        event: Some(proto::subscribe_event::Event::Operation(incoming_to_event(op))),
+    }
+}
+
+fn subscription_event_to_proto(event: SubscriptionEvent) -> SubscribeEvent {
+    let event = match event {
+        SubscriptionEvent::Operation(op) => proto::subscribe_event::Event::Operation(incoming_to_event(*op)),
+        SubscriptionEvent::ReplayStarted { total_operations } => {
+            proto::subscribe_event::Event::ReplayStarted(ReplayStarted { total_operations })
+        }
+        SubscriptionEvent::ReplayEnded => proto::subscribe_event::Event::ReplayEnded(ReplayEnded {}),
+    };
+    SubscribeEvent { event: Some(event) }
+}
+
+/// Whether `cursor` asks the subscription to replay from the start.
+fn wants_replay(cursor: Option<SubscriptionCursor>) -> bool {
+    matches!(cursor.and_then(|c| c.mode), Some(proto::subscription_cursor::Mode::Start(true)))
+}
+
 fn publish_error_to_status(e: PandaPublishError) -> Status {
     match e {
         PandaPublishError::NodeNotStarted => {
@@ -364,6 +401,7 @@ fn subscription_error_to_status(e: SubscriptionError) -> Status {
             warn!("subscription error: failed to create stream: {e}");
             Status::internal(e.to_string())
         }
+        SubscriptionError::ServerError => Status::internal("internal server error"),
     }
 }
 
