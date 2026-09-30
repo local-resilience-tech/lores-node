@@ -222,3 +222,9 @@ pub struct NodeHeartbeat {
     pub region_id: String,
     pub node_id: String,
 }
+
+#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
+pub struct LoresNode {
+    pub node_id: String,
+    pub lores_version: Option<String>,
+}
