@@ -14,7 +14,7 @@ publish = true
 license-file = "LICENSE.md"
 
 [dependencies]
-lores-p2panda-client = { version = "0.4", path = "../lores-p2panda-client", features = [
+lores-p2panda-client = { version = "0.5", path = "../lores-p2panda-client", features = [
   "serde",
 ] }
 futures = "0.3"
