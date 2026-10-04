@@ -13,6 +13,9 @@ chrono = { version = "0.4", features = ["serde"] }
 confy = "2.0"
 futures-util = "0.3"
 lazy_static = "1.5"
+# Force openssl-sys (pulled in via sqlx's tls-native-tls) to build from source
+# so the cross-compiled Docker build (linux/arm/v7) doesn't need pkg-config.
+openssl = { version = "0.10", features = ["vendored"] }
 password-auth = "1.0"
 pwgen2 = "0.8"
 serde = { workspace = true, features = ["derive"] }
