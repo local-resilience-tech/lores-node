@@ -181,12 +181,16 @@ impl Panda for PandaService {
 
         let region = (self.resolve_region_id)(ids.clone())
             .await
-            .map_err(|e| resolve_region_error_to_status(e, &ids))?;
+            .map_err(|e| resolve_region_error_to_status(e, &ids))
+            .inspect_err(|status| warn!("[publish] failed to resolve region: {status}"))?;
 
         let node_lock = self.node.lock().await;
         let node = node_lock
             .as_ref()
-            .ok_or_else(|| Status::unavailable("p2panda node is not yet started"))?
+            .ok_or_else(|| {
+                warn!("[publish] p2panda node is not yet started");
+                Status::unavailable("p2panda node is not yet started")
+            })?
             .clone();
         drop(node_lock);
 
@@ -200,7 +204,12 @@ impl Panda for PandaService {
         );
 
         // If the client supplied an idempotency key, return early on duplicate.
-        if let Some(existing_id) = self.idempotency.check_duplicate(&region_app_topic, &req.idempotency_key).await? {
+        if let Some(existing_id) = self
+            .idempotency
+            .check_duplicate(&region_app_topic, &req.idempotency_key)
+            .await
+            .inspect_err(|e| warn!("[publish] idempotency check failed: {e}"))?
+        {
             info!("[publish] duplicate idempotency key, returning existing operation_id");
             let node_id = node.public_key.as_bytes().to_vec();
             return Ok(Response::new(PublishResponse {
@@ -212,18 +221,23 @@ impl Panda for PandaService {
         // Ensure a subscription exists for this topic so the publisher is
         // available. This is idempotent: if already subscribed the existing
         // broadcast channel is reused.
-        let _rx = self.ensure_broadcast_subscription(&node, &region_app_topic).await?;
+        let _rx = self
+            .ensure_broadcast_subscription(&node, &region_app_topic)
+            .await
+            .inspect_err(|e| warn!("[publish] failed to ensure broadcast subscription: {e}"))?;
 
         let operation_id = node
             .publish_to_region_topic(&region_app_topic, req.payload)
             .await
-            .map_err(publish_error_to_status)?;
+            .map_err(publish_error_to_status)
+            .inspect_err(|e| warn!("[publish] failed to publish to region topic: {e}"))?;
 
         // Record the key only after a successful publish so a publish failure
         // does not burn the key — the client can safely retry.
         self.idempotency
             .record(&region_app_topic, &req.idempotency_key, operation_id.as_bytes())
-            .await?;
+            .await
+            .inspect_err(|e| warn!("[publish] failed to record idempotency key: {e}"))?;
 
         self.instance_notifier.notify(&region_app_topic.app_id, &ids.instance_id).await;
 
@@ -245,12 +259,16 @@ impl Panda for PandaService {
 
         let region = (self.resolve_region_id)(ids.clone())
             .await
-            .map_err(|e| resolve_region_error_to_status(e, &ids))?;
+            .map_err(|e| resolve_region_error_to_status(e, &ids))
+            .inspect_err(|status| warn!("[subscribe] failed to resolve region: {status}"))?;
 
         let node_lock = self.node.lock().await;
         let node = node_lock
             .as_ref()
-            .ok_or_else(|| Status::unavailable("p2panda node is not yet started"))?
+            .ok_or_else(|| {
+                warn!("[subscribe] p2panda node is not yet started");
+                Status::unavailable("p2panda node is not yet started")
+            })?
             .clone();
         drop(node_lock);
 
@@ -265,7 +283,10 @@ impl Panda for PandaService {
 
         // Under a write lock, ensure a p2panda subscription exists for this
         // topic and return a broadcast receiver for it.
-        let receiver = self.ensure_broadcast_subscription(&node, &region_app_topic).await?;
+        let receiver = self
+            .ensure_broadcast_subscription(&node, &region_app_topic)
+            .await
+            .inspect_err(|e| warn!("[subscribe] failed to ensure broadcast subscription: {e}"))?;
 
         // Record the region/namespace so ListRegions can report it.
         node.register_region(region_app_topic.region_id.clone()).await;
@@ -277,7 +298,8 @@ impl Panda for PandaService {
             let cursor_name = format!("{}:{}", region_app_topic.app_id, ids.instance_id);
             let events = replay_then_live(&node, &region_app_topic, cursor_name, receiver)
                 .await
-                .map_err(subscription_error_to_status)?;
+                .map_err(subscription_error_to_status)
+                .inspect_err(|e| warn!("[subscribe] failed to start replay subscription: {e}"))?;
             let stream = ReceiverStream::new(events).map(|event| Ok(subscription_event_to_proto(event)));
             Ok(Response::new(Box::pin(stream)))
         } else {
@@ -293,18 +315,27 @@ impl Panda for PandaService {
     async fn info(&self, request: Request<InfoRequest>) -> Result<Response<InfoResponse>, Status> {
         let req = request.into_inner();
         let node_lock = self.node.lock().await;
-        let node = node_lock
-            .as_ref()
-            .ok_or_else(|| Status::unavailable("p2panda node is not yet started"))?;
+        let node = node_lock.as_ref().ok_or_else(|| {
+            warn!("[info] p2panda node is not yet started");
+            Status::unavailable("p2panda node is not yet started")
+        })?;
         let node_id = node.public_key.as_bytes().to_vec();
+
+        info!(
+            "[info] node_id={} app_id={} instance_id={}",
+            node.public_key, req.app_id, req.instance_id
+        );
+
         drop(node_lock);
         let ids = AppInstanceIds {
             app_id: req.app_id,
             instance_id: req.instance_id,
         };
+
         let region = (self.resolve_region_id)(ids.clone())
             .await
-            .map_err(|e| resolve_region_error_to_status(e, &ids))?;
+            .map_err(|e| resolve_region_error_to_status(e, &ids))
+            .inspect_err(|status| warn!("[info] failed to resolve region: {status}"))?;
         Ok(Response::new(InfoResponse {
             node_id,
             region: Some(proto::RegionInfo {
@@ -321,9 +352,16 @@ impl Panda for PandaService {
             app_id: req.app_id,
             instance_id: req.instance_id,
         };
+
+        info!(
+            "[get_node] node_id={} app_id={} instance_id={}",
+            req.node_id, ids.app_id, ids.instance_id
+        );
+
         let info = (self.resolve_node_info)(ids.clone(), req.node_id.clone())
             .await
-            .map_err(|e| resolve_region_error_to_status(e, &ids))?;
+            .map_err(|e| resolve_region_error_to_status(e, &ids))
+            .inspect_err(|status| warn!("[get_node] failed to resolve node info: {status}"))?;
         Ok(Response::new(GetNodeResponse {
             node_id: info.node_id,
             name: info.name,
