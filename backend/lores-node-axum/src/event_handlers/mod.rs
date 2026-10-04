@@ -5,6 +5,7 @@ use crate::{
     api::public_api::realtime::RealtimeState,
     event_handlers::{
         app_registered::AppRegisteredHandler,
+        lores_node_install_changed_handler::LoresNodeInstallChangedHandler,
         node_heartbeat::NodeHeartbeatHandler,
         node_status_posted::NodeStatusPostedHandler,
         region_created::RegionCreatedHandler,
@@ -17,6 +18,7 @@ use crate::{
 };
 
 mod app_registered;
+mod lores_node_install_changed_handler;
 mod node_heartbeat;
 mod node_status_posted;
 mod region_created;
@@ -88,5 +90,6 @@ define_handlers!(
     RegionJoinRequested => RegionJoinRequestedHandler,
     RegionJoinRequestApproved => RegionJoinRequestApprovedHandler,
     RegionMapUpdated => region_map_updated::RegionMapUpdatedHandler,
-    NodeHeartbeat => NodeHeartbeatHandler
+    NodeHeartbeat => NodeHeartbeatHandler,
+    LoresNodeInstallChanged => LoresNodeInstallChangedHandler
 );

@@ -39,6 +39,7 @@ export default function NodesList({
             isRegionCreator={isRegionCreator}
             isThisNode={isThisNode}
             nodeHeartbeatDisplay={nodeHeartbeatDisplay}
+            canAdminister={canAdminister}
           />
         )
       })}

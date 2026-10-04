@@ -110,6 +110,7 @@ pub struct RegionNodeDetails {
     pub agreed_node_steward_conduct_url: Option<String>,
     pub status_text: Option<String>,
     pub state: Option<NodeState>,
+    pub lores_version: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
@@ -221,4 +222,10 @@ pub struct Network {
 pub struct NodeHeartbeat {
     pub region_id: String,
     pub node_id: String,
+}
+
+#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
+pub struct LoresNode {
+    pub node_id: String,
+    pub lores_version: Option<String>,
 }
