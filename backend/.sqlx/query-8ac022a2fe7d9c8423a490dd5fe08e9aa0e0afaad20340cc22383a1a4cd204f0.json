@@ -6,62 +6,134 @@
       {
         "name": "id",
         "ordinal": 0,
-        "type_info": "Text"
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "regions",
+            "name": "id"
+          }
+        }
       },
       {
         "name": "creator_node_id",
         "ordinal": 1,
-        "type_info": "Text"
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "regions",
+            "name": "creator_node_id"
+          }
+        }
       },
       {
         "name": "slug",
         "ordinal": 2,
-        "type_info": "Text"
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "regions",
+            "name": "slug"
+          }
+        }
       },
       {
         "name": "name",
         "ordinal": 3,
-        "type_info": "Text"
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "regions",
+            "name": "name"
+          }
+        }
       },
       {
         "name": "organisation_name",
         "ordinal": 4,
-        "type_info": "Text"
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "regions",
+            "name": "organisation_name"
+          }
+        }
       },
       {
         "name": "organisation_url",
         "ordinal": 5,
-        "type_info": "Text"
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "regions",
+            "name": "organisation_url"
+          }
+        }
       },
       {
         "name": "node_steward_conduct_url",
         "ordinal": 6,
-        "type_info": "Text"
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "regions",
+            "name": "node_steward_conduct_url"
+          }
+        }
       },
       {
         "name": "user_conduct_url",
         "ordinal": 7,
-        "type_info": "Text"
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "regions",
+            "name": "user_conduct_url"
+          }
+        }
       },
       {
         "name": "user_privacy_url",
         "ordinal": 8,
-        "type_info": "Text"
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "regions",
+            "name": "user_privacy_url"
+          }
+        }
       },
       {
         "name": "map_data_url",
         "ordinal": 9,
-        "type_info": "Text"
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "regions",
+            "name": "map"
+          }
+        }
       },
       {
         "name": "min_latlng: LatLng",
         "ordinal": 10,
-        "type_info": "Text"
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "regions",
+            "name": "min_latlng"
+          }
+        }
       },
       {
         "name": "max_latlng: LatLng",
         "ordinal": 11,
-        "type_info": "Text"
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "regions",
+            "name": "max_latlng"
+          }
+        }
       }
     ],
     "parameters": {

@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "\n            INSERT INTO lores_node_installations (node_id, lores_version)\n            VALUES(?, ?)\n            ON CONFLICT(node_id) DO UPDATE SET lores_version = excluded.lores_version\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "8a75b088d9773c555323ec7bf8f39d4ab627bc9fd6c725a66fdb069d2e052ed8"
+}
