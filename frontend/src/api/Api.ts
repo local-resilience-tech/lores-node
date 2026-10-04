@@ -120,6 +120,9 @@ export type ClientEvent =
   | {
       NodeHeartbeatReceived: NodeHeartbeat
     }
+  | {
+      LoresNodeInstallationChanged: LoresNode
+    }
 
 export interface CreateRegionData {
   name: string
@@ -172,7 +175,7 @@ export interface LocalApp {
   instance_id?: string | null
   name: string
   source?: LocalAppSource
-  url?: null | NodeAppUrl
+  url?: NodeAppUrl | null
   version: string
 }
 
@@ -185,6 +188,11 @@ export interface LocalAppFormData {
 export interface LocalAppInstanceRef {
   instance_id?: string | null
   name: string
+}
+
+export interface LoresNode {
+  lores_version?: string | null
+  node_id: string
 }
 
 export interface Network {
@@ -271,7 +279,7 @@ export interface PeerConnectionEntry {
 export interface Region {
   creator_node_id?: string | null
   id: string
-  map?: null | RegionMap
+  map?: RegionMap | null
   name?: string | null
   node_steward_conduct_url?: string | null
   organisation_name?: string | null
@@ -301,18 +309,19 @@ export interface RegionNodeDetails {
   domain_on_local_network?: string | null
   /** @format int64 */
   id: number
-  latlng?: null | LatLng
+  latlng?: LatLng | null
+  lores_version?: string | null
   name?: string | null
   node_id: string
   public_ipv4?: string | null
   region_id: string
-  state?: null | NodeState
-  status?: null | RegionNodeStatus
+  state?: NodeState | null
+  status?: RegionNodeStatus | null
   status_text?: string | null
 }
 
 export interface RegionNodeStatusData {
-  state?: null | NodeState
+  state?: NodeState | null
   text?: string | null
 }
 
@@ -336,7 +345,7 @@ export interface UpdateMapData {
 export interface UpdateNodeDetails {
   domain_on_internet?: string | null
   domain_on_local_network?: string | null
-  latlng?: null | LatLng
+  latlng?: LatLng | null
   name: string
   public_ipv4?: string | null
 }
@@ -607,7 +616,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @request GET:/auth_api/node_steward
      */
     getCurrentUser: (params: RequestParams = {}) =>
-      this.request<null | NodeStewardUser, GetCurrentNodeStewardError>({
+      this.request<NodeStewardUser | null, GetCurrentNodeStewardError>({
         path: `/auth_api/node_steward`,
         method: "GET",
         format: "json",
@@ -873,7 +882,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @request GET:/public_api/dummy_event
      */
     dummyEvent: (params: RequestParams = {}) =>
-      this.request<null | ClientEvent, any>({
+      this.request<ClientEvent | null, any>({
         path: `/public_api/dummy_event`,
         method: "GET",
         format: "json",
