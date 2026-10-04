@@ -14,39 +14,33 @@ pub async fn handle_lores_installed_version_update(
     node_data_pool: &Pool<Sqlite>,
     node_config: &LoresNodeConfig,
     panda_container: &PandaContainer,
-) {
-    let _node_id = match node_config.public_key_hex.clone() {
+) -> Result<(), String> {
+    let node_id = match node_config.public_key_hex.clone() {
         Some(id) => id,
-        None => {
-            tracing::info!("No node_id provided in config");
-            return;
-        }
+        None => return Err("No node_id in config".to_string()),
     };
 
     let current_lores_version = env!("CARGO_PKG_VERSION");
     let lores_repo = LoresNodeRepo::init();
-    let current_version = lores_repo.find(node_data_pool, &_node_id).await;
+    let current_version = lores_repo.find(node_data_pool, &node_id).await;
 
     let repo_result = match current_version {
         Ok(result) => result,
         Err(e) => {
-            tracing::info!("Error fetching current node version from DB: {}", e);
-            return;
+            return Err(e.to_string());
         }
     };
 
-    match repo_result {
-        Some(node) => {
-            if node.node_id == _node_id {
-                // current version is already persisted
-                return;
-            }
+    if let Some(node) = repo_result {
+        if node.node_id == node_id {
+            // current version is already persisted
+            // nothing to do
+            return Ok(());
         }
-        _ => {}
     };
 
     let node = LoresNode {
-        node_id: _node_id,
+        node_id,
         lores_version: if current_lores_version.is_empty() {
             None
         } else {
@@ -54,7 +48,9 @@ pub async fn handle_lores_installed_version_update(
         },
     };
 
-    lores_repo.upsert(&node_data_pool, &node).await;
+    if let Err(e) = lores_repo.upsert(&node_data_pool, &node).await {
+        return Err(e.to_string());
+    };
 
     if node.lores_version.is_some() && node_config.region_ids.is_some() {
         let event_payload = LoresNodeInstallChanged(LoresNodeInstallChangedDataV1 {
@@ -67,16 +63,18 @@ pub async fn handle_lores_installed_version_update(
 
             match region_id {
                 Ok(id) => {
-                    panda_container
+                    if let Err(e) = panda_container
                         .publish_persisted(&RegionAdminTopic::new(id), event_payload.clone(), None)
-                        .await;
+                        .await
+                    {
+                        tracing::error!("Issue publishing lores installed version: {}", e);
+                    };
                 }
                 Err(e) => {
-                    tracing::error!("Error converting region {} into region_id: {}", region, e);
+                    tracing::error!("Issue retrieving region_id {}: {}", region.as_str(), e);
                 }
             }
         }
     }
+    Ok(())
 }
-
-// to do add a test

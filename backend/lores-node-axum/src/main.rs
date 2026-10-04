@@ -104,10 +104,11 @@ async fn main() {
     start_panda(&config_state, &panda_container, &projections_pool).await;
     let _ = &panda_container.publish_heartbeat().await;
 
-    handle_lores_installed_version_update(&node_data_pool, &config, &panda_container).await;
+    match handle_lores_installed_version_update(&node_data_pool, &config, &panda_container).await {
+        Err(e) => tracing::error!("Error handling lores installed version: {}", e),
+        _ => {}
+    };
 
-    let package_version = env!("CARGO_PKG_VERSION");
-    println!("package_version: {}", package_version);
     // GRPC SERVER
     let grpc_port = env::var("GRPC_PORT").unwrap_or_else(|_| "50051".to_string());
     let grpc_addr = format!("0.0.0.0:{}", grpc_port).parse().expect("valid gRPC bind address");

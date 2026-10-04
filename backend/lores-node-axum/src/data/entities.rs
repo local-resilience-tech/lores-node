@@ -110,6 +110,7 @@ pub struct RegionNodeDetails {
     pub agreed_node_steward_conduct_url: Option<String>,
     pub status_text: Option<String>,
     pub state: Option<NodeState>,
+    pub lores_version: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]

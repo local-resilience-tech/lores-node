@@ -15,6 +15,7 @@ impl LoresNodeInstallationsReadRepo {
             "
             SELECT node_id, lores_version
             FROM lores_node_installations
+            WHERE node_id = ?
             LIMIT 1
             ",
             node_id,

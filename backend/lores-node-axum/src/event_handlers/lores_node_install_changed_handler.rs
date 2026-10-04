@@ -24,7 +24,7 @@ impl LoresNodeInstallChangedHandler {
 
         lores_node_installations_write_repo
             .upsert(pool, &header.author_node_id, &self.payload.lores_version)
-            .await;
+            .await?;
 
         Ok(())
     }
@@ -67,4 +67,42 @@ impl EventHandler for LoresNodeInstallChangedHandler {
     }
 }
 
-// to do add tests
+#[cfg(test)]
+mod tests {
+    use lores_p2panda::RegionId;
+    use p2panda_core::Hash;
+
+    use crate::api::public_api::client_events::ClientEvent::LoresNodeInstallationChanged;
+
+    use super::*;
+
+    #[sqlx::test(migrations = "../migrations_projectiondb")]
+    async fn returns_client_events(pool: SqlitePool) -> () {
+        let node_id = "test_node_id".to_string();
+        let lores_version = "0.23.2".to_string();
+
+        let install_changed_data = LoresNodeInstallChangedDataV1 {
+            node_id: node_id.clone(),
+            lores_version: lores_version.clone(),
+        };
+
+        let event_header = LoResEventHeader {
+            author_node_id: node_id.clone(),
+            region_id: Some(RegionId::from_hex("b64cce8cfb94be72549a71b47d0dd614e27baf23d7372bea79730f62e3c15bb4").unwrap()),
+            timestamp: 1790919673,
+            operation_id: Hash::digest(vec![0_u8]),
+        };
+
+        let result = LoresNodeInstallChangedHandler::new(&install_changed_data)
+            .handle(event_header, &pool)
+            .await
+            .client_events;
+
+        assert_eq!(1, result.len());
+
+        if let LoresNodeInstallationChanged(node) = &result.first().unwrap() {
+            assert_eq!(node.node_id, node_id);
+            assert_eq!(node.lores_version, Some(lores_version));
+        };
+    }
+}
