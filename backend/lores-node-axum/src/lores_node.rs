@@ -31,12 +31,12 @@ pub async fn handle_lores_installed_version_update(
         }
     };
 
-    if let Some(node) = repo_result {
-        if node.node_id == node_id {
-            // current version is already persisted
-            // nothing to do
-            return Ok(());
-        }
+    if let Some(node) = repo_result
+        && node.node_id == node_id
+    {
+        // current version is already persisted
+        // nothing to do
+        return Ok(());
     };
 
     let node = LoresNode {
@@ -48,17 +48,20 @@ pub async fn handle_lores_installed_version_update(
         },
     };
 
-    if let Err(e) = lores_repo.upsert(&node_data_pool, &node).await {
+    if let Err(e) = lores_repo.upsert(node_data_pool, &node).await {
         return Err(e.to_string());
     };
 
-    if node.lores_version.is_some() && node_config.region_ids.is_some() {
-        let event_payload = LoresNodeInstallChanged(LoresNodeInstallChangedDataV1 {
+    let event_payload = match node.lores_version {
+        Some(lores_version) => LoresNodeInstallChanged(LoresNodeInstallChangedDataV1 {
             node_id: node.node_id,
-            lores_version: node.lores_version.unwrap(),
-        });
+            lores_version,
+        }),
+        None => return Ok(()),
+    };
 
-        for region in node_config.region_ids.as_ref().unwrap() {
+    if let Some(region_ids) = &node_config.region_ids {
+        for region in region_ids {
             let region_id = RegionId::from_hex(region.as_str());
 
             match region_id {
@@ -76,5 +79,6 @@ pub async fn handle_lores_installed_version_update(
             }
         }
     }
+
     Ok(())
 }

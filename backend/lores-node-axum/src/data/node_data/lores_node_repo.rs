@@ -48,7 +48,7 @@ impl LoresNodeRepo {
             WHERE node_id = ?
             ",
         )
-        .bind(&node_id)
+        .bind(node_id)
         .fetch_optional(pool)
         .await?;
 
