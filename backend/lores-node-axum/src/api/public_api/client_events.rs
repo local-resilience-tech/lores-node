@@ -1,7 +1,7 @@
 use serde::Serialize;
 use utoipa::ToSchema;
 
-use crate::data::entities::{LocalApp, LoresNode, NodeHeartbeat, Region, RegionAppWithInstallations, RegionNodeDetails, RegionWithNodes};
+use crate::data::entities::{LocalApp, NodeHeartbeat, Region, RegionAppWithInstallations, RegionNodeDetails, RegionWithNodes};
 
 #[derive(Debug, Clone, Serialize, ToSchema)]
 pub enum ClientEvent {
@@ -14,5 +14,4 @@ pub enum ClientEvent {
     LocalAppUpdated(LocalApp),
     LocalAppsReloaded(Vec<LocalApp>),
     NodeHeartbeatReceived(NodeHeartbeat),
-    LoresNodeInstallationChanged(LoresNode),
 }

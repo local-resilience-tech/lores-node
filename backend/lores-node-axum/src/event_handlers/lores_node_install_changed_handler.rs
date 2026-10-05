@@ -1,12 +1,8 @@
 use sqlx::SqlitePool;
 
 use crate::{
-    api::public_api::client_events::ClientEvent,
-    data::{
-        projections_read::lores_node_installations::LoresNodeInstallationsReadRepo,
-        projections_write::lores_node_installations::LoresNodeInstallationsWriteRepo,
-    },
-    event_handlers::utilities::{EventHandler, HandlerResult, handle_db_write_error, header_has_region},
+    data::projections_write::lores_node_installations::LoresNodeInstallationsWriteRepo,
+    event_handlers::utilities::{EventHandler, HandlerResult, handle_db_write_error, header_has_region, read_node_updated_event},
     panda_comms::lores_events::{LoResEventHeader, LoresNodeInstallChangedDataV1},
 };
 
@@ -28,35 +24,24 @@ impl LoresNodeInstallChangedHandler {
 
         Ok(())
     }
-
-    async fn read_node_installation_event(&self, pool: &SqlitePool) -> Vec<ClientEvent> {
-        let lores_node_installations_read_repo = LoresNodeInstallationsReadRepo::init();
-
-        let node = lores_node_installations_read_repo
-            .find_by_node_id(pool, &self.payload.node_id)
-            .await;
-
-        match node {
-            Ok(Some(details)) => vec![ClientEvent::LoresNodeInstallationChanged(details)],
-            Ok(None) => {
-                tracing::info!("Node not found for {}", self.payload.node_id);
-                vec![]
-            }
-            Err(e) => {
-                tracing::error!("Error reading node details for {}: {}", self.payload.node_id, e);
-                vec![]
-            }
-        }
-    }
 }
 
 impl EventHandler for LoresNodeInstallChangedHandler {
     async fn handle(&self, header: LoResEventHeader, pool: &SqlitePool) -> HandlerResult {
+        let region_id = match &header.region_id {
+            Some(id) => id,
+            None => {
+                tracing::warn!("Region ID is missing");
+                return HandlerResult::default();
+            }
+        };
+
+        let node_id = header.author_node_id.clone();
         let result = self.write_projections(&header, pool).await;
 
         match result {
             Ok(()) => HandlerResult {
-                client_events: self.read_node_installation_event(pool).await,
+                client_events: read_node_updated_event(pool, node_id, region_id.to_hex()).await,
             },
             Err(e) => handle_db_write_error(e),
         }
@@ -72,14 +57,37 @@ mod tests {
     use lores_p2panda::RegionId;
     use p2panda_core::Hash;
 
-    use crate::api::public_api::client_events::ClientEvent::LoresNodeInstallationChanged;
+    use crate::{
+        api::public_api::client_events::ClientEvent::RegionNodeUpdated,
+        data::{
+            entities::Region,
+            projections_write::{nodes::NodesWriteRepo, region_nodes::RegionNodesWriteRepo, regions::RegionsWriteRepo},
+        },
+        panda_comms::lores_events::RegionNodeUpdatedDataV1,
+    };
 
     use super::*;
 
     #[sqlx::test(migrations = "../migrations_projectiondb")]
     async fn returns_client_events(pool: SqlitePool) -> () {
+        let region_id = RegionId::from_hex("b64cce8cfb94be72549a71b47d0dd614e27baf23d7372bea79730f62e3c15bb4").unwrap();
         let node_id = "test_node_id".to_string();
         let lores_version = "0.23.2".to_string();
+
+        let node_write_repo = NodesWriteRepo::init();
+        node_write_repo.upsert_id(&pool, &node_id).await.unwrap();
+
+        let mut test_region = Region::default();
+        test_region.id = region_id.to_hex();
+
+        let region_write_repo = RegionsWriteRepo::init();
+        region_write_repo.upsert(&pool, &test_region).await.unwrap();
+
+        let region_nodes_write_repo = RegionNodesWriteRepo::init();
+        region_nodes_write_repo
+            .upsert_details(&pool, &region_id.to_hex(), &node_id, &RegionNodeUpdatedDataV1::default())
+            .await
+            .unwrap();
 
         let install_changed_data = LoresNodeInstallChangedDataV1 {
             node_id: node_id.clone(),
@@ -88,7 +96,7 @@ mod tests {
 
         let event_header = LoResEventHeader {
             author_node_id: node_id.clone(),
-            region_id: Some(RegionId::from_hex("b64cce8cfb94be72549a71b47d0dd614e27baf23d7372bea79730f62e3c15bb4").unwrap()),
+            region_id: Some(region_id.clone()),
             timestamp: 1790919673,
             operation_id: Hash::digest(vec![0_u8]),
         };
@@ -100,7 +108,7 @@ mod tests {
 
         assert_eq!(1, result.len());
 
-        if let LoresNodeInstallationChanged(node) = &result.first().unwrap() {
+        if let RegionNodeUpdated(node) = &result.first().unwrap() {
             assert_eq!(node.node_id, node_id);
             assert_eq!(node.lores_version, Some(lores_version));
         };

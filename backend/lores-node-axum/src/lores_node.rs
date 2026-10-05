@@ -3,7 +3,10 @@ use sqlx::{Pool, Sqlite};
 
 use crate::{
     config::LoresNodeConfig,
-    data::{entities::LoresNode, node_data::lores_node_repo::LoresNodeRepo},
+    data::{
+        projections_read::lores_node_installations::LoresNodeInstallationsReadRepo,
+        projections_write::lores_node_installations::LoresNodeInstallationsWriteRepo,
+    },
     panda_comms::{
         PandaContainer,
         lores_events::{LoResEventPayload::LoresNodeInstallChanged, LoresNodeInstallChangedDataV1},
@@ -11,7 +14,7 @@ use crate::{
 };
 
 pub async fn handle_lores_installed_version_update(
-    node_data_pool: &Pool<Sqlite>,
+    projections_pool: &Pool<Sqlite>,
     node_config: &LoresNodeConfig,
     panda_container: &PandaContainer,
 ) -> Result<(), String> {
@@ -21,44 +24,42 @@ pub async fn handle_lores_installed_version_update(
     };
 
     let current_lores_version = env!("CARGO_PKG_VERSION");
-    let lores_repo = LoresNodeRepo::init();
-    let current_version = lores_repo.find(node_data_pool, &node_id).await;
 
-    let repo_result = match current_version {
-        Ok(result) => result,
+    if current_lores_version.is_empty() {
+        return Ok(());
+    }
+
+    let lores_node_installations_read_repo = LoresNodeInstallationsReadRepo::init();
+    let lores_node_query_result = lores_node_installations_read_repo.find_by_node_id(projections_pool, &node_id).await;
+
+    match lores_node_query_result {
+        Ok(result) => {
+            if let Some(node) = result
+                && node.lores_version == current_lores_version
+            {
+                // current version is already projected
+                // no further action needed
+                return Ok(());
+            }
+        }
         Err(e) => {
             return Err(e.to_string());
         }
     };
 
-    if let Some(node) = repo_result
-        && node.node_id == node_id
+    let lores_node_installations_write_repo = LoresNodeInstallationsWriteRepo::init();
+
+    if let Err(e) = lores_node_installations_write_repo
+        .upsert(projections_pool, &node_id, current_lores_version)
+        .await
     {
-        // current version is already persisted
-        // nothing to do
-        return Ok(());
-    };
-
-    let node = LoresNode {
-        node_id,
-        lores_version: if current_lores_version.is_empty() {
-            None
-        } else {
-            Some(current_lores_version.to_string())
-        },
-    };
-
-    if let Err(e) = lores_repo.upsert(node_data_pool, &node).await {
         return Err(e.to_string());
     };
 
-    let event_payload = match node.lores_version {
-        Some(lores_version) => LoresNodeInstallChanged(LoresNodeInstallChangedDataV1 {
-            node_id: node.node_id,
-            lores_version,
-        }),
-        None => return Ok(()),
-    };
+    let event_payload = LoresNodeInstallChanged(LoresNodeInstallChangedDataV1 {
+        node_id,
+        lores_version: current_lores_version.to_string(),
+    });
 
     if let Some(region_ids) = &node_config.region_ids {
         for region in region_ids {

@@ -120,7 +120,7 @@ pub struct RegionMap {
     pub max_latlng: LatLng,
 }
 
-#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
+#[derive(Serialize, Deserialize, ToSchema, Debug, Clone, Default)]
 pub struct Region {
     pub id: String,
     pub creator_node_id: Option<String>,
@@ -227,5 +227,5 @@ pub struct NodeHeartbeat {
 #[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
 pub struct LoresNode {
     pub node_id: String,
-    pub lores_version: Option<String>,
+    pub lores_version: String,
 }

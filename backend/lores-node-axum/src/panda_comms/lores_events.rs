@@ -35,7 +35,7 @@ pub struct RegionMapUpdatedDataV1 {
     pub image_data_url: String,
 }
 
-#[derive(Deserialize, Serialize, Clone, PartialEq, Debug)]
+#[derive(Deserialize, Serialize, Clone, PartialEq, Debug, Default)]
 pub struct RegionNodeUpdatedDataV1 {
     pub name: Option<String>,
     pub public_ipv4: Option<String>,
