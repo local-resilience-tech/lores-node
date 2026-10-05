@@ -35,8 +35,16 @@ impl ProjectionDb {
 
         // A pool with more than one connection would give each connection its
         // own isolated in-memory database. Pin to one connection so all
-        // callers share the same database.
-        let pool = sqlx::pool::PoolOptions::new().max_connections(1).connect_with(options).await?;
+        // callers share the same database. The single connection must never be
+        // reaped: with `:memory:` the database lives in the connection, so
+        // closing it (via idle_timeout or max_lifetime) would silently discard
+        // the schema and all data, handing the next checkout a fresh empty DB.
+        let pool = sqlx::pool::PoolOptions::new()
+            .max_connections(1)
+            .idle_timeout(None)
+            .max_lifetime(None)
+            .connect_with(options)
+            .await?;
 
         Self::apply_schema(&pool, schema_sql).await?;
         tracing::info!("projection database ready");
@@ -115,5 +123,39 @@ impl ProjectionDb {
         }
 
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    const SCHEMA: &str = "CREATE TABLE items (id TEXT PRIMARY KEY NOT NULL);";
+
+    #[tokio::test]
+    async fn in_memory_connection_is_never_reaped() {
+        let (pool, _) = ProjectionDb::in_memory(SCHEMA).await.unwrap();
+
+        // The single in-memory connection must be kept alive indefinitely:
+        // if the pool could reap it, the schema and data would be lost.
+        assert_eq!(pool.options().get_idle_timeout(), None);
+        assert_eq!(pool.options().get_max_lifetime(), None);
+        assert_eq!(pool.options().get_max_connections(), 1);
+    }
+
+    #[tokio::test]
+    async fn in_memory_schema_survives_beyond_default_timeouts() {
+        let (pool, _) = ProjectionDb::in_memory(SCHEMA).await.unwrap();
+
+        // Force the pool to attempt a reap cycle. This does not wait for the
+        // real default timeouts (10/30 minutes) but would surface a reaped
+        // connection if the options were ever changed to very small values.
+        tokio::time::sleep(std::time::Duration::from_millis(50)).await;
+
+        let row: (i64,) = sqlx::query_as("SELECT COUNT(*) FROM items")
+            .fetch_one(&pool)
+            .await
+            .expect("schema must survive; the connection must not be reaped");
+        assert_eq!(row.0, 0);
     }
 }
