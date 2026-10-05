@@ -4,7 +4,7 @@ use uuid::Uuid;
 
 pub use lores_p2panda_client::{NodeId, OperationId, RegionId};
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct RegionInfo {
     pub region_id: RegionId,
     pub slug: Option<String>,
@@ -29,8 +29,17 @@ pub struct AppNodeOperation<Op> {
     pub timestamp: Option<u64>,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum NodeEvent {
-    ServerConnected { node_id: NodeId, region: RegionInfo },
+    ServerConnected {
+        node_id: NodeId,
+        region: RegionInfo,
+    },
     ServerDisconnected,
+    /// Historical replay has started.
+    ReplayStarted {
+        total_operations: u32,
+    },
+    /// Historical replay has finished; the node is now receiving live operations.
+    ReplayEnded,
 }

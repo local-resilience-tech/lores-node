@@ -19,7 +19,7 @@ use sqlx::{AssertSqlSafe, SqlitePool, sqlite::SqliteConnectOptions};
 /// # On-disk
 ///
 /// [`ProjectionDb::open`] opens (or creates) an on-disk database.  On startup
-/// it compares the hash of the supplied schema against the stored hash.  If
+/// it compares the hash of the supplied schema against the hash.  If
 /// they differ the database is wiped, the new schema applied, and the caller
 /// is expected to replay all operations before serving traffic.
 pub struct ProjectionDb;
@@ -45,7 +45,7 @@ impl ProjectionDb {
 
     /// Open (or create) an on-disk SQLite database.
     ///
-    /// If the stored schema hash differs from the hash of `schema_sql`, all
+    /// If the schema hash differs from the hash of `schema_sql`, all
     /// user tables are dropped and the schema is re-applied.  Returns `true`
     /// if a rebuild occurred (signalling that the caller should replay ops).
     pub async fn open(path: &str, schema_sql: &str) -> Result<(SqlitePool, bool), sqlx::Error> {

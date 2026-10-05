@@ -13,8 +13,8 @@ use tracing::{info, warn};
 use sha2::{Digest, Sha256};
 
 use lores_p2panda_client::proto::{
-    GetNodeRequest, GetNodeResponse, InfoRequest, InfoResponse, OperationEvent, PublishRequest, PublishResponse, SubscribeRequest,
-    panda_server::Panda,
+    GetNodeRequest, GetNodeResponse, InfoRequest, InfoResponse, OperationEvent, PublishRequest, PublishResponse, SubscribeEvent,
+    SubscribeRequest, panda_server::Panda,
 };
 
 /// In-memory dev server for the lores-p2panda gRPC API.
@@ -26,7 +26,7 @@ use lores_p2panda_client::proto::{
 pub struct DevPandaService {
     /// One broadcast channel per `app_id`. All subscribers to the same app
     /// share the same channel so they see each other's operations.
-    topics: Arc<RwLock<HashMap<String, broadcast::Sender<OperationEvent>>>>,
+    topics: Arc<RwLock<HashMap<String, broadcast::Sender<SubscribeEvent>>>>,
     /// Reverse map from hex node_id to instance_id, used by get_node.
     node_names: Arc<RwLock<HashMap<String, String>>>,
     /// Monotonically increasing counter used to synthesise `operation_id`s.
@@ -44,19 +44,12 @@ impl Default for DevPandaService {
 }
 
 impl DevPandaService {
-    /// Create a new `DevPandaService` without operation recording.
+    /// Create a new `DevPandaService`.
+    ///
+    /// Operations are retained in memory so tests can seed history and replay
+    /// it via `SubscriptionFrom::Start`. The dev server is still non-persistent
+    /// and intended only for local testing.
     pub fn new() -> Self {
-        Self {
-            topics: Arc::new(RwLock::new(HashMap::new())),
-            node_names: Arc::new(RwLock::new(HashMap::new())),
-            counter: Arc::new(AtomicU64::new(1)),
-            observed: None,
-        }
-    }
-
-    /// Create a new `DevPandaService` that retains all published operations
-    /// so tests can introspect them.
-    pub fn with_operation_recording() -> Self {
         Self {
             topics: Arc::new(RwLock::new(HashMap::new())),
             node_names: Arc::new(RwLock::new(HashMap::new())),
@@ -65,7 +58,14 @@ impl DevPandaService {
         }
     }
 
-    async fn topic_tx(&self, app_id: &str) -> broadcast::Sender<OperationEvent> {
+    /// Create a new `DevPandaService` that retains all published operations.
+    ///
+    /// This is now equivalent to [`Self::new`]; kept for backward compatibility.
+    pub fn with_operation_recording() -> Self {
+        Self::new()
+    }
+
+    async fn topic_tx(&self, app_id: &str) -> broadcast::Sender<SubscribeEvent> {
         let topics = self.topics.read().await;
         if let Some(tx) = topics.get(app_id) {
             return tx.clone();
@@ -89,13 +89,45 @@ impl DevPandaService {
     /// Return all operations observed for `app_id` so far.
     ///
     /// This is intended for tests that want to assert on what was published
-    /// without needing to subscribe before the operations are sent. It returns
-    /// an empty vector if operation recording is not enabled.
+    /// without needing to subscribe before the operations are sent.
     pub async fn operations_for_app(&self, app_id: &str) -> Vec<OperationEvent> {
         match &self.observed {
             Some(observed) => observed.read().await.get(app_id).cloned().unwrap_or_default(),
             None => Vec::new(),
         }
+    }
+
+    /// Inject a synthetic historical operation for `app_id`.
+    ///
+    /// The operation is added to the replay history for `SubscriptionFrom::Start`
+    /// but is not broadcast to live subscribers. This lets tests seed history
+    /// without publishing it through a node.
+    pub async fn inject_observed_operation(&self, app_id: &str, payload: Vec<u8>) {
+        let author = dummy_node_id("dev-server-injected");
+
+        let timestamp = SystemTime::now()
+            .duration_since(SystemTime::UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_millis() as u64;
+
+        let operation_id = self.next_operation_id();
+
+        let event = OperationEvent {
+            topic_id: topic_id_from_app_id(app_id),
+            author,
+            operation_id,
+            timestamp,
+            payload,
+        };
+
+        self.observed
+            .as_ref()
+            .expect("operation recording is always enabled")
+            .write()
+            .await
+            .entry(app_id.to_string())
+            .or_default()
+            .push(event);
     }
 }
 
@@ -151,7 +183,10 @@ impl Panda for DevPandaService {
         // A lag here means all active subscribers are slow; the dev server
         // simply drops messages when the channel is full, matching the
         // broadcast behaviour of the real server.
-        let _ = tx.send(event.clone());
+        let subscribe_event = SubscribeEvent {
+            event: Some(lores_p2panda_client::proto::subscribe_event::Event::Operation(event.clone())),
+        };
+        let _ = tx.send(subscribe_event);
 
         // Retain a copy for test introspection when enabled.
         if let Some(observed) = &self.observed {
@@ -161,7 +196,7 @@ impl Panda for DevPandaService {
         Ok(Response::new(PublishResponse { operation_id, node_id }))
     }
 
-    type SubscribeStream = Pin<Box<dyn tokio_stream::Stream<Item = Result<OperationEvent, Status>> + Send + 'static>>;
+    type SubscribeStream = Pin<Box<dyn tokio_stream::Stream<Item = Result<SubscribeEvent, Status>> + Send + 'static>>;
 
     async fn subscribe(&self, request: Request<SubscribeRequest>) -> Result<Response<Self::SubscribeStream>, Status> {
         let req = request.into_inner();
@@ -171,7 +206,12 @@ impl Panda for DevPandaService {
         let tx = self.topic_tx(&req.app_id).await;
         let rx = tx.subscribe();
 
-        let stream = BroadcastStream::new(rx).filter_map(|result| async move {
+        let wants_replay = matches!(
+            req.cursor.and_then(|c| c.mode),
+            Some(lores_p2panda_client::proto::subscription_cursor::Mode::Start(true))
+        );
+
+        let live_stream = BroadcastStream::new(rx).filter_map(|result| async move {
             match result {
                 Ok(event) => Some(Ok(event)),
                 Err(_lagged) => {
@@ -181,7 +221,34 @@ impl Panda for DevPandaService {
             }
         });
 
-        Ok(Response::new(Box::pin(stream)))
+        if wants_replay {
+            // Replay any observed historical operations for this app, then
+            // continue with the live broadcast stream.
+            let observed = self.operations_for_app(&req.app_id).await;
+            let total_operations = observed.len() as u32;
+
+            let mut replay_events: Vec<Result<SubscribeEvent, Status>> = Vec::with_capacity(observed.len() + 2);
+            replay_events.push(Ok(SubscribeEvent {
+                event: Some(lores_p2panda_client::proto::subscribe_event::Event::ReplayStarted(
+                    lores_p2panda_client::proto::ReplayStarted { total_operations },
+                )),
+            }));
+            for op in observed {
+                replay_events.push(Ok(SubscribeEvent {
+                    event: Some(lores_p2panda_client::proto::subscribe_event::Event::Operation(op)),
+                }));
+            }
+            replay_events.push(Ok(SubscribeEvent {
+                event: Some(lores_p2panda_client::proto::subscribe_event::Event::ReplayEnded(
+                    lores_p2panda_client::proto::ReplayEnded {},
+                )),
+            }));
+
+            let stream = tokio_stream::iter(replay_events).chain(live_stream);
+            Ok(Response::new(Box::pin(stream)))
+        } else {
+            Ok(Response::new(Box::pin(live_stream)))
+        }
     }
 
     async fn info(&self, _request: Request<InfoRequest>) -> Result<Response<InfoResponse>, Status> {

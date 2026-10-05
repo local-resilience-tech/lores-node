@@ -1,8 +1,8 @@
 use futures::StreamExt;
 use tokio::sync::broadcast;
 
-use crate::stores::{OperationStream, RawOperationEvent, StoreError};
-use crate::types::{AppNodeOperation, NodeId, OperationId};
+use crate::transports::{OperationStream, RawEvent, RawOperationEvent, TransportError};
+use crate::types::{AppNodeOperation, NodeEvent, NodeId, OperationId};
 
 /// Deserializes raw operation payloads from a stream and broadcasts them to
 /// all subscribers of the event channel.
@@ -38,19 +38,23 @@ impl<Op: Clone + Send + 'static> OperationConsumer<Op> {
     /// Returns `Ok(count)` if the stream ended cleanly, or `Err` on the first
     /// stream-level failure. Deserialization failures are logged as warnings
     /// and do not stop the drain.
-    pub(crate) async fn drain_stream(&self, stream: &mut OperationStream) -> Result<usize, StoreError>
+    pub(crate) async fn drain_stream(
+        &self,
+        stream: &mut OperationStream,
+        node_event_tx: &broadcast::Sender<NodeEvent>,
+    ) -> Result<usize, TransportError>
     where
         Op: for<'de> serde::Deserialize<'de>,
     {
         let mut count = 0usize;
         while let Some(item) = stream.next().await {
             match item {
-                Ok(RawOperationEvent {
+                Ok(RawEvent::Operation(RawOperationEvent {
                     payload,
                     author,
                     operation_id,
                     timestamp,
-                }) => match serde_json::from_slice::<Op>(&payload) {
+                })) => match serde_json::from_slice::<Op>(&payload) {
                     Ok(op) => {
                         let _ = self.event_tx.send(AppNodeOperation {
                             op,
@@ -63,6 +67,12 @@ impl<Op: Clone + Send + 'static> OperationConsumer<Op> {
                     }
                     Err(e) => tracing::warn!("Failed to deserialize operation: {e}"),
                 },
+                Ok(RawEvent::ReplayStarted { total_operations }) => {
+                    let _ = node_event_tx.send(NodeEvent::ReplayStarted { total_operations });
+                }
+                Ok(RawEvent::ReplayEnded) => {
+                    let _ = node_event_tx.send(NodeEvent::ReplayEnded);
+                }
                 Err(e) => return Err(e),
             }
         }

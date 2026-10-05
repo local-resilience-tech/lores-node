@@ -1,6 +1,6 @@
 [package]
 name = "lores-p2panda"
-version = "0.23.0"
+version = "0.24.1"
 edition = "2024"
 rust-version = "1.96"
 publish = false
@@ -22,3 +22,6 @@ tokio-stream = { workspace = true }
 tracing = "0.1"
 hex = { workspace = true }
 rand = "0.10"
+
+[dev-dependencies]
+tempfile = "3"

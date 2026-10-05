@@ -4,7 +4,7 @@ use tokio::sync::{Mutex, mpsc};
 use tracing::{info, warn};
 
 use lores_p2panda::{
-    Credentials, IncomingOperation, PandaNodeError, RegionAdminTopic, RegionId, RegionTopic, RelayUrl, Topic,
+    Credentials, IncomingOperation, PandaNodeError, RegionAdminTopic, RegionId, RegionTopic, RelayUrl, SubscriptionEvent, Topic,
     p2panda_core::{Hash, VerifyingKey, identity::VERIFYING_KEY_LEN},
     panda_node::{LogCount, OperationCountByAuthorAndTopic, PandaNode, PandaPublishError, RequiredNodeParams, SubscriptionError},
     topic_status::ConnectionStatus,
@@ -171,17 +171,25 @@ impl PandaContainer {
         };
         drop(node_lock);
 
-        let topics = node.get_subscribed_topics().await;
-        let count = topics.len();
+        let region_ids = node.get_regions().await;
+        let count = region_ids.len();
 
-        for topic_id in topics {
-            let (incoming_tx, mut incoming_rx) = mpsc::channel::<IncomingOperation>(32);
-            node.replay_topic(topic_id, incoming_tx).await?;
+        for region_id in region_ids {
+            let admin_topic = RegionAdminTopic::new(region_id);
+            let (incoming_tx, mut incoming_rx) = mpsc::channel::<SubscriptionEvent>(32);
+            // Scoped per topic: cursor names are keyed globally by name alone,
+            // not by (topic, name), so reusing one name across topics would
+            // corrupt their replay positions.
+            let cursor_name = format!("local-rebuild:{}", admin_topic.p2panda_topic().to_hex());
+            node.replay_region_topic_as(&admin_topic, cursor_name, incoming_tx).await?;
 
             let events_tx = self.lores_events_tx.clone();
             tokio::spawn(async move {
-                while let Some(incoming) = incoming_rx.recv().await {
-                    match Self::decode_incoming_to_lores_event(incoming) {
+                while let Some(event) = incoming_rx.recv().await {
+                    let SubscriptionEvent::Operation(incoming) = event else {
+                        continue;
+                    };
+                    match Self::decode_incoming_to_lores_event(*incoming) {
                         Ok(lores_event) => {
                             if events_tx.send(lores_event).await.is_err() {
                                 break;
