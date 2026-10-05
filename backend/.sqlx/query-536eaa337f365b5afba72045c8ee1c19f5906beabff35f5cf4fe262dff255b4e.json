@@ -6,46 +6,22 @@
       {
         "name": "app_name",
         "ordinal": 0,
-        "type_info": "Text",
-        "origin": {
-          "Table": {
-            "table": "app_installations",
-            "name": "app_name"
-          }
-        }
+        "type_info": "Text"
       },
       {
         "name": "region_node_id",
         "ordinal": 1,
-        "type_info": "Integer",
-        "origin": {
-          "Table": {
-            "table": "app_installations",
-            "name": "region_node_id"
-          }
-        }
+        "type_info": "Integer"
       },
       {
         "name": "version",
         "ordinal": 2,
-        "type_info": "Text",
-        "origin": {
-          "Table": {
-            "table": "app_installations",
-            "name": "version"
-          }
-        }
+        "type_info": "Text"
       },
       {
         "name": "region_id",
         "ordinal": 3,
-        "type_info": "Text",
-        "origin": {
-          "Table": {
-            "table": "region_nodes",
-            "name": "region_id"
-          }
-        }
+        "type_info": "Text"
       }
     ],
     "parameters": {

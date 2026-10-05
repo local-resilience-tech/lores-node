@@ -6,101 +6,47 @@
       {
         "name": "id",
         "ordinal": 0,
-        "type_info": "Integer",
-        "origin": {
-          "Table": {
-            "table": "region_nodes",
-            "name": "id"
-          }
-        }
+        "type_info": "Integer"
       },
       {
         "name": "node_id",
         "ordinal": 1,
-        "type_info": "Text",
-        "origin": {
-          "Table": {
-            "table": "region_nodes",
-            "name": "node_id"
-          }
-        }
+        "type_info": "Text"
       },
       {
         "name": "region_id",
         "ordinal": 2,
-        "type_info": "Text",
-        "origin": {
-          "Table": {
-            "table": "region_nodes",
-            "name": "region_id"
-          }
-        }
+        "type_info": "Text"
       },
       {
         "name": "status: RegionNodeStatus",
         "ordinal": 3,
-        "type_info": "Text",
-        "origin": {
-          "Table": {
-            "table": "region_nodes",
-            "name": "status"
-          }
-        }
+        "type_info": "Text"
       },
       {
         "name": "name",
         "ordinal": 4,
-        "type_info": "Text",
-        "origin": {
-          "Table": {
-            "table": "region_nodes",
-            "name": "name"
-          }
-        }
+        "type_info": "Text"
       },
       {
         "name": "public_ipv4",
         "ordinal": 5,
-        "type_info": "Text",
-        "origin": {
-          "Table": {
-            "table": "region_nodes",
-            "name": "public_ipv4"
-          }
-        }
+        "type_info": "Text"
       },
       {
         "name": "domain_on_local_network",
         "ordinal": 6,
-        "type_info": "Text",
-        "origin": {
-          "Table": {
-            "table": "region_nodes",
-            "name": "domain_on_local_network"
-          }
-        }
+        "type_info": "Text"
       },
       {
         "name": "domain_on_internet",
         "ordinal": 7,
-        "type_info": "Text",
-        "origin": {
-          "Table": {
-            "table": "region_nodes",
-            "name": "domain_on_internet"
-          }
-        }
+        "type_info": "Text"
       },
       {
         "name": "latlng: LatLng",
         "ordinal": 8,
-        "type_info": "Text",
-        "origin": {
-          "Table": {
-            "table": "region_nodes",
-            "name": "latlng"
-          }
-        }
+        "type_info": "Text"
       }
     ],
     "parameters": {
