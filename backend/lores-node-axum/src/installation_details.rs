@@ -23,7 +23,7 @@ pub async fn handle_lores_installed_version_update(
     let current_lores_version = env!("CARGO_PKG_VERSION");
 
     if current_lores_version.is_empty() {
-        return Ok(());
+        return Err("CARGO_PKG_VERSION env var is empty".to_string());
     }
 
     let lores_node_installations_write_repo = LoresNodeInstallationsWriteRepo::init();
