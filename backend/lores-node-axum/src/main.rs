@@ -24,7 +24,7 @@ use crate::{
         public_api::realtime::{self, RealtimeState},
     },
     config::{LoresNodeConfig, LoresNodeConfigState},
-    lores_node::handle_lores_installed_version_update,
+    installation_details::handle_lores_installed_version_update,
     panda_comms::{PandaContainer, lores_events::LoResEvent, start_panda, start_panda_event_handler},
     static_server::frontend_handler,
 };
@@ -33,8 +33,8 @@ mod api;
 mod config;
 mod data;
 mod event_handlers;
+mod installation_details;
 mod local_apps;
-mod lores_node;
 mod panda_comms;
 mod static_server;
 

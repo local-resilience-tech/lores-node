@@ -3,10 +3,7 @@ use sqlx::{Pool, Sqlite};
 
 use crate::{
     config::LoresNodeConfig,
-    data::{
-        projections_read::lores_node_installations::LoresNodeInstallationsReadRepo,
-        projections_write::lores_node_installations::LoresNodeInstallationsWriteRepo,
-    },
+    data::projections_write::lores_node_installations::LoresNodeInstallationsWriteRepo,
     panda_comms::{
         PandaContainer,
         lores_events::{LoResEventPayload::LoresNodeInstallChanged, LoresNodeInstallChangedDataV1},
@@ -28,24 +25,6 @@ pub async fn handle_lores_installed_version_update(
     if current_lores_version.is_empty() {
         return Ok(());
     }
-
-    let lores_node_installations_read_repo = LoresNodeInstallationsReadRepo::init();
-    let lores_node_query_result = lores_node_installations_read_repo.find_by_node_id(projections_pool, &node_id).await;
-
-    match lores_node_query_result {
-        Ok(result) => {
-            if let Some(node) = result
-                && node.lores_version == current_lores_version
-            {
-                // current version is already projected
-                // no further action needed
-                return Ok(());
-            }
-        }
-        Err(e) => {
-            return Err(e.to_string());
-        }
-    };
 
     let lores_node_installations_write_repo = LoresNodeInstallationsWriteRepo::init();
 
