@@ -11,7 +11,6 @@ interface NodeCardProps {
   rightSection?: ReactNode
   isThisNode?: boolean
   nodeHeartbeatDisplay?: NodeHeartbeatDisplay
-  canAdminister?: boolean
 }
 
 interface NodeStatusProps {
@@ -80,7 +79,7 @@ function NodeStatus({ state, statusText, isThisNode, nodeHeartbeatDisplay }: Nod
   )
 }
 
-export default function NodeCard({ node, isRegionCreator, rightSection, isThisNode, nodeHeartbeatDisplay, canAdminister }: NodeCardProps) {
+export default function NodeCard({ node, isRegionCreator, rightSection, isThisNode, nodeHeartbeatDisplay }: NodeCardProps) {
   return (
     <Card key={node.id} withBorder>
       <Stack>
@@ -93,13 +92,10 @@ export default function NodeCard({ node, isRegionCreator, rightSection, isThisNo
               {node.node_id}
             </Text>
           </Stack>
-          {(isRegionCreator || rightSection || canAdminister) && (
+          {(isRegionCreator || rightSection || node.lores_version) && (
             <Group gap="xs" wrap="nowrap" align="center">
-              {isRegionCreator ? (
-                <Badge>Admin</Badge>
-              ) : canAdminister && node.lores_version ? (
-                <Badge variant="outline">{node.lores_version}</Badge>
-              ) : null}
+              {isRegionCreator && <Badge>Admin</Badge>}{" "}
+              {node.lores_version && !isThisNode && <Badge variant="outline">{node.lores_version}</Badge>}
               {rightSection}
             </Group>
           )}

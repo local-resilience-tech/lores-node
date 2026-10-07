@@ -120,9 +120,6 @@ export type ClientEvent =
   | {
       NodeHeartbeatReceived: NodeHeartbeat
     }
-  | {
-      LoresNodeInstallationChanged: LoresNode
-    }
 
 export interface CreateRegionData {
   name: string
@@ -188,11 +185,6 @@ export interface LocalAppFormData {
 export interface LocalAppInstanceRef {
   instance_id?: string | null
   name: string
-}
-
-export interface LoresNode {
-  lores_version?: string | null
-  node_id: string
 }
 
 export interface Network {
@@ -489,7 +481,7 @@ export class HttpClient<SecurityDataType = unknown> {
 
 /**
  * @title lores-node
- * @version 0.23.0
+ * @version 0.24.1
  * @license
  */
 export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDataType> {
