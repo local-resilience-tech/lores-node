@@ -23,8 +23,6 @@ interface NodeStatusProps {
 function NodeStatus({ state, statusText, isThisNode, nodeHeartbeatDisplay }: NodeStatusProps) {
   const message = statusText?.trim() || undefined
 
-  if (!state && !message) return null
-
   const {
     label: stateLabel,
     color: stateColor,
@@ -47,21 +45,23 @@ function NodeStatus({ state, statusText, isThisNode, nodeHeartbeatDisplay }: Nod
   return (
     <Group gap="sm" justify="space-between">
       <Group>
-        <Group gap={1} wrap="nowrap">
-          <ThemeIcon variant="light" color={stateColor} size="sm" radius="xl">
-            <Icon size={22} />
-          </ThemeIcon>
+        {state && (
+          <Group gap={1} wrap="nowrap">
+            <ThemeIcon variant="light" color={stateColor} size="sm" radius="xl">
+              <Icon size={22} />
+            </ThemeIcon>
 
-          <Text span fw={500} size="sm" c={stateColor}>
-            {stateLabel}
-          </Text>
-        </Group>
+            <Text span fw={500} size="sm" c={stateColor}>
+              {stateLabel}
+            </Text>
+          </Group>
+        )}
 
-        {message ? (
+        {message && (
           <Text span size="sm">
             {message}
           </Text>
-        ) : null}
+        )}
       </Group>
       <Group gap={3}>
         {isThisNode ? (
@@ -92,9 +92,10 @@ export default function NodeCard({ node, isRegionCreator, rightSection, isThisNo
               {node.node_id}
             </Text>
           </Stack>
-          {(isRegionCreator || rightSection) && (
+          {(isRegionCreator || rightSection || node.lores_version) && (
             <Group gap="xs" wrap="nowrap" align="center">
-              {isRegionCreator && <Badge>Admin</Badge>}
+              {isRegionCreator && <Badge>Admin</Badge>}{" "}
+              {node.lores_version && !isThisNode && <Badge variant="outline">{node.lores_version}</Badge>}
               {rightSection}
             </Group>
           )}

@@ -1,6 +1,7 @@
 pub mod app_installations;
 pub mod apps;
 pub mod current_node_statuses;
+pub mod lores_node_installations;
 pub mod node_statuses;
 pub mod nodes;
 pub mod region_nodes;

@@ -18,13 +18,13 @@ use utoipa_axum::router::OpenApiRouter;
 use utoipa_swagger_ui::SwaggerUi;
 
 use crate::{
-    // event_handlers::handle_event,,
     api::{
         api_router,
         auth_api::auth_backend::AppAuthBackend,
         public_api::realtime::{self, RealtimeState},
     },
     config::{LoresNodeConfig, LoresNodeConfigState},
+    installation_details::handle_lores_installed_version_update,
     panda_comms::{PandaContainer, lores_events::LoResEvent, start_panda, start_panda_event_handler},
     static_server::frontend_handler,
 };
@@ -33,6 +33,7 @@ mod api;
 mod config;
 mod data;
 mod event_handlers;
+mod installation_details;
 mod local_apps;
 mod panda_comms;
 mod static_server;
@@ -102,6 +103,10 @@ async fn main() {
     start_panda_event_handler(channel_rx, projections_pool.clone(), realtime_state.clone());
     start_panda(&config_state, &panda_container, &projections_pool).await;
     let _ = &panda_container.publish_heartbeat().await;
+
+    if let Err(e) = handle_lores_installed_version_update(&projections_pool, &config, &panda_container).await {
+        tracing::error!("Error handling lores installed version: {}", e)
+    };
 
     // GRPC SERVER
     let grpc_port = env::var("GRPC_PORT").unwrap_or_else(|_| "50051".to_string());

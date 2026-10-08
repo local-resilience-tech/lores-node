@@ -160,7 +160,15 @@ Then install with `cargo install sqlx-cli`
 ### Useful commands
 
 Re-create the database:
-`DATABASE_URL=sqlite:./projections.sqlite cargo sqlx database reset`
+`DATABASE_URL=sqlite:./data/node_data/projections-1.sqlite cargo sqlx database reset`
 
 Re-build the query indexes:
-`DATABASE_URL=sqlite:./projections.sqlite cargo sqlx prepare`
+`DATABASE_URL=sqlite:./data/node_data/projections-1.sqlite cargo sqlx prepare --workspace`
+
+Checking the status of migrations:
+`DATABASE_URL=sqlite:./data/node_data/projections-1.sqlite sqlx migrate info --source ./migrations_projectiondb`
+
+Running a migration locally:
+`DATABASE_URL=sqlite:./data/node_data/projections-1.sqlite sqlx migrate run --source ./migrations_projectiondb`
+
+**This fixes the `SQLX_OFFLINE=true but there is no cached data for this query` error**

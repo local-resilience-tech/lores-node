@@ -110,6 +110,7 @@ pub struct RegionNodeDetails {
     pub agreed_node_steward_conduct_url: Option<String>,
     pub status_text: Option<String>,
     pub state: Option<NodeState>,
+    pub lores_version: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
@@ -119,7 +120,7 @@ pub struct RegionMap {
     pub max_latlng: LatLng,
 }
 
-#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
+#[derive(Serialize, Deserialize, ToSchema, Debug, Clone, Default)]
 pub struct Region {
     pub id: String,
     pub creator_node_id: Option<String>,

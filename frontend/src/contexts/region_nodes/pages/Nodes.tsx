@@ -15,7 +15,7 @@ const defaultTab = "list"
 export default function Nodes() {
   const region = useAppSelector((state) => activeRegionWithNodes(state.my_regions))
   const thisNodeId = useAppSelector((state) => state.network?.node.id)
-  const isNodeAdmin = thisNodeId != null && region?.region.creator_node_id === thisNodeId
+  const isRegionAdmin = thisNodeId != null && region?.region.creator_node_id === thisNodeId
 
   const getNodeHeartbeatDisplay = useNodeHeartbeats()
 
@@ -100,6 +100,7 @@ export default function Nodes() {
               regionCreatorId={region.region.creator_node_id}
               thisNodeId={thisNodeId}
               getNodeHeartbeatDisplay={getNodeHeartbeatDisplay}
+              canAdminister={isRegionAdmin}
             />
           </Tabs.Panel>
 
@@ -114,7 +115,7 @@ export default function Nodes() {
               nodes={join_request_nodes}
               regionCreatorId={region.region.creator_node_id}
               onApprove={onApproveJoin}
-              canAdminister={isNodeAdmin}
+              canAdminister={isRegionAdmin}
             />
           </Tabs.Panel>
         </Tabs>
