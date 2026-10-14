@@ -11,6 +11,10 @@ migrate:
 dev:
     mprocs
 
+format:
+    cd frontend && npm run format:write
+    cd backend && cargo fmt
+
 docker:
     #!/usr/bin/env bash
     set -e
