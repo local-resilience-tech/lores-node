@@ -16,6 +16,7 @@ pub fn router() -> OpenApiRouter {
     OpenApiRouter::new()
         .routes(routes!(add_bootstrap_node))
         .routes(routes!(replay_projections))
+        .routes(routes!(clear_address_book))
         .routes(routes!(get_operation_counts))
 }
 
@@ -103,6 +104,18 @@ async fn replay_projections(
             (StatusCode::INTERNAL_SERVER_ERROR, format!("Failed to start replay: {e}")).into_response()
         }
     }
+}
+
+#[utoipa::path(
+    post,
+    path = "/clear_address_book",
+    responses(
+        (status = 200, body = String),
+        (status = 500, body = String),
+    )
+)]
+async fn clear_address_book() -> impl IntoResponse {
+    return (StatusCode::INTERNAL_SERVER_ERROR, "not implemented");
 }
 
 #[derive(Serialize, ToSchema)]

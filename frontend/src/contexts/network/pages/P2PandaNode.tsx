@@ -1,12 +1,16 @@
-import { Stack, Title, Container, Button, Collapse, Table } from "@mantine/core"
+import { Stack, Title, Container, Button, Collapse, Table, Text } from "@mantine/core"
 import { useAppSelector } from "../../../store"
-import { IconPlug } from "@tabler/icons-react"
+import { IconAddressBookOff, IconPlug } from "@tabler/icons-react"
 import { useDisclosure } from "@mantine/hooks"
 import AddBootstrapNode from "../components/AddBootstrapNode"
 import NodeConnectionStatus from "../components/NodeConnectionStatus"
 import { useEffect, useState } from "react"
 import { getApi } from "../../../api"
 import { NodeStatusResponse } from "../../../api/Api"
+import { IfNodeSteward } from "../../auth/node_steward_auth"
+import { ActionButton, ActionPromiseResult } from "../../../components"
+import { awaitConfirmModal } from "../../shared"
+import { actionCancelled, actionFailure, actionSuccess } from "../../../components/ActionResult"
 
 export default function P2PandaNode() {
   const node = useAppSelector((state) => state.network?.node)
@@ -22,6 +26,25 @@ export default function P2PandaNode() {
 
   if (!node) {
     return <></>
+  }
+
+  const onClearAddressBook = async (): Promise<ActionPromiseResult> => {
+    const confirmed = await awaitConfirmModal(
+      "Clear address book",
+      <Text size="sm">
+        Are you sure you want to clear the node address book? It will attempt to re-create it from the available bootstrap nodes.
+      </Text>,
+    )
+    if (!confirmed) return actionCancelled()
+
+    console.log("clearing address book")
+
+    return getApi()
+      .nodeStewardApi.clearAddressBook()
+      .then(() => {
+        return actionSuccess()
+      })
+      .catch(actionFailure)
   }
 
   // const restartNode = () => async () => {
@@ -53,9 +76,14 @@ export default function P2PandaNode() {
             </Table.Tr>
           </Table.Tbody>
         </Table>
-        <Button variant="outline" leftSection={<IconPlug />} onClick={toggleBootstrap}>
-          Add bootstrap node
-        </Button>
+        <IfNodeSteward>
+          <Button variant="outline" leftSection={<IconPlug />} onClick={toggleBootstrap}>
+            Add bootstrap node
+          </Button>
+          <ActionButton variant="outline" color="red" leftSection={<IconAddressBookOff />} onClick={onClearAddressBook}>
+            Clear address book
+          </ActionButton>
+        </IfNodeSteward>
         <Collapse expanded={openedBootstrap}>
           <AddBootstrapNode onSuccess={toggleBootstrap} />
         </Collapse>
