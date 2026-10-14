@@ -386,6 +386,19 @@ impl PandaContainer {
 
         Ok(())
     }
+
+    pub async fn clear_address_book(&self) -> Result<(), PandaContainerError> {
+        let node_lock = self.node.lock().await;
+        let node = match node_lock.as_ref() {
+            Some(node) => node.clone(),
+            None => return Err(PandaContainerError::PandaNodeError(PandaNodeError::ServerError)),
+        };
+        drop(node_lock);
+
+        node.clear_node_infos()
+            .await
+            .map_err(|e| PandaContainerError::PandaNodeError(PandaNodeError::Database(e)))
+    }
 }
 
 pub fn build_public_key_from_hex(key_hex: &str) -> Result<VerifyingKey, anyhow::Error> {

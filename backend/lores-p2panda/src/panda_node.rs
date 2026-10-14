@@ -84,6 +84,8 @@ pub enum SubscriptionEvent {
 pub enum PandaNodeError {
     #[error(transparent)]
     NodeSpawn(#[from] Box<SpawnError>),
+    #[error("Server error")]
+    ServerError,
     #[error(transparent)]
     Database(#[from] sqlx::Error),
 }
@@ -315,6 +317,11 @@ impl PandaNode {
         .await?;
 
         Ok(row.get::<i64, _>("present") != 0)
+    }
+
+    pub async fn clear_node_infos(&self) -> Result<(), sqlx::Error> {
+        sqlx::query("DELETE FROM node_infos_v1").execute(&self.pool).await?;
+        Ok(())
     }
 
     async fn subscribe_to_ephemeral_stream(

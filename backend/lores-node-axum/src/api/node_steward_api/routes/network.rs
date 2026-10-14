@@ -114,8 +114,11 @@ async fn replay_projections(
         (status = 500, body = String),
     )
 )]
-async fn clear_address_book() -> impl IntoResponse {
-    return (StatusCode::INTERNAL_SERVER_ERROR, "not implemented");
+async fn clear_address_book(Extension(panda_container): Extension<PandaContainer>) -> impl IntoResponse {
+    match panda_container.clear_address_book().await {
+        Ok(_) => (StatusCode::OK, "Address book cleared").into_response(),
+        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, format!("Failed to clear address book: {e}")).into_response(),
+    }
 }
 
 #[derive(Serialize, ToSchema)]
