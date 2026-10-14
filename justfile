@@ -1,6 +1,13 @@
 setup:
     cd frontend && npm install
 
+[working-directory('backend')]
+migrate:
+    cd lores-node-axum
+    cargo sqlx migrate run --source migrations_projectiondb
+    cd ..
+    cargo sqlx prepare --workspace
+
 dev:
     mprocs
 
@@ -16,22 +23,22 @@ docker:
 two-node:
     mprocs --config mprocs-2node.yaml
 
-[working-directory: 'frontend']
+[working-directory('frontend')]
 gen-api:
     npm run swagger
 
-[working-directory: 'backend/lores-p2panda-client']
+[working-directory('backend/lores-p2panda-client')]
 publish-p2panda-client:
     cargo publish
 
-[working-directory: 'backend/lores-app-node']
+[working-directory('backend/lores-app-node')]
 publish-app-node:
     cargo publish
 
-[working-directory: 'backend/lores-dev-server']
+[working-directory('backend/lores-dev-server')]
 publish-dev-server:
     cargo publish
 
-[working-directory: 'backend/coop-cloud-docker-apps']
+[working-directory('backend/coop-cloud-docker-apps')]
 publish-coop-cloud-docker-apps:
     cargo publish

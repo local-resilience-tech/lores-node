@@ -147,6 +147,14 @@ The app should then be running on post 8000 of your pi. We recommend using [swar
 
 The Backend uses an SQLite database. The rust integration uses a library called `sqlx` that handles queries and database migrations, and also performs compile time checking of SQL queries against the DB structure. There are some command-line tools to help out with this
 
+## Migration
+
+Although you can do database changes with the tools below, the following command might assist with updating things if a developer has added new migrations:
+
+`just migrate`
+
+This will run projection migrations, and create prepared statements.
+
 ## SQLX Command Line Tools
 
 ### Installing
