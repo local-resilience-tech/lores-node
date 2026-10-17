@@ -481,7 +481,7 @@ export class HttpClient<SecurityDataType = unknown> {
 
 /**
  * @title lores-node
- * @version 0.24.1
+ * @version 0.24.2
  * @license
  */
 export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDataType> {
@@ -836,6 +836,19 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
         body: data,
         type: ContentType.Json,
         format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @name ClearAddressBook
+     * @request POST:/node_steward_api/network/clear_address_book
+     */
+    clearAddressBook: (params: RequestParams = {}) =>
+      this.request<string, string>({
+        path: `/node_steward_api/network/clear_address_book`,
+        method: "POST",
         ...params,
       }),
 
