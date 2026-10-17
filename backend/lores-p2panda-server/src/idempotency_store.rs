@@ -1,9 +1,12 @@
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use lores_p2panda::{RegionAppTopic, RegionTopic};
-use sqlx::SqlitePool;
+use sqlx::{QueryBuilder, Sqlite, SqlitePool};
 use tokio::time::interval;
 use tonic::Status;
+
+const TABLE_NAME: &str = "publish_idempotency_keys_v1";
+const DEPRECATED_TABLES: &[&str] = &["publish_idempotency_keys"];
 
 pub struct IdempotencyStore {
     db: SqlitePool,
@@ -24,9 +27,14 @@ impl IdempotencyStore {
         }
 
         let topic_bytes = region_app_topic.p2panda_topic().to_bytes().to_vec();
-        let row: Option<(Vec<u8>,)> = sqlx::query_as("SELECT operation_id FROM publish_idempotency_keys WHERE topic = ? AND key = ?")
-            .bind(&topic_bytes)
-            .bind(idempotency_key)
+        let mut query = QueryBuilder::<Sqlite>::new("SELECT operation_id FROM ");
+        query.push(TABLE_NAME);
+        query.push(" WHERE topic = ");
+        query.push_bind(&topic_bytes);
+        query.push(" AND key = ");
+        query.push_bind(idempotency_key);
+        let row: Option<(Vec<u8>,)> = query
+            .build_query_as()
             .fetch_optional(&self.db)
             .await
             .map_err(|e| Status::internal(e.to_string()))?;
@@ -43,35 +51,47 @@ impl IdempotencyStore {
         let topic_bytes = region_app_topic.p2panda_topic().to_bytes().to_vec();
         let seen_at = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs() as i64;
 
-        sqlx::query(
-            "INSERT OR IGNORE INTO publish_idempotency_keys (topic, key, operation_id, seen_at)
-             VALUES (?, ?, ?, ?)",
-        )
-        .bind(&topic_bytes)
-        .bind(idempotency_key)
-        .bind(operation_id)
-        .bind(seen_at)
-        .execute(&self.db)
-        .await
-        .map_err(|e| Status::internal(e.to_string()))?;
+        let mut query = QueryBuilder::<Sqlite>::new("INSERT OR IGNORE INTO ");
+        query.push(TABLE_NAME);
+        query.push(" (topic, key, operation_id, seen_at) VALUES (");
+        {
+            let mut values = query.separated(", ");
+            values.push_bind(&topic_bytes);
+            values.push_bind(idempotency_key);
+            values.push_bind(operation_id);
+            values.push_bind(seen_at);
+        }
+        query.push(")");
+        query
+            .build()
+            .execute(&self.db)
+            .await
+            .map_err(|e| Status::internal(e.to_string()))?;
 
         Ok(())
     }
 
     async fn setup_table(db: &SqlitePool) -> Result<(), sqlx::Error> {
-        sqlx::query(
-            "CREATE TABLE IF NOT EXISTS publish_idempotency_keys (
-                topic        BLOB    NOT NULL,
-                key          BLOB    NOT NULL,
-                operation_id BLOB    NOT NULL,
-                seen_at      INTEGER NOT NULL,
-                PRIMARY KEY (topic, key)
-            );
-            CREATE INDEX IF NOT EXISTS idx_pik_seen_at
-                ON publish_idempotency_keys(seen_at);",
-        )
-        .execute(db)
-        .await?;
+        for table in DEPRECATED_TABLES {
+            let mut query = QueryBuilder::<Sqlite>::new("DROP TABLE IF EXISTS ");
+            query.push(table);
+            query.build().execute(db).await?;
+        }
+
+        let mut create_table = QueryBuilder::<Sqlite>::new("CREATE TABLE IF NOT EXISTS ");
+        create_table.push(TABLE_NAME);
+        create_table.push(
+            " (topic BLOB NOT NULL, key BLOB NOT NULL, operation_id BLOB NOT NULL, seen_at INTEGER NOT NULL, PRIMARY KEY (topic, key))",
+        );
+        create_table.build().execute(db).await?;
+
+        let mut create_index = QueryBuilder::<Sqlite>::new("CREATE INDEX IF NOT EXISTS ");
+        create_index.push("idx_pik_seen_at");
+        create_index.push(" ON ");
+        create_index.push(TABLE_NAME);
+        create_index.push(" (seen_at)");
+        create_index.build().execute(db).await?;
+
         Ok(())
     }
 
@@ -84,10 +104,11 @@ impl IdempotencyStore {
             loop {
                 timer.tick().await;
                 let cutoff = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs() as i64 - retention_secs;
-                let _ = sqlx::query("DELETE FROM publish_idempotency_keys WHERE seen_at < ?")
-                    .bind(cutoff)
-                    .execute(&db)
-                    .await;
+                let mut query = QueryBuilder::<Sqlite>::new("DELETE FROM ");
+                query.push(TABLE_NAME);
+                query.push(" WHERE seen_at < ");
+                query.push_bind(cutoff);
+                let _ = query.build().execute(&db).await;
             }
         });
     }
@@ -157,25 +178,29 @@ mod tests {
         // Insert a row with seen_at in the distant past.
         let topic = topic("app");
         let topic_bytes = topic.p2panda_topic().to_bytes().to_vec();
-        sqlx::query("INSERT INTO publish_idempotency_keys (topic, key, operation_id, seen_at) VALUES (?, ?, ?, ?)")
-            .bind(&topic_bytes)
-            .bind(b"old-key".as_slice())
-            .bind(b"op-id".as_slice())
-            .bind(0i64) // epoch — definitely expired
-            .execute(&store.db)
-            .await
-            .unwrap();
+        let mut insert = QueryBuilder::<Sqlite>::new("INSERT INTO ");
+        insert.push(TABLE_NAME);
+        insert.push(" (topic, key, operation_id, seen_at) VALUES (");
+        {
+            let mut values = insert.separated(", ");
+            values.push_bind(&topic_bytes);
+            values.push_bind(b"old-key".as_slice());
+            values.push_bind(b"op-id".as_slice());
+            values.push_bind(0i64); // epoch — definitely expired
+        }
+        insert.push(")");
+        insert.build().execute(&store.db).await.unwrap();
 
         // Confirm it looks like a duplicate before cleanup.
         assert!(store.check_duplicate(&topic, b"old-key").await.unwrap().is_some());
 
         // Run cleanup with a cutoff of now (removes anything seen_at < now).
         let cutoff = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs() as i64;
-        sqlx::query("DELETE FROM publish_idempotency_keys WHERE seen_at < ?")
-            .bind(cutoff)
-            .execute(&store.db)
-            .await
-            .unwrap();
+        let mut delete = QueryBuilder::<Sqlite>::new("DELETE FROM ");
+        delete.push(TABLE_NAME);
+        delete.push(" WHERE seen_at < ");
+        delete.push_bind(cutoff);
+        delete.build().execute(&store.db).await.unwrap();
 
         // Now the key should be gone.
         assert!(store.check_duplicate(&topic, b"old-key").await.unwrap().is_none());
@@ -192,5 +217,58 @@ mod tests {
 
         assert!(store.check_duplicate(&topic_a, b"key-1").await.unwrap().is_some());
         assert!(store.check_duplicate(&topic_b, b"key-1").await.unwrap().is_none());
+    }
+
+    // 7. Booting the store drops superseded (legacy unversioned) tables.
+    #[tokio::test]
+    async fn test_boot_drops_deprecated_tables() {
+        let db = SqlitePoolOptions::new()
+            .max_connections(1)
+            .connect("sqlite::memory:")
+            .await
+            .unwrap();
+
+        sqlx::query(
+            "CREATE TABLE publish_idempotency_keys (
+                topic   BLOB    NOT NULL,
+                key     BLOB    NOT NULL,
+                seen_at INTEGER NOT NULL,
+                PRIMARY KEY (topic, key)
+            )",
+        )
+        .execute(&db)
+        .await
+        .unwrap();
+
+        let store = IdempotencyStore::new(db, Duration::from_secs(u64::MAX / 2), Duration::from_hours(48))
+            .await
+            .unwrap();
+
+        let legacy: Option<String> =
+            sqlx::query_scalar("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'publish_idempotency_keys'")
+                .fetch_optional(&store.db)
+                .await
+                .unwrap();
+        assert!(legacy.is_none());
+
+        store.record(&topic("app"), b"key-1", b"op-id-1").await.unwrap();
+        assert!(store.check_duplicate(&topic("app"), b"key-1").await.unwrap().is_some());
+    }
+
+    // 8. Re-initializing the store on the same database keeps existing rows
+    //    (CREATE TABLE IF NOT EXISTS on the current version only).
+    #[tokio::test]
+    async fn test_reinit_preserves_current_version_rows() {
+        let store = test_store().await;
+        store.record(&topic("app"), b"key-1", b"op-id-1").await.unwrap();
+
+        let store2 = IdempotencyStore::new(store.db.clone(), Duration::from_secs(u64::MAX / 2), Duration::from_hours(48))
+            .await
+            .unwrap();
+
+        assert_eq!(
+            store2.check_duplicate(&topic("app"), b"key-1").await.unwrap().as_deref(),
+            Some(b"op-id-1".as_slice())
+        );
     }
 }
