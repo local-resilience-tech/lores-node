@@ -62,11 +62,7 @@ impl IdempotencyStore {
             values.push_bind(seen_at);
         }
         query.push(")");
-        query
-            .build()
-            .execute(&self.db)
-            .await
-            .map_err(|e| Status::internal(e.to_string()))?;
+        query.build().execute(&self.db).await.map_err(|e| Status::internal(e.to_string()))?;
 
         Ok(())
     }
