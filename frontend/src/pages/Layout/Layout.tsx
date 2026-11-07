@@ -13,6 +13,7 @@ import {
   IconSquarePlus,
   IconTimelineEventText,
   IconUser,
+  IconNetwork,
 } from "@tabler/icons-react"
 import packageJson from "../../../package.json"
 import pangaLogoUrl from "../../assets/deepsea-panda.svg"
@@ -186,6 +187,11 @@ export default function Layout() {
               href={`/regions/${region.region.slug}/apps`}
               leftSection={<IconApps size={iconSize} />}
               onClick={toggle}
+            />
+            <NavLink
+              label="Domain management"
+              href={`/regions/${region.region.slug}/domain_management`}
+              leftSection={<IconNetwork size={iconSize} onClick={toggle} />}
             />
           </AppShell.Section>
         )}

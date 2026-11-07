@@ -61,6 +61,10 @@ export enum GetCurrentNodeStewardError {
   AdminNotFound = "AdminNotFound",
 }
 
+export enum DomainProvider {
+  Serversaurus = "Serversaurus",
+}
+
 export enum AdminLoginError {
   InvalidCredentials = "InvalidCredentials",
   NoPasswordSet = "NoPasswordSet",
@@ -143,6 +147,12 @@ export interface DockerService {
 export interface DockerStackWithServices {
   name: string
   services: DockerService[]
+}
+
+export interface DomainManagementCredentials {
+  credential: string
+  provider: DomainProvider
+  username: string
 }
 
 export interface ForgetRegionData {
@@ -322,6 +332,12 @@ export interface RegionWithNodes {
   region: Region
 }
 
+export interface RegisteredDomainData {
+  credential: string
+  domain_provider: string
+  username: string
+}
+
 export interface TopicStatusEntry {
   connections: PeerConnectionEntry[]
   topic_hex: string
@@ -481,7 +497,7 @@ export class HttpClient<SecurityDataType = unknown> {
 
 /**
  * @title lores-node
- * @version 0.24.2
+ * @version 0.24.3
  * @license
  */
 export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDataType> {
@@ -648,6 +664,35 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
       }),
   }
   nodeStewardApi = {
+    /**
+     * No description
+     *
+     * @name RegisterProvider
+     * @request POST:/node_steward_api/domain_management/register
+     */
+    registerProvider: (data: DomainManagementCredentials, params: RequestParams = {}) =>
+      this.request<string, string>({
+        path: `/node_steward_api/domain_management/register`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @name GetRegisteredDomain
+     * @request GET:/node_steward_api/domain_management/{domain_registration_id}
+     */
+    getRegisteredDomain: (domainRegistrationId: any, params: RequestParams = {}) =>
+      this.request<RegisteredDomainData, string>({
+        path: `/node_steward_api/domain_management/${domainRegistrationId}`,
+        method: "GET",
+        format: "json",
+        ...params,
+      }),
+
     /**
      * No description
      *

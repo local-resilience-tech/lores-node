@@ -8,4 +8,5 @@ pub fn node_steward_api_router() -> OpenApiRouter {
         .nest("/local_apps", routes::local_apps::router())
         .nest("/my_regions", routes::my_regions::router())
         .nest("/network", routes::network::router())
+        .nest("/domain_management", routes::domain_management::router())
 }

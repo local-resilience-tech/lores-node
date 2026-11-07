@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "\n            INSERT INTO registered_domain_providers (registration_id, domain_provider, credential, username)\n            VALUES(?, ?, ?, ?)\n            ON CONFLICT(registration_id) DO UPDATE SET credential = excluded.credential AND username = excluded.username\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 4
+    },
+    "nullable": []
+  },
+  "hash": "7189b8e69c5e609886048748aee33b1c5abd4cb0e8538b7e83ea06ca563dccb5"
+}
