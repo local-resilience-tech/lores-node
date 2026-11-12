@@ -4,6 +4,7 @@ import networkReducer from "./network"
 import regionsReducer, { nodeJoinedRegion, regionNodeUpdated, regionUpdated, regionForgotten, nodeHeartbeatReceived } from "./my_regions"
 import localAppsReducer, { localAppCreated, localAppsLoaded, localAppUpdated } from "./local_apps"
 import regionAppsReducer, { regionAppUpdated } from "./region_apps"
+import domainManagementReducer, { registeredDomainAdded, registeredDomainDeleted } from "./domain_management"
 import meReducer from "./me"
 import { ClientEvent } from "../api/Api"
 
@@ -14,6 +15,7 @@ const store = configureStore({
     my_regions: regionsReducer,
     localApps: localAppsReducer,
     regionApps: regionAppsReducer,
+    registeredDomains: domainManagementReducer,
   },
 })
 
@@ -50,6 +52,10 @@ export async function handleClientEvent(event: ClientEvent) {
     store.dispatch(localAppsLoaded(event.LocalAppsReloaded))
   } else if ("NodeHeartbeatReceived" in event) {
     store.dispatch(nodeHeartbeatReceived(event.NodeHeartbeatReceived))
+  } else if ("DomainRegistrationDeleted" in event) {
+    store.dispatch(registeredDomainDeleted(event.DomainRegistrationDeleted))
+  } else if ("DomainRegistered" in event) {
+    store.dispatch(registeredDomainAdded(event.DomainRegistered))
   } else {
     console.warn("Unhandled event type:", event)
   }

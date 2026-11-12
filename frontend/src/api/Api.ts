@@ -61,6 +61,10 @@ export enum GetCurrentNodeStewardError {
   AdminNotFound = "AdminNotFound",
 }
 
+export enum DomainProvider {
+  Serversaurus = "Serversaurus",
+}
+
 export enum AdminLoginError {
   InvalidCredentials = "InvalidCredentials",
   NoPasswordSet = "NoPasswordSet",
@@ -120,6 +124,12 @@ export type ClientEvent =
   | {
       NodeHeartbeatReceived: NodeHeartbeat
     }
+  | {
+      DomainRegistrationDeleted: string
+    }
+  | {
+      DomainRegistered: RegisteredDomainDetail
+    }
 
 export interface CreateRegionData {
   name: string
@@ -143,6 +153,12 @@ export interface DockerService {
 export interface DockerStackWithServices {
   name: string
   services: DockerService[]
+}
+
+export interface DomainManagementCredentials {
+  credential: string
+  provider: DomainProvider
+  username: string
 }
 
 export interface ForgetRegionData {
@@ -322,6 +338,22 @@ export interface RegionWithNodes {
   region: Region
 }
 
+export interface RegisteredDomainData {
+  credential: string
+  domain_provider: string
+  username: string
+}
+
+export interface RegisteredDomainDetail {
+  domain_provider: string
+  registration_id: string
+  username: string
+}
+
+export interface RegisteredDomainRef {
+  registration_id: string
+}
+
 export interface TopicStatusEntry {
   connections: PeerConnectionEntry[]
   topic_hex: string
@@ -481,7 +513,7 @@ export class HttpClient<SecurityDataType = unknown> {
 
 /**
  * @title lores-node
- * @version 0.24.2
+ * @version 0.24.3
  * @license
  */
 export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDataType> {
@@ -648,6 +680,65 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
       }),
   }
   nodeStewardApi = {
+    /**
+     * No description
+     *
+     * @name DeleteDomainRegistration
+     * @request DELETE:/node_steward_api/domain_management/delete
+     */
+    deleteDomainRegistration: (data: RegisteredDomainRef, params: RequestParams = {}) =>
+      this.request<any, string>({
+        path: `/node_steward_api/domain_management/delete`,
+        method: "DELETE",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @name RegisterProvider
+     * @request POST:/node_steward_api/domain_management/register
+     */
+    registerProvider: (data: DomainManagementCredentials, params: RequestParams = {}) =>
+      this.request<string, string>({
+        path: `/node_steward_api/domain_management/register`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @name GetRegisteredDomainDetails
+     * @request GET:/node_steward_api/domain_management/registered_domains
+     */
+    getRegisteredDomainDetails: (params: RequestParams = {}) =>
+      this.request<RegisteredDomainDetail[], string>({
+        path: `/node_steward_api/domain_management/registered_domains`,
+        method: "GET",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @name GetRegisteredDomain
+     * @request GET:/node_steward_api/domain_management/{domain_registration_id}
+     */
+    getRegisteredDomain: (domainRegistrationId: any, params: RequestParams = {}) =>
+      this.request<RegisteredDomainData, string>({
+        path: `/node_steward_api/domain_management/${domainRegistrationId}`,
+        method: "GET",
+        format: "json",
+        ...params,
+      }),
+
     /**
      * No description
      *
