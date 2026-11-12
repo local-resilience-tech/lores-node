@@ -124,6 +124,12 @@ export type ClientEvent =
   | {
       NodeHeartbeatReceived: NodeHeartbeat
     }
+  | {
+      DomainRegistrationDeleted: string
+    }
+  | {
+      DomainRegistered: RegisteredDomainDetail
+    }
 
 export interface CreateRegionData {
   name: string
@@ -336,6 +342,16 @@ export interface RegisteredDomainData {
   credential: string
   domain_provider: string
   username: string
+}
+
+export interface RegisteredDomainDetail {
+  domain_provider: string
+  registration_id: string
+  username: string
+}
+
+export interface RegisteredDomainRef {
+  registration_id: string
 }
 
 export interface TopicStatusEntry {
@@ -667,6 +683,22 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @name DeleteDomainRegistration
+     * @request DELETE:/node_steward_api/domain_management/delete
+     */
+    deleteDomainRegistration: (data: RegisteredDomainRef, params: RequestParams = {}) =>
+      this.request<any, string>({
+        path: `/node_steward_api/domain_management/delete`,
+        method: "DELETE",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
      * @name RegisterProvider
      * @request POST:/node_steward_api/domain_management/register
      */
@@ -676,6 +708,20 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
         method: "POST",
         body: data,
         type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @name GetRegisteredDomainDetails
+     * @request GET:/node_steward_api/domain_management/registered_domains
+     */
+    getRegisteredDomainDetails: (params: RequestParams = {}) =>
+      this.request<RegisteredDomainDetail[], string>({
+        path: `/node_steward_api/domain_management/registered_domains`,
+        method: "GET",
+        format: "json",
         ...params,
       }),
 

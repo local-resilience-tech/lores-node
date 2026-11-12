@@ -230,3 +230,15 @@ pub struct RegisteredDomainData {
     pub credential: String,
     pub username: String, // to do - the specific domain data will go in this type in the next PR
 }
+
+#[derive(Serialize, ToSchema, Debug, Clone)]
+pub struct RegisteredDomainDetail {
+    pub registration_id: String,
+    pub domain_provider: String,
+    pub username: String,
+}
+
+#[derive(Deserialize, ToSchema, Debug, Clone)]
+pub struct RegisteredDomainRef {
+    pub registration_id: String,
+}
