@@ -35,7 +35,32 @@ const domainManagementSlice = createSlice({
 
       return state
     },
+    registeredDomainUpdated: (state, action: PayloadAction<RegisteredDomainDetail>) => {
+      const registeredDomain = action.payload
+
+      if (!state) {
+        state = [registeredDomain]
+        return state
+      }
+
+      const registeredDomainIdx = state.findIndex((domain) => domain.registration_id === registeredDomain.registration_id)
+
+      if (registeredDomainIdx === -1) {
+        state.push(registeredDomain)
+      } else {
+        state[registeredDomainIdx] = registeredDomain
+      }
+
+      return state
+    },
   },
 })
-export const { registeredDomainsLoaded, registeredDomainDeleted, registeredDomainAdded } = domainManagementSlice.actions
+
+export const findDomainProviderDetail = (
+  state: RegisteredDomainDetailState,
+  domainRegistrationId: string | undefined,
+): RegisteredDomainDetail | undefined => state?.find((domain) => domain.registration_id === domainRegistrationId)
+
+export const { registeredDomainsLoaded, registeredDomainDeleted, registeredDomainAdded, registeredDomainUpdated } =
+  domainManagementSlice.actions
 export default domainManagementSlice.reducer

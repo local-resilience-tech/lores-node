@@ -18,4 +18,5 @@ pub enum ClientEvent {
     NodeHeartbeatReceived(NodeHeartbeat),
     DomainRegistrationDeleted(String),
     DomainRegistered(RegisteredDomainDetail),
+    DomainRegistrationUpdated(RegisteredDomainDetail),
 }

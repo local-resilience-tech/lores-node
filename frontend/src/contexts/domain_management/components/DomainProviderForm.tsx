@@ -1,22 +1,23 @@
 import { Stack, PasswordInput, Button, Select, TextInput } from "@mantine/core"
 import { useForm } from "@mantine/form"
 import { ActionPromiseResult, DisplayActionResult, useOnSubmitWithResult } from "../../../components"
-import { DomainManagementCredentials, DomainProvider } from "../../../api/Api"
+import { DomainManagementCredentials, DomainProvider, RegisteredDomainDetail } from "../../../api/Api"
 
 interface DomainProviderFormProps {
+  registeredDomainDetail?: RegisteredDomainDetail
   onSubmit: (values: DomainManagementCredentials) => Promise<ActionPromiseResult | void>
 }
 
-export function DomainProviderForm({ onSubmit }: DomainProviderFormProps) {
+export function DomainProviderForm({ onSubmit, registeredDomainDetail }: DomainProviderFormProps) {
   const [actionResult, onSubmitWithResult] = useOnSubmitWithResult<DomainManagementCredentials>(onSubmit)
   const providers = [DomainProvider.Serversaurus] // to do - maybe not the best way to do this?
 
   const form = useForm<DomainManagementCredentials>({
     mode: "controlled",
     initialValues: {
-      provider: providers[0],
-      username: "", // to do - populate existing username here
-      credential: "", // to do - populate existing credentials here
+      provider: (registeredDomainDetail?.domain_provider as DomainProvider) ?? providers[0],
+      username: registeredDomainDetail?.username ?? "",
+      credential: registeredDomainDetail?.credential ?? "",
     },
     validate: {
       provider: (value) => {
@@ -43,6 +44,7 @@ export function DomainProviderForm({ onSubmit }: DomainProviderFormProps) {
           description="Select the domain provider to authenticate with."
           data={providers}
           withAsterisk
+          disabled={Boolean(registeredDomainDetail?.domain_provider)}
           {...form.getInputProps("provider")}
         />
 

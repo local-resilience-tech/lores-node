@@ -8,8 +8,6 @@ interface RegisteredDomainProvidersListProps {
   details: RegisteredDomainDetail[]
 }
 
-// there's also a console error to do with keys
-
 export default function RegisteredDomainProvidersList({ details }: RegisteredDomainProvidersListProps) {
   const handleDelete = async (registrationId: string) => {
     getApi()
@@ -32,7 +30,7 @@ export default function RegisteredDomainProvidersList({ details }: RegisteredDom
       </Table.Thead>
       <Table.Tbody>
         {details.map((detail) => (
-          <RegisteredDomainProviderRow detail={detail} handleDelete={handleDelete} />
+          <RegisteredDomainProviderRow detail={detail} handleDelete={handleDelete} key={detail.registration_id} />
         ))}
       </Table.Tbody>
     </Table>

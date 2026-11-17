@@ -4,7 +4,7 @@ import networkReducer from "./network"
 import regionsReducer, { nodeJoinedRegion, regionNodeUpdated, regionUpdated, regionForgotten, nodeHeartbeatReceived } from "./my_regions"
 import localAppsReducer, { localAppCreated, localAppsLoaded, localAppUpdated } from "./local_apps"
 import regionAppsReducer, { regionAppUpdated } from "./region_apps"
-import domainManagementReducer, { registeredDomainAdded, registeredDomainDeleted } from "./domain_management"
+import domainManagementReducer, { registeredDomainAdded, registeredDomainDeleted, registeredDomainUpdated } from "./domain_management"
 import meReducer from "./me"
 import { ClientEvent } from "../api/Api"
 
@@ -56,6 +56,8 @@ export async function handleClientEvent(event: ClientEvent) {
     store.dispatch(registeredDomainDeleted(event.DomainRegistrationDeleted))
   } else if ("DomainRegistered" in event) {
     store.dispatch(registeredDomainAdded(event.DomainRegistered))
+  } else if ("DomainRegistrationUpdated" in event) {
+    store.dispatch(registeredDomainUpdated(event.DomainRegistrationUpdated))
   } else {
     console.warn("Unhandled event type:", event)
   }

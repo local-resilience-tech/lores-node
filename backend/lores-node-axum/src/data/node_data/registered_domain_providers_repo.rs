@@ -1,4 +1,4 @@
-use sqlx::{Sqlite, SqlitePool};
+use sqlx::{Sqlite, SqlitePool, Transaction};
 
 #[derive(sqlx::FromRow)]
 pub struct RegisteredDomainProvidersRow {
@@ -6,6 +6,7 @@ pub struct RegisteredDomainProvidersRow {
     pub domain_provider: String,
     pub credential: String,
     pub username: String,
+    pub registered_by: String,
 }
 
 pub struct RegisteredDomainProvidersRepo {}
@@ -15,43 +16,29 @@ impl RegisteredDomainProvidersRepo {
         RegisteredDomainProvidersRepo {}
     }
 
-    pub async fn upsert(&self, pool: &SqlitePool, credentials: &RegisteredDomainProvidersRow) -> Result<(), sqlx::Error> {
+    pub async fn upsert(&self, tx: &mut Transaction<'_, Sqlite>, credentials: &RegisteredDomainProvidersRow) -> Result<(), sqlx::Error> {
         sqlx::query::<Sqlite>(
             "
-            INSERT INTO registered_domain_providers (registration_id, domain_provider, credential, username)
-            VALUES(?, ?, ?, ?)
-            ON CONFLICT(registration_id) DO UPDATE SET credential = excluded.credential AND username = excluded.username
+            INSERT INTO registered_domain_providers (registration_id, domain_provider, credential, username, registered_by)
+            VALUES(?, ?, ?, ?, ?)
+            ON CONFLICT(registration_id) DO UPDATE SET credential = excluded.credential AND username = excluded.username AND registered_by = excluded.registered_by
             ",
         )
         .bind(&credentials.registration_id)
         .bind(&credentials.domain_provider)
         .bind(&credentials.credential)
         .bind(&credentials.username)
-        .execute(pool)
+        .bind(&credentials.registered_by)
+        .execute(&mut **tx)
         .await?;
 
         Ok(())
     }
 
-    pub async fn find(&self, pool: &SqlitePool, registration_id: &str) -> Result<Option<RegisteredDomainProvidersRow>, sqlx::Error> {
-        let row = sqlx::query_as::<Sqlite, RegisteredDomainProvidersRow>(
-            "
-                SELECT registration_id, domain_provider, credential, username
-                FROM registered_domain_providers
-                WHERE registration_id = ?
-            ",
-        )
-        .bind(registration_id)
-        .fetch_optional(pool)
-        .await?;
-
-        Ok(row)
-    }
-
     pub async fn all(&self, pool: &SqlitePool) -> Result<Vec<RegisteredDomainProvidersRow>, sqlx::Error> {
         let rows = sqlx::query_as::<Sqlite, RegisteredDomainProvidersRow>(
             "
-                SELECT registration_id, domain_provider, credential, username
+                SELECT registration_id, domain_provider, credential, username, registered_by
                 FROM registered_domain_providers
             ",
         )

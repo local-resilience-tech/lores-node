@@ -130,6 +130,9 @@ export type ClientEvent =
   | {
       DomainRegistered: RegisteredDomainDetail
     }
+  | {
+      DomainRegistrationUpdated: RegisteredDomainDetail
+    }
 
 export interface CreateRegionData {
   name: string
@@ -338,13 +341,8 @@ export interface RegionWithNodes {
   region: Region
 }
 
-export interface RegisteredDomainData {
-  credential: string
-  domain_provider: string
-  username: string
-}
-
 export interface RegisteredDomainDetail {
+  credential: string
   domain_provider: string
   registration_id: string
   username: string
@@ -728,14 +726,15 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
-     * @name GetRegisteredDomain
-     * @request GET:/node_steward_api/domain_management/{domain_registration_id}
+     * @name UpdateDomainRegistration
+     * @request PUT:/node_steward_api/domain_management/{domain_registration_id}/update
      */
-    getRegisteredDomain: (domainRegistrationId: any, params: RequestParams = {}) =>
-      this.request<RegisteredDomainData, string>({
-        path: `/node_steward_api/domain_management/${domainRegistrationId}`,
-        method: "GET",
-        format: "json",
+    updateDomainRegistration: (domainRegistrationId: string, data: DomainManagementCredentials, params: RequestParams = {}) =>
+      this.request<string, string>({
+        path: `/node_steward_api/domain_management/${domainRegistrationId}/update`,
+        method: "PUT",
+        body: data,
+        type: ContentType.Json,
         ...params,
       }),
 

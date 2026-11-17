@@ -22,6 +22,7 @@ import "@mantine/notifications/styles.css"
 import { P2PandaNode } from "./contexts/network"
 import { SetActiveRegion, SetupRegion, EnsureJoinedRegion, RedirectToRegion, ShowRegion, EditRegionMap } from "./contexts/regions"
 import { ManageDomainProviders, SetupDomainProvider, ShowRegisteredDomainProvider } from "./contexts/domain_management"
+import EditDomainProviderConfiguration from "./contexts/domain_management/pages/EditDomainProviderConfiguration"
 
 function withStore(func: (store: AppStore) => any, store: AppStore): LoaderFunction<any> {
   const wrappedFunc: LoaderFunction<any> = async () => {
@@ -89,6 +90,43 @@ const router = createBrowserRouter([
               },
             ],
           },
+          {
+            path: "domain_management",
+            children: [
+              {
+                path: "",
+                element: (
+                  <RequireNodeSteward>
+                    <ManageDomainProviders />
+                  </RequireNodeSteward>
+                ),
+              },
+              {
+                path: "new",
+                element: (
+                  <RequireNodeSteward>
+                    <SetupDomainProvider />
+                  </RequireNodeSteward>
+                ),
+              },
+              {
+                path: ":domainRegistrationId",
+                element: (
+                  <RequireNodeSteward>
+                    <ShowRegisteredDomainProvider />
+                  </RequireNodeSteward>
+                ),
+              },
+              {
+                path: ":domainRegistrationId/edit",
+                element: (
+                  <RequireNodeSteward>
+                    <EditDomainProviderConfiguration />
+                  </RequireNodeSteward>
+                ),
+              },
+            ],
+          },
         ],
       },
       {
@@ -141,35 +179,6 @@ const router = createBrowserRouter([
                     <EditRegionMap />
                   </RequireNodeSteward>
                 ),
-              },
-              {
-                path: "domain_management",
-                children: [
-                  {
-                    path: "",
-                    element: (
-                      <RequireNodeSteward>
-                        <ManageDomainProviders />
-                      </RequireNodeSteward>
-                    ),
-                  },
-                  {
-                    path: "new",
-                    element: (
-                      <RequireNodeSteward>
-                        <SetupDomainProvider />
-                      </RequireNodeSteward>
-                    ),
-                  },
-                  {
-                    path: ":domainRegistrationId",
-                    element: (
-                      <RequireNodeSteward>
-                        <ShowRegisteredDomainProvider />
-                      </RequireNodeSteward>
-                    ),
-                  },
-                ],
               },
             ],
             element: (
