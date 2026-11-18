@@ -20,7 +20,6 @@ use crate::{
     },
 };
 
-// to do - move this
 #[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
 pub enum DomainProvider {
     Serversaurus,
@@ -38,6 +37,7 @@ pub fn router() -> OpenApiRouter {
         .routes(routes!(get_registered_domain_details))
         .routes(routes!(delete_domain_registration))
         .routes(routes!(update_domain_registration))
+        .routes(routes!(get_available_domain_providers))
 }
 
 #[derive(Deserialize, ToSchema, Debug, Clone)]
@@ -70,6 +70,18 @@ impl DomainManagementCredentials {
 
         Ok(())
     }
+}
+
+#[utoipa::path(
+    get, path = "/available_domain_providers",
+    responses(
+        (status = 200, body = Vec<DomainProvider>),
+    )
+)]
+async fn get_available_domain_providers() -> impl IntoResponse {
+    let available_domain_providers = vec![DomainProvider::Serversaurus];
+
+    (StatusCode::OK, Json(available_domain_providers)).into_response()
 }
 
 #[utoipa::path(
