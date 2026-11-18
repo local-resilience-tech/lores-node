@@ -2,6 +2,7 @@ import { Stack, PasswordInput, Button, Select, TextInput } from "@mantine/core"
 import { useForm } from "@mantine/form"
 import { ActionPromiseResult, DisplayActionResult, useOnSubmitWithResult } from "../../../components"
 import { DomainManagementCredentials, DomainProvider, RegisteredDomainDetail } from "../../../api/Api"
+import { useAppSelector } from "../../../store"
 
 interface DomainProviderFormProps {
   registeredDomainDetail?: RegisteredDomainDetail
@@ -10,7 +11,7 @@ interface DomainProviderFormProps {
 
 export function DomainProviderForm({ onSubmit, registeredDomainDetail }: DomainProviderFormProps) {
   const [actionResult, onSubmitWithResult] = useOnSubmitWithResult<DomainManagementCredentials>(onSubmit)
-  const providers = [DomainProvider.Serversaurus] // to do - maybe not the best way to do this?
+  const providers = useAppSelector((state) => state.registeredDomains.availableDomainProviders) ?? []
 
   const form = useForm<DomainManagementCredentials>({
     mode: "controlled",

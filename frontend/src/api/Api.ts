@@ -681,6 +681,20 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
+     * @name GetAvailableDomainProviders
+     * @request GET:/node_steward_api/domain_management/available_domain_providers
+     */
+    getAvailableDomainProviders: (params: RequestParams = {}) =>
+      this.request<DomainProvider[], any>({
+        path: `/node_steward_api/domain_management/available_domain_providers`,
+        method: "GET",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
      * @name DeleteDomainRegistration
      * @request DELETE:/node_steward_api/domain_management/delete
      */

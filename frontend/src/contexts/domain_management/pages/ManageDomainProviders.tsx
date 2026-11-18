@@ -7,7 +7,7 @@ import RegisteredDomainProvidersList from "../components/RegisteredDomainProvide
 export default function ManageDomainProviders() {
   const navigate = useNavigate()
 
-  const registeredDomainProviders = useAppSelector((state) => state.registeredDomains)
+  const registeredDomainProviders = useAppSelector((state) => state.registeredDomains.registeredDomainDetails)
   return (
     <Stack gap="lg">
       <Group justify="space-between">

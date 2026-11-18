@@ -7,7 +7,7 @@ import { meLoaded } from "./me"
 import { redirect } from "react-router-dom"
 import { GetCurrentNodeStewardError } from "../api/Api"
 import { networkLoaded } from "./network"
-import { registeredDomainsLoaded } from "./domain_management"
+import { availableProvidersLoaded, registeredDomainsLoaded } from "./domain_management"
 
 export async function loadInitialData(store: AppStore) {
   const state = store.getState()
@@ -38,7 +38,8 @@ export async function loadInitialData(store: AppStore) {
   if (state.my_regions.all === null) loadRegions(store)
   if (state.localApps === null) loadLocalApps(store)
   if (state.regionApps === null) loadRegionApps(store)
-  if (state.registeredDomains === null) loadDomainManagementDetails(store)
+  if (state.registeredDomains.registeredDomainDetails === null) loadDomainManagementDetails(store)
+  if (state.registeredDomains.availableDomainProviders === null) loadAvailableDomainProviders(store)
 }
 
 async function loadNetwork(store: AppStore) {
@@ -69,6 +70,12 @@ async function loadDomainManagementDetails(store: AppStore) {
   const result = await fetchApiData(() => getApi().nodeStewardApi.getRegisteredDomainDetails())
   console.log("EFFECT: fetchRegisteredDomainDetails", result)
   if (result) store.dispatch(registeredDomainsLoaded(result))
+}
+
+async function loadAvailableDomainProviders(store: AppStore) {
+  const result = await fetchApiData(() => getApi().nodeStewardApi.getAvailableDomainProviders())
+  console.log("EFFECT: fetchAvailableDomainProviders", result)
+  if (result) store.dispatch(availableProvidersLoaded(result))
 }
 
 const fetchApiData = async <T>(apiCall: () => Promise<{ status: number; data: T }>): Promise<T | null> => {
