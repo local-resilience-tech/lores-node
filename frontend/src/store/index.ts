@@ -52,12 +52,12 @@ export async function handleClientEvent(event: ClientEvent) {
     store.dispatch(localAppsLoaded(event.LocalAppsReloaded))
   } else if ("NodeHeartbeatReceived" in event) {
     store.dispatch(nodeHeartbeatReceived(event.NodeHeartbeatReceived))
-  } else if ("DomainRegistrationDeleted" in event) {
-    store.dispatch(registeredDomainDeleted(event.DomainRegistrationDeleted))
-  } else if ("DomainRegistered" in event) {
-    store.dispatch(registeredDomainAdded(event.DomainRegistered))
-  } else if ("DomainRegistrationUpdated" in event) {
-    store.dispatch(registeredDomainUpdated(event.DomainRegistrationUpdated))
+  } else if ("DomainProviderRegistrationDeleted" in event) {
+    store.dispatch(registeredDomainDeleted(event.DomainProviderRegistrationDeleted))
+  } else if ("DomainProviderRegistered" in event) {
+    store.dispatch(registeredDomainAdded(event.DomainProviderRegistered))
+  } else if ("DomainProviderRegistrationUpdated" in event) {
+    store.dispatch(registeredDomainUpdated(event.DomainProviderRegistrationUpdated))
   } else {
     console.warn("Unhandled event type:", event)
   }

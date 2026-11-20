@@ -6,17 +6,13 @@ import { findDomainProviderDetail } from "../../../store/domain_management"
 import { IconEdit } from "@tabler/icons-react"
 
 export default function ShowRegisteredDomainProvider() {
-  // to do:
-  // - sort naming of these variables
-
   const { domainRegistrationId } = useParams()
   const navigate = useNavigate()
-
   const domainProviderDetail = useAppSelector((state) => findDomainProviderDetail(state.registeredDomains, domainRegistrationId))
 
   useEffect(() => {
     if (!domainProviderDetail) {
-      navigate(-1)
+      navigate("/node/domain_management")
     }
   }, [domainRegistrationId, domainProviderDetail, navigate])
 

@@ -11,18 +11,17 @@ import { getApi } from "../../../api"
 export default function EditDomainProviderConfiguration() {
   const { domainRegistrationId } = useParams()
   const navigate = useNavigate()
-
   const domainProviderDetail = useAppSelector((state) => findDomainProviderDetail(state.registeredDomains, domainRegistrationId))
 
   useEffect(() => {
     if (!domainProviderDetail) {
-      navigate(-1)
+      navigate("/node/domain_management")
     }
   }, [domainRegistrationId, domainProviderDetail, navigate])
 
   const handleSubmit = async (values: DomainManagementCredentials): Promise<ActionPromiseResult> => {
     return getApi()
-      .nodeStewardApi.updateDomainRegistration(domainRegistrationId!, values)
+      .nodeStewardApi.updateRegisteredDomainProviderDetails(domainRegistrationId!, values)
       .then((response) => {
         const { data: domainRegistrationId } = response
         navigate(`../../${domainRegistrationId}`, { relative: "path" })
@@ -39,7 +38,7 @@ export default function EditDomainProviderConfiguration() {
   return (
     <Stack gap="lg" h="300">
       <Title order={1}>Edit domain provider</Title>
-      <DomainProviderForm onSubmit={handleSubmit} registeredDomainDetail={domainProviderDetail} />
+      <DomainProviderForm onSubmit={handleSubmit} registeredDomainProviderDetail={domainProviderDetail} />
     </Stack>
   )
 }

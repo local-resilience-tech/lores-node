@@ -225,7 +225,7 @@ pub struct NodeHeartbeat {
 }
 
 #[derive(Serialize, ToSchema, Debug, Clone)]
-pub struct RegisteredDomainDetail {
+pub struct RegisteredDomainProviderDetail {
     pub registration_id: String,
     pub domain_provider: String,
     pub username: String,
@@ -233,6 +233,6 @@ pub struct RegisteredDomainDetail {
 }
 
 #[derive(Deserialize, ToSchema, Debug, Clone)]
-pub struct RegisteredDomainRef {
+pub struct RegisteredDomainProviderRef {
     pub registration_id: String,
 }

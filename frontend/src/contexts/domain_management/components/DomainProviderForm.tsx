@@ -1,24 +1,24 @@
 import { Stack, PasswordInput, Button, Select, TextInput } from "@mantine/core"
 import { useForm } from "@mantine/form"
 import { ActionPromiseResult, DisplayActionResult, useOnSubmitWithResult } from "../../../components"
-import { DomainManagementCredentials, DomainProvider, RegisteredDomainDetail } from "../../../api/Api"
+import { DomainManagementCredentials, DomainProvider, RegisteredDomainProviderDetail } from "../../../api/Api"
 import { useAppSelector } from "../../../store"
 
 interface DomainProviderFormProps {
-  registeredDomainDetail?: RegisteredDomainDetail
+  registeredDomainProviderDetail?: RegisteredDomainProviderDetail
   onSubmit: (values: DomainManagementCredentials) => Promise<ActionPromiseResult | void>
 }
 
-export function DomainProviderForm({ onSubmit, registeredDomainDetail }: DomainProviderFormProps) {
+export function DomainProviderForm({ onSubmit, registeredDomainProviderDetail }: DomainProviderFormProps) {
   const [actionResult, onSubmitWithResult] = useOnSubmitWithResult<DomainManagementCredentials>(onSubmit)
   const providers = useAppSelector((state) => state.registeredDomains.availableDomainProviders) ?? []
 
   const form = useForm<DomainManagementCredentials>({
     mode: "controlled",
     initialValues: {
-      provider: (registeredDomainDetail?.domain_provider as DomainProvider) ?? providers[0],
-      username: registeredDomainDetail?.username ?? "",
-      credential: registeredDomainDetail?.credential ?? "",
+      provider: (registeredDomainProviderDetail?.domain_provider as DomainProvider) ?? providers[0],
+      username: registeredDomainProviderDetail?.username ?? "",
+      credential: registeredDomainProviderDetail?.credential ?? "",
     },
     validate: {
       provider: (value) => {
@@ -45,7 +45,7 @@ export function DomainProviderForm({ onSubmit, registeredDomainDetail }: DomainP
           description="Select the domain provider to authenticate with."
           data={providers}
           withAsterisk
-          disabled={Boolean(registeredDomainDetail?.domain_provider)}
+          disabled={Boolean(registeredDomainProviderDetail?.domain_provider)}
           {...form.getInputProps("provider")}
         />
 
@@ -65,7 +65,7 @@ export function DomainProviderForm({ onSubmit, registeredDomainDetail }: DomainP
         />
         <DisplayActionResult result={actionResult} />
         <Button loading={form.submitting} type="submit">
-          Store credential
+          {registeredDomainProviderDetail ? "Update provider details" : "Store provider details"}
         </Button>
       </Stack>
     </form>

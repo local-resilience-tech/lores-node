@@ -6,7 +6,6 @@ import RegisteredDomainProvidersList from "../components/RegisteredDomainProvide
 
 export default function ManageDomainProviders() {
   const navigate = useNavigate()
-
   const registeredDomainProviders = useAppSelector((state) => state.registeredDomains.registeredDomainDetails)
   return (
     <Stack gap="lg">
@@ -16,7 +15,7 @@ export default function ManageDomainProviders() {
           <IconPlus />
         </ActionIcon>
       </Group>
-      {registeredDomainProviders && registeredDomainProviders.length > 0 ? (
+      {registeredDomainProviders && registeredDomainProviders.length ? (
         <RegisteredDomainProvidersList details={registeredDomainProviders} />
       ) : (
         <Text>No providers currently configured</Text>

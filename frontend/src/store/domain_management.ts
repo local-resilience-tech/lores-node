@@ -1,8 +1,8 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit"
-import { DomainProvider, RegisteredDomainDetail } from "../api/Api"
+import { DomainProvider, RegisteredDomainProviderDetail } from "../api/Api"
 
 export type DomainManagementState = {
-  registeredDomainDetails: RegisteredDomainDetail[] | null
+  registeredDomainDetails: RegisteredDomainProviderDetail[] | null
   availableDomainProviders: DomainProvider[] | null
 }
 
@@ -15,7 +15,7 @@ const domainManagementSlice = createSlice({
 
       return state
     },
-    registeredDomainsLoaded: (state, action: PayloadAction<RegisteredDomainDetail[]>) => {
+    registeredDomainsLoaded: (state, action: PayloadAction<RegisteredDomainProviderDetail[]>) => {
       state.registeredDomainDetails = action.payload
 
       return state
@@ -31,7 +31,7 @@ const domainManagementSlice = createSlice({
 
       return state
     },
-    registeredDomainAdded: (state, action: PayloadAction<RegisteredDomainDetail>) => {
+    registeredDomainAdded: (state, action: PayloadAction<RegisteredDomainProviderDetail>) => {
       const registeredDomain = action.payload
 
       if (!state.registeredDomainDetails) {
@@ -45,7 +45,7 @@ const domainManagementSlice = createSlice({
 
       return state
     },
-    registeredDomainUpdated: (state, action: PayloadAction<RegisteredDomainDetail>) => {
+    registeredDomainUpdated: (state, action: PayloadAction<RegisteredDomainProviderDetail>) => {
       const registeredDomain = action.payload
 
       if (!state.registeredDomainDetails) {
@@ -70,7 +70,8 @@ const domainManagementSlice = createSlice({
 export const findDomainProviderDetail = (
   state: DomainManagementState,
   domainRegistrationId: string | undefined,
-): RegisteredDomainDetail | undefined => state?.registeredDomainDetails?.find((domain) => domain.registration_id === domainRegistrationId)
+): RegisteredDomainProviderDetail | undefined =>
+  state?.registeredDomainDetails?.find((domain) => domain.registration_id === domainRegistrationId)
 
 export const {
   availableProvidersLoaded,

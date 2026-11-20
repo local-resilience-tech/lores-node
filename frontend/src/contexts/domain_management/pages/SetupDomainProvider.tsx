@@ -7,16 +7,14 @@ import { useNavigate } from "react-router-dom"
 
 export default function SetupDomainProvider() {
   const navigate = useNavigate()
-
   const handleSubmit = async (values: DomainManagementCredentials): Promise<ActionPromiseResult> => {
     return getApi()
-      .nodeStewardApi.registerProvider(values)
+      .nodeStewardApi.registerDomainProvider(values)
       .then((response) => {
         const { data: domainRegistrationId } = response
         navigate(`../${domainRegistrationId}`, { relative: "path" })
       })
       .catch((error) => {
-        // to do - double check our endpoint can return this response
         if (error.response?.status === 401 || error.response?.status === 403) {
           navigate("/auth/admin/login")
         } else {

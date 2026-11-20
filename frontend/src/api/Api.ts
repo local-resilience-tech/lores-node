@@ -125,13 +125,13 @@ export type ClientEvent =
       NodeHeartbeatReceived: NodeHeartbeat
     }
   | {
-      DomainRegistrationDeleted: string
+      DomainProviderRegistrationDeleted: string
     }
   | {
-      DomainRegistered: RegisteredDomainDetail
+      DomainProviderRegistered: RegisteredDomainProviderDetail
     }
   | {
-      DomainRegistrationUpdated: RegisteredDomainDetail
+      DomainProviderRegistrationUpdated: RegisteredDomainProviderDetail
     }
 
 export interface CreateRegionData {
@@ -341,14 +341,14 @@ export interface RegionWithNodes {
   region: Region
 }
 
-export interface RegisteredDomainDetail {
+export interface RegisteredDomainProviderDetail {
   credential: string
   domain_provider: string
   registration_id: string
   username: string
 }
 
-export interface RegisteredDomainRef {
+export interface RegisteredDomainProviderRef {
   registration_id: string
 }
 
@@ -695,10 +695,10 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
-     * @name DeleteDomainRegistration
+     * @name DeleteRegisteredDomainProvider
      * @request DELETE:/node_steward_api/domain_management/delete
      */
-    deleteDomainRegistration: (data: RegisteredDomainRef, params: RequestParams = {}) =>
+    deleteRegisteredDomainProvider: (data: RegisteredDomainProviderRef, params: RequestParams = {}) =>
       this.request<any, string>({
         path: `/node_steward_api/domain_management/delete`,
         method: "DELETE",
@@ -711,10 +711,10 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
-     * @name RegisterProvider
+     * @name RegisterDomainProvider
      * @request POST:/node_steward_api/domain_management/register
      */
-    registerProvider: (data: DomainManagementCredentials, params: RequestParams = {}) =>
+    registerDomainProvider: (data: DomainManagementCredentials, params: RequestParams = {}) =>
       this.request<string, string>({
         path: `/node_steward_api/domain_management/register`,
         method: "POST",
@@ -726,11 +726,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
-     * @name GetRegisteredDomainDetails
+     * @name GetRegisteredDomainProviderDetails
      * @request GET:/node_steward_api/domain_management/registered_domains
      */
-    getRegisteredDomainDetails: (params: RequestParams = {}) =>
-      this.request<RegisteredDomainDetail[], string>({
+    getRegisteredDomainProviderDetails: (params: RequestParams = {}) =>
+      this.request<RegisteredDomainProviderDetail[], string>({
         path: `/node_steward_api/domain_management/registered_domains`,
         method: "GET",
         format: "json",
@@ -740,10 +740,10 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
-     * @name UpdateDomainRegistration
+     * @name UpdateRegisteredDomainProviderDetails
      * @request PUT:/node_steward_api/domain_management/{domain_registration_id}/update
      */
-    updateDomainRegistration: (domainRegistrationId: string, data: DomainManagementCredentials, params: RequestParams = {}) =>
+    updateRegisteredDomainProviderDetails: (domainRegistrationId: string, data: DomainManagementCredentials, params: RequestParams = {}) =>
       this.request<string, string>({
         path: `/node_steward_api/domain_management/${domainRegistrationId}/update`,
         method: "PUT",

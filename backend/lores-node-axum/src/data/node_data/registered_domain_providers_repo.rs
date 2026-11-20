@@ -1,7 +1,7 @@
 use sqlx::{Sqlite, SqlitePool, Transaction};
 
 #[derive(sqlx::FromRow)]
-pub struct RegisteredDomainProvidersRow {
+pub struct RegisteredDomainProviderRow {
     pub registration_id: String,
     pub domain_provider: String,
     pub credential: String,
@@ -16,7 +16,7 @@ impl RegisteredDomainProvidersRepo {
         RegisteredDomainProvidersRepo {}
     }
 
-    pub async fn upsert(&self, tx: &mut Transaction<'_, Sqlite>, credentials: &RegisteredDomainProvidersRow) -> Result<(), sqlx::Error> {
+    pub async fn upsert(&self, tx: &mut Transaction<'_, Sqlite>, credentials: &RegisteredDomainProviderRow) -> Result<(), sqlx::Error> {
         sqlx::query::<Sqlite>(
             "
             INSERT INTO registered_domain_providers (registration_id, domain_provider, credential, username, registered_by)
@@ -35,8 +35,8 @@ impl RegisteredDomainProvidersRepo {
         Ok(())
     }
 
-    pub async fn all(&self, pool: &SqlitePool) -> Result<Vec<RegisteredDomainProvidersRow>, sqlx::Error> {
-        let rows = sqlx::query_as::<Sqlite, RegisteredDomainProvidersRow>(
+    pub async fn all(&self, pool: &SqlitePool) -> Result<Vec<RegisteredDomainProviderRow>, sqlx::Error> {
+        let rows = sqlx::query_as::<Sqlite, RegisteredDomainProviderRow>(
             "
                 SELECT registration_id, domain_provider, credential, username, registered_by
                 FROM registered_domain_providers

@@ -2,7 +2,7 @@ use serde::Serialize;
 use utoipa::ToSchema;
 
 use crate::data::entities::{
-    LocalApp, NodeHeartbeat, Region, RegionAppWithInstallations, RegionNodeDetails, RegionWithNodes, RegisteredDomainDetail,
+    LocalApp, NodeHeartbeat, Region, RegionAppWithInstallations, RegionNodeDetails, RegionWithNodes, RegisteredDomainProviderDetail,
 };
 
 #[derive(Debug, Clone, Serialize, ToSchema)]
@@ -16,7 +16,7 @@ pub enum ClientEvent {
     LocalAppUpdated(LocalApp),
     LocalAppsReloaded(Vec<LocalApp>),
     NodeHeartbeatReceived(NodeHeartbeat),
-    DomainRegistrationDeleted(String),
-    DomainRegistered(RegisteredDomainDetail),
-    DomainRegistrationUpdated(RegisteredDomainDetail),
+    DomainProviderRegistrationDeleted(String),
+    DomainProviderRegistered(RegisteredDomainProviderDetail),
+    DomainProviderRegistrationUpdated(RegisteredDomainProviderDetail),
 }

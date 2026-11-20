@@ -67,7 +67,7 @@ async function loadRegionApps(store: AppStore) {
 }
 
 async function loadDomainManagementDetails(store: AppStore) {
-  const result = await fetchApiData(() => getApi().nodeStewardApi.getRegisteredDomainDetails())
+  const result = await fetchApiData(() => getApi().nodeStewardApi.getRegisteredDomainProviderDetails())
   console.log("EFFECT: fetchRegisteredDomainDetails", result)
   if (result) store.dispatch(registeredDomainsLoaded(result))
 }

@@ -41,6 +41,7 @@ export default function Layout() {
   const navigate = useNavigate()
 
   const pandaRunning = !!network
+  const isDomainManagementEnabled = import.meta.env.DEV
 
   useWebSocket({
     url: getSocketUrl(),
@@ -123,13 +124,15 @@ export default function Layout() {
             rightSection={localAppsCount !== undefined && <Badge circle>{localAppsCount}</Badge>}
           />
 
-          <IfNodeSteward>
-            <NavLink
-              label="Domain management"
-              href={`/node/domain_management`}
-              leftSection={<IconNetwork size={iconSize} onClick={toggle} />}
-            />
-          </IfNodeSteward>
+          {isDomainManagementEnabled && (
+            <IfNodeSteward>
+              <NavLink
+                label="Domain management"
+                href={`/node/domain_management`}
+                leftSection={<IconNetwork size={iconSize} onClick={toggle} />}
+              />
+            </IfNodeSteward>
+          )}
         </AppShell.Section>
 
         {!region && (

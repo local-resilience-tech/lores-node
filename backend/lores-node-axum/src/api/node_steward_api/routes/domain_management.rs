@@ -15,8 +15,8 @@ use crate::{
         public_api::{client_events::ClientEvent, realtime::RealtimeState},
     },
     data::{
-        entities::{RegisteredDomainDetail, RegisteredDomainRef},
-        node_data::registered_domain_providers_repo::{RegisteredDomainProvidersRepo, RegisteredDomainProvidersRow},
+        entities::{RegisteredDomainProviderDetail, RegisteredDomainProviderRef},
+        node_data::registered_domain_providers_repo::{RegisteredDomainProviderRow, RegisteredDomainProvidersRepo},
     },
 };
 
@@ -33,10 +33,10 @@ impl fmt::Display for DomainProvider {
 
 pub fn router() -> OpenApiRouter {
     OpenApiRouter::new()
-        .routes(routes!(register_provider))
-        .routes(routes!(get_registered_domain_details))
-        .routes(routes!(delete_domain_registration))
-        .routes(routes!(update_domain_registration))
+        .routes(routes!(register_domain_provider))
+        .routes(routes!(get_registered_domain_provider_details))
+        .routes(routes!(delete_registered_domain_provider))
+        .routes(routes!(update_registered_domain_provider_details))
         .routes(routes!(get_available_domain_providers))
 }
 
@@ -47,7 +47,7 @@ pub struct DomainManagementCredentials {
     pub credential: String,
 }
 
-impl RegisteredDomainProvidersRow {
+impl RegisteredDomainProviderRow {
     fn from(value: DomainManagementCredentials, registered_by: &str, registration_id: String) -> Self {
         Self {
             registration_id,
@@ -93,7 +93,7 @@ async fn get_available_domain_providers() -> impl IntoResponse {
         (status = INTERNAL_SERVER_ERROR, body = String)
     )
 )]
-async fn register_provider(
+async fn register_domain_provider(
     Extension(db): Extension<DatabaseState>,
     Extension(realtime_state): Extension<RealtimeState>,
     auth_session: AuthSession,
@@ -108,7 +108,7 @@ async fn register_provider(
         None => return internal_server_error("No auth user found for request").into_response(),
     };
 
-    let row = RegisteredDomainProvidersRow::from(payload, &user.id, Uuid::new_v4().to_string());
+    let row = RegisteredDomainProviderRow::from(payload, &user.id, Uuid::new_v4().to_string());
 
     let mut tx = match db.node_data_pool.begin().await {
         Ok(tx) => tx,
@@ -129,7 +129,7 @@ async fn register_provider(
     }
 
     realtime_state
-        .broadcast_app_event(ClientEvent::DomainRegistered(RegisteredDomainDetail {
+        .broadcast_app_event(ClientEvent::DomainProviderRegistered(RegisteredDomainProviderDetail {
             registration_id: row.registration_id.clone(),
             domain_provider: row.domain_provider,
             username: row.username,
@@ -143,27 +143,26 @@ async fn register_provider(
 #[utoipa::path(
     get, path = "/registered_domains",
     responses(
-        (status = 200, body = Vec<RegisteredDomainDetail>),
+        (status = 200, body = Vec<RegisteredDomainProviderDetail>),
         (status = INTERNAL_SERVER_ERROR, body = String)
     )
 )]
-async fn get_registered_domain_details(Extension(db): Extension<DatabaseState>) -> impl IntoResponse {
+async fn get_registered_domain_provider_details(Extension(db): Extension<DatabaseState>) -> impl IntoResponse {
     let registered_domain_rows = match RegisteredDomainProvidersRepo::init().all(&db.node_data_pool).await {
         Ok(rows) => rows,
         Err(e) => {
-            // to do - chuck this into a function or something?
             warn!("Database error persisting domain provider credentials: {e}");
             return internal_server_error("A database error occured").into_response();
         }
     };
 
-    let registered_domains: Vec<RegisteredDomainDetail> = registered_domain_rows
+    let registered_domains: Vec<RegisteredDomainProviderDetail> = registered_domain_rows
         .into_iter()
-        .map(|row| RegisteredDomainDetail {
-            registration_id: row.registration_id,
-            domain_provider: row.domain_provider,
-            username: row.username,
-            credential: row.credential,
+        .map(|domain| RegisteredDomainProviderDetail {
+            registration_id: domain.registration_id,
+            domain_provider: domain.domain_provider,
+            username: domain.username,
+            credential: domain.credential,
         })
         .collect();
 
@@ -172,18 +171,20 @@ async fn get_registered_domain_details(Extension(db): Extension<DatabaseState>) 
 
 #[utoipa::path(
     delete, path = "/delete",
-    request_body(content = RegisteredDomainRef, content_type = "application/json"),
+    request_body(content = RegisteredDomainProviderRef, content_type = "application/json"),
     responses(
         (status = 200, body = ()),
         (status = NOT_FOUND, body = String),
         (status = INTERNAL_SERVER_ERROR, body = String)
     )
 )]
-async fn delete_domain_registration(
+async fn delete_registered_domain_provider(
     Extension(db): Extension<DatabaseState>,
     Extension(realtime_state): Extension<RealtimeState>,
-    Json(payload): Json<RegisteredDomainRef>,
+    Json(payload): Json<RegisteredDomainProviderRef>,
 ) -> impl IntoResponse {
+    // to do next PR: Call provider API to remove records for node
+
     match RegisteredDomainProvidersRepo::init()
         .delete(&db.node_data_pool, &payload.registration_id)
         .await
@@ -195,15 +196,12 @@ async fn delete_domain_registration(
         }
         Ok(true) => {
             realtime_state
-                .broadcast_app_event(ClientEvent::DomainRegistrationDeleted(payload.registration_id))
+                .broadcast_app_event(ClientEvent::DomainProviderRegistrationDeleted(payload.registration_id))
                 .await;
 
             (StatusCode::OK, ()).into_response()
         }
     }
-
-    // Should we be removing domains with the provider here
-    // or just the registration at the node level?
 }
 
 #[utoipa::path(
@@ -217,7 +215,7 @@ async fn delete_domain_registration(
         (status = INTERNAL_SERVER_ERROR, body = String)
     )
 )]
-async fn update_domain_registration(
+async fn update_registered_domain_provider_details(
     Extension(db): Extension<DatabaseState>,
     Extension(realtime_state): Extension<RealtimeState>,
     auth_session: AuthSession,
@@ -233,7 +231,7 @@ async fn update_domain_registration(
         None => return internal_server_error("No auth user found for request").into_response(),
     };
 
-    let row = RegisteredDomainProvidersRow::from(payload, &user.id, domain_registration_id);
+    let row = RegisteredDomainProviderRow::from(payload, &user.id, domain_registration_id);
 
     let mut tx = match db.node_data_pool.begin().await {
         Ok(tx) => tx,
@@ -254,7 +252,7 @@ async fn update_domain_registration(
     }
 
     realtime_state
-        .broadcast_app_event(ClientEvent::DomainRegistrationUpdated(RegisteredDomainDetail {
+        .broadcast_app_event(ClientEvent::DomainProviderRegistrationUpdated(RegisteredDomainProviderDetail {
             registration_id: row.registration_id.clone(),
             domain_provider: row.domain_provider,
             username: row.username,
