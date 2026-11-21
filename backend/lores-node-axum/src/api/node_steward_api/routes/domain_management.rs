@@ -16,7 +16,7 @@ use crate::{
     },
     data::{
         entities::{RegisteredDomainProviderDetail, RegisteredDomainProviderRef},
-        node_data::registered_domain_providers_repo::{RegisteredDomainProviderRow, RegisteredDomainProvidersRepo},
+        node_data::domain_providers_repo::{DomainProviderRow, RegisteredDomainProvidersRepo},
     },
 };
 
@@ -47,13 +47,13 @@ pub struct DomainManagementCredentials {
     pub credential: String,
 }
 
-impl RegisteredDomainProviderRow {
-    fn from(value: DomainManagementCredentials, registered_by: &str, registration_id: String) -> Self {
-        Self {
+impl DomainManagementCredentials {
+    fn into_provider_row(self, registered_by: &str, registration_id: String) -> DomainProviderRow {
+        DomainProviderRow {
             registration_id,
-            domain_provider: value.provider.to_string(),
-            credential: value.credential,
-            username: value.username,
+            domain_provider: self.provider.to_string(),
+            credential: self.credential,
+            username: self.username,
             registered_by: registered_by.to_string(),
         }
     }
@@ -108,7 +108,7 @@ async fn register_domain_provider(
         None => return internal_server_error("No auth user found for request").into_response(),
     };
 
-    let row = RegisteredDomainProviderRow::from(payload, &user.id, Uuid::new_v4().to_string());
+    let row = payload.into_provider_row(&user.id, Uuid::new_v4().to_string());
 
     let mut tx = match db.node_data_pool.begin().await {
         Ok(tx) => tx,
@@ -118,7 +118,7 @@ async fn register_domain_provider(
         }
     };
 
-    if let Err(e) = RegisteredDomainProvidersRepo::init().upsert(&mut tx, &row).await {
+    if let Err(e) = RegisteredDomainProvidersRepo::init().upsert(&mut *tx, &row).await {
         warn!("Database error persisting domain provider credentials: {e}");
         return internal_server_error("A database error occured").into_response();
     }
@@ -231,7 +231,7 @@ async fn update_registered_domain_provider_details(
         None => return internal_server_error("No auth user found for request").into_response(),
     };
 
-    let row = RegisteredDomainProviderRow::from(payload, &user.id, domain_registration_id);
+    let row = payload.into_provider_row(&user.id, domain_registration_id);
 
     let mut tx = match db.node_data_pool.begin().await {
         Ok(tx) => tx,
@@ -241,7 +241,7 @@ async fn update_registered_domain_provider_details(
         }
     };
 
-    if let Err(e) = RegisteredDomainProvidersRepo::init().upsert(&mut tx, &row).await {
+    if let Err(e) = RegisteredDomainProvidersRepo::init().upsert(&mut *tx, &row).await {
         warn!("Database error persisting domain provider credentials: {e}");
         return internal_server_error("A database error occured").into_response();
     }
