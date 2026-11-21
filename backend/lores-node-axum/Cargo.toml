@@ -22,10 +22,10 @@ serde = { workspace = true, features = ["derive"] }
 serde_json = "1.0"
 short-uuid = "0.2"
 sqlx = { workspace = true, features = [
-  "runtime-tokio",
-  "tls-native-tls",
-  "sqlite",
-  "chrono",
+    "runtime-tokio",
+    "tls-native-tls",
+    "sqlite",
+    "chrono",
 ] }
 thiserror = { workspace = true }
 time = "0.3"
@@ -39,6 +39,7 @@ tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 utoipa = "6.0"
 utoipa-axum = "0.3"
 utoipa-swagger-ui = { version = "10.0", features = ["axum", "vendored"] }
+uuid = { version = "1", features = ["v4"] }
 hex = { workspace = true }
 lores-p2panda = { path = "../lores-p2panda" }
 lores-p2panda-server = { path = "../lores-p2panda-server" }

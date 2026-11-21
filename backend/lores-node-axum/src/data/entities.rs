@@ -223,3 +223,16 @@ pub struct NodeHeartbeat {
     pub region_id: String,
     pub node_id: String,
 }
+
+#[derive(Serialize, ToSchema, Debug, Clone)]
+pub struct RegisteredDomainProviderDetail {
+    pub registration_id: String,
+    pub domain_provider: String,
+    pub username: String,
+    pub credential: String,
+}
+
+#[derive(Deserialize, ToSchema, Debug, Clone)]
+pub struct RegisteredDomainProviderRef {
+    pub registration_id: String,
+}
