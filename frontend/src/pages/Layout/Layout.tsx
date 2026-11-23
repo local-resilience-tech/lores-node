@@ -13,6 +13,7 @@ import {
   IconSquarePlus,
   IconTimelineEventText,
   IconUser,
+  IconNetwork,
 } from "@tabler/icons-react"
 import packageJson from "../../../package.json"
 import pangaLogoUrl from "../../assets/deepsea-panda.svg"
@@ -40,6 +41,7 @@ export default function Layout() {
   const navigate = useNavigate()
 
   const pandaRunning = !!network
+  const isDomainManagementEnabled = import.meta.env.DEV
 
   useWebSocket({
     url: getSocketUrl(),
@@ -121,6 +123,16 @@ export default function Layout() {
             onClick={toggle}
             rightSection={localAppsCount !== undefined && <Badge circle>{localAppsCount}</Badge>}
           />
+
+          {isDomainManagementEnabled && (
+            <IfNodeSteward>
+              <NavLink
+                label="Domain management"
+                href={`/node/domain_management`}
+                leftSection={<IconNetwork size={iconSize} onClick={toggle} />}
+              />
+            </IfNodeSteward>
+          )}
         </AppShell.Section>
 
         {!region && (

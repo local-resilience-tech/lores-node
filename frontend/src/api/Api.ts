@@ -61,6 +61,10 @@ export enum GetCurrentNodeStewardError {
   AdminNotFound = "AdminNotFound",
 }
 
+export enum DomainProvider {
+  Serversaurus = "Serversaurus",
+}
+
 export enum AdminLoginError {
   InvalidCredentials = "InvalidCredentials",
   NoPasswordSet = "NoPasswordSet",
@@ -120,6 +124,15 @@ export type ClientEvent =
   | {
       NodeHeartbeatReceived: NodeHeartbeat
     }
+  | {
+      DomainProviderRegistrationDeleted: string
+    }
+  | {
+      DomainProviderRegistered: RegisteredDomainProviderDetail
+    }
+  | {
+      DomainProviderRegistrationUpdated: RegisteredDomainProviderDetail
+    }
 
 export interface CreateRegionData {
   name: string
@@ -143,6 +156,12 @@ export interface DockerService {
 export interface DockerStackWithServices {
   name: string
   services: DockerService[]
+}
+
+export interface DomainManagementCredentials {
+  credential: string
+  provider: DomainProvider
+  username: string
 }
 
 export interface ForgetRegionData {
@@ -322,6 +341,17 @@ export interface RegionWithNodes {
   region: Region
 }
 
+export interface RegisteredDomainProviderDetail {
+  credential: string
+  domain_provider: string
+  registration_id: string
+  username: string
+}
+
+export interface RegisteredDomainProviderRef {
+  registration_id: string
+}
+
 export interface TopicStatusEntry {
   connections: PeerConnectionEntry[]
   topic_hex: string
@@ -481,7 +511,7 @@ export class HttpClient<SecurityDataType = unknown> {
 
 /**
  * @title lores-node
- * @version 0.24.2
+ * @version 0.24.3
  * @license
  */
 export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDataType> {
@@ -648,6 +678,80 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
       }),
   }
   nodeStewardApi = {
+    /**
+     * No description
+     *
+     * @name GetAvailableDomainProviders
+     * @request GET:/node_steward_api/domain_management/available_domain_providers
+     */
+    getAvailableDomainProviders: (params: RequestParams = {}) =>
+      this.request<DomainProvider[], any>({
+        path: `/node_steward_api/domain_management/available_domain_providers`,
+        method: "GET",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @name DeleteRegisteredDomainProvider
+     * @request DELETE:/node_steward_api/domain_management/delete
+     */
+    deleteRegisteredDomainProvider: (data: RegisteredDomainProviderRef, params: RequestParams = {}) =>
+      this.request<any, string>({
+        path: `/node_steward_api/domain_management/delete`,
+        method: "DELETE",
+        body: data,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @name RegisterDomainProvider
+     * @request POST:/node_steward_api/domain_management/register
+     */
+    registerDomainProvider: (data: DomainManagementCredentials, params: RequestParams = {}) =>
+      this.request<string, string>({
+        path: `/node_steward_api/domain_management/register`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @name GetRegisteredDomainProviderDetails
+     * @request GET:/node_steward_api/domain_management/registered_domains
+     */
+    getRegisteredDomainProviderDetails: (params: RequestParams = {}) =>
+      this.request<RegisteredDomainProviderDetail[], string>({
+        path: `/node_steward_api/domain_management/registered_domains`,
+        method: "GET",
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @name UpdateRegisteredDomainProviderDetails
+     * @request PUT:/node_steward_api/domain_management/{domain_registration_id}/update
+     */
+    updateRegisteredDomainProviderDetails: (domainRegistrationId: string, data: DomainManagementCredentials, params: RequestParams = {}) =>
+      this.request<string, string>({
+        path: `/node_steward_api/domain_management/${domainRegistrationId}/update`,
+        method: "PUT",
+        body: data,
+        type: ContentType.Json,
+        ...params,
+      }),
+
     /**
      * No description
      *
